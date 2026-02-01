@@ -62,9 +62,9 @@ services:
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1h}
       - REDIS_URL=redis://redis:6379
       - AUTH_SERVICE_URL=http://auth-service:3001
-      - CODE_REVIEW_ENGINE_URL=http://ai-service:3002
+      - CODE_REVIEW_ENGINE_URL=http://code-review-engine:3002
       - ARCHITECTURE_ANALYZER_URL=http://architecture-analyzer:3003
-      - AGENTIC_AI_URL=http://ai-service:3004
+      - AGENTIC_AI_URL=http://agentic-ai:3004
       - PROJECT_MANAGER_URL=http://project-manager:3005
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
       - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
@@ -88,11 +88,11 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_started
-      ai-service:
+      code-review-engine:
         condition: service_started
       architecture-analyzer:
         condition: service_started
-      ai-service:
+      agentic-ai:
         condition: service_started
       project-manager:
         condition: service_started
@@ -144,10 +144,10 @@ services:
       - ./certs:/app/certs:ro
     restart: unless-stopped
 
-  ai-service:
+  code-review-engine:
     build:
       context: .
-      dockerfile: services/ai-service/Dockerfile
+      dockerfile: services/code-review-engine/Dockerfile
     ports:
       - "3002:3002"
     environment:
@@ -155,19 +155,19 @@ services:
       - PORT=3002
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - GITHUB_ACCESS_TOKEN=${GITHUB_TOKEN}
-      - AGENTIC_AI_URL=http://ai-service:3004
+      - AGENTIC_AI_URL=http://agentic-ai:3004
       - ARCHITECTURE_ANALYZER_URL=http://architecture-analyzer:3003
-      - LLM_SERVICE_URL=http://ai-service:8000
+      - LLM_SERVICE_URL=http://llm-service:8000
       - WEBHOOK_PROCESSING_TIMEOUT=30000
       - ANALYSIS_TIMEOUT=300000
       - LOG_LEVEL=info
     depends_on:
       redis:
         condition: service_healthy
-      ai-service:
+      llm-service:
         condition: service_started
     volumes:
-      - ./services/ai-service/logs:/app/logs
+      - ./services/code-review-engine/logs:/app/logs
     restart: unless-stopped
 
   architecture-analyzer:
@@ -195,10 +195,10 @@ services:
       - ./services/architecture-analyzer/logs:/app/logs
     restart: unless-stopped
 
-  ai-service:
+  agentic-ai:
     build:
       context: .
-      dockerfile: services/ai-service/Dockerfile
+      dockerfile: services/agentic-ai/Dockerfile
     ports:
       - "3004:3004"
     environment:
@@ -221,7 +221,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./services/ai-service/logs:/app/logs
+      - ./services/agentic-ai/logs:/app/logs
     restart: unless-stopped
 
   project-manager:
@@ -249,10 +249,10 @@ services:
       - ./services/project-manager/logs:/app/logs
     restart: unless-stopped
 
-  ai-service:
+  llm-service:
     build:
       context: .
-      dockerfile: services/ai-service/Dockerfile
+      dockerfile: services/llm-service/Dockerfile
     ports:
       - "8000:8000"
     environment:
@@ -264,7 +264,7 @@ services:
       - LOG_LEVEL=info
     volumes:
       - ./models:/app/models:ro
-      - ./services/ai-service/logs:/app/logs
+      - ./services/llm-service/logs:/app/logs
     deploy:
       resources:
         reservations:

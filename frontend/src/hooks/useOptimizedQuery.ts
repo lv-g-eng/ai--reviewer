@@ -76,7 +76,8 @@ const executeBatch = async (endpoint: string) => {
       // Resolve individual requests
       group.forEach((request, index) => {
         request.resolve(results[index]);
-      }ueryClient]);
+      });
+    }, [queryClient]);
 
   return {
     ...query,

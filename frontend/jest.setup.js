@@ -15,17 +15,21 @@ const localStorageMock = {
 };
 global.localStorage = localStorageMock;
 
-// Mock window.location
-delete global.window.location;
-global.window.location = {
-  href: 'http://localhost:3000',
-  pathname: '/',
-  search: '',
-  hash: '',
-  reload: jest.fn(),
-  replace: jest.fn(),
-  assign: jest.fn(),
-};
+// Mock window.location without causing navigation errors
+if (!window.location) {
+  Object.defineProperty(window, 'location', {
+    value: {
+      href: 'http://localhost:3000',
+      pathname: '/',
+      search: '',
+      hash: '',
+      reload: jest.fn(),
+      replace: jest.fn(),
+      assign: jest.fn(),
+    },
+    writable: true,
+  });
+}
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {

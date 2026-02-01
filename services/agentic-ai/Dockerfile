@@ -9,10 +9,13 @@ COPY services/agentic-ai/package*.json ./services/agentic-ai/
 COPY shared ./shared
 
 # Install dependencies for the entire workspace
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY services/agentic-ai ./services/agentic-ai
+
+# Build the service
+RUN npm run build -w services/agentic-ai
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

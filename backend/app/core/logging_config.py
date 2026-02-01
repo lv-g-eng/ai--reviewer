@@ -1,12 +1,23 @@
 """
 Structured logging configuration for the application
+
+Provides:
+- JSON logging for log aggregation
+- Startup diagnostics and summary
+- Request/response logging
+- Exception logging with context
+- Sensitive data masking
+
+Validates Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
 """
 import logging
 import sys
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from pythonjsonlogger.json import JsonFormatter
+
+from app.core.error_reporter import ErrorReporter
 
 
 class CustomJsonFormatter(JsonFormatter):
@@ -40,6 +51,8 @@ def setup_logging(level: str = "INFO", enable_json: bool = True) -> None:
     Args:
         level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         enable_json: Whether to use JSON formatting
+        
+    Validates Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
     """
     log_level = getattr(logging, level.upper())
     
@@ -72,6 +85,81 @@ def setup_logging(level: str = "INFO", enable_json: bool = True) -> None:
     # Suppress noisy loggers
     logging.getLogger('urllib3').setLevel(logging.WARNING)
     logging.getLogger('asyncio').setLevel(logging.WARNING)
+
+
+def log_startup_summary(
+    app_name: str,
+    version: str,
+    environment: str,
+    config_file: str,
+    database_status: Dict[str, Any],
+    features_enabled: Dict[str, bool],
+    security_warnings: Optional[list] = None
+) -> None:
+    """
+    Log comprehensive startup summary.
+    
+    Args:
+        app_name: Application name
+        version: Application version
+        environment: Environment (development, staging, production)
+        config_file: Configuration file path
+        database_status: Dictionary of database connection statuses
+        features_enabled: Dictionary of enabled/disabled features
+        security_warnings: Optional list of security warnings
+        
+    Validates Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
+    """
+    logger = logging.getLogger(__name__)
+    
+    logger.info("=" * 70)
+    logger.info("APPLICATION STARTUP SUMMARY")
+    logger.info("=" * 70)
+    
+    # Application info
+    logger.info(f"Application: {app_name}")
+    logger.info(f"Version: {version}")
+    logger.info(f"Environment: {environment}")
+    logger.info(f"Configuration file: {config_file}")
+    
+    # Database status
+    logger.info("\nDatabase Status:")
+    for db_name, status in database_status.items():
+        if isinstance(status, dict):
+            is_connected = status.get('is_connected', False)
+            response_time = status.get('response_time_ms', 0)
+            status_str = f"✅ ({response_time:.0f}ms)" if is_connected else "❌"
+        else:
+            status_str = str(status)
+        logger.info(f"  {db_name}: {status_str}")
+    
+    # Features status
+    logger.info("\nFeatures:")
+    for feature_name, is_enabled in features_enabled.items():
+        status_str = "✅ enabled" if is_enabled else "⚠️  disabled"
+        logger.info(f"  {feature_name}: {status_str}")
+    
+    # Security warnings
+    if security_warnings:
+        logger.warning("\nSecurity Warnings:")
+        for warning in security_warnings:
+            logger.warning(f"  ⚠️  {warning}")
+    
+    # API documentation
+    logger.info("\nAPI Documentation:")
+    logger.info("  Swagger UI: http://localhost:8000/docs")
+    logger.info("  ReDoc: http://localhost:8000/redoc")
+    logger.info("  OpenAPI JSON: http://localhost:8000/openapi.json")
+    
+    # Health check endpoints
+    logger.info("\nHealth Check Endpoints:")
+    logger.info("  Overall health: GET /health")
+    logger.info("  Readiness probe: GET /health/ready")
+    logger.info("  Liveness probe: GET /health/live")
+    
+    logger.info("=" * 70)
+    logger.info("✅ Application startup complete")
+    logger.info("=" * 70)
 
 
 # Create logger instance
@@ -146,3 +234,120 @@ def log_exception(exc: Exception, context: Dict[str, Any] = None):
         extra=extra,
         exc_info=True
     )
+
+
+def mask_sensitive_in_logs(message: str) -> str:
+    """
+    Mask sensitive data in log messages.
+    
+    Applies masking rules to remove or obscure:
+    - Passwords
+    - API keys
+    - Tokens
+    - Connection strings with credentials
+    - JWT secrets
+    - Database URLs with passwords
+    - Webhook secrets
+    
+    Args:
+        message: Log message that may contain sensitive data
+        
+    Returns:
+        Log message with sensitive data masked
+        
+    Validates Requirements: 1.6, 7.5, 7.6
+    """
+    if not message:
+        return message
+    
+    return ErrorReporter.mask_sensitive_data(message)
+
+
+def log_database_status(
+    database_status: Dict[str, Any],
+    logger_instance: Optional[logging.Logger] = None
+) -> None:
+    """
+    Log database connection status with detailed information.
+    
+    Logs:
+    - Connection status for each database (PostgreSQL, Neo4j, Redis)
+    - Response times for successful connections
+    - Error messages for failed connections (masked)
+    - Overall database health summary
+    
+    Args:
+        database_status: Dictionary mapping database names to status info
+        logger_instance: Optional logger instance (uses module logger if not provided)
+        
+    Validates Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
+    """
+    if logger_instance is None:
+        logger_instance = logging.getLogger(__name__)
+    
+    logger_instance.info("Database Connection Status:")
+    logger_instance.info("-" * 50)
+    
+    all_connected = True
+    critical_connected = True
+    
+    for db_name, status in database_status.items():
+        if isinstance(status, dict):
+            is_connected = status.get('is_connected', False)
+            response_time = status.get('response_time_ms', 0)
+            error = status.get('error', None)
+            is_critical = status.get('is_critical', True)
+            
+            if is_connected:
+                logger_instance.info(
+                    f"  {db_name}: ✅ Connected ({response_time:.0f}ms)"
+                )
+            else:
+                all_connected = False
+                if is_critical:
+                    critical_connected = False
+                
+                # Mask sensitive data in error message
+                masked_error = mask_sensitive_in_logs(error) if error else "Unknown error"
+                
+                if is_critical:
+                    logger_instance.error(
+                        f"  {db_name}: ❌ Failed - {masked_error}"
+                    )
+                else:
+                    logger_instance.warning(
+                        f"  {db_name}: ⚠️  Failed - {masked_error}"
+                    )
+        else:
+            # Handle ConnectionStatus objects
+            status_obj = status
+            if hasattr(status_obj, 'is_connected'):
+                if status_obj.is_connected:
+                    logger_instance.info(
+                        f"  {status_obj.service}: ✅ Connected ({status_obj.response_time_ms:.0f}ms)"
+                    )
+                else:
+                    all_connected = False
+                    if status_obj.is_critical:
+                        critical_connected = False
+                    
+                    masked_error = mask_sensitive_in_logs(status_obj.error) if status_obj.error else "Unknown error"
+                    
+                    if status_obj.is_critical:
+                        logger_instance.error(
+                            f"  {status_obj.service}: ❌ Failed - {masked_error}"
+                        )
+                    else:
+                        logger_instance.warning(
+                            f"  {status_obj.service}: ⚠️  Failed - {masked_error}"
+                        )
+    
+    logger_instance.info("-" * 50)
+    
+    # Log summary
+    if all_connected:
+        logger_instance.info("✅ All databases connected")
+    elif critical_connected:
+        logger_instance.warning("⚠️  Some optional databases unavailable, but critical databases connected")
+    else:
+        logger_instance.error("❌ Critical database(s) unavailable")

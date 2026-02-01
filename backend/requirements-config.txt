@@ -1,0 +1,3 @@
+# Configuration Management Dependencies
+watchdog>=3.0.0  # File system monitoring for hot reloading
+pyyaml>=6.0      # YAML configuration support

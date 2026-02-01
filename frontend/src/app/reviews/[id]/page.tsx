@@ -31,7 +31,7 @@ import {
 
 export default function PullRequestReviewPage() {
   const params = useParams();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [commentFilters, setCommentFilters] = useState<CommentFilters>({
     severity: [],
     category: [],

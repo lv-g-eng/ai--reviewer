@@ -1,69 +1,33 @@
 import { Router, Request, Response } from 'express';
-import axios from 'axios';
-import { config } from '../config';
+import { serviceRegistry } from '../services/serviceRegistry';
 import { logger } from '../utils/logger';
 
 const router = Router();
 
-interface ServiceHealth {
-  name: string;
-  status: 'healthy' | 'unhealthy' | 'unknown';
-  responseTime?: number;
-  error?: string;
-}
-
-const checkServiceHealth = async (name: string, url: string): Promise<ServiceHealth> => {
-  const startTime = Date.now();
-  
-  try {
-    const response = await axios.get(`${url}/health`, {
-      timeout: 5000,
-    });
-    
-    const responseTime = Date.now() - startTime;
-    
-    return {
-      name,
-      status: response.status === 200 ? 'healthy' : 'unhealthy',
-      responseTime,
-    };
-  } catch (error) {
-    const responseTime = Date.now() - startTime;
-    
-    return {
-      name,
-      status: 'unhealthy',
-      responseTime,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
-};
-
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    const healthChecks = await Promise.all([
-      checkServiceHealth('auth-service', config.services.authService),
-      checkServiceHealth('code-review-engine', config.services.codeReviewEngine),
-      checkServiceHealth('architecture-analyzer', config.services.architectureAnalyzer),
-      checkServiceHealth('agentic-ai', config.services.agenticAI),
-      checkServiceHealth('project-manager', config.services.projectManager),
-    ]);
-
-    const allHealthy = healthChecks.every(check => check.status === 'healthy');
-    const overallStatus = allHealthy ? 'healthy' : 'degraded';
+    const systemHealth = await serviceRegistry.getSystemHealth();
 
     const response = {
-      status: overallStatus,
-      timestamp: new Date().toISOString(),
+      status: systemHealth.status,
+      timestamp: systemHealth.timestamp.toISOString(),
       service: 'api-gateway',
       version: '1.0.0',
-      services: healthChecks,
+      services: systemHealth.services.map((service) => ({
+        name: service.name,
+        status: service.status,
+        url: service.url,
+        responseTime: service.responseTime,
+        error: service.error,
+        lastChecked: service.lastChecked.toISOString(),
+      })),
     };
 
-    res.status(allHealthy ? 200 : 503).json(response);
+    const statusCode = systemHealth.status === 'healthy' ? 200 : 503;
+    res.status(statusCode).json(response);
   } catch (error) {
     logger.error('Health check error:', error);
-    
+
     res.status(500).json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),

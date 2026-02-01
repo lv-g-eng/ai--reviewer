@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    swcMinify: true,
     images: {
         remotePatterns: [
             {
@@ -16,12 +17,20 @@ const nextConfig = {
         ],
         formats: ['image/avif', 'image/webp'],
     },
-    // Production export configuration for static hosting
-    output: 'export',
-    distDir: 'dist',
     trailingSlash: true,
     experimental: {
-        // Removed: appDir is not compatible with 'output: export' configuration
+        optimizePackageImports: ['@radix-ui/react-icons'],
+    },
+    webpack: (config, { isServer }) => {
+        if (!isServer) {
+            config.resolve.fallback = {
+                ...config.resolve.fallback,
+                fs: false,
+                net: false,
+                tls: false,
+            };
+        }
+        return config;
     },
 };
 

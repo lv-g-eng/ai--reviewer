@@ -67,10 +67,15 @@ export class DatabaseService {
     try {
       logger.info('Initializing database schema...');
 
-      // Create users table
+      // Enable UUID extension if not already enabled
+      await this.pool.query(`
+        CREATE EXTENSION IF NOT EXISTS "uuid-ossp"
+      `);
+
+      // Create users table (matches init-db.sql schema)
       await this.pool.query(`
         CREATE TABLE IF NOT EXISTS users (
-          id VARCHAR(255) PRIMARY KEY,
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           email VARCHAR(255) UNIQUE NOT NULL,
           name VARCHAR(255) NOT NULL,
           password_hash VARCHAR(255) NOT NULL,
@@ -94,8 +99,8 @@ export class DatabaseService {
       // Create sessions table for additional session tracking (optional)
       await this.pool.query(`
         CREATE TABLE IF NOT EXISTS user_sessions (
-          id VARCHAR(255) PRIMARY KEY,
-          user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           token_hash VARCHAR(255) NOT NULL,
           expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -114,8 +119,8 @@ export class DatabaseService {
       // Create audit log table for security events
       await this.pool.query(`
         CREATE TABLE IF NOT EXISTS auth_audit_log (
-          id SERIAL PRIMARY KEY,
-          user_id VARCHAR(255),
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID,
           event_type VARCHAR(100) NOT NULL,
           event_data JSONB,
           ip_address INET,

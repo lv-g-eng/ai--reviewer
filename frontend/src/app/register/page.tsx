@@ -72,12 +72,6 @@ export default function RegisterPage() {
     setPasswordStrength(calculatePasswordStrength(password))
   })
 
-  const getPasswordStrengthColor = () => {
-    if (passwordStrength < 40) return 'bg-destructive'
-    if (passwordStrength < 70) return 'bg-yellow-500'
-    return 'bg-green-500'
-  }
-
   const getPasswordStrengthText = () => {
     if (passwordStrength < 40) return 'Weak'
     if (passwordStrength < 70) return 'Medium'

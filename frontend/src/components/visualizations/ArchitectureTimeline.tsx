@@ -140,7 +140,7 @@ export default function ArchitectureTimeline({
                 .attr('r', 3)
                 .attr('fill', metric.color)
                 .style('cursor', 'pointer')
-                .on('mouseover', function (event, d: any) {
+                .on('mouseover', function (_event, d: any) {
                     d3.select(this).attr('r', 5);
 
                     // Tooltip

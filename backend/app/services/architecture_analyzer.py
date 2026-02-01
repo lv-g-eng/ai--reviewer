@@ -11,7 +11,7 @@ import networkx as nx
 
 from neo4j import AsyncSession
 
-from app.database.neo4j_db import get_neo4j_session
+from app.database.neo4j_db import get_neo4j_driver
 from app.schemas.architecture import (
     ArchitectureComponent,
     ArchitectureViolation,

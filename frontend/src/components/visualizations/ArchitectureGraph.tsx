@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,8 @@ import {
   RefreshCw, 
   Filter, 
   Layers, 
-  Database, 
-  Code, 
-  FileText,
   AlertTriangle,
-  CheckCircle,
   Eye,
-  EyeOff,
   Download,
   Upload
 } from 'lucide-react';
@@ -64,10 +59,87 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
   const [viewMode, setViewMode] = useState<'all' | 'drift' | 'complexity' | 'layers'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [graphData, setGraphData] = useState<any>(null);
-  const [forceGraphRef, setForceGraphRef] = useState<any>(null);
+  const [, setGraphData] = useState<any>(null);
   
   const graphRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Memoized node types for React Flow
+   * Prevents unnecessary re-renders and warnings
+   * 
+   * Validates Requirements: 4.1, 4.3, 5.1
+   */
+  const nodeTypes = useMemo(() => ({
+    default: {
+      id: 'default-node',
+      component: 'div',
+      description: 'Default node type',
+    },
+    layer: {
+      id: 'layer-node',
+      component: 'div',
+      description: 'Layer node type',
+    },
+    module: {
+      id: 'module-node',
+      component: 'div',
+      description: 'Module node type',
+    },
+    file: {
+      id: 'file-node',
+      component: 'div',
+      description: 'File node type',
+    },
+    class: {
+      id: 'class-node',
+      component: 'div',
+      description: 'Class node type',
+    },
+    function: {
+      id: 'function-node',
+      component: 'div',
+      description: 'Function node type',
+    },
+  }), []);
+
+  /**
+   * Memoized edge types for React Flow
+   * Prevents unnecessary re-renders and warnings
+   * 
+   * Validates Requirements: 4.2, 4.3
+   */
+  const edgeTypes = useMemo(() => ({
+    default: {
+      id: 'default-edge',
+      component: 'line',
+      description: 'Default edge type',
+    },
+    import: {
+      id: 'import-edge',
+      component: 'line',
+      description: 'Import edge type',
+    },
+    inheritance: {
+      id: 'inheritance-edge',
+      component: 'line',
+      description: 'Inheritance edge type',
+    },
+    dependency: {
+      id: 'dependency-edge',
+      component: 'line',
+      description: 'Dependency edge type',
+    },
+    call: {
+      id: 'call-edge',
+      component: 'line',
+      description: 'Call edge type',
+    },
+    containment: {
+      id: 'containment-edge',
+      component: 'line',
+      description: 'Containment edge type',
+    },
+  }), []);
 
   useEffect(() => {
     if (analysisId) {
@@ -102,10 +174,9 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
     // Sample layers and modules
     const layers = ['UI', 'Service', 'Business', 'Data'];
     const modules = ['User', 'Auth', 'Product', 'Order', 'Payment'];
-    const fileTypes = ['python', 'javascript', 'typescript'];
     
     // Create layer nodes
-    layers.forEach((layer, index) => {
+    layers.forEach((layer) => {
       nodes.push({
         id: `layer-${layer}`,
         name: layer,
@@ -150,7 +221,6 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
     files.forEach((file, index) => {
       const module = modules[index % modules.length];
       const layer = layers[index % layers.length];
-      const fileType = fileTypes[index % fileTypes.length];
       const complexity = Math.floor(Math.random() * 15) + 1;
       const isDrift = Math.random() > 0.7; // 30% chance of drift
       
@@ -701,7 +771,7 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
                 })}
 
                 {/* Nodes */}
-                {filteredNodes.map((node, index) => {
+                {filteredNodes.map((node) => {
                   // Simple positioning for demo
                   const x = Math.random() * 700 + 50;
                   const y = Math.random() * 500 + 50;

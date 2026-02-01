@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-01-22T10:33:57.928Z",
+  "analysisResults": {
+    "throughputBottlenecks": [],
+    "latencyBottlenecks": [
+      "High p50 latency in Target Load (1000 req/s): 176ms (target: <50ms)",
+      "High p99 latency in Target Load (1000 req/s): 286ms (target: <200ms)",
+      "High p50 latency in Stress Test (5000 req/s): 1174ms (target: <50ms)",
+      "High p99 latency in Stress Test (5000 req/s): 5976ms (target: <200ms)"
+    ],
+    "memoryBottlenecks": [
+      "High memory usage in Memory-Intensive Endpoint (60s): 461.35 MB (80%+ of limit)"
+    ],
+    "errorBottlenecks": [
+      "Stress Test (5000 req/s) had 516 errors - indicates service instability"
+    ]
+  },
+  "recommendations": {
+    "immediate": [
+      "Fix error handling and timeout issues",
+      "Review server logs for error patterns"
+    ],
+    "shortTerm": [
+      "Optimize middleware chain execution order",
+      "Implement response caching for frequently accessed data",
+      "Review and optimize database queries",
+      "Optimize memory usage in request handlers",
+      "Implement proper buffer management",
+      "Review and optimize caching strategies"
+    ],
+    "longTerm": [
+      "Consider implementing horizontal scaling",
+      "Evaluate alternative web frameworks (Fastify, etc.)",
+      "Implement advanced caching strategies (Redis, CDN)",
+      "Set up comprehensive performance monitoring",
+      "Implement automated performance regression testing",
+      "Consider microservice architecture optimizations"
+    ]
+  },
+  "prioritizedActions": [
+    {
+      "priority": "HIGH",
+      "action": "Fix error handling and eliminate timeouts",
+      "impact": "Prevents service failures and improves reliability",
+      "effort": "Low - Medium"
+    },
+    {
+      "priority": "MEDIUM",
+      "action": "Optimize middleware chain and reduce latency",
+      "impact": "Improves user experience and response times",
+      "effort": "Medium"
+    },
+    {
+      "priority": "LOW",
+      "action": "Set up performance monitoring and alerting",
+      "impact": "Enables proactive performance management",
+      "effort": "Medium"
+    },
+    {
+      "priority": "LOW",
+      "action": "Implement automated performance testing in CI/CD",
+      "impact": "Prevents performance regressions",
+      "effort": "Medium - High"
+    }
+  ]
+}

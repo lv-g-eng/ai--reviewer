@@ -4,7 +4,7 @@ import { Providers } from '@/providers';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
-import { BackendStatus } from '@/components/common/backend-status';
+import BackendStatusBanner from '@/components/common/backend-status';
 import '@/styles/globals.css';
 
 const inter = Inter({
@@ -43,10 +43,12 @@ export default function RootLayout({
                     disableTransitionOnChange
                 >
                     <Providers>
-                        <AuthProvider>{children}</AuthProvider>
+                        <AuthProvider>
+                            {children}
+                            <BackendStatusBanner />
+                        </AuthProvider>
                     </Providers>
                     <Toaster />
-                    <BackendStatus />
                 </ThemeProvider>
             </body>
         </html>

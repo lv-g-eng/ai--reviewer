@@ -1,411 +1,507 @@
-# 🔒 Security & Automation Scripts
+# Scripts Documentation
 
-This directory contains automated security tools and AI-powered automation for your AI-Based Quality Check project.
+**Last Updated**: January 21, 2026
 
-## 📊 Security Compliance Report Generator
-
-**File:** `security_compliance_report.py`
-
-### Purpose
-Transforms Bandit SAST JSON output into comprehensive security compliance reports aligned with ISO/IEC 25010 quality standards.
-
-### Usage
-
-#### Generate Markdown Report
-```bash
-python scripts/security_compliance_report.py backend/bandit-results.json --output security-report.md
-```
-
-#### Generate JSON Report
-```bash
-python scripts/security_compliance_report.py backend/bandit-results.json --format json --output security-report.json
-```
-
-### Features
-
-- **ISO/IEC 25010 Compliance Analysis**: Categorizes vulnerabilities by security characteristics
-- **Risk Scoring**: Calculates compliance scores (0-100) with severity ratings
-- **Executive Summaries**: Business-focused risk assessments
-- **Remediation Guidance**: Prioritized action items
-- **Multiple Output Formats**: Markdown and JSON support
-
-### Sample Output
-
-#### Compliance Score
-```
-Security Compliance Score: 78/100 (Fair)
-Critical Vulnerabilities: 2
-High Severity Issues: 5
-ISO/IEC 25010 Analysis:
-- Confidentiality: Poor (3 issues)
-- Integrity: Good (1 issue)
-- Availability: Excellent (0 issues)
-```
-
-#### Vulnerability Categories
-- **Confidentiality**: Hardcoded credentials, insecure deserialization
-- **Integrity**: SQL injection, command injection, input validation
-- **Availability**: Resource exhaustion, DoS vulnerabilities
-- **Authenticity**: Authentication bypass, session management
-
-### Integration with CI/CD
-
-Add to your GitHub Actions workflow:
-
-```yaml
-- name: Generate Security Report
-  run: |
-    python scripts/security_compliance_report.py bandit-results.json --output security-report.md
-
-- name: Upload Security Report
-  uses: actions/upload-artifact@v4
-  with:
-    name: security-compliance-report
-    path: security-report.md
-
-- name: Comment Report on PR
-  if: github.event_name == 'pull_request'
-  uses: actions/github-script@v7
-  with:
-    script: |
-      const fs = require('fs');
-      const report = fs.readFileSync('security-report.md', 'utf8');
-      github.rest.issues.createComment({
-        issue_number: context.issue.number,
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        body: report
-      });
-```
-
-### Automated Report Generation
-
-The security scanning workflow automatically generates reports:
-
-```yaml
-# In .github/workflows/security-scanning.yml
-- name: Generate Compliance Report
-  run: |
-    python scripts/security_compliance_report.py bandit-results.sarif --output compliance-report.md
-  continue-on-error: true
-```
-
-## 🚨 Critical Vulnerability Assessment
-
-**File:** `docs/CRITICAL_VULNERABILITY_CATEGORIZATION.md`
-
-### When to Use
-- TruffleHog detects exposed secrets
-- Bandit finds critical security issues
-- ESLint security plugin flags problems
-- Any security scan fails with critical findings
-
-### Assessment Framework
-
-1. **Categorize by ISO/IEC 25010**:
-   - Confidentiality (data protection)
-   - Integrity (modification prevention)
-   - Availability (system reliability)
-   - Authenticity (identity verification)
-
-2. **Calculate Risk Score**:
-   ```
-   Risk Score = (Impact × Likelihood) ÷ Controls
-   ```
-
-3. **Determine Remediation Priority**:
-   - **Critical**: Fix within 24 hours
-   - **High**: Fix within 1 week
-   - **Medium**: Fix within 1 month
-
-### Quick Assessment Checklist
-
-For each critical vulnerability:
-- [ ] ISO characteristic affected?
-- [ ] Business impact assessment?
-- [ ] Exploitability rating?
-- [ ] Remediation timeline?
-- [ ] Communication requirements?
-
-## 🧹 Git Secrets Cleanup
-
-**File:** `docs/SECRETS_CLEANUP_GUIDE.md`
-
-### Emergency Response Guide
-
-When TruffleHog fails due to exposed credentials:
-
-1. **Immediate Actions**:
-   - Stop all CI/CD pipelines
-   - Rotate affected credentials
-   - Assess exposure scope
-
-2. **Repository Cleanup**:
-   ```bash
-   # Install git-filter-repo
-   pip install git-filter-repo
-
-   # Remove secrets from history
-   git filter-repo --replace-text <(echo "your_secret==>REDACTED") --force
-
-   # Force push (CAUTION: Rewrites history)
-   git push origin --force --all
-   ```
-
-3. **Team Coordination**:
-   - Notify all developers
-   - Provide re-cloning instructions
-   - Update CI/CD configurations
-
-4. **Prevention Measures**:
-   - Install pre-commit hooks
-   - Update .gitignore
-   - Set up ongoing monitoring
-
-## 🔧 Development Setup
-
-### Prerequisites
-```bash
-# Install Python dependencies
-pip install -r backend/requirements.txt
-pip install -r backend/requirements-test.txt
-
-# Install Node.js security tools
-cd frontend && npm install --save-dev eslint-plugin-security
-```
-
-### Testing the Tools
-```bash
-# Test Bandit report generation
-bandit -r backend/app -f json -o test-bandit.json
-python scripts/security_compliance_report.py test-bandit.json --output test-report.md
-
-# Test TruffleHog integration
-trufflehog git --repo-path . --json > test-secrets.json
-```
-
-## 📈 Monitoring and Alerts
-
-### Automated Security Monitoring
-```bash
-# Daily secret scanning
-0 2 * * * /path/to/repo/scripts/monitor_secrets.sh
-
-# Weekly vulnerability assessment
-0 3 * * 1 python scripts/security_compliance_report.py bandit-results.json --output weekly-report.md
-```
-
-### Alert Thresholds
-- **Critical Issues**: 0 (Zero tolerance)
-- **High Severity**: < 5 per 1000 lines of code
-- **Compliance Score**: > 85/100
-- **Response Time**: < 24 hours for critical findings
-
-## 🔗 Integration Points
-
-### CI/CD Integration
-- **GitHub Actions**: Automatic report generation and PR comments
-- **Security Gates**: Block deployments on critical findings
-- **Artifact Storage**: Preserve reports for compliance audits
-
-### AI Reviewer Integration
-- **JSON Output**: Structured data for AI analysis
-- **Historical Tracking**: Trend analysis across releases
-- **Risk Scoring**: Automated priority assignment
-
-### Compliance Reporting
-- **ISO/IEC 25010**: Quality standard alignment
-- **Audit Trails**: Complete vulnerability lifecycle
-- **Executive Summaries**: Business-focused reporting
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-**Script won't run:**
-```bash
-# Check Python path
-which python
-python --version
-
-# Install missing dependencies
-pip install json argparse pathlib
-```
-
-**Bandit report empty:**
-```bash
-# Verify Bandit installation
-bandit --version
-
-# Check file permissions
-ls -la bandit-results.json
-
-# Run Bandit manually
-bandit -r backend/app -f json -o bandit-results.json
-```
-
-**Permission errors:**
-```bash
-# Make script executable
-chmod +x scripts/security_compliance_report.py
-
-# Run with Python explicitly
-python3 scripts/security_compliance_report.py ...
-```
-
-## 📚 Additional Resources
-
-- [Bandit Documentation](https://bandit.readthedocs.io/)
-- [TruffleHog Documentation](https://github.com/trufflesecurity/trufflehog)
-- [ISO/IEC 25010 Standard](https://iso.org/standard/35733.html)
-- [OWASP Security Testing Guide](https://owasp.org/www-project-testing/)
+This directory contains utility scripts for project setup, maintenance, security, and operations.
 
 ---
 
-## 🤖 AI Self-Healing CI/CD
+## 📋 Table of Contents
 
-**File:** `ai_self_healing.py`
+1. [Setup Scripts](#setup-scripts)
+2. [Maintenance Scripts](#maintenance-scripts)
+3. [Security Scripts](#security-scripts)
+4. [Utility Scripts](#utility-scripts)
+5. [Usage Guidelines](#usage-guidelines)
 
-### Purpose
-Automatically analyzes CI/CD pipeline failures and provides AI-powered fixes through GitHub PR comments, completing the automation of your Pull Request review process.
+---
 
-### How It Works
+## 🚀 Setup Scripts
 
-```
-CI/CD Failure → GitHub API → Log Extraction → Ollama AI → PR Comment
-     ↓              ↓            ↓              ↓            ↓
-  Pipeline Fails → Fetch Logs → Parse Errors → Generate Fix → Post Solution
-```
+### LLM Setup
 
-### Features
+**Files**: `setup-llm.bat`, `setup-llm.sh`
 
-- **Intelligent Failure Analysis**: Parses Python exceptions, test failures, and security issues
-- **Ollama Integration**: Uses qwen2.5-coder for contextual code analysis
-- **GitHub PR Comments**: Posts formatted analysis with code fixes
-- **Multi-Failure Support**: Handles Backend Tests, Security Scans, and more
-- **Automated Triggering**: Integrates with CI/CD workflows
+Sets up the local LLM environment with required models and dependencies.
 
-### Usage
-
-#### Analyze Latest Failure
+**Usage:**
 ```bash
-python scripts/ai_self_healing.py --analyze-failure --pr-number 123
+# Windows
+scripts\setup-llm.bat
+
+# Linux/macOS
+chmod +x scripts/setup-llm.sh
+./scripts/setup-llm.sh
 ```
 
-#### Manual Analysis
+**What it does:**
+- Downloads required LLM models
+- Installs Python dependencies
+- Configures LLM service
+- Verifies installation
+
+**See also**: [docs/LLM_QUICK_START.md](../docs/LLM_QUICK_START.md)
+
+---
+
+### Development Environment Setup
+
+**File**: `setup-dev.sh`
+
+Sets up the complete development environment.
+
+**Usage:**
 ```bash
-# Analyze specific workflow run
-python scripts/ai_self_healing.py --workflow-run-id 456789012
-
-# Target specific jobs
-python scripts/ai_self_healing.py --analyze-failure --job-names "Backend Tests" "Security Scan"
+chmod +x scripts/setup-dev.sh
+./scripts/setup-dev.sh
 ```
 
-### GitHub Actions Integration
+**What it does:**
+- Installs system dependencies
+- Sets up Python virtual environment
+- Installs Node.js dependencies
+- Configures databases
+- Creates environment files
 
-Automatically triggers on CI/CD failures:
+---
 
-```yaml
-- name: AI Self-Healing Analysis
-  if: failure() && github.event_name == 'pull_request'
-  run: |
-      echo "🤖 Running AI Self-Healing Analysis..."
-      cd backend
-      python ../scripts/ai_self_healing.py --analyze-failure --pr-number ${{ github.event.number }}
-  env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      OLLAMA_URL: ${{ secrets.OLLAMA_URL }}
-      OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL }}
-  continue-on-error: true
+## 🧹 Maintenance Scripts
+
+### NPM Cache Cleanup
+
+**Files**: `clean-npm-cache.bat`, `clean-npm-cache.sh`
+
+Cleans npm cache and removes problematic path configurations.
+
+**Usage:**
+```bash
+# Windows
+scripts\clean-npm-cache.bat
+
+# Linux/macOS
+chmod +x scripts/clean-npm-cache.sh
+./scripts/clean-npm-cache.sh
 ```
 
-### Prerequisites
+**What it does:**
+- Deletes `node_modules` and `package-lock.json`
+- Runs `npm cache clean --force`
+- Removes Chinese character paths
+- Configures clean cache path
+- Verifies cleanup
 
-1. **Ollama Setup**:
-   ```bash
-   ollama pull qwen2.5-coder
-   ollama serve
-   ```
+**See also**: [docs/npm-management.md](../docs/npm-management.md)
 
-2. **GitHub Secrets**:
-   - `GITHUB_TOKEN`: Personal access token with repo permissions
-   - `OLLAMA_URL`: Ollama server URL (default: http://localhost:11434)
-   - `OLLAMA_MODEL`: AI model to use (default: qwen2.5-coder)
+---
 
-3. **Python Dependencies**:
-   ```txt
-   requests>=2.28.0
-   ```
+### Path Verification
 
-### Supported Failure Types
+**Files**: `verify-path-clean.bat`, `verify-path-clean.sh`
 
-- **Python Exceptions**: Traceback parsing and root cause analysis
-- **Test Failures**: Pytest failure extraction and fixes
-- **Security Issues**: Bandit and TruffleHog vulnerability analysis
-- **Database Errors**: PostgreSQL, Neo4j, Redis connection issues
-- **Async Problems**: Event loop and coroutine failures
+Verifies that all paths are clean and CI/CD ready.
 
-### Example AI Analysis Output
+**Usage:**
+```bash
+# Windows
+scripts\verify-path-clean.bat
 
-**Original Error:**
-```
-neo4j.exceptions.ServiceUnavailable: Connection refused
+# Linux/macOS
+chmod +x scripts/verify-path-clean.sh
+./scripts/verify-path-clean.sh
 ```
 
-**AI-Generated PR Comment:**
-```markdown
-## 🤖 AI Self-Healing Analysis
+**What it checks:**
+- npm configurations
+- Environment variables
+- Project files
+- npm command functionality
 
-**Generated:** 2024-01-17T11:06:04
-**Job:** Backend Tests
-**Status:** 🔴 Failed - AI Analysis Complete
+---
 
-### 🚨 Failure Summary
-❌ **1 test(s) failed**
-💥 **1 error(s) detected**
+### Frontend Build Fix
 
-### 🔍 AI Analysis & Fix
+**File**: `fix_frontend_build.bat`
 
-## 🔍 Root Cause Analysis
-The Neo4j connection is failing due to incorrect URI configuration in test environment.
+Fixes common frontend build issues.
 
-## 🛠️ Fix
-Update the test configuration to use the correct Neo4j URI:
-
-```python
-# In conftest.py or test setup
-NEO4J_URI = "bolt://localhost:7687"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "testpassword"
+**Usage:**
+```bash
+scripts\fix_frontend_build.bat
 ```
 
-## 🛡️ Prevention
-- Ensure Neo4j service is running in CI/CD
-- Use environment-specific configuration
-- Add connection health checks
+**What it does:**
+- Cleans `.next` directory
+- Removes `node_modules`
+- Reinstalls dependencies
+- Runs build verification
 
-### 📋 Next Steps
+---
 
-1. **Review the suggested fix above**
-2. **Apply the code changes to your branch**
-3. **Run tests locally** before pushing
-4. **Request re-review** after implementing fixes
+### Project Organization
+
+**File**: `organize_project.py`
+
+Organizes and archives redundant project files.
+
+**Usage:**
+```bash
+python scripts/organize_project.py
 ```
 
-## ⚡ Quick Commands
+**What it does:**
+- Identifies redundant files
+- Creates dated archive directory
+- Moves files to appropriate categories
+- Generates archive index
+- Updates project index
+
+---
+
+### Documentation Consolidation
+
+**File**: `consolidate_docs.py`
+
+Consolidates and organizes documentation files.
+
+**Usage:**
+```bash
+python scripts/consolidate_docs.py
+```
+
+**What it does:**
+- Identifies duplicate documentation
+- Merges similar content
+- Updates cross-references
+- Archives old versions
+
+---
+
+## 🔐 Security Scripts
+
+### Git Secrets Removal
+
+**File**: `remove_git_secrets.sh`
+
+Removes secrets from git history (use with extreme caution).
+
+**Usage:**
+```bash
+chmod +x scripts/remove_git_secrets.sh
+./scripts/remove_git_secrets.sh
+```
+
+**⚠️ Warning**: This rewrites git history. Backup your repository first!
+
+**What it does:**
+- Scans git history for secrets
+- Removes identified secrets
+- Rewrites git history
+- Updates all branches
+
+**See also**: [docs/SECRETS_CLEANUP_GUIDE.md](../docs/SECRETS_CLEANUP_GUIDE.md)
+
+---
+
+### Security Compliance Report
+
+**File**: `security_compliance_report.py`
+
+Generates comprehensive security compliance reports.
+
+**Usage:**
+```bash
+python scripts/security_compliance_report.py
+```
+
+**What it generates:**
+- Dependency vulnerability report
+- Code security analysis
+- Compliance checklist
+- Remediation recommendations
+
+**See also**: [docs/SECURITY.md](../docs/SECURITY.md)
+
+---
+
+## 🛠️ Utility Scripts
+
+### AI Self-Healing
+
+**File**: `ai_self_healing.py`
+
+AI-powered automated error detection and fixing.
+
+**Usage:**
+```bash
+python scripts/ai_self_healing.py
+```
+
+**What it does:**
+- Scans codebase for errors
+- Uses AI to suggest fixes
+- Applies fixes automatically (with confirmation)
+- Generates fix report
+
+**See also**: [docs/AI_SELF_HEALING_GUIDE.md](../docs/AI_SELF_HEALING_GUIDE.md)
+
+---
+
+### Code Duplication Detection
+
+**File**: `detect_code_duplication.py`
+
+Detects duplicate code across the project.
+
+**Usage:**
+```bash
+python scripts/detect_code_duplication.py
+```
+
+**What it reports:**
+- Duplicate code blocks
+- Similarity percentage
+- Refactoring suggestions
+- Impact analysis
+
+---
+
+### Requirements Generation
+
+**File**: `generate_requirements.py`
+
+Generates Python requirements files from imports.
+
+**Usage:**
+```bash
+python scripts/generate_requirements.py
+```
+
+**What it does:**
+- Scans Python files for imports
+- Identifies required packages
+- Generates requirements.txt
+- Pins versions
+
+---
+
+### File Path Scanner
+
+**File**: `scan_file_paths.py`
+
+Scans for problematic file paths.
+
+**Usage:**
+```bash
+python scripts/scan_file_paths.py
+```
+
+**What it checks:**
+- Non-ASCII characters
+- Path length issues
+- Special characters
+- Case sensitivity problems
+
+---
+
+### LLM Integration Test
+
+**File**: `test-llm-integration.py`
+
+Tests LLM service integration.
+
+**Usage:**
+```bash
+python scripts/test-llm-integration.py
+```
+
+**What it tests:**
+- LLM service connectivity
+- Model loading
+- Inference functionality
+- Response quality
+
+---
+
+### Optimization Validation
+
+**File**: `validate_optimization.py`
+
+Validates code optimizations.
+
+**Usage:**
+```bash
+python scripts/validate_optimization.py
+```
+
+**What it validates:**
+- Performance improvements
+- Memory usage
+- Code quality metrics
+- Regression tests
+
+---
+
+### Frontend Environment Verification
+
+**Files**: `verify-frontend-env.sh`, `verify-frontend-env-enhanced.sh`
+
+Verifies frontend environment configuration.
+
+**Usage:**
+```bash
+chmod +x scripts/verify-frontend-env.sh
+./scripts/verify-frontend-env.sh
+
+# Enhanced version with more checks
+./scripts/verify-frontend-env-enhanced.sh
+```
+
+**What it checks:**
+- Environment variables
+- Node.js version
+- npm configuration
+- Build requirements
+
+---
+
+## 📖 Usage Guidelines
+
+### General Best Practices
+
+1. **Always backup** before running destructive scripts
+2. **Read the script** before executing
+3. **Check permissions** on Linux/macOS
+4. **Run from project root** unless specified otherwise
+5. **Review output** for errors or warnings
+
+### Script Permissions (Linux/macOS)
 
 ```bash
-# Generate security report
-python scripts/security_compliance_report.py bandit-results.json -o report.md
+# Make all scripts executable
+chmod +x scripts/*.sh
 
-# AI self-healing analysis
-python scripts/ai_self_healing.py --analyze-failure --pr-number 123
-
-# Emergency secret cleanup
-git filter-repo --replace-text <(echo "secret==>REDACTED") --force
-
-# Verify cleanup
-trufflehog git --repo-path . --json | jq '.[] | select(.Verified == true)'
+# Or individually
+chmod +x scripts/setup-llm.sh
 ```
 
-**Remember:** Security and automation are continuous processes. Run these tools regularly and address findings promptly.
+### Windows Execution Policy
+
+If you encounter execution policy errors:
+
+```powershell
+# Check current policy
+Get-ExecutionPolicy
+
+# Set policy for current user (if needed)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### Running Python Scripts
+
+Ensure you're in the correct environment:
+
+```bash
+# Activate virtual environment first
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate     # Windows
+
+# Then run script
+python scripts/script_name.py
+```
+
+---
+
+## 🔄 Script Dependencies
+
+### System Requirements
+
+**All Scripts:**
+- Git
+- Bash (Linux/macOS) or PowerShell (Windows)
+
+**Python Scripts:**
+- Python 3.11+
+- pip
+- Virtual environment (recommended)
+
+**Node.js Scripts:**
+- Node.js 18+
+- npm 9+
+
+### Python Package Dependencies
+
+Most Python scripts require:
+```bash
+pip install -r backend/requirements.txt
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Script not found:**
+```bash
+# Ensure you're in project root
+cd /path/to/project
+ls scripts/  # Should list all scripts
+```
+
+**Permission denied (Linux/macOS):**
+```bash
+chmod +x scripts/script-name.sh
+```
+
+**Python module not found:**
+```bash
+# Activate virtual environment
+source venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+**npm command not found:**
+```bash
+# Install Node.js from nodejs.org
+# Verify installation
+node --version
+npm --version
+```
+
+---
+
+## 📊 Script Categories Summary
+
+| Category | Scripts | Purpose |
+|----------|---------|---------|
+| Setup | 2 | Environment initialization |
+| Maintenance | 6 | Project upkeep |
+| Security | 2 | Security operations |
+| Utility | 8 | Various tools |
+| **Total** | **18** | **All purposes** |
+
+---
+
+## 📞 Getting Help
+
+If you encounter issues with any script:
+
+1. Check this README
+2. Review script-specific documentation
+3. Check [TROUBLESHOOTING.md](../TROUBLESHOOTING.md)
+4. Review script source code
+5. Ask in team chat
+6. Create GitHub issue
+
+---
+
+## 🔗 Related Documentation
+
+- [Quick Reference](../QUICK_REFERENCE.md) - Common commands
+- [NPM Management](../docs/npm-management.md) - NPM operations
+- [Security Guide](../docs/SECURITY.md) - Security practices
+- [LLM Quick Start](../docs/LLM_QUICK_START.md) - LLM setup
+
+---
+
+**For more information, see the main [README.md](../README.md)**

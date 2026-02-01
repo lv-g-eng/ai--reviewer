@@ -16,17 +16,19 @@ export const authMiddleware = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ error: 'Missing or invalid authorization header' });
+      res
+        .status(401)
+        .json({ error: 'Missing or invalid authorization header' });
       return;
     }
 
     const token = authHeader.substring(7);
-    
+
     // Verify JWT token
     const decoded = jwt.verify(token, config.jwt.secret) as any;
-    
+
     // Validate token with auth service
     const authResponse = await axios.post(
       `${config.services.authService}/api/auth/validate`,
@@ -52,18 +54,18 @@ export const authMiddleware = async (
     next();
   } catch (error) {
     logger.error('Authentication error:', error);
-    
+
     if (error instanceof jwt.JsonWebTokenError) {
       res.status(401).json({ error: 'Invalid token' });
       return;
     }
-    
+
     if (axios.isAxiosError(error)) {
       logger.error('Auth service communication error:', error.message);
       res.status(503).json({ error: 'Authentication service unavailable' });
       return;
     }
-    
+
     res.status(500).json({ error: 'Internal server error' });
   }
 };

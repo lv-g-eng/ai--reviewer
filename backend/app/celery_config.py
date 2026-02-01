@@ -11,8 +11,8 @@ from app.core.config import settings
 # Create Celery app
 celery_app = Celery(
     "ai_code_review",
-    broker=settings.CELERY_BROKER_URL,
-    backend=settings.CELERY_RESULT_BACKEND
+    broker=settings.celery_broker_url,
+    backend=settings.celery_result_backend
 )
 
 # Configuration

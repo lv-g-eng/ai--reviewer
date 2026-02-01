@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { z } from 'zod';
@@ -73,7 +72,7 @@ export default function SignInPage() {
     } catch (error) {
       if (error instanceof z.ZodError) {
         // Handle validation errors
-        const validationErrors = error.errors.reduce((acc, curr) => {
+        const validationErrors = error.issues.reduce((acc, curr) => {
           const key = curr.path[0] as string;
           acc[key] = curr.message;
           return acc;

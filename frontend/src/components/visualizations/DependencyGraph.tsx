@@ -17,7 +17,7 @@ import ReactFlow, {
     Panel,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Search, ZoomIn, ZoomOut, Maximize, Download } from 'lucide-react';
+import { Search, Maximize, Download } from 'lucide-react';
 
 interface GraphNode {
     id: string;

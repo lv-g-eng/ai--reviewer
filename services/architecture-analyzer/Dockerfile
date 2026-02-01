@@ -9,10 +9,13 @@ COPY services/architecture-analyzer/package*.json ./services/architecture-analyz
 COPY shared ./shared
 
 # Install dependencies for the entire workspace
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY services/architecture-analyzer ./services/architecture-analyzer
+
+# Build the service
+RUN npm run build -w services/architecture-analyzer
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

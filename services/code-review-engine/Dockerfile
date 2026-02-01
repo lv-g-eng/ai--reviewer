@@ -9,10 +9,13 @@ COPY services/code-review-engine/package*.json ./services/code-review-engine/
 COPY shared ./shared
 
 # Install dependencies for the entire workspace
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY services/code-review-engine ./services/code-review-engine
+
+# Build the service
+RUN npm run build -w services/code-review-engine
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

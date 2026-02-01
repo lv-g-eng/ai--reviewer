@@ -1,0 +1,5 @@
+# Local LLM dependencies (optional)
+-r base.txt
+
+# Local LLM support
+llama-cpp-python==0.2.90

@@ -1,0 +1,131 @@
+{
+  "timestamp": "2026-01-22T10:26:00.897Z",
+  "tests": [
+    {
+      "testName": "Health Check Baseline",
+      "duration": 10,
+      "connections": 10,
+      "pipelining": 1,
+      "requests": {
+        "total": 39860,
+        "average": 3987,
+        "p50": 4051,
+        "p99": 4531
+      },
+      "latency": {
+        "average": 2.06,
+        "p50": 2,
+        "p99": 5
+      },
+      "throughput": {
+        "average": 4021862.4
+      },
+      "errors": 0,
+      "timeouts": 0
+    },
+    {
+      "testName": "Target Load (1000 req/s)",
+      "duration": 30,
+      "connections": 100,
+      "pipelining": 10,
+      "requests": {
+        "total": 165960,
+        "average": 5724.73,
+        "p50": 6003,
+        "p99": 6683
+      },
+      "latency": {
+        "average": 182.17,
+        "p50": 176,
+        "p99": 286
+      },
+      "throughput": {
+        "average": 5775395.32
+      },
+      "errors": 0,
+      "timeouts": 0
+    },
+    {
+      "testName": "Stress Test (5000 req/s)",
+      "duration": 20,
+      "connections": 500,
+      "pipelining": 10,
+      "requests": {
+        "total": 98010,
+        "average": 5159.43,
+        "p50": 5551,
+        "p99": 6063
+      },
+      "latency": {
+        "average": 1902.79,
+        "p50": 1174,
+        "p99": 5976
+      },
+      "throughput": {
+        "average": 5204884.22
+      },
+      "errors": 516,
+      "timeouts": 0
+    },
+    {
+      "testName": "API Endpoint Test",
+      "duration": 20,
+      "connections": 50,
+      "pipelining": 5,
+      "requests": {
+        "total": 103250,
+        "average": 5163.7,
+        "p50": 5251,
+        "p99": 6003
+      },
+      "latency": {
+        "average": 48.64,
+        "p50": 45,
+        "p99": 87
+      },
+      "throughput": {
+        "average": 5178137.6
+      },
+      "errors": 0,
+      "timeouts": 0
+    },
+    {
+      "testName": "POST Endpoint Test",
+      "duration": 15,
+      "connections": 25,
+      "pipelining": 2,
+      "requests": {
+        "total": 57850,
+        "average": 3857.6,
+        "p50": 4001,
+        "p99": 4251
+      },
+      "latency": {
+        "average": 12.53,
+        "p50": 12,
+        "p99": 26
+      },
+      "throughput": {
+        "average": 3980083.2
+      },
+      "errors": 0,
+      "timeouts": 0
+    }
+  ],
+  "summary": {
+    "passed": false,
+    "totalTests": 5,
+    "passedTests": 3,
+    "failedTests": 2,
+    "bottlenecks": [
+      "High p50 latency: 176ms (target: <50ms)",
+      "High p50 latency: 1174ms (target: <50ms)",
+      "Errors detected: 516 errors, 0 timeouts"
+    ],
+    "recommendations": [
+      "Review middleware execution time",
+      "Consider caching frequently accessed data",
+      "Review error logs for failure patterns"
+    ]
+  }
+}

@@ -70,7 +70,7 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [graphData, setGraphData] = useState<any>(null);
-  const [forceGraphRef, setForceGraphRef] = useState<any>(null);
+  const forceGraphRef = useRef<any>(null);
   const [graphStats, setGraphStats] = useState({
     clusteringCoefficient: 0,
     averagePathLength: 0,
@@ -599,16 +599,16 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
   };
 
   const resetView = () => {
-    if (forceGraphRef) {
-      forceGraphRef.zoomToFit(800);
+    if (forceGraphRef.current) {
+      forceGraphRef.current.zoomToFit(800);
     }
   };
 
   const applyForceLayout = () => {
-    if (forceGraphRef) {
-      forceGraphRef.d3Force('link').distance(100);
-      forceGraphRef.d3Force('charge').strength(-300);
-      forceGraphRef.d3Force('center').strength(0.1);
+    if (forceGraphRef.current) {
+      forceGraphRef.current.d3Force('link').distance(100);
+      forceGraphRef.current.d3Force('charge').strength(-300);
+      forceGraphRef.current.d3Force('center').strength(0.1);
     }
   };
 
@@ -964,7 +964,7 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
             </div>
           ) : (
             <ForceGraph2D
-              ref={setForceGraphRef}
+              ref={forceGraphRef}
               graphData={{ nodes: filteredNodes, links: filteredLinks }}
               nodeLabel="name"
               nodeColor={getNodeTypeColor}
@@ -976,9 +976,6 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
               onNodeClick={handleNodeClick}
               width={graphRef.current?.clientWidth || 800}
               height={graphRef.current?.clientHeight || 600}
-              d3Force="charge"
-              d3ChargeStrength={-300}
-              d3LinkDistance={100}
               cooldownTicks={100}
             />
           )}

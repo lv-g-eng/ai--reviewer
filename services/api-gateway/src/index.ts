@@ -5,7 +5,17 @@ import rateLimit from 'express-rate-limit';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
+import { circuitBreakerErrorHandler } from './middleware/circuitBreaker';
 import { authMiddleware } from './middleware/auth';
+import { correlationIdMiddleware } from './utils/correlationId';
+import {
+  requestLogger,
+  requestMetadataLogger,
+} from './middleware/requestLogger';
+import {
+  responseLogger,
+  responseTimeLogger,
+} from './middleware/responseLogger';
 import { routes } from './routes';
 import { healthCheck } from './routes/health';
 
@@ -13,10 +23,25 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
-app.use(cors({
-  origin: config.cors.allowedOrigins,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: config.cors.allowedOrigins,
+    credentials: true,
+  })
+);
+
+// Correlation ID middleware (must be first to generate ID for all requests)
+app.use(correlationIdMiddleware);
+
+// Response time tracking
+app.use(responseTimeLogger);
+
+// Request logging
+app.use(requestLogger);
+app.use(requestMetadataLogger);
+
+// Response logging
+app.use(responseLogger);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -40,6 +65,9 @@ app.use('/api', authMiddleware);
 
 // API routes
 app.use('/api', routes);
+
+// Circuit breaker error handling (before general error handler)
+app.use(circuitBreakerErrorHandler);
 
 // Error handling
 app.use(errorHandler);

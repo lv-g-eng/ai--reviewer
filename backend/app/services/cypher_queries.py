@@ -17,8 +17,7 @@ Each query includes detailed explanation of the pattern matching logic.
 
 CYCLIC_DEPENDENCY_QUERY = """
 MATCH (p:Project {projectId: $projectId})-[:CONTAINS]->(m1:Module)
-MATCH path = (m1)-[:DEPENDS_ON*]->(m1)
-WHERE length(path) > 1
+MATCH path = (m1)-[:DEPENDS_ON*2..10]->(m1)
 WITH m1, path, relationships(path) as rels
 RETURN m1.name AS module,
        [n IN nodes(path) | n.name] AS cycle_path,
@@ -289,12 +288,12 @@ ORDER BY path_length DESC
 LIMIT 20
 """
 
-# Find all modules involved in dependency chains
+# Find all modules involved in dependency chains (bounded depth)
 DEPENDENCY_CHAIN_MODULES_QUERY = """
 MATCH (p:Project {projectId: $projectId})-[:CONTAINS]->(m:Module)
-MATCH (m)-[:DEPENDS_ON*1..]->(downstream:Module)
+MATCH (m)-[:DEPENDS_ON*1..10]->(downstream:Module)
 WITH m, count(DISTINCT downstream) AS reachable_modules
-MATCH (upstream:Module)-[:DEPENDS_ON*1..]->(m)
+MATCH (upstream:Module)-[:DEPENDS_ON*1..10]->(m)
 WITH m, reachable_modules, count(DISTINCT upstream) AS depending_modules
 RETURN m.name AS module,
        reachable_modules,
@@ -315,10 +314,9 @@ WITH datetime() AS report_date
 
 MATCH (p:Project {projectId: $projectId})
 
-// Count cycles
+// Count cycles (bounded to prevent timeout)
 CALL {
-    MATCH path = (m1:Module)-[:DEPENDS_ON*]->(m1)
-    WHERE length(path) > 1
+    MATCH path = (m1:Module)-[:DEPENDS_ON*2..8]->(m1)
     RETURN count(DISTINCT m1) AS cycle_count
 }
 

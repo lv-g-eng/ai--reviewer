@@ -9,10 +9,13 @@ COPY services/project-manager/package*.json ./services/project-manager/
 COPY shared ./shared
 
 # Install dependencies for the entire workspace
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY services/project-manager ./services/project-manager
+
+# Build the service
+RUN npm run build -w services/project-manager
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

@@ -11,12 +11,15 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
+# Set TESTING environment variable before importing app
+os.environ["TESTING"] = "true"
+
 from app.main import app
 from app.database.postgresql import Base, get_db
 from app.core.config import settings
 
 # Test database URL
-TEST_DATABASE_URL = settings.POSTGRES_URL.replace("/ai_code_review", "/ai_code_review_test")
+TEST_DATABASE_URL = settings.postgres_url.replace("/ai_code_review", "/ai_code_review_test")
 
 # Create test engine
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
@@ -53,8 +56,8 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest.fixture(scope="function")
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+@pytest.fixture
+async def client(db_session: AsyncSession) -> AsyncClient:
     """Create test client"""
     async def override_get_db():
         yield db_session
@@ -68,9 +71,11 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest.fixture
-def auth_headers(access_token: str):
+async def auth_headers(test_user):
     """Get authentication headers"""
-    return {"Authorization": f"Bearer {access_token}"}
+    from app.utils.jwt import create_access_token
+    token = create_access_token({"sub": str(test_user.id), "email": test_user.email, "role": test_user.role.value})
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
@@ -81,7 +86,7 @@ async def test_user(db_session: AsyncSession):
     
     user = User(
         email="test@example.com",
-        hashed_password=hash_password("TestPass123!"),
+        password_hash=hash_password("TestPass123!"),
         full_name="Test User",
         role="developer"
     )
@@ -95,7 +100,7 @@ async def test_user(db_session: AsyncSession):
 async def access_token(test_user):
     """Generate access token for test user"""
     from app.utils.jwt import create_access_token
-    return create_access_token({"sub": test_user.email, "user_id": str(test_user.id)})
+    return create_access_token({"sub": str(test_user.id), "email": test_user.email, "role": test_user.role.value})
 
 
 # ===== NEO4J MOCKING FIXTURES =====
@@ -262,13 +267,11 @@ def pytest_exception_interact(node, call, report):
 
 def pytest_sessionfinish(session, exitstatus):
     """Hook to collect session summary"""
+    # Note: session.get_reports() is not available in newer pytest versions
+    # This is a custom hook for AI reviewer integration
     test_results["summary"] = {
         "total_tests": session.testscollected,
-        "passed": len([r for r in session.get_reports() if r.passed]),
-        "failed": len([r for r in session.get_reports() if r.failed]),
-        "skipped": len([r for r in session.get_reports() if r.skipped]),
         "exit_code": exitstatus,
-        "duration": session.duration
     }
 
 
@@ -345,3 +348,47 @@ def mock_db_timeouts():
             "neo4j": mock_neo4j,
             "redis": mock_redis
         }
+
+
+# ===== REDIS MOCKING FIXTURES =====
+
+@pytest.fixture(scope="function")
+def mock_redis_client():
+    """
+    Mock Redis client for unit tests
+    Provides in-memory storage for testing token revocation and metadata
+    """
+    # In-memory storage for mock Redis
+    storage = {}
+    ttls = {}
+    
+    class MockRedis:
+        async def set(self, key: str, value: str, ex: Optional[int] = None):
+            storage[key] = value
+            if ex:
+                ttls[key] = ex
+            return True
+        
+        async def get(self, key: str):
+            return storage.get(key)
+        
+        async def exists(self, key: str):
+            return 1 if key in storage else 0
+        
+        async def delete(self, key: str):
+            if key in storage:
+                del storage[key]
+                if key in ttls:
+                    del ttls[key]
+            return 1
+        
+        async def ttl(self, key: str):
+            return ttls.get(key, -1)
+    
+    mock_redis = MockRedis()
+    
+    # Patch get_redis to return our mock
+    with patch('app.database.redis_db.get_redis', return_value=mock_redis):
+        with patch('app.utils.jwt.get_redis', return_value=mock_redis):
+            yield mock_redis
+

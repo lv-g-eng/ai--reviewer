@@ -1,8 +1,20 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextAuthOptions } from 'next-auth';
+import {
+  authenticateUser,
+  handleAuthError,
+  getUserFriendlyErrorMessage,
+  validateEnvironmentConfig,
+} from '@/lib/auth';
 
-export const authOptions: NextAuthOptions = {
+// Validate environment configuration on startup
+const envValidation = validateEnvironmentConfig();
+if (!envValidation.valid && process.env.NODE_ENV === 'development') {
+  console.warn('[NextAuth] Environment configuration issues:', envValidation.errors);
+}
+
+const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -12,57 +24,48 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[NextAuth] Missing credentials');
+          }
           throw new Error('Email and password are required');
         }
 
         try {
-          const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-          
-          // Step 1: Authenticate and get tokens
-          const loginRes = await fetch(`${backendUrl}/api/v1/auth/login`, {
-            method: 'POST',
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-            headers: { 'Content-Type': 'application/json' },
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[NextAuth] Starting authentication for:', credentials.email);
+          }
+
+          // Use the authentication service utility
+          const user = await authenticateUser({
+            email: credentials.email,
+            password: credentials.password,
           });
 
-          if (!loginRes.ok) {
-            const error = await loginRes.json().catch(() => ({}));
-            throw new Error(error.detail || 'Authentication failed');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[NextAuth] Authentication successful for:', user.email);
           }
-
-          const authData = await loginRes.json();
-
-          if (!authData.access_token) {
-            throw new Error('Invalid response from authentication server');
-          }
-
-          // Step 2: Get user details using access token
-          const meRes = await fetch(`${backendUrl}/api/v1/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${authData.access_token}`,
-            },
-          });
-
-          if (!meRes.ok) {
-            throw new Error('Failed to fetch user details');
-          }
-
-          const userData = await meRes.json();
 
           return {
-            id: userData.id,
-            email: userData.email,
-            name: userData.full_name || userData.email.split('@')[0],
-            role: userData.role,
-            accessToken: authData.access_token,
-            refreshToken: authData.refresh_token,
+            id: user.id,
+            email: user.email,
+            name: user.name || user.email.split('@')[0],
+            role: user.role || 'user',
+            accessToken: user.accessToken || '',
+            refreshToken: user.refreshToken || '',
           };
         } catch (error) {
-          console.error('Authentication error:', error);
-          throw new Error(error instanceof Error ? error.message : 'Authentication failed');
+          const authError = handleAuthError(error);
+          const userMessage = getUserFriendlyErrorMessage(authError);
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[NextAuth] Authentication failed:', {
+              type: authError.type,
+              message: authError.message,
+              statusCode: authError.statusCode,
+            });
+          }
+          
+          throw new Error(userMessage);
         }
       },
     }),

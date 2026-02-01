@@ -1,0 +1,222 @@
+{
+  "timestamp": "2026-01-22T10:21:59.059Z",
+  "tests": [
+    {
+      "testName": "Health Check Baseline",
+      "duration": 10,
+      "connections": 10,
+      "pipelining": 1,
+      "requests": {
+        "total": 1,
+        "average": 0.1,
+        "mean": 0.1,
+        "stddev": 0.31,
+        "min": 1,
+        "max": 1,
+        "p50": 0,
+        "p75": 0,
+        "p90": 0,
+        "p99": 1
+      },
+      "latency": {
+        "average": 601,
+        "mean": 601,
+        "stddev": 0,
+        "min": 601,
+        "max": 601,
+        "p50": 601,
+        "p75": 601,
+        "p90": 601,
+        "p99": 601
+      },
+      "throughput": {
+        "average": 185.6,
+        "mean": 185.6,
+        "stddev": 556.81,
+        "min": 1856,
+        "max": 1856
+      },
+      "errors": 10344,
+      "timeouts": 0,
+      "non2xx": 0
+    },
+    {
+      "testName": "Target Load (1000 req/s)",
+      "duration": 30,
+      "connections": 100,
+      "pipelining": 10,
+      "requests": {
+        "total": 0,
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0,
+        "p50": 0,
+        "p75": 0,
+        "p90": 0,
+        "p99": 0
+      },
+      "latency": {
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0,
+        "p50": 0,
+        "p75": 0,
+        "p90": 0,
+        "p99": 0
+      },
+      "throughput": {
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      },
+      "errors": 3000,
+      "timeouts": 0,
+      "non2xx": 0
+    },
+    {
+      "testName": "Stress Test (5000 req/s)",
+      "duration": 20,
+      "connections": 500,
+      "pipelining": 10,
+      "requests": {
+        "total": 0,
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0,
+        "p50": 0,
+        "p75": 0,
+        "p90": 0,
+        "p99": 0
+      },
+      "latency": {
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0,
+        "p50": 0,
+        "p75": 0,
+        "p90": 0,
+        "p99": 0
+      },
+      "throughput": {
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      },
+      "errors": 10000,
+      "timeouts": 0,
+      "non2xx": 0
+    },
+    {
+      "testName": "Sustained Load (60s)",
+      "duration": 60,
+      "connections": 100,
+      "pipelining": 10,
+      "requests": {
+        "total": 0,
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0,
+        "p50": 0,
+        "p75": 0,
+        "p90": 0,
+        "p99": 0
+      },
+      "latency": {
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0,
+        "p50": 0,
+        "p75": 0,
+        "p90": 0,
+        "p99": 0
+      },
+      "throughput": {
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      },
+      "errors": 64787,
+      "timeouts": 10,
+      "non2xx": 0
+    },
+    {
+      "testName": "API Endpoint (with middleware)",
+      "duration": 20,
+      "connections": 50,
+      "pipelining": 5,
+      "requests": {
+        "total": 0,
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0,
+        "p50": 0,
+        "p75": 0,
+        "p90": 0,
+        "p99": 0
+      },
+      "latency": {
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0,
+        "p50": 0,
+        "p75": 0,
+        "p90": 0,
+        "p99": 0
+      },
+      "throughput": {
+        "average": 0,
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      },
+      "errors": 15591,
+      "timeouts": 0,
+      "non2xx": 0
+    }
+  ],
+  "summary": {
+    "passed": false,
+    "totalTests": 5,
+    "passedTests": 0,
+    "failedTests": 5,
+    "bottlenecks": [
+      "High p50 latency: 601ms (target: <50ms)",
+      "Errors detected: 10344 errors, 0 timeouts",
+      "Throughput below target: 0.00 req/s (target: 1000 req/s)",
+      "Errors detected: 3000 errors, 0 timeouts",
+      "Errors detected: 10000 errors, 0 timeouts",
+      "Errors detected: 64787 errors, 10 timeouts",
+      "Errors detected: 15591 errors, 0 timeouts"
+    ],
+    "recommendations": [
+      "Review middleware execution time",
+      "Consider caching frequently accessed data",
+      "Review error logs for failure patterns",
+      "Consider optimizing middleware chain",
+      "Enable HTTP keep-alive connections"
+    ]
+  }
+}

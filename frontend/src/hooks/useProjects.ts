@@ -1,8 +1,9 @@
 /**
  * Project API hooks using React Query
+ * Uses optimized API client with caching and retry logic
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { apiClient } from '@/lib/api-client-optimized';
 
 export interface Project {
   id: string;
@@ -39,8 +40,7 @@ export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
-      const response = await api.get<Project[]>('/projects');
-      return response.data;
+      return apiClient.get<Project[]>('/projects');
     },
   });
 }
@@ -52,8 +52,7 @@ export function useProject(projectId: string) {
   return useQuery({
     queryKey: ['projects', projectId],
     queryFn: async () => {
-      const response = await api.get<Project>(`/projects/${projectId}`);
-      return response.data;
+      return apiClient.get<Project>(`/projects/${projectId}`);
     },
     enabled: !!projectId,
   });
@@ -66,10 +65,9 @@ export function useProjectPullRequests(projectId: string, state: string = 'all')
   return useQuery({
     queryKey: ['projects', projectId, 'pulls', state],
     queryFn: async () => {
-      const response = await api.get(`/github/projects/${projectId}/pulls`, {
+      return apiClient.get(`/github/projects/${projectId}/pulls`, {
         params: { state },
       });
-      return response.data;
     },
     enabled: !!projectId,
   });
@@ -83,8 +81,7 @@ export function useSyncProject() {
 
   return useMutation({
     mutationFn: async (projectId: string) => {
-      const response = await api.post(`/github/projects/${projectId}/sync`);
-      return response.data;
+      return apiClient.post(`/github/projects/${projectId}/sync`);
     },
     onSuccess: (_, projectId) => {
       queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
@@ -100,8 +97,7 @@ export function useCreateProject() {
 
   return useMutation({
     mutationFn: async (data: Partial<Project>) => {
-      const response = await api.post<Project>('/projects', data);
-      return response.data;
+      return apiClient.post<Project>('/projects', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -117,7 +113,7 @@ export function useDeleteProject() {
 
   return useMutation({
     mutationFn: async (projectId: string) => {
-      await api.delete(`/projects/${projectId}`);
+      await apiClient.delete(`/projects/${projectId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });

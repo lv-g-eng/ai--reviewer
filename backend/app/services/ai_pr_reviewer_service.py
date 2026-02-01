@@ -71,13 +71,15 @@ class AIReviewService:
             self.logger.info(f"Starting AI review for PR {request.pr_id}")
             
             # Perform AI analysis
-            review_result = self.ai_reviewer.analyze_diff(
+            # Note: Using analyze_pr with design_standards converted to string
+            design_standards_str = json.dumps(request.design_standards) if request.design_standards else "No specific standards provided"
+            review_result = self.ai_reviewer.analyze_pr(
                 request.diff_content, 
-                request.design_standards
+                design_standards_str
             )
             
             # Generate comprehensive report
-            report = self.ai_reviewer.generate_report(review_result)
+            report_markdown = self.ai_reviewer.generate_markdown_report(review_result)
             
             # Create response
             response = ReviewResponse(

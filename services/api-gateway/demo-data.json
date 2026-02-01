@@ -1,0 +1,570 @@
+{
+  "demoConfig": {
+    "title": "API Gateway Production Demo",
+    "version": "1.0.0",
+    "description": "Comprehensive demonstration of API Gateway features for the AI Code Review Platform",
+    "baseUrl": "http://localhost:3000",
+    "demoDate": "2026-01-24"
+  },
+  "users": {
+    "testUser": {
+      "id": "user-demo-001",
+      "email": "demo@example.com",
+      "name": "Demo User",
+      "role": "user",
+      "permissions": ["read:projects", "write:projects", "read:reviews", "write:reviews"],
+      "createdAt": "2026-01-20T10:00:00Z"
+    },
+    "adminUser": {
+      "id": "admin-demo-001",
+      "email": "admin@example.com",
+      "name": "Admin User",
+      "role": "admin",
+      "permissions": ["*"],
+      "createdAt": "2026-01-20T10:00:00Z"
+    },
+    "developerUser": {
+      "id": "dev-demo-001",
+      "email": "developer@example.com",
+      "name": "Developer User",
+      "role": "developer",
+      "permissions": ["read:projects", "write:projects", "read:reviews", "write:reviews", "read:architecture"],
+      "createdAt": "2026-01-20T10:00:00Z"
+    }
+  },
+  "projects": [
+    {
+      "id": "demo-project-001",
+      "name": "E-Commerce Platform",
+      "description": "A modern e-commerce platform built with microservices architecture",
+      "repositoryUrl": "https://github.com/demo-org/ecommerce-platform",
+      "language": "typescript",
+      "framework": "nestjs",
+      "status": "active",
+      "createdBy": "user-demo-001",
+      "createdAt": "2026-01-15T09:00:00Z",
+      "lastReviewAt": "2026-01-23T14:30:00Z",
+      "stats": {
+        "totalReviews": 15,
+        "completedReviews": 12,
+        "pendingReviews": 3,
+        "averageReviewTime": "2.5 hours",
+        "codeQualityScore": 8.7,
+        "securityScore": 9.2,
+        "performanceScore": 8.1
+      }
+    },
+    {
+      "id": "demo-project-002",
+      "name": "Mobile Banking App",
+      "description": "Secure mobile banking application with advanced security features",
+      "repositoryUrl": "https://github.com/demo-org/mobile-banking",
+      "language": "react-native",
+      "framework": "expo",
+      "status": "active",
+      "createdBy": "dev-demo-001",
+      "createdAt": "2026-01-10T11:00:00Z",
+      "lastReviewAt": "2026-01-24T08:15:00Z",
+      "stats": {
+        "totalReviews": 23,
+        "completedReviews": 20,
+        "pendingReviews": 3,
+        "averageReviewTime": "1.8 hours",
+        "codeQualityScore": 9.1,
+        "securityScore": 9.8,
+        "performanceScore": 8.9
+      }
+    },
+    {
+      "id": "demo-project-003",
+      "name": "AI Analytics Dashboard",
+      "description": "Real-time analytics dashboard powered by machine learning",
+      "repositoryUrl": "https://github.com/demo-org/ai-analytics",
+      "language": "python",
+      "framework": "fastapi",
+      "status": "archived",
+      "createdBy": "admin-demo-001",
+      "createdAt": "2025-12-01T10:00:00Z",
+      "lastReviewAt": "2026-01-05T16:45:00Z",
+      "stats": {
+        "totalReviews": 8,
+        "completedReviews": 8,
+        "pendingReviews": 0,
+        "averageReviewTime": "3.2 hours",
+        "codeQualityScore": 7.9,
+        "securityScore": 8.5,
+        "performanceScore": 9.3
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "id": "review-demo-001",
+      "projectId": "demo-project-001",
+      "title": "Security Review - Authentication Module",
+      "type": "security",
+      "status": "completed",
+      "priority": "high",
+      "createdBy": "user-demo-001",
+      "assignedTo": "dev-demo-001",
+      "createdAt": "2026-01-23T09:00:00Z",
+      "completedAt": "2026-01-23T14:30:00Z",
+      "findings": {
+        "critical": 0,
+        "high": 2,
+        "medium": 5,
+        "low": 3,
+        "info": 8
+      },
+      "summary": "Authentication module shows good security practices with minor improvements needed in session management."
+    },
+    {
+      "id": "review-demo-002",
+      "projectId": "demo-project-002",
+      "title": "Performance Review - API Endpoints",
+      "type": "performance",
+      "status": "in_progress",
+      "priority": "medium",
+      "createdBy": "dev-demo-001",
+      "assignedTo": "admin-demo-001",
+      "createdAt": "2026-01-24T08:00:00Z",
+      "estimatedCompletion": "2026-01-24T16:00:00Z",
+      "progress": 65,
+      "currentFocus": "Database query optimization"
+    },
+    {
+      "id": "review-demo-003",
+      "projectId": "demo-project-001",
+      "title": "Code Quality Review - Payment Processing",
+      "type": "code_quality",
+      "status": "pending",
+      "priority": "high",
+      "createdBy": "admin-demo-001",
+      "createdAt": "2026-01-24T10:30:00Z",
+      "description": "Comprehensive review of payment processing module for code quality, error handling, and best practices."
+    }
+  ],
+  "architecture": {
+    "demo-project-001": {
+      "lastScanAt": "2026-01-23T12:00:00Z",
+      "components": [
+        {
+          "name": "API Gateway",
+          "type": "gateway",
+          "status": "healthy",
+          "dependencies": ["Auth Service", "Product Service", "Order Service"]
+        },
+        {
+          "name": "Auth Service",
+          "type": "microservice",
+          "status": "healthy",
+          "dependencies": ["Database", "Redis Cache"]
+        },
+        {
+          "name": "Product Service",
+          "type": "microservice",
+          "status": "healthy",
+          "dependencies": ["Database", "Search Engine"]
+        },
+        {
+          "name": "Order Service",
+          "type": "microservice",
+          "status": "warning",
+          "dependencies": ["Database", "Payment Gateway", "Notification Service"],
+          "issues": ["High memory usage", "Slow response times"]
+        }
+      ],
+      "metrics": {
+        "totalComponents": 12,
+        "healthyComponents": 10,
+        "warningComponents": 2,
+        "criticalComponents": 0,
+        "architectureScore": 8.5
+      }
+    },
+    "demo-project-002": {
+      "lastScanAt": "2026-01-24T08:15:00Z",
+      "components": [
+        {
+          "name": "Mobile App",
+          "type": "frontend",
+          "status": "healthy",
+          "dependencies": ["API Gateway", "Push Notification Service"]
+        },
+        {
+          "name": "Banking API",
+          "type": "api",
+          "status": "healthy",
+          "dependencies": ["Core Banking System", "Security Service"]
+        },
+        {
+          "name": "Security Service",
+          "type": "microservice",
+          "status": "healthy",
+          "dependencies": ["HSM", "Fraud Detection"]
+        }
+      ],
+      "metrics": {
+        "totalComponents": 8,
+        "healthyComponents": 8,
+        "warningComponents": 0,
+        "criticalComponents": 0,
+        "architectureScore": 9.2
+      }
+    }
+  },
+  "queue": [
+    {
+      "id": "queue-item-001",
+      "type": "code_review",
+      "status": "processing",
+      "projectId": "demo-project-001",
+      "priority": "high",
+      "createdAt": "2026-01-24T10:00:00Z",
+      "estimatedCompletion": "2026-01-24T12:00:00Z",
+      "progress": 45,
+      "description": "Automated code review for payment processing module"
+    },
+    {
+      "id": "queue-item-002",
+      "type": "architecture_scan",
+      "status": "queued",
+      "projectId": "demo-project-002",
+      "priority": "medium",
+      "createdAt": "2026-01-24T10:15:00Z",
+      "estimatedStart": "2026-01-24T11:00:00Z",
+      "description": "Full architecture analysis and dependency mapping"
+    },
+    {
+      "id": "queue-item-003",
+      "type": "security_scan",
+      "status": "completed",
+      "projectId": "demo-project-001",
+      "priority": "high",
+      "createdAt": "2026-01-23T14:00:00Z",
+      "completedAt": "2026-01-23T15:30:00Z",
+      "results": {
+        "vulnerabilities": 3,
+        "securityScore": 8.7,
+        "recommendations": 12
+      }
+    }
+  ],
+  "webhooks": {
+    "github": [
+      {
+        "id": "webhook-001",
+        "repository": "demo-org/ecommerce-platform",
+        "event": "push",
+        "branch": "main",
+        "commits": [
+          {
+            "id": "abc123def456",
+            "message": "Add payment validation logic",
+            "author": "demo-user",
+            "timestamp": "2026-01-24T09:30:00Z"
+          }
+        ],
+        "triggeredActions": ["code_review", "security_scan"]
+      },
+      {
+        "id": "webhook-002",
+        "repository": "demo-org/mobile-banking",
+        "event": "pull_request",
+        "action": "opened",
+        "pullRequest": {
+          "number": 42,
+          "title": "Implement biometric authentication",
+          "author": "developer-user",
+          "branch": "feature/biometric-auth"
+        },
+        "triggeredActions": ["automated_review"]
+      }
+    ]
+  },
+  "demoScenarios": [
+    {
+      "name": "Happy Path - Complete Workflow",
+      "description": "Demonstrates successful request flow through all middleware layers",
+      "steps": [
+        "Health check to verify system status",
+        "Authenticate user with valid JWT token",
+        "Create new project with valid data",
+        "List projects with pagination",
+        "Get project statistics",
+        "Create code review for project",
+        "Check queue status"
+      ],
+      "expectedOutcomes": [
+        "All requests succeed with 200/201 status codes",
+        "Correlation IDs present in all responses",
+        "Rate limit headers included",
+        "Response times under 100ms for routing"
+      ]
+    },
+    {
+      "name": "Authentication & Authorization",
+      "description": "Tests JWT authentication and role-based access control",
+      "steps": [
+        "Attempt access without authentication (should fail)",
+        "Access with invalid JWT token (should fail)",
+        "User accessing user endpoints (should succeed)",
+        "User accessing admin endpoints (should fail)",
+        "Admin accessing admin endpoints (should succeed)"
+      ],
+      "expectedOutcomes": [
+        "Proper 401 Unauthorized responses",
+        "Proper 403 Forbidden responses",
+        "Successful access with correct permissions"
+      ]
+    },
+    {
+      "name": "Request Validation",
+      "description": "Tests Zod schema validation for various request types",
+      "steps": [
+        "Send valid project creation request",
+        "Send invalid project creation (missing required fields)",
+        "Send invalid query parameters",
+        "Send malformed JSON",
+        "Send request with invalid data types"
+      ],
+      "expectedOutcomes": [
+        "Valid requests succeed",
+        "Invalid requests return 400 Bad Request",
+        "Detailed validation error messages",
+        "Field-specific error information"
+      ]
+    },
+    {
+      "name": "Rate Limiting",
+      "description": "Tests Redis-backed rate limiting functionality",
+      "steps": [
+        "Send requests within rate limit",
+        "Send rapid burst of requests",
+        "Verify rate limit headers",
+        "Wait for rate limit reset",
+        "Verify access restored after reset"
+      ],
+      "expectedOutcomes": [
+        "Normal requests succeed",
+        "Excess requests return 429 Too Many Requests",
+        "Rate limit headers show remaining requests",
+        "Access restored after reset period"
+      ]
+    },
+    {
+      "name": "Circuit Breaker",
+      "description": "Tests circuit breaker pattern with failing services",
+      "steps": [
+        "Send requests to healthy service",
+        "Send requests to failing service",
+        "Observe circuit breaker opening",
+        "Verify fast-fail responses",
+        "Wait for circuit breaker reset",
+        "Test half-open state"
+      ],
+      "expectedOutcomes": [
+        "Healthy services respond normally",
+        "Circuit opens after failure threshold",
+        "Fast-fail responses when circuit open",
+        "Circuit attempts recovery after timeout"
+      ]
+    },
+    {
+      "name": "Error Handling",
+      "description": "Tests standardized error responses and logging",
+      "steps": [
+        "Request non-existent endpoint (404)",
+        "Use wrong HTTP method (405)",
+        "Send malformed request (400)",
+        "Trigger server error (500)",
+        "Verify error response format"
+      ],
+      "expectedOutcomes": [
+        "Consistent error response format",
+        "Correlation IDs in error responses",
+        "Appropriate HTTP status codes",
+        "Helpful error messages",
+        "No sensitive data in error responses"
+      ]
+    },
+    {
+      "name": "Webhook Processing",
+      "description": "Tests webhook endpoint handling",
+      "steps": [
+        "Send GitHub push webhook",
+        "Send GitHub pull request webhook",
+        "Send invalid webhook payload",
+        "Verify webhook processing",
+        "Check triggered actions"
+      ],
+      "expectedOutcomes": [
+        "Valid webhooks processed successfully",
+        "Invalid webhooks rejected appropriately",
+        "Webhook events trigger correct actions",
+        "Proper logging of webhook events"
+      ]
+    },
+    {
+      "name": "Performance & Monitoring",
+      "description": "Tests performance characteristics and monitoring",
+      "steps": [
+        "Measure response times for various endpoints",
+        "Check correlation ID propagation",
+        "Verify structured logging",
+        "Test health check endpoint",
+        "Monitor resource usage"
+      ],
+      "expectedOutcomes": [
+        "Response times under 50ms for routing",
+        "Correlation IDs in all logs",
+        "Structured JSON log format",
+        "Health check shows service status",
+        "Memory usage within limits"
+      ]
+    }
+  ],
+  "testData": {
+    "validProjectPayloads": [
+      {
+        "name": "Demo E-Commerce",
+        "description": "A demonstration e-commerce platform",
+        "repositoryUrl": "https://github.com/demo/ecommerce",
+        "language": "typescript",
+        "framework": "nestjs"
+      },
+      {
+        "name": "Mobile Banking Demo",
+        "description": "Secure mobile banking application demo",
+        "repositoryUrl": "https://github.com/demo/banking",
+        "language": "react-native",
+        "framework": "expo"
+      }
+    ],
+    "invalidProjectPayloads": [
+      {
+        "description": "Missing name field"
+      },
+      {
+        "name": "",
+        "description": "Empty name field"
+      },
+      {
+        "name": "Test",
+        "description": "Test",
+        "repositoryUrl": "invalid-url"
+      }
+    ],
+    "validReviewPayloads": [
+      {
+        "projectId": "demo-project-001",
+        "title": "Security Review",
+        "type": "security",
+        "priority": "high",
+        "description": "Comprehensive security review"
+      },
+      {
+        "projectId": "demo-project-002",
+        "title": "Performance Review",
+        "type": "performance",
+        "priority": "medium",
+        "description": "API performance analysis"
+      }
+    ],
+    "webhookPayloads": {
+      "github_push": {
+        "ref": "refs/heads/main",
+        "before": "abc123",
+        "after": "def456",
+        "repository": {
+          "id": 123456,
+          "name": "demo-repo",
+          "full_name": "demo-org/demo-repo",
+          "html_url": "https://github.com/demo-org/demo-repo"
+        },
+        "commits": [
+          {
+            "id": "def456",
+            "message": "Add new feature",
+            "author": {
+              "name": "Demo User",
+              "email": "demo@example.com"
+            },
+            "timestamp": "2026-01-24T10:00:00Z"
+          }
+        ]
+      },
+      "github_pull_request": {
+        "action": "opened",
+        "number": 42,
+        "pull_request": {
+          "id": 789012,
+          "number": 42,
+          "title": "Add new authentication method",
+          "body": "This PR adds support for biometric authentication",
+          "head": {
+            "ref": "feature/biometric-auth",
+            "sha": "ghi789"
+          },
+          "base": {
+            "ref": "main",
+            "sha": "def456"
+          }
+        },
+        "repository": {
+          "id": 123456,
+          "name": "demo-repo",
+          "full_name": "demo-org/demo-repo"
+        }
+      }
+    }
+  },
+  "expectedResponses": {
+    "health_check": {
+      "status": "healthy",
+      "timestamp": "2026-01-24T10:00:00.000Z",
+      "uptime": 123.456,
+      "services": {
+        "auth": "healthy",
+        "code-review": "healthy",
+        "architecture": "healthy",
+        "ai-service": "healthy",
+        "project-manager": "healthy"
+      },
+      "redis": "connected"
+    },
+    "error_responses": {
+      "unauthorized": {
+        "error": "Unauthorized",
+        "message": "Authentication required",
+        "statusCode": 401,
+        "timestamp": "2026-01-24T10:00:00.000Z",
+        "path": "/api/v1/projects",
+        "correlationId": "uuid-here"
+      },
+      "validation_error": {
+        "error": "Validation failed",
+        "message": "Invalid request data",
+        "statusCode": 400,
+        "details": [
+          {
+            "field": "name",
+            "message": "Name is required"
+          }
+        ],
+        "timestamp": "2026-01-24T10:00:00.000Z",
+        "path": "/api/v1/projects",
+        "correlationId": "uuid-here"
+      },
+      "rate_limited": {
+        "error": "Too many requests",
+        "message": "Please try again later",
+        "statusCode": 429,
+        "retryAfter": 900,
+        "timestamp": "2026-01-24T10:00:00.000Z",
+        "path": "/api/v1/projects",
+        "correlationId": "uuid-here"
+      }
+    }
+  }
+}

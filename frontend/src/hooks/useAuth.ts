@@ -1,9 +1,10 @@
 /**
  * Authentication API hooks
+ * Uses optimized API client with caching and retry logic
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import { apiClient } from '@/lib/api-client-optimized';
 import type { LoginFormData, RegisterFormData } from '@/lib/validations/auth';
 
 interface TokenResponse {
@@ -30,8 +31,7 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (data: LoginFormData) => {
-      const response = await api.post<TokenResponse>('/login', data);
-      return response.data;
+      return apiClient.post<TokenResponse>('/login', data);
     },
     onSuccess: (data) => {
       // Store tokens
@@ -55,12 +55,11 @@ export function useRegister() {
 
   return useMutation({
     mutationFn: async (data: RegisterFormData) => {
-      const response = await api.post<User>('/register', {
+      return apiClient.post<User>('/register', {
         email: data.email,
         password: data.password,
         full_name: data.fullName,
       });
-      return response.data;
     },
     onSuccess: () => {
       // Registration successful - redirect to main page
@@ -78,7 +77,7 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      await api.post('/logout');
+      await apiClient.post('/logout');
     },
     onSuccess: () => {
       // Clear tokens
@@ -104,8 +103,7 @@ export function useUser() {
       const token = localStorage.getItem('access_token');
       if (!token) return null;
       
-      const response = await api.get<User>('/me');
-      return response.data;
+      return apiClient.get<User>('/me');
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
@@ -133,10 +131,9 @@ export function useRefreshToken() {
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) throw new Error('No refresh token');
 
-      const response = await api.post<TokenResponse>('/refresh', {
+      return apiClient.post<TokenResponse>('/refresh', {
         refresh_token: refreshToken,
       });
-      return response.data;
     },
     onSuccess: (data) => {
       localStorage.setItem('access_token', data.access_token);

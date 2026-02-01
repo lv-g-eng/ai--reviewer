@@ -1,9 +1,8 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import ReactFlow, {
   Node,
-  Edge,
   Controls,
   Background,
   useNodesState,
@@ -85,7 +84,7 @@ export default function ArchitectureGraph({
   onNodeClick,
   highlightCircularDeps = true,
 }: ArchitectureGraphProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState(
+  const [nodes, , onNodesChange] = useNodesState(
     initialNodes.map((node) => ({
       id: node.id,
       type: 'custom',

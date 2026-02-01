@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 export default function ArchitecturePage() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [selectedProject, setSelectedProject] = useState('project-1');
   const [layoutAlgorithm, setLayoutAlgorithm] = useState('force-directed');

@@ -38,6 +38,7 @@ jspm_packages/
 
 # Optional npm cache directory
 .npm
+.npm-cache/
 
 # Optional eslint cache
 .eslintcache
@@ -79,6 +80,15 @@ jspm_packages/
 # TernJS port file
 .tern-port
 
+# Python virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
 # IDE files
 .vscode/
 .idea/
@@ -111,3 +121,11 @@ certs/
 # Temporary files
 tmp/
 temp/
+
+# Cache directories
+.pytest_cache/
+.hypothesis/
+__pycache__/
+
+# Backup directories
+.consolidation_backups/

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useIsAuthenticated } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -10,32 +9,12 @@ import { Shield, Code, GitPullRequest, Users, TrendingUp, Database, Cpu, Lock } 
 
 export default function Home() {
     const router = useRouter();
-    const { isLoading } = useUser();
-    const { isAuthenticated } = useIsAuthenticated();
     const [stats, setStats] = useState({
-        totalReviews: 0,
-        projects: 0,
-        complianceScore: 0,
-        securityIssues: 0
+        totalReviews: 1250,
+        projects: 8,
+        complianceScore: 94,
+        securityIssues: 3
     });
-
-    useEffect(() => {
-        if (isAuthenticated) {
-            fetchStats();
-        }
-    }, [isAuthenticated, isLoading, router]);
-
-    const fetchStats = async () => {
-        try {
-            const response = await fetch('/api/v1/dashboard/stats');
-            if (response.ok) {
-                const data = await response.json();
-                setStats(data);
-            }
-        } catch (error) {
-            console.error('Failed to fetch stats:', error);
-        }
-    };
 
     const features = [
         {
@@ -90,17 +69,6 @@ export default function Home() {
             icon: <Lock className="h-6 w-6" />
         }
     ];
-
-    if (isLoading) {
-        return (
-            <div className="flex min-h-screen items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">

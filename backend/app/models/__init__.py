@@ -20,6 +20,12 @@ from app.models.code_review import (
     ReviewStatus,
     PullRequest as CodeReviewPullRequest
 )
+from app.models.library import (
+    Library,
+    LibraryDependency,
+    RegistryType,
+    ProjectContext
+)
 
 
 class UserRole(str, enum.Enum):

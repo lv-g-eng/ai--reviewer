@@ -5,12 +5,14 @@ dotenv.config();
 export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-  
+
   // Service URLs
   services: {
     authService: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
-    codeReviewEngine: process.env.CODE_REVIEW_ENGINE_URL || 'http://localhost:3002',
-    architectureAnalyzer: process.env.ARCHITECTURE_ANALYZER_URL || 'http://localhost:3003',
+    codeReviewEngine:
+      process.env.CODE_REVIEW_ENGINE_URL || 'http://localhost:3002',
+    architectureAnalyzer:
+      process.env.ARCHITECTURE_ANALYZER_URL || 'http://localhost:3003',
     agenticAI: process.env.AGENTIC_AI_URL || 'http://localhost:3004',
     projectManager: process.env.PROJECT_MANAGER_URL || 'http://localhost:3005',
   },
@@ -23,7 +25,14 @@ export const config = {
 
   // CORS configuration
   cors: {
-    allowedOrigins: process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    allowedOrigins: process.env.CORS_ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+    ],
+  },
+
+  // Redis configuration
+  redis: {
+    url: process.env.REDIS_URL || 'redis://localhost:6379',
   },
 
   // Rate limiting

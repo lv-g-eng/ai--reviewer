@@ -15,7 +15,6 @@ export default function GaugeChart({
   max = 100,
   title,
   subtitle,
-  color = '#3b82f6',
 }: GaugeChartProps) {
   const percentage = (value / max) * 100;
   const circumference = 2 * Math.PI * 40;

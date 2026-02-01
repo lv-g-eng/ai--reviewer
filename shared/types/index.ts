@@ -297,3 +297,6 @@ export interface AuthContext {
   roles: string[];
   permissions: string[];
 }
+
+// Re-export LLM client
+export * from '../llm-client';

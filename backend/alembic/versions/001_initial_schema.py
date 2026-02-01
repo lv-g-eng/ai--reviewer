@@ -1,4 +1,4 @@
-"""empty message
+"""Initial schema with users, roles, permissions, projects, analysis results, audit logs, and user preferences
 
 Revision ID: 001_initial_schema
 Revises: 
@@ -32,7 +32,7 @@ def upgrade() -> None:
     user_role_enum.create(op.get_bind(), checkfirst=True)
     
     pr_status_enum = postgresql.ENUM(
-        'pending', 'analyzing', 'reviewed', 'approved', 'rejected',
+        'pending', 'analyzing', 'reviewed', 'approved', 'rejected', 'merged',
         name='pr_status',
         create_type=False
     )
@@ -50,19 +50,70 @@ def upgrade() -> None:
         'users',
         sa.Column('id', sa.UUID(), server_default=sa.text(UUID_GENERATE_FUNCTION), nullable=False),
         sa.Column('email', sa.String(length=255), nullable=False),
+        sa.Column('username', sa.String(length=255), nullable=True),
         sa.Column('password_hash', sa.String(length=255), nullable=False),
-        sa.Column('role', user_role_enum, nullable=False, server_default='developer'),
         sa.Column('full_name', sa.String(length=255), nullable=True),
         sa.Column('is_active', sa.Boolean(), server_default=sa.text('true'), nullable=True),
         sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
         sa.Column('updated_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('email')
+        sa.UniqueConstraint('email'),
+        sa.UniqueConstraint('username')
     )
     op.create_index('idx_users_email', 'users', ['email'])
-    op.create_index('idx_users_role', 'users', ['role'])
+    op.create_index('idx_users_username', 'users', ['username'])
     op.create_index('idx_users_is_active', 'users', ['is_active'])
     op.create_index('idx_users_created_at', 'users', [sa.text(CREATED_AT_DESC)])
+    
+    # Create roles table
+    op.create_table(
+        'roles',
+        sa.Column('id', sa.UUID(), server_default=sa.text(UUID_GENERATE_FUNCTION), nullable=False),
+        sa.Column('name', sa.String(length=100), nullable=False, unique=True),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
+        sa.Column('updated_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('idx_roles_name', 'roles', ['name'])
+    
+    # Create permissions table
+    op.create_table(
+        'permissions',
+        sa.Column('id', sa.UUID(), server_default=sa.text(UUID_GENERATE_FUNCTION), nullable=False),
+        sa.Column('name', sa.String(length=100), nullable=False, unique=True),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
+        sa.Column('updated_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('idx_permissions_name', 'permissions', ['name'])
+    
+    # Create user_roles junction table
+    op.create_table(
+        'user_roles',
+        sa.Column('user_id', sa.UUID(), nullable=False),
+        sa.Column('role_id', sa.UUID(), nullable=False),
+        sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
+        sa.ForeignKeyConstraint(['user_id'], [USERS_ID], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('user_id', 'role_id')
+    )
+    op.create_index('idx_user_roles_user', 'user_roles', ['user_id'])
+    op.create_index('idx_user_roles_role', 'user_roles', ['role_id'])
+    
+    # Create role_permissions junction table
+    op.create_table(
+        'role_permissions',
+        sa.Column('role_id', sa.UUID(), nullable=False),
+        sa.Column('permission_id', sa.UUID(), nullable=False),
+        sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
+        sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['permission_id'], ['permissions.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('role_id', 'permission_id')
+    )
+    op.create_index('idx_role_permissions_role', 'role_permissions', ['role_id'])
+    op.create_index('idx_role_permissions_permission', 'role_permissions', ['permission_id'])
     
     # Create projects table
     op.create_table(
@@ -120,29 +171,21 @@ def upgrade() -> None:
     op.create_index('idx_pr_created_at', 'pull_requests', [sa.text(CREATED_AT_DESC)])
     op.create_index('idx_pr_project_status', 'pull_requests', ['project_id', 'status'])
     
-    # Create review_results table
+    # Create review_results table (analysis_results)
     op.create_table(
-        'review_results',
+        'analysis_results',
         sa.Column('id', sa.UUID(), server_default=sa.text(UUID_GENERATE_FUNCTION), nullable=False),
-        sa.Column('pull_request_id', sa.UUID(), nullable=False),
-        sa.Column('ai_suggestions', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('architectural_impact', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('security_issues', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('compliance_status', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column('confidence_score', sa.Float(), nullable=True),
-        sa.Column('total_issues', sa.Integer(), server_default=sa.text('0'), nullable=True),
-        sa.Column('critical_issues', sa.Integer(), server_default=sa.text('0'), nullable=True),
+        sa.Column('project_id', sa.UUID(), nullable=False),
+        sa.Column('analysis_type', sa.String(length=100), nullable=False),
+        sa.Column('results', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
-        sa.CheckConstraint('confidence_score >= 0 AND confidence_score <= 1'),
-        sa.ForeignKeyConstraint(['pull_request_id'], ['pull_requests.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('pull_request_id')
+        sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('id')
     )
-    op.create_index('idx_review_pr', 'review_results', ['pull_request_id'])
-    op.create_index('idx_review_confidence', 'review_results', [sa.text('confidence_score DESC')])
-    op.create_index('idx_review_created_at', 'review_results', [sa.text(CREATED_AT_DESC)])
-    op.create_index('idx_review_ai_suggestions', 'review_results', ['ai_suggestions'], postgresql_using='gin')
-    op.create_index('idx_review_security_issues', 'review_results', ['security_issues'], postgresql_using='gin')
+    op.create_index('idx_analysis_project', 'analysis_results', ['project_id'])
+    op.create_index('idx_analysis_type', 'analysis_results', ['analysis_type'])
+    op.create_index('idx_analysis_created_at', 'analysis_results', [sa.text(CREATED_AT_DESC)])
+    op.create_index('idx_analysis_results', 'analysis_results', ['results'], postgresql_using='gin')
     
     # Create audit_logs table
     op.create_table(
@@ -189,14 +232,35 @@ def upgrade() -> None:
     op.create_index('idx_baseline_project_current', 'architectural_baselines', ['project_id', 'is_current'])
     op.create_index('idx_baseline_graph', 'architectural_baselines', ['graph_snapshot'], postgresql_using='gin')
     op.create_index('idx_baseline_metrics', 'architectural_baselines', ['metrics'], postgresql_using='gin')
+    
+    # Create user_preferences table
+    op.create_table(
+        'user_preferences',
+        sa.Column('id', sa.UUID(), server_default=sa.text(UUID_GENERATE_FUNCTION), nullable=False),
+        sa.Column('user_id', sa.UUID(), nullable=False),
+        sa.Column('key', sa.String(length=255), nullable=False),
+        sa.Column('value', sa.Text(), nullable=True),
+        sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
+        sa.Column('updated_at', sa.TIMESTAMP(timezone=True), server_default=sa.text(TIMESTAMP_NOW_FUNCTION), nullable=True),
+        sa.ForeignKeyConstraint(['user_id'], [USERS_ID], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('user_id', 'key')
+    )
+    op.create_index('idx_user_preferences_user', 'user_preferences', ['user_id'])
+    op.create_index('idx_user_preferences_key', 'user_preferences', ['key'])
 
 
 def downgrade() -> None:
+    op.drop_table('user_preferences')
     op.drop_table('architectural_baselines')
     op.drop_table('audit_logs')
-    op.drop_table('review_results')
+    op.drop_table('analysis_results')
     op.drop_table('pull_requests')
     op.drop_table('projects')
+    op.drop_table('role_permissions')
+    op.drop_table('user_roles')
+    op.drop_table('permissions')
+    op.drop_table('roles')
     op.drop_table('users')
     
     # Drop ENUM types

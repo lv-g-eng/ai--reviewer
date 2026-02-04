@@ -20,7 +20,9 @@ const nextConfig = {
     experimental: {
         optimizePackageImports: ['@radix-ui/react-icons'],
     },
-    // Keep webpack config for compatibility
+    // Turbopack configuration (empty to silence warning)
+    turbopack: {},
+    // Keep webpack config for compatibility when not using Turbopack
     webpack: (config, { isServer }) => {
         if (!isServer) {
             config.resolve.fallback = {

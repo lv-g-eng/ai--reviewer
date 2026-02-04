@@ -1,70 +1,127 @@
 # 📚 Quick Reference Guide
 
-**Last Updated**: January 21, 2026
+**Last Updated**: February 4, 2026
+
+> **Quick access to all essential commands and configurations**
 
 ---
 
 ## 📍 Essential Links
 
 - **[README.md](README.md)** - Project overview
-- **[QUICK_START.md](QUICK_START.md)** - Environment setup
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues
-- **[docs/](docs/)** - Complete documentation
+- **[QUICK_START.md](QUICK_START.md)** - Complete setup guide
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Fix common issues
+- **[docs/README.md](docs/README.md)** - Documentation hub
 
 ---
 
-## ⚡ Quick Commands
+## ⚡ Quick Start Commands
 
 ### Start Services
+
+**Fast Start (3 commands)**:
 ```bash
-# Windows - Start all services
-START_ALL_SERVICES.bat
-
-# Or individually
-START_NEO4J.bat
-START_REDIS.bat
-
-# Linux/Mac - Infrastructure
-docker-compose up -d
-
-# Frontend
-cd frontend
-npm install
-npm run dev  # http://localhost:3000
-
-# Backend
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload  # http://localhost:8000
+docker-compose up -d postgres redis neo4j
+cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+cd frontend && npm run dev
 ```
 
-### Testing
+**Windows Batch Scripts**:
+```cmd
+START_ALL_SERVICES.bat  # Start all infrastructure
+START_NEO4J.bat         # Start Neo4j only
+START_REDIS.bat         # Start Redis only
+STOP_ALL_SERVICES.bat   # Stop all services
+```
+
+**Individual Services**:
 ```bash
-# API Gateway (409 tests, 95% coverage)
-cd services/api-gateway
-npm test
+# Infrastructure
+docker-compose up -d postgres redis neo4j
+
+# Backend (new terminal)
+cd backend
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # Linux/Mac
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Frontend (new terminal)
+cd frontend
+npm run dev
+```
+
+**Access**:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+### Stop Services
+```bash
+# Stop backend/frontend: Ctrl+C in terminals
+
+# Stop infrastructure
+docker-compose down
+
+# Stop and remove volumes (clean slate)
+docker-compose down -v
+```
+
+---
+
+## 🧪 Testing Commands
+
+```bash
+# Run all tests
+npm test  # Root: runs all service tests
 
 # Frontend tests
-cd frontend
-npm test
+cd frontend && npm test
 
 # Backend tests
-cd backend
-pytest
+cd backend && pytest
+
+# Backend with coverage
+cd backend && pytest --cov=app --cov-report=html
+
+# API Gateway tests (409 tests, 95% coverage)
+cd services/api-gateway && npm test
+
+# Run specific test file
+cd backend && pytest tests/test_auth_endpoints.py
+
+# Run with verbose output
+cd backend && pytest -v
 ```
 
-### Docker
+---
+
+## 🐳 Docker Commands
+
 ```bash
-# View logs
+# View logs (all services)
 docker-compose logs -f
+
+# View logs (specific service)
+docker-compose logs -f postgres
+docker-compose logs -f backend
+
+# Check service status
+docker-compose ps
+
+# Restart services
+docker-compose restart
+
+# Rebuild and restart
+docker-compose up -d --build
 
 # Stop services
 docker-compose down
 
-# Rebuild
-docker-compose up -d --build
+# Stop and remove volumes
+docker-compose down -v
+
+# Remove orphan containers
+docker-compose down --remove-orphans
 ```
 
 ---
@@ -200,25 +257,173 @@ scripts\setup-llm.bat
 
 ---
 
-## 📊 Project Status
+## 🗄️ Database Commands
 
-| Component | Status | Progress |
-|-----------|--------|----------|
-| API Gateway | ✅ Complete | 100% |
-| Frontend UI | ✅ Complete | 100% |
-| NextAuth | ✅ Complete | 100% |
-| Backend Auth | 🟡 In Progress | 25% |
-| Other Services | ⏳ Not Started | 0% |
+```bash
+# Run migrations
+cd backend && alembic upgrade head
+
+# Create new migration
+cd backend && alembic revision -m "description"
+
+# Rollback migration
+cd backend && alembic downgrade -1
+
+# View migration history
+cd backend && alembic history
+
+# Reset database (WARNING: deletes all data)
+docker-compose down -v
+docker-compose up -d postgres
+cd backend && alembic upgrade head
+```
+
+---
+
+## 🔧 Development Commands
+
+```bash
+# Code formatting
+npm run format  # Format all services
+cd backend && black app/  # Format Python code
+cd frontend && npm run format  # Format TypeScript
+
+# Linting
+npm run lint  # Lint all services
+cd backend && pylint app/  # Lint Python
+cd frontend && npm run lint  # Lint TypeScript
+
+# Type checking
+cd frontend && npm run type-check
+cd backend && mypy app/
+
+# Build for production
+cd frontend && npm run build
+cd backend && docker build -t backend:latest .
+```
+
+---
+
+## 🛠️ Maintenance Commands
+
+### NPM Cache Management
+```bash
+# Windows
+scripts\clean-npm-cache.bat
+
+# Linux/Mac
+./scripts/clean-npm-cache.sh
+
+# Manual cleanup
+npm cache clean --force
+```
+
+### Python Environment
+```bash
+# Create new virtual environment
+python -m venv venv
+
+# Activate
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # Linux/Mac
+
+# Deactivate
+deactivate
+
+# Update dependencies
+pip install --upgrade -r requirements.txt
+```
+
+### LLM Setup
+```bash
+# Windows
+scripts\setup-llm.bat
+
+# Linux/Mac
+./scripts/setup-llm.sh
+```
+
+---
+
+## 🔐 Security Commands
+
+### Generate Secrets
+```bash
+# JWT Secret (32 characters)
+openssl rand -hex 32
+
+# NextAuth Secret (base64)
+openssl rand -base64 32
+
+# GitHub Webhook Secret
+openssl rand -hex 20
+```
+
+### Security Scanning
+```bash
+# Python security
+cd backend
+bandit -r app/ -ll
+safety check
+
+# JavaScript security
+cd frontend
+npm audit
+npm audit fix
+
+# Check for secrets in code
+trufflehog filesystem . --json
+```
+
+---
+
+## 📊 Quick Status Check
+
+```bash
+# Check all services
+docker-compose ps
+
+# Check backend health
+curl http://localhost:8000/health
+
+# Check database connection
+docker-compose exec postgres psql -U postgres -d ai_code_review -c "SELECT 1"
+
+# Check Redis
+docker-compose exec redis redis-cli ping
+
+# Check Neo4j
+curl http://localhost:7474
+```
+
+---
+
+## 🚀 Production Commands
+
+```bash
+# Build production images
+docker-compose -f docker-compose.prod.yml build
+
+# Start production services
+docker-compose -f docker-compose.prod.yml up -d
+
+# View production logs
+docker-compose -f docker-compose.prod.yml logs -f
+
+# Stop production services
+docker-compose -f docker-compose.prod.yml down
+```
 
 ---
 
 ## 📞 Getting Help
 
-1. Check **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
-2. Review **[docs/README.md](docs/README.md)**
-3. Search in relevant documentation
-4. Create GitHub issue
+1. **Common issues**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+2. **Setup guide**: [QUICK_START.md](QUICK_START.md)
+3. **Full documentation**: [docs/README.md](docs/README.md)
+4. **API reference**: http://localhost:8000/docs
+5. **Create issue**: GitHub Issues
 
 ---
 
-**Quick Tip**: Bookmark this page for easy reference! 📌
+**💡 Pro Tip**: Use `Ctrl+F` to quickly find commands on this page!

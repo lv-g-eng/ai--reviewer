@@ -122,11 +122,50 @@ async def get_repository(
     current_user: dict = Depends(get_current_user)
 ):
     """Get detailed information about a specific repository"""
-    # TODO: Implement database retrieval
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Repository retrieval not yet implemented"
-    )
+    try:
+        from app.models.repository import Repository
+        from sqlalchemy import select
+        from uuid import UUID
+        
+        # Convert string to UUID
+        try:
+            repo_uuid = UUID(repository_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid repository ID format"
+            )
+        
+        # Query repository
+        result = await db.execute(
+            select(Repository).where(Repository.id == repo_uuid)
+        )
+        repository = result.scalar_one_or_none()
+        
+        if not repository:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Repository not found"
+            )
+        
+        # Check ownership
+        if repository.created_by != current_user["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to access this repository"
+            )
+        
+        logger.info(f"Retrieved repository {repository_id} for user {current_user['sub']}")
+        return repository
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving repository: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve repository"
+        )
 
 
 @router.get(
@@ -142,13 +181,53 @@ async def list_repositories(
     current_user: dict = Depends(get_current_user)
 ):
     """List all repository dependencies with pagination"""
-    # TODO: Implement database listing
-    return RepositoryListResponse(
-        repositories=[],
-        total=0,
-        page=page,
-        page_size=page_size
-    )
+    try:
+        from app.models.repository import Repository
+        from sqlalchemy import select, func
+        
+        # Build base query for user's repositories
+        query = select(Repository).where(Repository.created_by == current_user["sub"])
+        
+        # Apply status filter if provided
+        if status:
+            query = query.where(Repository.status == status)
+        
+        # Order by creation date (newest first)
+        query = query.order_by(Repository.created_at.desc())
+        
+        # Count total matching repositories
+        count_query = select(func.count()).select_from(
+            query.subquery()
+        )
+        total_result = await db.execute(count_query)
+        total = total_result.scalar()
+        
+        # Apply pagination
+        offset = (page - 1) * page_size
+        query = query.offset(offset).limit(page_size)
+        
+        # Execute query
+        result = await db.execute(query)
+        repositories = result.scalars().all()
+        
+        logger.info(
+            f"Listed {len(repositories)} repositories (page {page}/{(total + page_size - 1) // page_size}) "
+            f"for user {current_user['sub']}"
+        )
+        
+        return RepositoryListResponse(
+            repositories=list(repositories),
+            total=total,
+            page=page,
+            page_size=page_size
+        )
+        
+    except Exception as e:
+        logger.error(f"Error listing repositories: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list repositories"
+        )
 
 
 @router.patch(
@@ -163,11 +242,65 @@ async def update_repository(
     current_user: dict = Depends(get_current_user)
 ):
     """Update repository configuration and settings"""
-    # TODO: Implement database update
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Repository update not yet implemented"
-    )
+    try:
+        from app.models.repository import Repository
+        from sqlalchemy import select
+        from uuid import UUID
+        from datetime import datetime
+        
+        # Convert string to UUID
+        try:
+            repo_uuid = UUID(repository_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid repository ID format"
+            )
+        
+        # Query repository
+        result = await db.execute(
+            select(Repository).where(Repository.id == repo_uuid)
+        )
+        repository = result.scalar_one_or_none()
+        
+        if not repository:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Repository not found"
+            )
+        
+        # Check ownership
+        if repository.created_by != current_user["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to update this repository"
+            )
+        
+        # Update fields (only if provided in request)
+        update_data = request.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            if hasattr(repository, field):
+                setattr(repository, field, value)
+        
+        # Update timestamp
+        repository.updated_at = datetime.utcnow()
+        
+        # Commit changes
+        await db.commit()
+        await db.refresh(repository)
+        
+        logger.info(f"Updated repository {repository_id} for user {current_user['sub']}")
+        return repository
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating repository: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update repository"
+        )
 
 
 @router.delete(
@@ -180,12 +313,60 @@ async def delete_repository(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Remove a repository dependency"""
-    # TODO: Implement database deletion
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Repository deletion not yet implemented"
-    )
+    """Remove a repository dependency (soft delete by archiving)"""
+    try:
+        from app.models.repository import Repository
+        from sqlalchemy import select
+        from uuid import UUID
+        from datetime import datetime
+        
+        # Convert string to UUID
+        try:
+            repo_uuid = UUID(repository_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid repository ID format"
+            )
+        
+        # Query repository
+        result = await db.execute(
+            select(Repository).where(Repository.id == repo_uuid)
+        )
+        repository = result.scalar_one_or_none()
+        
+        if not repository:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Repository not found"
+            )
+        
+        # Check ownership
+        if repository.created_by != current_user["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to delete this repository"
+            )
+        
+        # Soft delete by setting status to archived
+        repository.status = "archived"
+        repository.updated_at = datetime.utcnow()
+        
+        # Commit changes
+        await db.commit()
+        
+        logger.info(f"Archived repository {repository_id} for user {current_user['sub']}")
+        return None  # 204 No Content
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting repository: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete repository"
+        )
 
 
 @router.post(
@@ -206,8 +387,74 @@ async def sync_repository(
     2. Update dependency information
     3. Trigger analysis if configured
     """
-    # TODO: Implement repository sync
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Repository sync not yet implemented"
-    )
+    try:
+        from app.models.repository import Repository
+        from sqlalchemy import select
+        from uuid import UUID
+        from datetime import datetime
+        
+        # Convert string to UUID
+        try:
+            repo_uuid = UUID(repository_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid repository ID format"
+            )
+        
+        # Query repository
+        result = await db.execute(
+            select(Repository).where(Repository.id == repo_uuid)
+        )
+        repository = result.scalar_one_or_none()
+        
+        if not repository:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_IMPLEMENTED,
+                detail="Repository not found"
+            )
+        
+        # Check ownership
+        if repository.created_by != current_user["sub"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to sync this repository"
+            )
+        
+        # Perform sync using repository service
+        service = RepositoryService(db)
+        
+        # Re-validate and update repository information
+        repo_info = service.parse_repository_url(repository.repository_url)
+        validation = await service.validate_repository(repo_info, repository.branch)
+        
+        if not validation.is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Repository validation failed: {validation.error}"
+            )
+        
+        # Update last synced timestamp
+        repository.last_synced = datetime.utcnow()
+        repository.updated_at = datetime.utcnow()
+        
+        # Update metadata if available
+        if validation.metadata:
+            repository.metadata = validation.metadata
+        
+        # Commit changes
+        await db.commit()
+        await db.refresh(repository)
+        
+        logger.info(f"Synced repository {repository_id} for user {current_user['sub']}")
+        return repository
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error syncing repository: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to sync repository: {str(e)}"
+        )

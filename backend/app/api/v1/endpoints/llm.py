@@ -171,7 +171,13 @@ async def load_model(
     
     Requires admin privileges
     """
-    # TODO: Add admin check
+    # Check admin privileges
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required to load models"
+        )
+    
     try:
         success = await llm_service.load_model(model_type)
         
@@ -183,6 +189,8 @@ async def load_model(
         else:
             raise HTTPException(status_code=500, detail="Failed to load model")
             
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load model: {str(e)}")
 
@@ -197,7 +205,13 @@ async def unload_model(
     
     Requires admin privileges
     """
-    # TODO: Add admin check
+    # Check admin privileges
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required to unload models"
+        )
+    
     try:
         await llm_service.unload_model(model_type)
         
@@ -206,6 +220,8 @@ async def unload_model(
             "message": f"Model {model_type.value} unloaded successfully",
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to unload model: {str(e)}")
 

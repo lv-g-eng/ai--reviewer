@@ -14,7 +14,8 @@ const publicRoutes = [
   '/api/auth',
 ];
 
-export function middleware(request: NextRequest) {
+// Export as 'proxy' function for Next.js 16
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow public routes

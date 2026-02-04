@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    swcMinify: true,
     images: {
         remotePatterns: [
             {
@@ -21,6 +20,7 @@ const nextConfig = {
     experimental: {
         optimizePackageImports: ['@radix-ui/react-icons'],
     },
+    // Keep webpack config for compatibility
     webpack: (config, { isServer }) => {
         if (!isServer) {
             config.resolve.fallback = {

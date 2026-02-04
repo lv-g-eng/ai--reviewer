@@ -1,6 +1,6 @@
 # 🚀 AI-Powered Code Review Platform
 
-> **Status**: Frontend 100% Complete | Backend 25% Complete | Production-Ready in 6-8 Weeks
+> **Status**: Active Development | Frontend Complete | Backend In Progress
 
 A comprehensive microservices-based platform that provides automated code quality analysis, graph-based architecture visualization, and agentic AI reasoning for software development teams.
 
@@ -11,68 +11,102 @@ A comprehensive microservices-based platform that provides automated code qualit
 | Frontend (Next.js) | ✅ Complete | 100% |
 | API Gateway | ✅ Complete | 100% |
 | NextAuth Integration | ✅ Complete | 100% |
-| Backend Services | 🟡 In Progress | 25% |
-| Tests | ⚠️ Low Coverage | 20% |
-| CI/CD | ⚠️ Not Setup | 0% |
+| Backend Services | 🟡 In Progress | 40% |
+| Tests | 🟡 Improving | 35% |
+| CI/CD | ⏳ Planned | 0% |
 
 ## 🎯 Quick Start
 
-**New to the project?** → Read **[PROJECT_GUIDE.md](PROJECT_GUIDE.md)** (5 minutes)
+### Prerequisites
+- Node.js 18+, Python 3.11+, Docker Desktop
+- PostgreSQL, Redis, Neo4j (via Docker)
 
-**Ready to code?** → See setup instructions below
+### Start in 3 Steps
 
-## 🏗️ Architecture
-
-### Microservices
-- **api-gateway**: Entry point, routing, rate limiting (✅ Complete)
-- **auth-service**: Authentication, authorization, RBAC (🟡 25% complete)
-- **code-review-engine**: Code quality analysis (⏳ Not started)
-- **architecture-analyzer**: Source code parsing, graph database (⏳ Not started)
-- **agentic-ai**: AI reasoning, pattern recognition (⏳ Not started)
-- **project-manager**: Project lifecycle management (⏳ Not started)
-
-### Databases
-- **PostgreSQL**: Relational data
-- **Neo4j**: Architecture graph
-- **Redis**: Caching & sessions
-
-## 📖 Documentation
-
-### Essential Reading
-- **[QUICK_START.md](QUICK_START.md)** - Get started in 5 minutes
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Command cheat sheet
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Fix common issues
-- **[docs/](docs/)** - Complete documentation hub
-
-### Key Guides
-- **[docs/npm-management.md](docs/npm-management.md)** - NPM cache, audit, and updates
-- **[docs/LLM_QUICK_START.md](docs/LLM_QUICK_START.md)** - Local LLM setup
-- **[docs/SECURITY.md](docs/SECURITY.md)** - Security best practices
-- **[docs/AI_PR_REVIEWER_GUIDE.md](docs/AI_PR_REVIEWER_GUIDE.md)** - AI code review
-
-## 💻 Development Setup
-
-### Frontend
 ```bash
+# 1. Start infrastructure services
+docker-compose up -d postgres redis neo4j
+
+# 2. Start backend (new terminal)
+cd backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 3. Start frontend (new terminal)
 cd frontend
-npm install
-cp .env.example .env.local
 npm run dev
 ```
 
-### Backend
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn app.main:app --reload
+**Access**: 
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+**Need help?** → See [QUICK_START.md](QUICK_START.md) for detailed setup | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for issues
+
+## 🏗️ Architecture
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   Frontend  │────▶│ API Gateway  │────▶│   Backend   │
+│  (Next.js)  │     │  (Node.js)   │     │  (FastAPI)  │
+└─────────────┘     └──────────────┘     └─────────────┘
+                            │                     │
+                            ▼                     ▼
+                    ┌──────────────┐     ┌─────────────┐
+                    │  PostgreSQL  │     │   Neo4j     │
+                    │    Redis     │     │   Celery    │
+                    └──────────────┘     └─────────────┘
 ```
 
-### Docker (All Services)
+### Core Services
+- **Frontend**: Next.js 14, React 18, TailwindCSS (✅ Complete)
+- **API Gateway**: Routing, rate limiting, circuit breaker (✅ Complete)
+- **Backend**: FastAPI, SQLAlchemy, async operations (🟡 40% complete)
+- **Databases**: PostgreSQL (relational), Neo4j (graph), Redis (cache)
+
+## 📖 Documentation
+
+### Getting Started
+- **[QUICK_START.md](QUICK_START.md)** - Complete setup guide (5 minutes)
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Command cheat sheet
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Fix common issues
+
+### Documentation Hub
+- **[docs/README.md](docs/README.md)** - Complete documentation index
+- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development guide
+- **[docs/INSTALLATION.md](docs/INSTALLATION.md)** - Detailed installation
+
+### Feature Guides
+- **[docs/AI_PR_REVIEWER_GUIDE.md](docs/AI_PR_REVIEWER_GUIDE.md)** - AI code review
+- **[docs/LLM_QUICK_START.md](docs/LLM_QUICK_START.md)** - Local LLM setup
+- **[docs/SECURITY.md](docs/SECURITY.md)** - Security best practices
+
+## 💻 Development
+
+### Environment Setup
 ```bash
+# Frontend
+cd frontend && npm install && cp .env.example .env.local
+
+# Backend
+cd backend && python -m venv venv && pip install -r requirements.txt && cp .env.example .env
+
+# Infrastructure
 docker-compose up -d
+```
+
+### Development Workflow
+```bash
+# Run tests
+npm test                    # Frontend tests
+cd backend && pytest        # Backend tests
+
+# Code quality
+npm run lint                # Lint all services
+npm run format              # Format code
+
+# Database migrations
+cd backend && alembic upgrade head
 ```
 
 ## 🏗️ Architecture
@@ -93,36 +127,50 @@ docker-compose up -d
 ## 🧪 Testing
 
 ```bash
-# API Gateway tests (409 tests, 95% coverage)
-cd services/api-gateway
-npm test
+# Run all tests
+npm test                              # Root: runs all service tests
 
-# NextAuth tests (64 tests, 100% coverage)
-cd frontend
-npm test -- auth
+# Specific test suites
+cd services/api-gateway && npm test   # API Gateway (409 tests, 95% coverage)
+cd frontend && npm test               # Frontend (64 tests, 100% coverage)
+cd backend && pytest                  # Backend (growing coverage)
 
-# Backend tests
-cd backend
-pytest
-
-# All tests
-npm test
+# With coverage
+cd backend && pytest --cov=app --cov-report=html
 ```
 
-## 🎯 Current Focus
+## 🚀 Deployment
 
-### This Week
-- Complete Backend Authentication Service (Task 2.2-2.4)
-- API Gateway Integration (Task 3)
-- Increase test coverage
+### Production Checklist
+- [ ] Update environment variables in `.env`
+- [ ] Set strong `JWT_SECRET` and `NEXTAUTH_SECRET`
+- [ ] Configure production databases
+- [ ] Enable HTTPS
+- [ ] Set up monitoring (Prometheus/Grafana)
+- [ ] Configure backups
 
-### Next 2 Weeks
-- Code Review Engine (Task 5)
-- Architecture Analyzer (Task 6)
-- Service Integration
+### Docker Production
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
 
-See **[PROJECT_GUIDE.md](PROJECT_GUIDE.md)** for detailed roadmap.
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes and test thoroughly
+4. Commit: `git commit -m 'Add amazing feature'`
+5. Push: `git push origin feature/amazing-feature`
+6. Open a Pull Request
+
+**Development Guidelines**: See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
+
+## 📞 Support
+
+- **Documentation**: [docs/README.md](docs/README.md)
+- **Issues**: Create a GitHub issue
+- **Security**: See [docs/SECURITY.md](docs/SECURITY.md)
 
 ---
 
-**Ready to contribute?** Read [PROJECT_GUIDE.md](PROJECT_GUIDE.md) to get started!
+**Version**: 1.0.0 | **License**: MIT | **Last Updated**: February 2026

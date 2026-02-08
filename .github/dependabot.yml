@@ -1,0 +1,30 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    groups:
+      frontend-deps:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+    groups:
+      backend-deps:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "backend"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

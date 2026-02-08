@@ -3,7 +3,7 @@
 
 # Stage 1: Builder
 # Use Python slim image for smaller base
-FROM python:3.13-slim as builder
+FROM python:3.13-slim AS builder
 
 # Set working directory
 WORKDIR /build
@@ -51,15 +51,12 @@ ENV PATH="/opt/venv/bin:$PATH" \
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini .
-COPY .env .env
 
-# Create non-root user for security
+# Create non-root user for security and create log file
 RUN addgroup -g 1000 appuser && \
     adduser -D -u 1000 -G appuser appuser && \
-    chown -R appuser:appuser /app
-
-# Create log file and grant permissions
-RUN touch app.log && chown appuser:appuser app.log
+    chown -R appuser:appuser /app && \
+    touch app.log && chown appuser:appuser app.log
 
 USER appuser
 

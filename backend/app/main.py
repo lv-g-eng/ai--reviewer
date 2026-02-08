@@ -199,9 +199,14 @@ async def health_check():
     # Return appropriate status code based on health
     status_code = 200 if health_status.status == "healthy" else 503
     
+    response_content = health_status.to_dict()
+    if status_code == 503:
+        # Add basic diagnosis if not healthy
+        response_content["detail"] = "One or more critical dependencies are unhealthy"
+    
     return JSONResponse(
         status_code=status_code,
-        content=health_status.to_dict()
+        content=response_content
     )
 
 

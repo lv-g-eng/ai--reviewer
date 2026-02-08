@@ -32,7 +32,6 @@ flower
 
 # HTTP Clients
 httpx
-aiohttp
 
 # External APIs & AI
 PyGithub

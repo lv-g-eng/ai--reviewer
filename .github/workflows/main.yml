@@ -14,7 +14,7 @@ jobs:
             backend: ${{ steps.filter.outputs.backend }}
             frontend: ${{ steps.filter.outputs.frontend }}
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
             - uses: dorny/paths-filter@v3
               id: filter
               with:
@@ -53,10 +53,10 @@ jobs:
                     --health-timeout 5s
                     --health-retries 5
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
             - name: Set up Python
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@v6
               with:
                   python-version: "3.13"
                   cache: "pip"
@@ -103,7 +103,7 @@ jobs:
                   pytest tests/ -v --ignore=tests/test_neo4j_fixtures.py --ignore=tests/test_neo4j_client.py -x --tb=short
 
             - name: Upload test results
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               if: always()
               with:
                   name: backend-test-results
@@ -117,7 +117,7 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 10
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
             - name: Set up Node.js
               uses: actions/setup-node@v6
@@ -140,7 +140,7 @@ jobs:
                   npm run test:ci
 
             - name: Upload test results
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               if: always()
               with:
                   name: frontend-test-results
@@ -152,7 +152,7 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 10
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
             - name: Run Trivy vulnerability scanner on backend
               uses: aquasecurity/trivy-action@master
@@ -191,7 +191,7 @@ jobs:
               continue-on-error: true
 
             - name: Upload Trivy scan results to GitHub Security tab
-              uses: github/codeql-action/upload-sarif@v3
+              uses: github/codeql-action/upload-sarif@v4
               if: always()
               with:
                   sarif_file: "trivy-results.sarif"
@@ -200,7 +200,7 @@ jobs:
     security-scan:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
             - name: Run Snyk to check for vulnerabilities
               uses: snyk/actions/python-3.10@master
@@ -219,7 +219,7 @@ jobs:
         runs-on: ubuntu-latest
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
             - name: Install Cosign
               uses: sigstore/cosign-installer@v3

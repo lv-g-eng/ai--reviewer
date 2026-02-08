@@ -2,14 +2,14 @@
 # Validates Requirements: 10.1, 10.2, 10.3, 10.4, 10.5
 
 # Stage 1: Builder
-# Use Python slim image for smaller base
-FROM python:3.13-slim AS builder
+# Use Python slim-bookworm image for security updates
+FROM python:3.13-slim-bookworm AS builder
 
 # Set working directory
 WORKDIR /build
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install build dependencies with security updates
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -24,11 +24,14 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Runtime
-# Use minimal Alpine Linux image for smallest final size
-FROM python:3.13-alpine
+# Use minimal Alpine Linux image with specific version for reproducibility
+FROM python:3.13-alpine3.21
 
 # Set working directory
 WORKDIR /app
+
+# Security: Upgrade all packages to latest versions
+RUN apk upgrade --no-cache
 
 # Install runtime dependencies and healthcheck tool
 RUN apk add --no-cache \
@@ -52,20 +55,24 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini .
 
-# Create non-root user for security and create log file
+# Create non-root user for security
 RUN addgroup -g 1000 appuser && \
     adduser -D -u 1000 -G appuser appuser && \
     chown -R appuser:appuser /app && \
+    mkdir -p /app/logs && chown appuser:appuser /app/logs && \
     touch app.log && chown appuser:appuser app.log
+
+# Create tmp directory for writable operations (when using readOnlyRootFilesystem in K8s)
+RUN mkdir -p /tmp/app && chown appuser:appuser /tmp/app
 
 USER appuser
 
-# Health check using curl (installed above) since requests module might not be present or we want to avoid python startup overhead
+# Health check using curl
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Expose port
 EXPOSE 8000
 
-# Run application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run application with proper settings for production
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

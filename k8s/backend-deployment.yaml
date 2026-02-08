@@ -19,12 +19,28 @@ spec:
     spec:
       serviceAccountName: backend-service-account
       automountServiceAccountToken: false
+      # Pod-level security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: backend
           image: your-registry/ai-review-backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
               name: http
+          # Container-level security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -53,6 +69,12 @@ spec:
             limits:
               memory: "2Gi"
               cpu: "2000m"
+          # Volume mounts for writable directories
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+            - name: app-logs
+              mountPath: /app/logs
           livenessProbe:
             httpGet:
               path: /api/v1/health
@@ -69,6 +91,12 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 2
+      # Volumes for writable paths (required with readOnlyRootFilesystem)
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}
+        - name: app-logs
+          emptyDir: {}
       imagePullSecrets:
         - name: registry-credentials
 
@@ -130,3 +158,51 @@ spec:
           value: 4
           periodSeconds: 30
       selectPolicy: Max
+
+---
+# Network Policy for backend - restrict ingress/egress
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-network-policy
+  namespace: ai-code-review
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        - podSelector:
+            matchLabels:
+              app: neo4j
+      ports:
+        - protocol: TCP
+          port: 7687

@@ -1,31 +1,48 @@
-FROM node:18-alpine
+# Multi-stage build for optimized production image
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy all package files and config files
 COPY package*.json ./
 COPY tsconfig.json ./
 COPY services/architecture-analyzer/package*.json ./services/architecture-analyzer/
 COPY shared ./shared
 
-# Install dependencies for the entire workspace
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
-# Copy source code
 COPY services/architecture-analyzer ./services/architecture-analyzer
 
-# Build the service
 RUN npm run build -w services/architecture-analyzer
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+# Stage 2: Runtime
+FROM node:18-alpine AS production
 
-# Create logs directory
-RUN mkdir -p services/architecture-analyzer/logs && chown -R nodejs:nodejs services/architecture-analyzer/logs
+RUN apk add --no-cache dumb-init && \
+    apk upgrade --no-cache
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY services/architecture-analyzer/package*.json ./services/architecture-analyzer/
+COPY shared ./shared
+
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
+
+COPY --from=builder /app/services/architecture-analyzer/dist ./services/architecture-analyzer/dist
+
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 -G nodejs
+
+RUN mkdir -p services/architecture-analyzer/logs && \
+    chown -R nodejs:nodejs /app
 
 USER nodejs
 
 EXPOSE 3003
 
-CMD ["npm", "start", "-w", "services/architecture-analyzer"]
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["node", "services/architecture-analyzer/dist/services/architecture-analyzer/src/index.js"]

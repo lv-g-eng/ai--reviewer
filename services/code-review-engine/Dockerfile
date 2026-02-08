@@ -1,31 +1,48 @@
-FROM node:18-alpine
+# Multi-stage build for optimized production image
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy all package files and config files
 COPY package*.json ./
 COPY tsconfig.json ./
 COPY services/code-review-engine/package*.json ./services/code-review-engine/
 COPY shared ./shared
 
-# Install dependencies for the entire workspace
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
-# Copy source code
 COPY services/code-review-engine ./services/code-review-engine
 
-# Build the service
 RUN npm run build -w services/code-review-engine
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+# Stage 2: Runtime
+FROM node:18-alpine AS production
 
-# Create logs directory
-RUN mkdir -p services/code-review-engine/logs && chown -R nodejs:nodejs services/code-review-engine/logs
+RUN apk add --no-cache dumb-init && \
+    apk upgrade --no-cache
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY services/code-review-engine/package*.json ./services/code-review-engine/
+COPY shared ./shared
+
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
+
+COPY --from=builder /app/services/code-review-engine/dist ./services/code-review-engine/dist
+
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 -G nodejs
+
+RUN mkdir -p services/code-review-engine/logs && \
+    chown -R nodejs:nodejs /app
 
 USER nodejs
 
 EXPOSE 3002
 
-CMD ["npm", "start", "-w", "services/code-review-engine"]
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["node", "services/code-review-engine/dist/services/code-review-engine/src/index.js"]

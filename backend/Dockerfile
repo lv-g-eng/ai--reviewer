@@ -20,8 +20,9 @@ COPY requirements.txt .
 # Create virtual environment and install dependencies
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip setuptools wheel && \
+    pip install --only-binary :all: -r requirements.txt
 
 # Stage 2: Runtime
 # Use minimal Alpine Linux image with specific version for reproducibility
@@ -68,7 +69,7 @@ RUN mkdir -p /tmp/app && chown appuser:appuser /tmp/app
 USER appuser
 
 # Health check using curl
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Expose port

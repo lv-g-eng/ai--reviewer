@@ -14,7 +14,8 @@ COPY services/api-gateway/tsconfig.json ./services/api-gateway/
 COPY shared ./shared
 
 # Install all dependencies (including devDependencies for build)
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm \
+    npm install
 
 # Copy source code
 COPY services/api-gateway ./services/api-gateway
@@ -37,7 +38,8 @@ COPY services/api-gateway/package*.json ./services/api-gateway/
 COPY shared ./shared
 
 # Install only production dependencies
-RUN npm install --omit=dev --ignore-scripts && \
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --omit=dev --ignore-scripts && \
     npm cache clean --force
 
 # Copy built application from builder stage

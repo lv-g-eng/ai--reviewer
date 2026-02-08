@@ -1,15 +1,19 @@
-FROM node:18-alpine
+# Multi-stage build for optimized production image
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy all package files and config files
+# Copy root workspace files
 COPY package*.json ./
 COPY tsconfig.json ./
+
+# Copy service specific files
 COPY services/agentic-ai/package*.json ./services/agentic-ai/
 COPY shared ./shared
 
-# Install dependencies for the entire workspace
-RUN npm install
+# Use npm ci for faster installation
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # Copy source code
 COPY services/agentic-ai ./services/agentic-ai
@@ -17,15 +21,36 @@ COPY services/agentic-ai ./services/agentic-ai
 # Build the service
 RUN npm run build -w services/agentic-ai
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+# Stage 2: Runtime
+FROM node:18-alpine AS production
 
-# Create logs directory
-RUN mkdir -p services/agentic-ai/logs && chown -R nodejs:nodejs services/agentic-ai/logs
+RUN apk add --no-cache dumb-init && \
+    apk upgrade --no-cache
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY services/agentic-ai/package*.json ./services/agentic-ai/
+COPY shared ./shared
+
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
+
+# Copy built files
+COPY --from=builder /app/services/agentic-ai/dist ./services/agentic-ai/dist
+
+# Non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 -G nodejs
+
+RUN mkdir -p services/agentic-ai/logs && \
+    chown -R nodejs:nodejs /app
 
 USER nodejs
 
 EXPOSE 3004
 
-CMD ["npm", "start", "-w", "services/agentic-ai"]
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["node", "services/agentic-ai/dist/services/agentic-ai/src/index.js"]

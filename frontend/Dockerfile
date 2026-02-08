@@ -1,6 +1,6 @@
 # Multi-stage build for optimized Next.js production image
 # Stage 1: Dependencies
-FROM node:20-alpine3.21 AS deps
+FROM node:25-alpine3.21 AS deps
 
 # Security: Upgrade packages and install security updates
 RUN apk upgrade --no-cache
@@ -14,7 +14,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci --only=production --legacy-peer-deps
 
 # Stage 2: Builder
-FROM node:20-alpine3.21 AS builder
+FROM node:25-alpine3.21 AS builder
 
 # Security: Upgrade packages
 RUN apk upgrade --no-cache
@@ -35,7 +35,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Stage 3: Runtime (minimal production image)
-FROM node:20-alpine3.21
+FROM node:25-alpine3.21
 
 # Security: Upgrade packages
 RUN apk upgrade --no-cache

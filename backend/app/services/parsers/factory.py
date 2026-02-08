@@ -10,17 +10,22 @@ from app.services.parsers.javascript_parser import JavaScriptParser
 class ParserFactory:
     """
     Factory for creating appropriate AST parser based on language
+    
+    Supports:
+    - Python (using ast module)
+    - JavaScript (using tree-sitter with esprima fallback)
+    - TypeScript (using tree-sitter with esprima fallback)
     """
     
     _parsers = {
-        'python': PythonASTParser,
-        'py': PythonASTParser,
-        'javascript': JavaScriptParser,
-        'js': JavaScriptParser,
-        'typescript': JavaScriptParser,
-        'ts': JavaScriptParser,
-        'jsx': JavaScriptParser,
-        'tsx': JavaScriptParser,
+        'python': (PythonASTParser, {}),
+        'py': (PythonASTParser, {}),
+        'javascript': (JavaScriptParser, {'language': 'javascript'}),
+        'js': (JavaScriptParser, {'language': 'javascript'}),
+        'typescript': (JavaScriptParser, {'language': 'typescript'}),
+        'ts': (JavaScriptParser, {'language': 'typescript'}),
+        'jsx': (JavaScriptParser, {'language': 'javascript'}),
+        'tsx': (JavaScriptParser, {'language': 'typescript'}),
     }
     
     @classmethod
@@ -35,10 +40,11 @@ class ParserFactory:
             Parser instance or None if unsupported
         """
         language_lower = language.lower().lstrip('.')
-        parser_class = cls._parsers.get(language_lower)
+        parser_info = cls._parsers.get(language_lower)
         
-        if parser_class:
-            return parser_class()
+        if parser_info:
+            parser_class, kwargs = parser_info
+            return parser_class(**kwargs)
         
         return None
     
@@ -63,3 +69,17 @@ class ParserFactory:
     def supported_languages(cls) -> list[str]:
         """Get list of supported languages"""
         return list(set(cls._parsers.keys()))
+    
+    @classmethod
+    def is_language_supported(cls, language: str) -> bool:
+        """
+        Check if a language is supported
+        
+        Args:
+            language: Language name or file extension
+            
+        Returns:
+            True if supported, False otherwise
+        """
+        language_lower = language.lower().lstrip('.')
+        return language_lower in cls._parsers

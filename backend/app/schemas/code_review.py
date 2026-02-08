@@ -9,6 +9,30 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 
+class WebhookEvent(BaseModel):
+    """GitHub webhook event data"""
+    action: str = Field(..., description="Action that triggered the webhook (opened, synchronize, etc.)")
+    pull_request: Dict[str, Any] = Field(..., description="Pull request data")
+    repository: Dict[str, Any] = Field(..., description="Repository data")
+    sender: Dict[str, Any] = Field(..., description="User who triggered the event")
+
+
+class PREventPayload(BaseModel):
+    """Extracted PR event payload"""
+    pr_number: int = Field(..., description="Pull request number")
+    title: str = Field(..., description="Pull request title")
+    description: Optional[str] = Field(None, description="Pull request description")
+    branch_name: str = Field(..., description="Source branch name")
+    commit_sha: str = Field(..., description="Latest commit SHA")
+    files_changed: int = Field(0, description="Number of files changed")
+    lines_added: int = Field(0, description="Number of lines added")
+    lines_deleted: int = Field(0, description="Number of lines deleted")
+    repository_url: str = Field(..., description="Repository URL")
+    repository_full_name: str = Field(..., description="Repository full name (owner/repo)")
+    action: str = Field(..., description="Action that triggered the event")
+    sender: str = Field(..., description="Username of the sender")
+
+
 class ReviewSeverity(str, Enum):
     """Severity levels for code review findings"""
     INFO = "info"

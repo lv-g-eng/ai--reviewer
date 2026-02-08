@@ -169,7 +169,7 @@ class ErrorReporter:
         ),
         # API Keys: sk-xxx, pk-xxx, etc.
         MaskingRule(
-            pattern=r'(?i)(sk-|pk-|api[_-]?key\s*[=:]\s*)([a-zA-Z0-9_-]{20,})',
+            pattern=r'(?i)(sk-|pk-|api[_-]?key\s*[=:]\s*)([a-zA-Z0-9_-]+)',
             replacement=r'\1***',
             data_type=SensitiveDataType.API_KEY,
         ),

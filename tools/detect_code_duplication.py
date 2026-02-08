@@ -33,16 +33,21 @@ class CodeDuplicationDetector:
     def scan_directory(self):
         """扫描目录中的所有 Python 文件"""
         print("[*] 扫描 Python 文件...")
-        for py_file in self.root_path.rglob("*.py"):
-            # 跳过 __pycache__ 和测试缓存
-            if "__pycache__" in str(py_file) or "pytest_cache" in str(py_file):
-                continue
-            self.python_files.append(py_file)
-            try:
-                with open(py_file, 'r', encoding='utf-8') as f:
-                    self.file_contents[py_file] = f.read()
-            except Exception as e:
-                print(f"[!] 无法读取 {py_file}: {e}")
+        skip_dirs = {'venv', 'node_modules', '.git', '__pycache__', 'pytest_cache'}
+        
+        for root, dirs, files in os.walk(self.root_path):
+            # 排除跳过的目录
+            dirs[:] = [d for d in dirs if d not in skip_dirs]
+            
+            for file in files:
+                if file.endswith('.py'):
+                    py_file = Path(root) / file
+                    self.python_files.append(py_file)
+                    try:
+                        with open(py_file, 'r', encoding='utf-8') as f:
+                            self.file_contents[py_file] = f.read()
+                    except Exception as e:
+                        print(f"[!] 无法读取 {py_file}: {e}")
         
         print(f"[+] 找到 {len(self.python_files)} 个 Python 文件")
     

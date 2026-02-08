@@ -1,64 +1,74 @@
-# Multi-stage build for optimized FastAPI production image
-# Stage 1: Builder
-FROM python:3.11-slim as builder
+# Multi-stage Dockerfile for optimized production deployment
+# Validates Requirements: 10.1, 10.2, 10.3, 10.4, 10.5
 
-WORKDIR /app
+# Stage 1: Builder
+# Use Python slim image for smaller base
+FROM python:3.13-slim as builder
+
+# Set working directory
+WORKDIR /build
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
+    build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
+# Copy requirements
 COPY requirements.txt .
 
-# Create wheels for all dependencies (for faster installation in final stage)
-RUN pip install --user --no-cache-dir --no-warn-script-location \
-    --upgrade pip setuptools wheel && \
-    pip install --user --no-cache-dir --no-warn-script-location \
-    -r requirements.txt
+# Create virtual environment and install dependencies
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Runtime
-FROM python:3.11-slim
+# Use minimal Alpine Linux image for smallest final size
+FROM python:3.13-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install runtime dependencies and healthcheck tool
+RUN apk add --no-cache \
+    libpq \
+    libstdc++ \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
 
 # Set environment variables
-ENV PYTHONUNBUFFERED=1 \
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-WORKDIR /app
-
-# Install only runtime dependencies (not build tools)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-# Create non-root user for security (principle of least privilege)
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# Copy Python dependencies from builder stage
-COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
-
 # Copy application code
-COPY --chown=appuser:appuser . .
+COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini .
+COPY .env .env
 
-# Set PATH to use user-installed packages
-ENV PATH=/home/appuser/.local/bin:$PATH
+# Create non-root user for security
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser && \
+    chown -R appuser:appuser /app
 
-# Switch to non-root user
+# Create log file and grant permissions
+RUN touch app.log && chown appuser:appuser app.log
+
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+# Health check using curl (installed above) since requests module might not be present or we want to avoid python startup overhead
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Expose port
 EXPOSE 8000
 
-# Run the application
+# Run application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

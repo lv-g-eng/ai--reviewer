@@ -4,8 +4,8 @@
 #
 #    pip-compile requirements.in
 #
---index-url https://pypi.tuna.tsinghua.edu.cn/simple
---trusted-host pypi.tuna.tsinghua.edu.cn
+# --index-url https://pypi.tuna.tsinghua.edu.cn/simple
+# --trusted-host pypi.tuna.tsinghua.edu.cn
 
 aiohappyeyeballs==2.6.1
     # via aiohttp

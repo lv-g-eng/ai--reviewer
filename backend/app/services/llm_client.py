@@ -12,6 +12,16 @@ from openai import AsyncOpenAI
 import httpx
 
 from app.core.config import settings
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+    before_sleep_log
+)
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LLMProvider(str, Enum):
@@ -97,6 +107,13 @@ class LLMClient:
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
     
+    @retry(
+        retry=retry_if_exception_type((openai.APIConnectionError, openai.RateLimitError, openai.InternalServerError)),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        stop=stop_after_attempt(3),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def _openai_completion(
         self,
         system_prompt: str,
@@ -152,6 +169,13 @@ class LLMClient:
         except Exception as e:
             raise Exception(f"OpenAI API error: {str(e)}")
     
+    @retry(
+        retry=retry_if_exception_type((anthropic.APIConnectionError, anthropic.RateLimitError, anthropic.InternalServerError)),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        stop=stop_after_attempt(3),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def _anthropic_completion(
         self,
         system_prompt: str,
@@ -206,6 +230,13 @@ class LLMClient:
         except Exception as e:
             raise Exception(f"Anthropic API error: {str(e)}")
     
+    @retry(
+        retry=retry_if_exception_type((httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError)),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        stop=stop_after_attempt(3),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def _ollama_completion(
         self,
         system_prompt: str,

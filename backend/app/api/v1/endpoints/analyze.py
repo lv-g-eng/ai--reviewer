@@ -22,7 +22,7 @@ from starlette.responses import StreamingResponse
 import aiofiles
 
 from app.services.llm_client import LLMClient, LLMProvider
-from app.services.neo4j_ast_service_extended import Neo4jASTService
+from app.services.neo4j_ast_service import Neo4jASTService
 from app.services.architecture_prompts import (
     format_architectural_purpose_prompt,
     format_architectural_patterns_prompt,

@@ -502,11 +502,16 @@ async def service_status():
 
 if __name__ == "__main__":
     import uvicorn
+    import os
+    
+    # Get host from environment, default to localhost for security
+    # Use 0.0.0.0 only in production with proper network security
+    host = os.getenv("UVICORN_HOST", "127.0.0.1")
     
     # Run with optimized settings
     uvicorn.run(
         "app.main_optimized:app",
-        host="0.0.0.0",
+        host=host,
         port=8000,
         reload=resilient_settings.ENVIRONMENT == "development",
         log_level=resilient_settings.LOG_LEVEL.lower(),

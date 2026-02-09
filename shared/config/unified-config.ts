@@ -611,7 +611,3 @@ Set the \`ENVIRONMENT\` variable to control environment-specific behavior.
 
 // Create singleton instance
 export const configManager = new ConfigManager();
-
-// Export types and utilities
-export type { UnifiedConfig };
-export { UnifiedConfigSchema };

@@ -14,6 +14,14 @@ from app.api.v1.router import api_router
 from app.database.postgresql import init_postgres, close_postgres
 from app.database.neo4j_db import init_neo4j, close_neo4j
 from app.database.redis_db import init_redis, close_redis
+from app.shared.exceptions import (
+    ServiceException,
+    AuthenticationException,
+    AuthorizationException,
+    ValidationException,
+    DatabaseException,
+    LLMProviderException
+)
 
 
 @asynccontextmanager
@@ -158,13 +166,41 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 # Request Logging Middleware
 app.middleware("http")(log_request)
 
-# Global Exception Handler
+# Global Exception Handlers
+@app.exception_handler(ServiceException)
+async def service_exception_handler(request: Request, exc: ServiceException):
+    log_exception(exc, {"path": request.url.path, "method": request.method})
+    
+    # Map exception types to status codes
+    status_code = 400
+    if isinstance(exc, AuthenticationException):
+        status_code = 401
+    elif isinstance(exc, AuthorizationException):
+        status_code = 403
+    elif isinstance(exc, ValidationException):
+        status_code = 422
+    elif isinstance(exc, (DatabaseException, LLMProviderException)):
+        status_code = 500
+        
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "message": exc.message,
+            "error_code": exc.error_code,
+            "details": exc.details
+        },
+    )
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     log_exception(exc, {"path": request.url.path, "method": request.method})
     return JSONResponse(
         status_code=500,
-        content={"message": "Internal Server Error", "detail": str(exc)},
+        content={
+            "message": "Internal Server Error",
+            "error_code": "INTERNAL_ERROR",
+            "detail": str(exc)
+        },
     )
 
 # Include API router

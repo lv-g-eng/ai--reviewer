@@ -2,7 +2,9 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "outDir": "./dist",
     "rootDir": "./",
     "strict": false,
@@ -29,13 +31,27 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["./shared/*"],
-      "@api-gateway/*": ["./services/api-gateway/src/*"],
-      "@auth-service/*": ["./services/auth-service/src/*"],
-      "@code-review-engine/*": ["./services/code-review-engine/src/*"],
-      "@architecture-analyzer/*": ["./services/architecture-analyzer/src/*"],
-      "@agentic-ai/*": ["./services/agentic-ai/src/*"],
-      "@project-manager/*": ["./services/project-manager/src/*"]
+      "@shared/*": [
+        "./shared/*"
+      ],
+      "@api-gateway/*": [
+        "./services/api-gateway/src/*"
+      ],
+      "@auth-service/*": [
+        "./services/auth-service/src/*"
+      ],
+      "@code-review-engine/*": [
+        "./services/code-review-engine/src/*"
+      ],
+      "@architecture-analyzer/*": [
+        "./services/architecture-analyzer/src/*"
+      ],
+      "@agentic-ai/*": [
+        "./services/agentic-ai/src/*"
+      ],
+      "@project-manager/*": [
+        "./services/project-manager/src/*"
+      ]
     }
   },
   "include": [
@@ -47,6 +63,6 @@
     "node_modules",
     "dist",
     "**/*.test.ts",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
   ]
 }

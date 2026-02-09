@@ -11,6 +11,7 @@
 
 import { z } from 'zod';
 import { io, Socket } from 'socket.io-client';
+import * as React from 'react';
 
 // API Response schemas
 export const ApiResponseSchema = z.object({
@@ -88,8 +89,23 @@ export const LibrarySchema = z.object({
 });
 
 // Type exports
-export type ApiResponse<T = any> = z.infer<typeof ApiResponseSchema> & { data?: T };
-export type PaginatedResponse<T = any> = z.infer<typeof PaginatedResponseSchema> & { items: T[] };
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  timestamp: string;
+  requestId?: string;
+}
+
+export interface PaginatedResponse<T = any> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export type Project = z.infer<typeof ProjectSchema>;
 export type ProjectStats = z.infer<typeof ProjectStatsSchema>;
 export type Review = z.infer<typeof ReviewSchema>;
@@ -222,7 +238,7 @@ export class APIIntegration {
     });
 
     const data = await this.handleResponse(response);
-    return PaginatedResponseSchema.parse(data);
+    return PaginatedResponseSchema.parse(data) as PaginatedResponse<Project>;
   }
 
   async getProject(id: number): Promise<Project> {
@@ -289,7 +305,7 @@ export class APIIntegration {
     });
 
     const data = await this.handleResponse(response);
-    return PaginatedResponseSchema.parse(data);
+    return PaginatedResponseSchema.parse(data) as PaginatedResponse<Review>;
   }
 
   async createReview(projectId: number, review: Omit<Review, 'id' | 'project_id' | 'created_at' | 'updated_at'>): Promise<Review> {
@@ -317,7 +333,7 @@ export class APIIntegration {
     });
 
     const data = await this.handleResponse(response);
-    return PaginatedResponseSchema.parse(data);
+    return PaginatedResponseSchema.parse(data) as PaginatedResponse<Library>;
   }
 
   async searchLibraries(query: string, filters?: {

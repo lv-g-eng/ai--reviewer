@@ -35,14 +35,6 @@ test_results = {
 }
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create event loop for async tests"""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """Create test database session"""
@@ -53,6 +45,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
     
     async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.begin())
         await conn.run_sync(Base.metadata.drop_all)
 
 
@@ -111,12 +104,10 @@ async def mock_neo4j_driver():
     Mock Neo4j driver for unit tests that don't need real database
     Returns a mock driver that simulates Neo4j behavior
     """
-    # Create mock session
     mock_session = AsyncMock()
     mock_result = AsyncMock()
     mock_record = MagicMock()
 
-    # Configure mock result
     mock_result.data.return_value = []
     mock_result.single.return_value = mock_record
     mock_session.run.return_value = mock_result
@@ -124,17 +115,14 @@ async def mock_neo4j_driver():
     mock_session.execute_write.return_value = None
     mock_session.execute_read.return_value = []
 
-    # Create mock transaction
     mock_tx = AsyncMock()
     mock_tx.run.return_value = mock_result
     mock_session.begin_transaction.return_value = mock_tx
 
-    # Create mock driver
     mock_driver = AsyncMock()
     mock_driver.session.return_value = mock_session
     mock_driver.verify_connectivity.return_value = None
 
-    # Patch the global driver
     with patch('app.database.neo4j_db.get_neo4j_driver', return_value=mock_driver):
         yield mock_driver
 
@@ -147,7 +135,6 @@ async def neo4j_session_data():
     """
     mock_session = AsyncMock()
 
-    # Mock result with sample data
     mock_result = AsyncMock()
     mock_records = [
         MagicMock(data=MagicMock(return_value={
@@ -174,7 +161,6 @@ async def neo4j_session_data():
 def neo4j_container():
     """
     Testcontainers Neo4j fixture for integration tests
-    Requires: pip install testcontainers[neo4j]
     """
     try:
         from testcontainers.neo4j import Neo4jContainer
@@ -182,7 +168,6 @@ def neo4j_container():
         container = Neo4jContainer("neo4j:5", password="testpassword")
         container.start()
 
-        # Override environment variables for tests
         original_uri = os.environ.get('NEO4J_URI')
         original_user = os.environ.get('NEO4J_USER')
         original_password = os.environ.get('NEO4J_PASSWORD')
@@ -193,10 +178,8 @@ def neo4j_container():
 
         yield container
 
-        # Cleanup
         container.stop()
 
-        # Restore original environment
         if original_uri:
             os.environ['NEO4J_URI'] = original_uri
         if original_user:
@@ -221,12 +204,10 @@ def collect_test_results():
 
     yield
 
-    # Write results to JSON file at end of test session
     output_file = os.environ.get('TEST_RESULTS_JSON', 'test-results.json')
     with open(output_file, 'w') as f:
         json.dump(test_results, f, indent=2, default=str)
 
-    # Also write to GitHub Actions summary if running in CI
     if os.environ.get('GITHUB_ACTIONS'):
         summary_file = os.environ.get('GITHUB_STEP_SUMMARY', '/dev/null')
         with open(summary_file, 'a') as f:
@@ -238,7 +219,7 @@ def collect_test_results():
 
             if test_results['failures']:
                 f.write("### ❌ Test Failures\n")
-                for failure in test_results['failures'][:5]:  # Show first 5
+                for failure in test_results['failures'][:5]:
                     f.write(f"- `{failure['test_id']}`: {failure['error_type']}\n")
                 if len(test_results['failures']) > 5:
                     f.write(f"- ... and {len(test_results['failures']) - 5} more\n")
@@ -267,29 +248,13 @@ def pytest_exception_interact(node, call, report):
 
 def pytest_sessionfinish(session, exitstatus):
     """Hook to collect session summary"""
-    # Note: session.get_reports() is not available in newer pytest versions
-    # This is a custom hook for AI reviewer integration
     test_results["summary"] = {
         "total_tests": session.testscollected,
         "exit_code": exitstatus,
     }
 
 
-# ===== ASYNC EVENT LOOP FIXTURES =====
-
-@pytest.fixture(scope="function")
-def event_loop_policy():
-    """
-    Fixture to handle async event loop issues in pytest-asyncio
-    """
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    yield loop
-
-    loop.close()
-
+# ===== ASYNC TIMEOUT FIXTURES =====
 
 @pytest.fixture(scope="function")
 def mock_async_timeouts():
@@ -338,7 +303,6 @@ def mock_db_timeouts():
          patch('app.database.neo4j_db.init_neo4j') as mock_neo4j, \
          patch('app.database.redis_db.init_redis') as mock_redis:
 
-        # Make init functions return immediately
         mock_postgres.return_value = None
         mock_neo4j.return_value = None
         mock_redis.return_value = None
@@ -356,9 +320,7 @@ def mock_db_timeouts():
 def mock_redis_client():
     """
     Mock Redis client for unit tests
-    Provides in-memory storage for testing token revocation and metadata
     """
-    # In-memory storage for mock Redis
     storage = {}
     ttls = {}
     
@@ -387,8 +349,6 @@ def mock_redis_client():
     
     mock_redis = MockRedis()
     
-    # Patch get_redis to return our mock
     with patch('app.database.redis_db.get_redis', return_value=mock_redis):
         with patch('app.utils.jwt.get_redis', return_value=mock_redis):
             yield mock_redis
-

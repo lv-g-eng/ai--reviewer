@@ -24,6 +24,16 @@ from app.schemas.security_models import (
 logger = logging.getLogger(__name__)
 
 
+def _sanitize_log_input(value: str, max_length: int = 100) -> str:
+    """Sanitize user input for safe logging to prevent log injection."""
+    if not value:
+        return ""
+    sanitized = str(value).replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+    if len(sanitized) > max_length:
+        sanitized = sanitized[:max_length] + "..."
+    return sanitized
+
+
 class SeverityLevel(Enum):
     """Severity levels from npm audit."""
     LOW = "low"
@@ -259,7 +269,7 @@ class SecurityComplianceService:
                 """, {'project_id': project_id}).single()
                 
                 if not project_result:
-                    logger.warning(f"Project {project_id} not found")
+                    logger.warning(f"Project {_sanitize_log_input(project_id)} not found")
                     return None
                 
                 # Get vulnerabilities grouped by severity

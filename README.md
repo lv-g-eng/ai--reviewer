@@ -72,6 +72,8 @@ npm run dev
 - **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Fix common issues
 
 ### Documentation Hub
+- **[docs/architecture/URS.md](docs/architecture/URS.md)** - User Requirement Specification
+- **[docs/architecture/SRS.md](docs/architecture/SRS.md)** - Software Requirement Specification
 - **[docs/README.md](docs/README.md)** - Complete documentation index
 - **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development guide
 - **[docs/INSTALLATION.md](docs/INSTALLATION.md)** - Detailed installation

@@ -26,7 +26,7 @@ async def analyze_pull_request_endpoint(
     pr_id: str,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user),
-    _ = Depends(lambda: check_project_access(project_id, current_user))
+    _ = Depends(check_project_access)
 ):
     """
     Queue a pull request for asynchronous analysis
@@ -109,7 +109,7 @@ async def reanalyze_pull_request(
     pr_id: str,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user),
-    _ = Depends(lambda: check_project_access(project_id, current_user))
+    _ = Depends(check_project_access)
 ):
     """
     Re-analyze an existing pull request
@@ -147,7 +147,7 @@ async def analyze_circular_dependencies(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user),
-    _ = Depends(lambda: check_project_access(project_id, current_user))
+    _ = Depends(check_project_access)
 ):
     """
     Analyze circular dependencies in a project using AST analysis

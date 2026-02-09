@@ -9,7 +9,7 @@ Validates Requirements: 1.1
 import hmac
 import hashlib
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Annotated
 from datetime import datetime
 
 from fastapi import APIRouter, Request, Header, HTTPException, status, Depends, BackgroundTasks

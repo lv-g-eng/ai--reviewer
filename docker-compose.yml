@@ -64,185 +64,12 @@ services:
           memory: 1G
           cpus: '1'
 
-  # Application Services
-  api-gateway:
-    build:
-      context: .
-      dockerfile: services/api-gateway/Dockerfile
-    ports:
-      - "3010:3000"
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3000
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1h}
-      - REDIS_URL=redis://redis:6379
-      - AUTH_SERVICE_URL=http://auth-service:3001
-      - CODE_REVIEW_ENGINE_URL=http://code-review-engine:3002
-      - ARCHITECTURE_ANALYZER_URL=http://architecture-analyzer:3003
-      - AGENTIC_AI_URL=http://agentic-ai:3004
-      - PROJECT_MANAGER_URL=http://project-manager:3005
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3010}
-      - LOG_LEVEL=${LOG_LEVEL:-warn}
-      - WORKERS=2
-    depends_on:
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/api-gateway/logs:/app/services/api-gateway/logs
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
-      interval: 20s
-      timeout: 5s
-      retries: 2
-      start_period: 20s
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
-
-  auth-service:
-    build:
-      context: .
-      dockerfile: services/auth-service/Dockerfile
-    ports:
-      - "3001:3001"
-    environment:
-      - NODE_ENV=development
-      - PORT=3001
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ai_code_review}
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=24h
-      - LOG_LEVEL=warn
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/auth-service/logs:/app/logs
-      - ./certs:/app/certs:ro
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
-
-  code-review-engine:
-    build:
-      context: .
-      dockerfile: services/code-review-engine/Dockerfile
-    ports:
-      - "3002:3002"
-    environment:
-      - NODE_ENV=development
-      - PORT=3002
-      - REDIS_URL=redis://redis:6379
-      - LOG_LEVEL=warn
-    depends_on:
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/code-review-engine/logs:/app/logs
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
-
-  architecture-analyzer:
-    build:
-      context: .
-      dockerfile: services/architecture-analyzer/Dockerfile
-    ports:
-      - "3003:3003"
-    environment:
-      - NODE_ENV=development
-      - PORT=3003
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
-      - REDIS_URL=redis://redis:6379
-      - LOG_LEVEL=warn
-    depends_on:
-      neo4j:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/architecture-analyzer/logs:/app/logs
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
-
-  agentic-ai:
-    build:
-      context: .
-      dockerfile: services/agentic-ai/Dockerfile
-    ports:
-      - "3004:3004"
-    environment:
-      - NODE_ENV=development
-      - PORT=3004
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
-      - REDIS_URL=redis://redis:6379
-      - LOG_LEVEL=warn
-    depends_on:
-      neo4j:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/agentic-ai/logs:/app/logs
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
-
-  project-manager:
-    build:
-      context: .
-      dockerfile: services/project-manager/Dockerfile
-    ports:
-      - "3005:3005"
-    environment:
-      - NODE_ENV=development
-      - PORT=3005
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ai_code_review}
-      - REDIS_URL=redis://redis:6379
-      - LOG_LEVEL=warn
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/project-manager/logs:/app/logs
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
-
   llm-service:
     build:
       context: .
       dockerfile: services/llm-service/Dockerfile
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       - SERVICE_NAME=llm-service
       - PORT=8000
@@ -269,6 +96,28 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ai_code_review}
+      - REDIS_URL=redis://redis:6379
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:

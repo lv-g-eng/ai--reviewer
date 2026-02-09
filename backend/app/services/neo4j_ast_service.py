@@ -55,15 +55,26 @@ class Neo4jASTService(BaseNeo4jService):
                     await self._insert_function(session, func, project_id, module.file_path, None)
                 
                 # Insert imports as dependencies
+                from app.services.layer_classifier import layer_classifier
+                
                 for imp in module.imports:
                     file_id = f"{project_id}::{module.file_path}"
                     target_module = imp.module_name
                     
+                    # Classify target module
+                    layer_type, layer_rank = layer_classifier.classify_module(target_module)
+                    
                     await session.run("""
                         MATCH (source:File {fileId: $sourceId})
                         MERGE (target:Module {moduleId: $targetModule})
+                        SET target.name = $targetModule,
+                            target.layerType = $layerType,
+                            target.layerRank = $layerRank
                         MERGE (source)-[:DEPENDS_ON {type: 'import', weight: 1.0}]->(target)
-                    """, sourceId=file_id, targetModule=target_module)
+                    """, sourceId=file_id, 
+                         targetModule=target_module,
+                         layerType=layer_type,
+                         layerRank=layer_rank)
                 
                 return True
                 
@@ -379,39 +390,315 @@ class Neo4jASTService(BaseNeo4jService):
                 print(f"Error deleting project graph: {e}")
                 return False
     
-    async def update_node_incremental(
+    async def detect_cyclic_dependencies(
         self,
-        node_id: str,
-        properties: Dict[str, Any]
-    ) -> bool:
+        project_id: str
+    ) -> List[Dict[str, Any]]:
         """
-        Update an existing node incrementally
+        Detect cyclic dependencies in the project
+        """
+        from app.services.cache_manager import analysis_cache
         
-        Args:
-            node_id: Node identifier
-            properties: Properties to update
+        # Check cache
+        cached = await analysis_cache.get_cached_result(project_id, "cyclic_dependencies")
+        if cached:
+            return cached
             
-        Returns:
-            Success status
+        # Use cypher_queries module
+        from app.services import cypher_queries
+        
+        results = await self.run_query(
+            cypher_queries.CYCLIC_DEPENDENCY_QUERY,
+            projectId=project_id
+        )
+        
+        cycles = []
+        for record in results:
+            cycle = {
+                'module': record.get('module'),
+                'cycle_path': record.get('cycle_path', []),
+                'cycle_length': record.get('cycle_length'),
+                'severity': 'CRITICAL' if record.get('cycle_length') == 2 else 'HIGH',
+                'dependency_reasons': record.get('dependency_reasons', [])
+            }
+            cycles.append(cycle)
+        
+        # Store in cache
+        await analysis_cache.set_cached_result(project_id, "cyclic_dependencies", cycles)
+        
+        return cycles
+    
+    async def detect_layer_violations(
+        self,
+        project_id: str,
+        layer_definitions: Optional[Dict[str, List[str]]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Detect layer violations (e.g., Controller directly to Repository)
+        """
+        from app.services.cache_manager import analysis_cache
+        
+        # Check cache
+        cached = await analysis_cache.get_cached_result(project_id, "layer_violations", layer_definitions)
+        if cached:
+            return cached
+            
+        from app.services import cypher_queries
+        
+        results = await self.run_query(
+            cypher_queries.LAYER_VIOLATION_QUERY,
+            projectId=project_id
+        )
+        
+        violations = []
+        for record in results:
+            violation = {
+                'source_module': record.get('source_module'),
+                'source_type': record.get('source_type', 'Unknown'),
+                'target_module': record.get('target_module'),
+                'target_type': record.get('target_type', 'Unknown'),
+                'violation_path': record.get('violation_path', []),
+                'violation_type': 'layer_skip',
+                'severity': 'HIGH',
+                'reasons': record.get('reasons', [])
+            }
+            violations.append(violation)
+        
+        # Store in cache
+        await analysis_cache.set_cached_result(project_id, "layer_violations", violations, layer_definitions)
+        
+        return violations
+    
+    async def detect_direct_cycles(self, project_id: str) -> List[Dict[str, Any]]:
+        """
+        Detect only direct 2-hop cyclic dependencies (most critical)
+        """
+        from app.services import cypher_queries
+        
+        results = await self.run_query(
+            cypher_queries.DIRECT_CYCLES_QUERY,
+            projectId=project_id
+        )
+        
+        return [
+            {
+                'module_a': r.get('module_a'),
+                'module_b': r.get('module_b'),
+                'type': 'DIRECT_CYCLE',
+                'severity': 'CRITICAL'
+            }
+            for r in results
+        ]
+    
+    async def find_cyclic_services(self, project_id: str) -> List[Dict[str, Any]]:
+        """
+        Find cycles specifically in Service layer
+        """
+        from app.services import cypher_queries
+        
+        results = await self.run_query(
+            cypher_queries.CYCLIC_SERVICE_QUERY,
+            projectId=project_id
+        )
+        
+        return results
+    
+    async def detect_all_layer_violations(
+        self,
+        project_id: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Detect all layer violations (not just Controller->Repository)
+        """
+        from app.services import cypher_queries
+        
+        results = await self.run_query(
+            cypher_queries.ALL_LAYER_VIOLATIONS_QUERY,
+            projectId=project_id
+        )
+        
+        return results
+    
+    async def calculate_coupling_metrics(self, project_id: str) -> Dict[str, Any]:
+        """
+        Calculate coupling metrics for all modules
+        """
+        from app.services.cache_manager import analysis_cache
+        
+        cached = await analysis_cache.get_cached_result(project_id, "coupling_metrics")
+        if cached:
+            return cached
+            
+        from app.services import cypher_queries
+        
+        # Get efferent coupling
+        efferent_results = await self.run_query(
+            cypher_queries.EFFERENT_COUPLING_QUERY,
+            projectId=project_id
+        )
+        
+        # Get afferent coupling
+        afferent_results = await self.run_query(
+            cypher_queries.AFFERENT_COUPLING_QUERY,
+            projectId=project_id
+        )
+        
+        # Get instability index
+        instability_results = await self.run_query(
+            cypher_queries.INSTABILITY_INDEX_QUERY,
+            projectId=project_id
+        )
+        
+        result = {
+            'efferent_coupling': efferent_results,
+            'afferent_coupling': afferent_results,
+            'instability_metrics': instability_results
+        }
+        
+        await analysis_cache.set_cached_result(project_id, "coupling_metrics", result)
+        
+        return result
+    
+    async def find_longest_dependency_paths(
+        self,
+        project_id: str,
+        limit: int = 20
+    ) -> List[Dict[str, Any]]:
+        """
+        Find longest dependency paths (refactoring candidates)
+        """
+        from app.services.cache_manager import analysis_cache
+        
+        params = {"limit": limit}
+        cached = await analysis_cache.get_cached_result(project_id, "longest_paths", params)
+        if cached:
+            return cached
+            
+        from app.services import cypher_queries
+        
+        results = await self.run_query(
+            cypher_queries.LONGEST_DEPENDENCY_PATHS_QUERY,
+            projectId=project_id
+        )
+        
+        await analysis_cache.set_cached_result(project_id, "longest_paths", results, params)
+        
+        return results
+        
+        # Modify query to include limit
+        query = cypher_queries.LONGEST_DEPENDENCY_PATHS_QUERY.replace(
+            'LIMIT 20',
+            f'LIMIT {limit}'
+        )
+        
+        results = await self.run_query(query, projectId=project_id)
+        return results
+    
+    async def generate_weekly_drift_report(
+        self,
+        project_id: str
+    ) -> Dict[str, Any]:
+        """
+        Generate comprehensive weekly drift report
+        """
+        from app.services import cypher_queries
+        
+        results = await self.run_query(
+            cypher_queries.WEEKLY_DRIFT_REPORT_QUERY,
+            projectId=project_id
+        )
+        
+        if results:
+            return dict(results[0])
+        
+        return {
+            'cycle_count': 0,
+            'violation_count': 0,
+            'average_instability': 0.0,
+            'unstable_modules': 0
+        }
+
+    async def run_query(
+        self,
+        query: str,
+        **parameters
+    ) -> List[Dict[str, Any]]:
+        """
+        Execute a Cypher query and return results
         """
         async with self.driver.session(database=settings.NEO4J_DATABASE) as session:
-            try:
-                # Generic update - works for any node type
-                set_clause = ", ".join([f"n.{key} = ${key}" for key in properties.keys()])
-                
-                query = f"""
-                MATCH (n)
-                WHERE id(n) = $nodeId OR 
-                      n.projectId = $nodeId OR
-                      n.moduleId = $nodeId OR
-                      n.classId = $nodeId OR
-                      n.functionId = $nodeId OR
-                      n.fileId = $nodeId
-                SET {set_clause}
-                """
-                
-                await session.run(query, nodeId=node_id, **properties)
-                return True
-            except Exception as e:
-                print(f"Error updating node: {e}")
-                return False
+            result = await session.run(query, parameters)
+            records = await result.data()
+            return records
+
+    async def detect_drift(
+        self,
+        project_id: str,
+        baseline_version: str = "latest"
+    ) -> Dict[str, Any]:
+        """
+        Comprehensive drift detection
+        """
+        import asyncio
+        
+        # Run all detection tasks in parallel
+        cycles, violations, metrics = await asyncio.gather(
+            self.detect_cyclic_dependencies(project_id),
+            self.detect_layer_violations(project_id),
+            self.calculate_coupling_metrics(project_id)
+        )
+        
+        # Generate comprehensive report
+        report = {
+            'project_id': project_id,
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'baseline_version': baseline_version,
+            'cyclic_dependencies': {
+                'count': len(cycles),
+                'details': cycles,
+                'severity': max([c['severity'] for c in cycles]) if cycles else 'NONE'
+            },
+            'layer_violations': {
+                'count': len(violations),
+                'details': violations,
+                'severity': 'HIGH' if violations else 'NONE'
+            },
+            'coupling_metrics': metrics,
+            'overall_score': self._calculate_drift_score(cycles, violations, metrics),
+            'status': 'completed'
+        }
+        
+        return report
+    
+    def _calculate_drift_score(
+        self,
+        cycles: List[Dict],
+        violations: List[Dict],
+        metrics: Dict
+    ) -> float:
+        """
+        Calculate overall architectural drift score (0-100)
+        
+        0 = No drift, 100 = Severe drift
+        """
+        score = 0.0
+        
+        # Cycles contribute to score
+        direct_cycles = sum(1 for c in cycles if c.get('cycle_length') == 2)
+        indirect_cycles = sum(1 for c in cycles if c.get('cycle_length', 0) > 2)
+        
+        score += direct_cycles * 15  # Direct cycles are critical
+        score += indirect_cycles * 8
+        
+        # Layer violations contribute
+        score += len(violations) * 10
+        
+        # High instability modules
+        unstable_modules = metrics.get('instability_metrics', [])
+        high_instability = sum(1 for m in unstable_modules 
+                              if m.get('instability_index', 0) > 0.7)
+        score += high_instability * 5
+        
+        # Cap at 100
+        return min(score, 100.0)
+

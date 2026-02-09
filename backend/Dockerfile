@@ -3,7 +3,7 @@
 
 # Stage 1: Builder
 # Use Python slim-bookworm image for security updates
-FROM python:3.14-slim-bookworm AS builder
+FROM python:3.13-slim-bookworm AS builder
 
 # Set working directory
 WORKDIR /build
@@ -22,11 +22,11 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade pip setuptools wheel && \
-    pip install --only-binary :all: -r requirements.txt
+    pip install -r requirements.txt
 
 # Stage 2: Runtime
 # Use minimal Alpine Linux image with specific version for reproducibility
-FROM python:3.14-alpine3.21
+FROM python:3.13-alpine3.21
 
 # Set working directory
 WORKDIR /app

@@ -17,7 +17,7 @@ Each query includes detailed explanation of the pattern matching logic.
 
 CYCLIC_DEPENDENCY_QUERY = """
 MATCH (p:Project {projectId: $projectId})-[:CONTAINS]->(m1:Module)
-MATCH path = (m1)-[:DEPENDS_ON*2..10]->(m1)
+MATCH path = (m1)-[:DEPENDS_ON*2..6]->(m1)
 WITH m1, path, relationships(path) as rels
 RETURN m1.name AS module,
        [n IN nodes(path) | n.name] AS cycle_path,
@@ -76,13 +76,13 @@ MATCH (m2)-[d2:DEPENDS_ON]->(m3:Module)
 MATCH (m3)-[:DEPENDS_ON]->(m4:Module)
 
 // Check for direct controller -> repository connection (skipping service)
-WHERE (toLower(m1.name) CONTAINS 'controller' OR toLower(m1.type) CONTAINS 'controller')
-AND (toLower(m3.name) CONTAINS 'repository' OR toLower(m3.type) CONTAINS 'repository')
+WHERE m1.layerType IN ['controller', 'api', 'endpoint']
+  AND m3.layerType IN ['repository', 'data', 'dao']
 
 // Verify there's no intermediate service layer
 AND NOT EXISTS {
     MATCH (m1)-[:DEPENDS_ON]->(svc:Module)
-    WHERE (toLower(svc.name) CONTAINS 'service' OR toLower(svc.type) CONTAINS 'service')
+    WHERE svc.layerType IN ['service', 'manager']
     AND (svc)-[:DEPENDS_ON]->(m3)
 }
 
@@ -181,14 +181,14 @@ RETURN m1.name AS internal_module,
 ALL_LAYER_VIOLATIONS_QUERY = """
 MATCH (p:Project {projectId: $projectId})-[:CONTAINS]->(source:Module)
 MATCH (source)-[d1:DEPENDS_ON*1..3]->(target:Module)
-WHERE source.layer IS NOT NULL 
-  AND target.layer IS NOT NULL
-  AND source.layer < target.layer - 1
+WHERE source.layerRank IS NOT NULL 
+  AND target.layerRank IS NOT NULL
+  AND source.layerRank < target.layerRank - 1
 RETURN source.name AS source,
-       source.layer AS source_layer,
+       source.layerRank AS source_layer,
        target.name AS target,
-       target.layer AS target_layer,
-       (target.layer - source.layer) AS layers_skipped
+       target.layerRank AS target_layer,
+       (target.layerRank - source.layerRank) AS layers_skipped
 ORDER BY layers_skipped DESC
 """
 

@@ -4,7 +4,7 @@ GitHub webhook and integration endpoints
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header, BackgroundTasks
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Annotated
 from datetime import datetime
 import json
 import logging
@@ -425,8 +425,8 @@ async def handle_pull_request_event(
 @router.post("/pr/{pr_id}/analyze")
 async def analyze_pull_request(
     pr_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     Manually trigger analysis of a pull request
@@ -467,8 +467,8 @@ async def analyze_pull_request(
 @router.get("/pr/{pr_id}/review")
 async def get_code_review(
     pr_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     Get code review results for a pull request
@@ -533,9 +533,9 @@ async def get_code_review(
 @router.post("/projects/{project_id}/sync", response_model=Message)
 async def sync_project(
     project_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-    _: bool = Depends(check_project_access)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[bool, Depends(check_project_access)]
 ):
     """
     Manually trigger project synchronization with GitHub
@@ -564,10 +564,10 @@ async def sync_project(
 @router.get("/projects/{project_id}/pulls")
 async def list_project_pulls(
     project_id: str,
-    state: str = "open",
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-    _: bool = Depends(check_project_access)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[bool, Depends(check_project_access)],
+    state: str = "open"
 ):
     """
     List pull requests for a project
@@ -618,8 +618,8 @@ async def list_project_pulls(
 @router.get("/pulls/{pr_id}/files")
 async def get_pr_files(
     pr_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     Get changed files in a pull request

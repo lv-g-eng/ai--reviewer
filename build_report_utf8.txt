@@ -1,0 +1,133 @@
+﻿#1 [internal] load local bake definitions
+#1 reading from stdin 764B 0.1s done
+#1 DONE 0.1s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.19kB done
+#2 DONE 0.0s
+
+#3 [auth] library/node:pull token for registry-1.docker.io
+#3 DONE 0.0s
+
+#4 [internal] load metadata for docker.io/library/node:18-alpine
+#4 DONE 2.2s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 200B done
+#5 DONE 0.0s
+
+#6 [builder 1/9] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
+#6 resolve docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e 0.0s done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 1.40kB 3.9s done
+#7 DONE 3.9s
+
+#8 [production  4/10] COPY package*.json ./
+#8 CACHED
+
+#9 [production  6/10] COPY shared ./shared
+#9 CACHED
+
+#10 [production  3/10] WORKDIR /app
+#10 CACHED
+
+#11 [production  5/10] COPY services/code-review-engine/package*.json ./services/code-review-engine/
+#11 CACHED
+
+#12 [production  2/10] RUN apk add --no-cache dumb-init &&     apk upgrade --no-cache
+#12 CACHED
+
+#13 [builder 7/9] RUN npm install
+#13 CACHED
+
+#14 [builder 4/9] COPY tsconfig.json ./
+#14 CACHED
+
+#15 [builder 2/9] WORKDIR /app
+#15 CACHED
+
+#16 [builder 6/9] COPY shared ./shared
+#16 CACHED
+
+#17 [builder 5/9] COPY services/code-review-engine/package*.json ./services/code-review-engine/
+#17 CACHED
+
+#18 [builder 3/9] COPY package*.json ./
+#18 CACHED
+
+#19 [builder 8/9] COPY services/code-review-engine ./services/code-review-engine
+#19 CACHED
+
+#20 [production  7/10] RUN npm install --omit=dev --ignore-scripts &&     npm cache clean --force
+#20 CACHED
+
+#21 [builder 9/9] RUN npm run build -w services/code-review-engine
+#21 0.496 
+#21 0.496 > @ai-code-review/code-review-engine@1.0.0 build
+#21 0.496 > tsc
+#21 0.496 
+#21 3.090 ../../shared/config/unified-config.ts(12,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+#21 3.092 ../../shared/config/unified-config.ts(189,14): error TS2323: Cannot redeclare exported variable 'UnifiedConfigSchema'.
+#21 3.092 ../../shared/config/unified-config.ts(616,15): error TS2484: Export declaration conflicts with exported declaration of 'UnifiedConfig'.
+#21 3.092 ../../shared/config/unified-config.ts(617,10): error TS2323: Cannot redeclare exported variable 'UnifiedConfigSchema'.
+#21 3.093 ../../shared/config/unified-config.ts(617,10): error TS2484: Export declaration conflicts with exported declaration of 'UnifiedConfigSchema'.
+#21 3.093 ../../shared/integration/api-integration.ts(12,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+#21 3.093 ../../shared/integration/api-integration.ts(13,28): error TS2307: Cannot find module 'socket.io-client' or its corresponding type declarations.
+#21 3.094 ../../shared/integration/api-integration.ts(420,37): error TS2304: Cannot find name 'React'.
+#21 3.095 ../../shared/integration/api-integration.ts(421,43): error TS2304: Cannot find name 'React'.
+#21 3.096 ../../shared/integration/api-integration.ts(423,3): error TS2304: Cannot find name 'React'.
+#21 3.097 ../../shared/integration/api-integration.ts(452,33): error TS2304: Cannot find name 'React'.
+#21 3.097 ../../shared/integration/api-integration.ts(454,3): error TS2304: Cannot find name 'React'.
+#21 3.134 npm error Lifecycle script `build` failed with error:
+#21 3.135 npm error code 2
+#21 3.136 npm error path /app/services/code-review-engine
+#21 3.136 npm error workspace @ai-code-review/code-review-engine@1.0.0
+#21 3.136 npm error location /app/services/code-review-engine
+#21 3.136 npm error command failed
+#21 3.136 npm error command sh -c tsc
+#21 ERROR: process "/bin/sh -c npm run build -w services/code-review-engine" did not complete successfully: exit code: 2
+------
+ > [builder 9/9] RUN npm run build -w services/code-review-engine:
+3.096 ../../shared/integration/api-integration.ts(423,3): error TS2304: Cannot find name 'React'.
+3.097 ../../shared/integration/api-integration.ts(452,33): error TS2304: Cannot find name 'React'.
+3.097 ../../shared/integration/api-integration.ts(454,3): error TS2304: Cannot find name 'React'.
+3.134 npm error Lifecycle script `build` failed with error:
+3.135 npm error code 2
+3.136 npm error path /app/services/code-review-engine
+3.136 npm error workspace @ai-code-review/code-review-engine@1.0.0
+3.136 npm error location /app/services/code-review-engine
+3.136 npm error command failed
+3.136 npm error command sh -c tsc
+------
+docker-compose : Dockerfile:15
+所在位置 行:1 字符: 1
++ docker-compose build code-review-engine > build.log 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Dockerfile:15:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+--------------------
+
+  13 |     COPY services/code-review-engine ./services/code-review-engine
+
+  14 |     
+
+  15 | >>> RUN npm run build -w services/code-review-engine
+
+  16 |     
+
+  17 |     # Stage 2: Runtime
+
+--------------------
+
+failed to solve: process "/bin/sh -c npm run build -w services/code-review-engine" did not 
+complete successfully: exit code: 2
+
+
+
+View build details: docker-desktop://dashboard/build/default/default/e5w21tn7at825uawuzvh6u
+118
+

@@ -36,6 +36,19 @@ from app.services.library_management.library_repository import LibraryRepository
 
 logger = logging.getLogger(__name__)
 
+
+def _sanitize_log_input(value: str, max_length: int = 200) -> str:
+    """Sanitize user input for safe logging to prevent log injection."""
+    if not value:
+        return ""
+    # Remove newlines and control characters that could break log format
+    sanitized = value.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+    # Truncate to prevent log flooding
+    if len(sanitized) > max_length:
+        sanitized = sanitized[:max_length] + "...[truncated]"
+    return sanitized
+
+
 router = APIRouter()
 
 
@@ -71,11 +84,11 @@ async def validate_library(
     """
     try:
         logger.info(
-            f"Validating library URI: {request.uri}",
+            f"Validating library URI: {_sanitize_log_input(request.uri)}",
             extra={
                 'user_id': str(current_user.id),
                 'operation': 'validate_library_endpoint',
-                'uri': request.uri,
+                'uri': _sanitize_log_input(request.uri),
                 'project_context': request.project_context.value if request.project_context else None
             }
         )
@@ -301,12 +314,12 @@ async def search_libraries(
     """
     try:
         logger.info(
-            f"Searching libraries: query='{q}', registry={registry}",
+            f"Searching libraries: query='{_sanitize_log_input(q)}', registry={_sanitize_log_input(registry or '')}",
             extra={
                 'user_id': str(current_user.id),
                 'operation': 'search_libraries_endpoint',
-                'query': q,
-                'registry_filter': registry
+                'query': _sanitize_log_input(q),
+                'registry_filter': _sanitize_log_input(registry or '')
             }
         )
         

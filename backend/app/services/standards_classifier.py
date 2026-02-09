@@ -65,8 +65,10 @@ class StandardsClassifier:
             "security": {
                 "characteristic": "security",
                 "sub_characteristics": {
+                    # Note: These are security CATEGORY keywords for classification,
+                    # NOT credentials. Used to map findings to ISO 25010 sub-characteristics.
                     "authentication": "Authenticity",
-                    "password": "Authenticity",
+                    "password": "Authenticity",  # noqa: S105 - classification keyword, not credential
                     "mfa": "Authenticity",
                     "authorization": "Confidentiality",
                     "encryption": "Confidentiality",

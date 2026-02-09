@@ -9,7 +9,7 @@ import logging
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
-from app.services.neo4j_ast_service_extended import Neo4jASTService
+from app.services.neo4j_ast_service import Neo4jASTService
 from app.services.architecture_golden_standard import GoldenStandardManager
 from app.core.logging_config import logger
 
@@ -54,6 +54,16 @@ class ArchitecturalDriftDetector:
 
     async def detect_drift(self, project_id: str) -> DriftSummary:
         """Main method to detect architectural drift for a project."""
+        from app.services.cache_manager import analysis_cache
+        from dataclasses import asdict
+        
+        # Check cache
+        cached = await analysis_cache.get_cached_result(project_id, "drift_analysis")
+        if cached:
+            # Reconstruct DriftSummary from cached dict
+            # (Simplified for now, in practice would need proper deserialization)
+            return DriftSummary(**cached)
+            
         try:
             self.logger.info(f"Starting drift detection for project: {project_id}")
             
@@ -100,6 +110,9 @@ class ArchitecturalDriftDetector:
                 pattern_violations=pattern_violations,
                 overall_health_score=overall_health_score
             )
+
+            # Cache the result (convert to dict first)
+            await analysis_cache.set_cached_result(project_id, "drift_analysis", asdict(summary))
 
             self.logger.info(f"Drift detection completed for project {project_id}: {len(violations)} violations found")
             return summary

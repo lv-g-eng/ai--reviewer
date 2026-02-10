@@ -1,5 +1,5 @@
 # FastAPI and Web Framework - UPDATED FOR SECURITY
-fastapi==0.128.0
+fastapi==0.128.7
 uvicorn[standard]==0.32.0
 python-multipart==0.0.18  # Updated from 0.0.12 - fixes CVE-2024-53981
 pydantic==2.12.5

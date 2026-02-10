@@ -18,8 +18,8 @@ celery==5.4.0
 pyjwt[crypto]==2.9.0
 python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
-bcrypt==4.2.1
-cryptography==43.0.3
+bcrypt==5.0.0
+cryptography==46.0.5
 
 # Configuration
 pydantic==2.12.5

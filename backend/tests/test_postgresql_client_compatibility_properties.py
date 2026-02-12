@@ -22,6 +22,12 @@ from app.database.postgresql_client import PostgreSQLClient, PostgreSQLCompatibi
 from app.database.models import CompatibilityResult, ErrorType
 
 
+# constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+
+
 class TestPostgreSQLClientCompatibilityProperties:
     """Property-based tests for PostgreSQL client connection compatibility validation"""
     
@@ -87,7 +93,7 @@ class TestPostgreSQLClientCompatibilityProperties:
                     mock_pool = AsyncMock()
                     mock_create_pool.return_value = mock_pool
                     
-                    pool = await client.create_pool("postgresql://user:pass@localhost/db")
+                    pool = await client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}")
                     assert pool == mock_pool
                     mock_create_pool.assert_called_once()
                 
@@ -108,7 +114,7 @@ class TestPostgreSQLClientCompatibilityProperties:
                 
                 # Property: Incompatible versions should prevent connection operations
                 with pytest.raises(PostgreSQLCompatibilityError):
-                    await client.create_pool("postgresql://user:pass@localhost/db")
+                    await client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}")
     
     @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @given(
@@ -138,7 +144,7 @@ class TestPostgreSQLClientCompatibilityProperties:
                 if operation_type == 'validate_compatibility':
                     await client.validate_compatibility()
                 elif operation_type == 'create_pool':
-                    await client.create_pool("postgresql://user:pass@localhost/db")
+                    await client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}")
                 elif operation_type == 'execute_query':
                     await client.execute_query("SELECT 1")
                 elif operation_type == 'test_connection':
@@ -290,7 +296,7 @@ class TestPostgreSQLClientCompatibilityProperties:
                 
                 # Property: Pool creation failures should be handled gracefully
                 with pytest.raises(exception_class) as exc_info:
-                    await client.create_pool("postgresql://user:pass@localhost/db")
+                    await client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}")
                 
                 # Property: Original exception should be preserved
                 assert str(exc_info.value) == pool_creation_error

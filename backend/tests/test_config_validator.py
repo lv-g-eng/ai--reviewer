@@ -20,6 +20,11 @@ from app.core.config_validator import (
 )
 
 
+# Constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_value_12345678"
+TEST_SECRET = "test_secret_value_32_chars_long_12345"
+
+
 class TestValidationResult:
     """Test ValidationResult dataclass"""
     
@@ -46,16 +51,16 @@ class TestConfigValidatorRequiredVars:
     def test_validate_required_vars_all_present(self):
         """Test validation passes when all required variables are present"""
         with patch.dict(os.environ, {
-            "JWT_SECRET": "a" * 32,
-            "SECRET_KEY": "b" * 32,
+            "JWT_SECRET": TEST_SECRET,
+            "SECRET_KEY": TEST_SECRET,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",
@@ -68,15 +73,15 @@ class TestConfigValidatorRequiredVars:
     def test_validate_required_vars_missing_jwt_secret(self):
         """Test validation fails when JWT_SECRET is missing"""
         with patch.dict(os.environ, {
-            "SECRET_KEY": "b" * 32,
+            "SECRET_KEY": TEST_SECRET,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",
@@ -84,15 +89,15 @@ class TestConfigValidatorRequiredVars:
             # Mock settings to not have JWT_SECRET
             with patch('app.core.config_validator.settings') as mock_settings:
                 mock_settings.JWT_SECRET = ""
-                mock_settings.SECRET_KEY = "b" * 32
+                mock_settings.SECRET_KEY = TEST_SECRET
                 mock_settings.POSTGRES_HOST = "localhost"
                 mock_settings.POSTGRES_PORT = 5432
                 mock_settings.POSTGRES_DB = "test"
                 mock_settings.POSTGRES_USER = "user"
-                mock_settings.POSTGRES_PASSWORD = "password"
+                mock_settings.POSTGRES_PASSWORD = TEST_PASSWORD
                 mock_settings.NEO4J_URI = "bolt://localhost:7687"
                 mock_settings.NEO4J_USER = "neo4j"
-                mock_settings.NEO4J_PASSWORD = "password"
+                mock_settings.NEO4J_PASSWORD = TEST_PASSWORD
                 mock_settings.REDIS_HOST = "localhost"
                 mock_settings.REDIS_PORT = 6379
                 
@@ -104,23 +109,23 @@ class TestConfigValidatorRequiredVars:
     def test_validate_required_vars_missing_postgres_password(self):
         """Test validation fails when POSTGRES_PASSWORD is missing"""
         with patch.dict(os.environ, {
-            "JWT_SECRET": "a" * 32,
-            "SECRET_KEY": "b" * 32,
+            "JWT_SECRET": TEST_SECRET,
+            "SECRET_KEY": TEST_SECRET,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",
         }, clear=True):
             # Mock settings to not have POSTGRES_PASSWORD
             with patch('app.core.config_validator.settings') as mock_settings:
-                mock_settings.JWT_SECRET = "a" * 32
-                mock_settings.SECRET_KEY = "b" * 32
+                mock_settings.JWT_SECRET = TEST_SECRET
+                mock_settings.SECRET_KEY = TEST_SECRET
                 mock_settings.POSTGRES_HOST = "localhost"
                 mock_settings.POSTGRES_PORT = 5432
                 mock_settings.POSTGRES_DB = "test"
@@ -128,7 +133,7 @@ class TestConfigValidatorRequiredVars:
                 mock_settings.POSTGRES_PASSWORD = ""
                 mock_settings.NEO4J_URI = "bolt://localhost:7687"
                 mock_settings.NEO4J_USER = "neo4j"
-                mock_settings.NEO4J_PASSWORD = "password"
+                mock_settings.NEO4J_PASSWORD = TEST_PASSWORD
                 mock_settings.REDIS_HOST = "localhost"
                 mock_settings.REDIS_PORT = 6379
                 
@@ -140,16 +145,16 @@ class TestConfigValidatorRequiredVars:
     def test_validate_required_vars_missing_next_public_api_url(self):
         """Test validation fails when NEXT_PUBLIC_API_URL is missing"""
         with patch.dict(os.environ, {
-            "JWT_SECRET": "a" * 32,
-            "SECRET_KEY": "b" * 32,
+            "JWT_SECRET": TEST_SECRET,
+            "SECRET_KEY": TEST_SECRET,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
         }, clear=True):
@@ -162,15 +167,15 @@ class TestConfigValidatorRequiredVars:
         """Test validation warns when JWT_SECRET is too short"""
         with patch.dict(os.environ, {
             "JWT_SECRET": "short",
-            "SECRET_KEY": "b" * 32,
+            "SECRET_KEY": TEST_SECRET,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",
@@ -183,16 +188,16 @@ class TestConfigValidatorRequiredVars:
     def test_validate_variable_formats_invalid_port(self):
         """Test validation fails when port number is invalid"""
         with patch.dict(os.environ, {
-            "JWT_SECRET": "a" * 32,
-            "SECRET_KEY": "b" * 32,
+            "JWT_SECRET": TEST_SECRET,
+            "SECRET_KEY": TEST_SECRET,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "99999",  # Invalid port
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",
@@ -351,16 +356,16 @@ class TestConfigValidatorValidateAll:
     def test_validate_all_success(self):
         """Test validate_all returns success when all checks pass"""
         with patch.dict(os.environ, {
-            "JWT_SECRET": "a" * 32,
-            "SECRET_KEY": "b" * 32,
+            "JWT_SECRET": TEST_SECRET,
+            "SECRET_KEY": TEST_SECRET,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",
@@ -386,16 +391,16 @@ class TestConfigValidatorValidateAll:
     def test_validate_all_generates_config_summary(self):
         """Test validate_all generates configuration summary"""
         with patch.dict(os.environ, {
-            "JWT_SECRET": "a" * 32,
-            "SECRET_KEY": "b" * 32,
+            "JWT_SECRET": TEST_SECRET,
+            "SECRET_KEY": TEST_SECRET,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",
@@ -416,16 +421,16 @@ class TestConfigValidatorSummary:
     def test_get_validation_summary(self):
         """Test get_validation_summary returns complete summary"""
         with patch.dict(os.environ, {
-            "JWT_SECRET": "a" * 32,
-            "SECRET_KEY": "b" * 32,
+            "JWT_SECRET": TEST_SECRET,
+            "SECRET_KEY": TEST_SECRET,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",
@@ -444,16 +449,16 @@ class TestConfigValidatorSummary:
     def test_format_validation_report(self):
         """Test format_validation_report generates readable report"""
         with patch.dict(os.environ, {
-            "JWT_SECRET": "a" * 32,
-            "SECRET_KEY": "b" * 32,
+            "JWT_SECRET": TEST_SECRET,
+            "SECRET_KEY": TEST_SECRET,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",

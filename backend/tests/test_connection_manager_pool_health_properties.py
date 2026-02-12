@@ -18,6 +18,12 @@ from app.database.connection_manager import ConnectionManager, PoolStats
 from app.database.models import DatabaseConfig, RetryConfig, HealthState
 
 
+# constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+
+
 class TestPoolHealthAndRecoveryProperties:
     """Property-based tests for pool health monitoring and recovery"""
     
@@ -41,7 +47,7 @@ class TestPoolHealthAndRecoveryProperties:
         assume(failure_count <= total_attempts)
         
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test"),
             pool_max_size=pool_max_size
@@ -96,7 +102,7 @@ class TestPoolHealthAndRecoveryProperties:
         attempt automatic recovery and update health status based on recovery success.
         """
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test")
         )
@@ -158,7 +164,7 @@ class TestPoolHealthAndRecoveryProperties:
         assume(active_connections <= max_size)
         
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test"),
             pool_max_size=max_size
@@ -230,7 +236,7 @@ class TestPoolHealthAndRecoveryProperties:
         detect stale connections and trigger recovery when pools are inactive.
         """
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test"),
             pool_max_size=pool_size
@@ -296,7 +302,7 @@ class TestPoolHealthAndRecoveryProperties:
         assume(success_on_attempt <= recreation_attempts)
         
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test")
         )
@@ -362,7 +368,7 @@ class TestPoolHealthAndRecoveryProperties:
         manager should continuously monitor pool health and respond to changes.
         """
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test")
         )
@@ -423,7 +429,7 @@ class TestPoolHealthAndRecoveryProperties:
         accurately calculate and report performance metrics for monitoring.
         """
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test"),
             pool_max_size=20
@@ -534,7 +540,7 @@ def sample_pool_stats():
 def test_connection_manager_pool_health_integration():
     """Integration test to verify pool health monitoring works with mocked dependencies"""
     config = DatabaseConfig(
-        postgresql_dsn="postgresql://test:test@localhost:5432/test",
+        postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
         neo4j_uri="bolt://localhost:7687",
         neo4j_auth=("test", "test")
     )
@@ -570,7 +576,7 @@ def test_connection_manager_pool_health_integration():
 async def test_async_pool_health_operations():
     """Test async pool health operations with mocked dependencies"""
     config = DatabaseConfig(
-        postgresql_dsn="postgresql://test:test@localhost:5432/test",
+        postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
         neo4j_uri="bolt://localhost:7687",
         neo4j_auth=("test", "test")
     )

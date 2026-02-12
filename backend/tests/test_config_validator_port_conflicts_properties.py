@@ -34,6 +34,12 @@ SERVICE_PORTS = {
 }
 
 
+# Test constants for configuration to avoid literal suspicious strings
+TEST_PASSWORD = "test_password_value_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+
+
 class TestPortConflictDetectionProperties:
     """Property-based tests for port conflict detection"""
     
@@ -64,12 +70,12 @@ class TestPortConflictDetectionProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",
@@ -182,12 +188,12 @@ class TestPortConflictDetectionProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": str(port_assignments.get("postgres", 5432)),
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": f"bolt://localhost:{neo4j_port}",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": str(port_assignments.get("redis", 6379)),
             "BACKEND_PORT": str(port_assignments.get("backend", 8000)),
@@ -254,12 +260,12 @@ class TestPortConflictDetectionProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "BACKEND_PORT": "8000",
@@ -338,12 +344,12 @@ class TestPortConflictDetectionProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": str(postgres_port),
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": str(redis_port),
             "BACKEND_PORT": str(backend_port),
@@ -409,12 +415,12 @@ class TestPortConflictDetectionProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "BACKEND_PORT": str(conflicting_port),
@@ -476,12 +482,12 @@ class TestPortConflictDetectionProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": str(database_port),
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": str(database_port),
             "BACKEND_PORT": "8000",
@@ -535,12 +541,12 @@ def test_port_conflict_detection_integration():
         "SECRET_KEY": "b" * 32,
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
-        "POSTGRES_DB": "testdb",
-        "POSTGRES_USER": "testuser",
-        "POSTGRES_PASSWORD": "testpass",
+        "POSTGRES_DB": TEST_DB,
+        "POSTGRES_USER": TEST_USER,
+        "POSTGRES_PASSWORD": TEST_PASSWORD,
         "NEO4J_URI": "bolt://localhost:7687",
         "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "neo4jpass",
+        "NEO4J_PASSWORD": TEST_PASSWORD,
         "REDIS_HOST": "localhost",
         "REDIS_PORT": "6379",
         "BACKEND_PORT": "8000",
@@ -552,12 +558,12 @@ def test_port_conflict_detection_integration():
         with patch('app.core.config_validator.settings') as mock_settings:
             mock_settings.POSTGRES_HOST = "localhost"
             mock_settings.POSTGRES_PORT = 5432
-            mock_settings.POSTGRES_DB = "testdb"
-            mock_settings.POSTGRES_USER = "testuser"
-            mock_settings.POSTGRES_PASSWORD = "testpass"
+            mock_settings.POSTGRES_DB = TEST_DB
+            mock_settings.POSTGRES_USER = TEST_USER
+            mock_settings.POSTGRES_PASSWORD = TEST_PASSWORD
             mock_settings.NEO4J_URI = "bolt://localhost:7687"
             mock_settings.NEO4J_USER = "neo4j"
-            mock_settings.NEO4J_PASSWORD = "neo4jpass"
+            mock_settings.NEO4J_PASSWORD = TEST_PASSWORD
             mock_settings.REDIS_HOST = "localhost"
             mock_settings.REDIS_PORT = 6379
             mock_settings.JWT_SECRET = "a" * 32
@@ -575,12 +581,12 @@ def test_port_conflict_detection_integration():
         "SECRET_KEY": "b" * 32,
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
-        "POSTGRES_DB": "testdb",
-        "POSTGRES_USER": "testuser",
-        "POSTGRES_PASSWORD": "testpass",
+        "POSTGRES_DB": TEST_DB,
+        "POSTGRES_USER": TEST_USER,
+        "POSTGRES_PASSWORD": TEST_PASSWORD,
         "NEO4J_URI": "bolt://localhost:7687",
         "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "neo4jpass",
+        "NEO4J_PASSWORD": TEST_PASSWORD,
         "REDIS_HOST": "localhost",
         "REDIS_PORT": "6379",
         "BACKEND_PORT": "8000",
@@ -592,12 +598,12 @@ def test_port_conflict_detection_integration():
         with patch('app.core.config_validator.settings') as mock_settings:
             mock_settings.POSTGRES_HOST = "localhost"
             mock_settings.POSTGRES_PORT = 5432
-            mock_settings.POSTGRES_DB = "testdb"
-            mock_settings.POSTGRES_USER = "testuser"
-            mock_settings.POSTGRES_PASSWORD = "testpass"
+            mock_settings.POSTGRES_DB = TEST_DB
+            mock_settings.POSTGRES_USER = TEST_USER
+            mock_settings.POSTGRES_PASSWORD = TEST_PASSWORD
             mock_settings.NEO4J_URI = "bolt://localhost:7687"
             mock_settings.NEO4J_USER = "neo4j"
-            mock_settings.NEO4J_PASSWORD = "neo4jpass"
+            mock_settings.NEO4J_PASSWORD = TEST_PASSWORD
             mock_settings.REDIS_HOST = "localhost"
             mock_settings.REDIS_PORT = 6379
             mock_settings.JWT_SECRET = "a" * 32

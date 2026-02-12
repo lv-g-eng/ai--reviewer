@@ -247,7 +247,7 @@ app = FastAPI(
 # Security middleware
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0", "*"] if resilient_settings.ENVIRONMENT == "development" else ["yourdomain.com"]
+    allowed_hosts=["localhost", "127.0.0.1"] if resilient_settings.ENVIRONMENT == "development" else ["yourdomain.com"]
 )
 
 # CORS middleware with optimized settings

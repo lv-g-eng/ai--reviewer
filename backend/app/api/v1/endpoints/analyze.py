@@ -67,7 +67,7 @@ class ArchitectureAnalyzer:
         try:
             # Stage 1: Repository Cloning
             self._send_progress("cloning", 10, "Cloning repository...")
-            repo_path = self._clone_repository(request.repositoryUrl)
+            repo_path = await asyncio.to_thread(self._clone_repository, request.repositoryUrl)
             temp_dirs.append(repo_path)
             
             try:
@@ -85,7 +85,7 @@ class ArchitectureAnalyzer:
                 # Stage 4: Architecture Analysis
                 if request.includeArchitectureAnalysis:
                     self._send_progress("architecture", 80, "Analyzing architectural patterns...")
-                    architecture_summary = await asyncio.to_thread(self._analyze_architecture, code_hierarchy, metrics)
+                    architecture_summary = await self._analyze_architecture(code_hierarchy, metrics)
                 else:
                     architecture_summary = {}
                 
@@ -227,10 +227,10 @@ class ArchitectureAnalyzer:
             
             # Parse AST for Python files
             if file_type == "python":
-                return await self._analyze_python_file(content, relative_path, file_type)
+                return self._analyze_python_file(content, relative_path, file_type)
             else:
                 # For non-Python files, do basic analysis
-                return await self._analyze_generic_file(content, relative_path, file_type)
+                return self._analyze_generic_file(content, relative_path, file_type)
                 
         except Exception as e:
             logger.warning(f"Failed to analyze file {file_path}: {str(e)}", exc_info=True)
@@ -423,7 +423,7 @@ class ArchitectureAnalyzer:
         
         return smells
 
-    def _analyze_architecture(self, code_hierarchy: Dict[str, Any], metrics: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_architecture(self, code_hierarchy: Dict[str, Any], metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze architectural patterns and purpose using Ollama."""
         try:
             # Prepare data for LLM analysis
@@ -433,17 +433,17 @@ class ArchitectureAnalyzer:
             ollama_client = LLMClient(LLMProvider.OLLAMA)
             
             # Generate architectural purpose summary
-            architectural_purpose = self._generate_architectural_purpose_ollama(
+            architectural_purpose = await self._generate_architectural_purpose_ollama(
                 architecture_data, ollama_client
             )
             
             # Detect architectural patterns
-            detected_patterns = self._detect_architectural_patterns_ollama(
+            detected_patterns = await self._detect_architectural_patterns_ollama(
                 architecture_data, ollama_client
             )
             
             # Identify potential issues
-            potential_issues = self._identify_potential_issues_ollama(
+            potential_issues = await self._identify_potential_issues_ollama(
                 architecture_data, metrics, ollama_client
             )
             
@@ -473,7 +473,7 @@ class ArchitectureAnalyzer:
             "file_types": list(set(f["type"] for f in code_hierarchy["files"] if f["type"] != "unknown"))
         }
 
-    def _generate_architectural_purpose_ollama(
+    async def _generate_architectural_purpose_ollama(
         self, 
         architecture_data: Dict[str, Any], 
         ollama_client: LLMClient
@@ -499,7 +499,7 @@ class ArchitectureAnalyzer:
                 code_structure_summary
             )
             
-            response = ollama_client.generate_completion(
+            response = await ollama_client.generate_completion(
                 system_prompt="You are an expert software architect analyzing codebase architecture.",
                 user_prompt=prompt,
                 temperature=0.3,
@@ -519,7 +519,7 @@ class ArchitectureAnalyzer:
             logger.error(f"Failed to generate architectural purpose with Ollama: {str(e)}")
             return "Unable to determine architectural purpose due to analysis error."
 
-    def _detect_architectural_patterns_ollama(
+    async def _detect_architectural_patterns_ollama(
         self, 
         architecture_data: Dict[str, Any], 
         ollama_client: LLMClient
@@ -541,7 +541,7 @@ class ArchitectureAnalyzer:
                 code_structure
             )
             
-            response = ollama_client.generate_completion(
+            response = await ollama_client.generate_completion(
                 system_prompt="You are an expert software architect identifying architectural patterns.",
                 user_prompt=prompt,
                 temperature=0.3,
@@ -564,7 +564,7 @@ class ArchitectureAnalyzer:
             logger.error(f"Failed to detect architectural patterns with Ollama: {str(e)}")
             return []
 
-    def _identify_potential_issues_ollama(
+    async def _identify_potential_issues_ollama(
         self, 
         architecture_data: Dict[str, Any], 
         metrics: Dict[str, Any], 
@@ -585,7 +585,7 @@ class ArchitectureAnalyzer:
                 code_structure
             )
             
-            response = ollama_client.generate_completion(
+            response = await ollama_client.generate_completion(
                 system_prompt="You are an expert software architect identifying code quality issues.",
                 user_prompt=prompt,
                 temperature=0.3,
@@ -622,7 +622,7 @@ class ArchitectureAnalyzer:
         - Code Smells: {architecture_data['code_smells']}
         """
 
-    def _detect_architectural_patterns(self, architecture_data: Dict[str, Any]) -> List[str]:
+    async def _detect_architectural_patterns(self, architecture_data: Dict[str, Any]) -> List[str]:
         """Detect architectural patterns using LLM."""
         patterns = []
         
@@ -655,7 +655,7 @@ class ArchitectureAnalyzer:
             try:
                 # Use Ollama for pattern detection as well
                 ollama_client = LLMClient(LLMProvider.OLLAMA)
-                response = ollama_client.generate_completion(
+                response = await ollama_client.generate_completion(
                     system_prompt="You are an expert software architect identifying architectural patterns.",
                     user_prompt=prompt,
                     temperature=0.3,

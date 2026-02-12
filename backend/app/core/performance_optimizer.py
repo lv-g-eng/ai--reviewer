@@ -14,7 +14,7 @@ import json
 import time
 from functools import wraps
 from typing import Any, Dict, List, Optional, Callable, Union
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import redis
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -132,7 +132,7 @@ def optimize_query(func: Callable) -> Callable:
             
             performance_optimizer.metrics[func.__name__].append({
                 'execution_time': execution_time,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
             
             # Keep only last 100 metrics per function
@@ -393,7 +393,7 @@ async def performance_monitoring_middleware(request: Request, call_next):
         'url': str(request.url),
         'process_time': process_time,
         'status_code': response.status_code,
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.now(timezone.utc).isoformat()
     })
     
     # Keep only last 1000 request metrics
@@ -428,7 +428,7 @@ async def get_performance_metrics() -> Dict:
         'query_metrics': performance_optimizer.metrics,
         'cache_stats': await get_cache_statistics(),
         'system_info': {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'uptime': time.time() - getattr(performance_optimizer, 'start_time', time.time())
         }
     }

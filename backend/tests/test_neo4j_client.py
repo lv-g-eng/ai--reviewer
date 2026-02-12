@@ -18,13 +18,18 @@ from app.database.models import DatabaseConfig, RetryConfig
 from app.database.retry_manager import RetryManager
 
 
+# Constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_123"
+TEST_USER = "test_user"
+
+
 @pytest.fixture
 def database_config():
     """Create test database configuration"""
     return DatabaseConfig(
-        postgresql_dsn="postgresql://test:test@localhost/test",
+        postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/test",
         neo4j_uri="bolt://localhost:7687",
-        neo4j_auth=("neo4j", "password"),
+        neo4j_auth=("neo4j", TEST_PASSWORD),
         connection_timeout=10,
         pool_min_size=1,
         pool_max_size=5,

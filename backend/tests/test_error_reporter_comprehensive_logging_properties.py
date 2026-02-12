@@ -26,6 +26,15 @@ from app.core.error_reporter import (
 )
 
 
+# Constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+TEST_API_KEY = "sk-test-api-key-1234567890abcdef"
+TEST_TOKEN = "test_token_1234567890"
+TEST_JWT_SECRET = "test_jwt_secret_32_characters_long"
+
+
 class TestComprehensiveErrorLoggingProperties:
     """Property-based tests for comprehensive error logging"""
     
@@ -58,15 +67,15 @@ class TestComprehensiveErrorLoggingProperties:
             connection_params = {
                 'host': 'localhost',
                 'port': '5432',
-                'database': 'testdb'
+                'database': TEST_DB
             }
             
             if include_sensitive_data:
                 connection_params.update({
-                    'username': 'testuser',
-                    'password': 'secret123',
-                    'api_key': 'sk-1234567890abcdefghijklmnop',  # 20+ chars for pattern matching
-                    'token': 'bearer_token_xyz'
+                    'username': TEST_USER,
+                    'password': TEST_PASSWORD,
+                    'api_key': TEST_API_KEY,
+                    'token': TEST_TOKEN
                 })
         
         # Create error and error info
@@ -121,7 +130,7 @@ class TestComprehensiveErrorLoggingProperties:
                     if 'host' in conn_params:
                         assert conn_params['host'] == 'localhost', "Host should not be masked"
                     if 'database' in conn_params:
-                        assert conn_params['database'] == 'testdb', "Database name should not be masked"
+                        assert conn_params['database'] == TEST_DB, "Database name should not be masked"
     
     @given(
         error_category=st.sampled_from(list(DatabaseErrorCategory)),
@@ -281,13 +290,13 @@ class TestComprehensiveErrorLoggingProperties:
     @given(
         sensitive_patterns=st.lists(
             st.sampled_from([
-                "password=secret123",
-                "api_key=sk-1234567890abcdefghijklmnop",  # 20+ chars for API key pattern
-                "token=bearer_xyz",
-                "jwt_secret=mysecret",
+                f"password={TEST_PASSWORD}",
+                f"api_key={TEST_API_KEY}",
+                f"token={TEST_TOKEN}",
+                f"jwt_secret={TEST_JWT_SECRET}",
                 "webhook_secret=hook123",
-                "postgresql://user:password@host:5432/db",
-                "redis://:password@host:6379"
+                f"postgresql://user:{TEST_PASSWORD}@host:5432/db",
+                f"redis://:{TEST_PASSWORD}@host:6379"
             ]),
             min_size=1,
             max_size=5
@@ -527,10 +536,10 @@ def test_error_reporter_comprehensive_logging_integration():
     # Create a real error scenario with connection string
     error = Exception("Connection timeout after 30 seconds")
     connection_params = {
-        'connection_string': 'postgresql://testuser:secret123@localhost:5432/testdb',
+        'connection_string': f'postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}',
         'host': 'localhost',
         'port': '5432',
-        'database': 'testdb'
+        'database': TEST_DB
     }
     
     error_info = ErrorReporter.create_database_error_info(

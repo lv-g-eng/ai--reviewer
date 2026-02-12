@@ -9,7 +9,7 @@ Validates Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6
 
 import logging
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Optional
 from enum import Enum
 
@@ -182,7 +182,7 @@ class HealthService:
             status=health_status.value,
             version=settings.VERSION,
             environment=settings.ENVIRONMENT,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             databases=databases,
             services=services,
         )
@@ -214,7 +214,7 @@ class HealthService:
             response = ReadinessCheckResponse(
                 ready=False,
                 reason=f"PostgreSQL not connected: {error_msg}",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
             )
             logger.warning(f"Not ready: PostgreSQL not connected - {error_msg}")
             return response
@@ -229,7 +229,7 @@ class HealthService:
                 response = ReadinessCheckResponse(
                     ready=False,
                     reason=f"{migration_status.pending_count} pending migrations",
-                    timestamp=datetime.utcnow().isoformat(),
+                    timestamp=datetime.now(timezone.utc).isoformat(),
                 )
                 logger.warning(f"Not ready: {migration_status.pending_count} pending migrations")
                 return response
@@ -240,7 +240,7 @@ class HealthService:
         response = ReadinessCheckResponse(
             ready=True,
             reason="All required dependencies ready",
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
         logger.info("Ready")
         return response
@@ -261,7 +261,7 @@ class HealthService:
         
         response = LivenessCheckResponse(
             alive=True,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
         logger.info("Alive")
         return response

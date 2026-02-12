@@ -269,7 +269,7 @@ class SecurityComplianceService:
                 """, {'project_id': project_id}).single()
                 
                 if not project_result:
-                    logger.warning(f"Project {_sanitize_log_input(project_id)} not found")
+                    logger.warning("Project [ID masked] not found")
                     return None
                 
                 # Get vulnerabilities grouped by severity

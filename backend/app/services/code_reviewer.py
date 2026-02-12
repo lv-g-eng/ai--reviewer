@@ -132,7 +132,7 @@ class CodeReviewer:
             )
             
             # Get LLM analysis
-            analysis = await self.llm.generate(prompt)
+            analysis = await self.llm.generate_completion(prompt)
             
             # Process LLM response
             comments = self._process_llm_response(analysis, file_change['file_path'])

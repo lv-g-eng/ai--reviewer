@@ -246,7 +246,7 @@ async def update_repository(
         from app.models.repository import Repository
         from sqlalchemy import select
         from uuid import UUID
-        from datetime import datetime
+        from datetime import datetime, timezone
         
         # Convert string to UUID
         try:
@@ -283,7 +283,7 @@ async def update_repository(
                 setattr(repository, field, value)
         
         # Update timestamp
-        repository.updated_at = datetime.utcnow()
+        repository.updated_at = datetime.now(timezone.utc)
         
         # Commit changes
         await db.commit()
@@ -318,7 +318,7 @@ async def delete_repository(
         from app.models.repository import Repository
         from sqlalchemy import select
         from uuid import UUID
-        from datetime import datetime
+        from datetime import datetime, timezone
         
         # Convert string to UUID
         try:
@@ -350,7 +350,7 @@ async def delete_repository(
         
         # Soft delete by setting status to archived
         repository.status = "archived"
-        repository.updated_at = datetime.utcnow()
+        repository.updated_at = datetime.now(timezone.utc)
         
         # Commit changes
         await db.commit()
@@ -391,7 +391,7 @@ async def sync_repository(
         from app.models.repository import Repository
         from sqlalchemy import select
         from uuid import UUID
-        from datetime import datetime
+        from datetime import datetime, timezone
         
         # Convert string to UUID
         try:
@@ -435,8 +435,8 @@ async def sync_repository(
             )
         
         # Update last synced timestamp
-        repository.last_synced = datetime.utcnow()
-        repository.updated_at = datetime.utcnow()
+        repository.last_synced = datetime.now(timezone.utc)
+        repository.updated_at = datetime.now(timezone.utc)
         
         # Update metadata if available
         if validation.metadata:

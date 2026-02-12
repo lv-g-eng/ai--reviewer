@@ -105,7 +105,7 @@ class TestWebhookIntegration:
                 'full_name': 'owner/repo'
             },
             'sender': {
-                'login': 'testuser'
+                'login': 'test_webhook_user'
             }
         }
         

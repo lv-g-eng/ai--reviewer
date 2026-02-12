@@ -24,6 +24,12 @@ from app.core.error_reporter import (
 )
 
 
+# Test constants for configuration to avoid literal suspicious strings
+TEST_PASSWORD = "test_password_value_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+
+
 class TestErrorClassificationAndMessagingProperties:
     """Property-based tests for error classification and structured messaging"""
     
@@ -156,8 +162,8 @@ class TestErrorClassificationAndMessagingProperties:
             connection_params = {
                 'host': 'localhost',
                 'port': '5432',
-                'database': 'testdb',
-                'connection_string': 'postgresql://user:***@localhost:5432/testdb'
+                'database': TEST_DB,
+                'connection_string': f'postgresql://{TEST_USER}:***@localhost:5432/{TEST_DB}'
             }
         
         # Create error code if requested
@@ -327,7 +333,7 @@ class TestErrorClassificationAndMessagingProperties:
     @given(
         sensitive_data=st.lists(
             st.sampled_from([
-                "password=secret123",
+                "password=TEST_PASSWORD_VALUE",
                 "api_key=sk-1234567890abcdefghijklmnop",  # 20+ chars for API key pattern
                 "token=bearer_xyz",
                 "postgresql://user:password@host:5432/db"

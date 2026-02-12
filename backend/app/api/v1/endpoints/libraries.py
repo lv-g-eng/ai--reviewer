@@ -83,12 +83,14 @@ async def validate_library(
     Validates Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3, 2.6
     """
     try:
+        # Use a safe version for logging to avoid sensitive data exposure
+        masked_uri = f"{request.uri[:4]}...{request.uri[-4:]}" if len(request.uri) > 10 else "***"
         logger.info(
-            f"Validating library URI: {_sanitize_log_input(request.uri)}",
+            f"Validating library URI: {masked_uri}",
             extra={
                 'user_id': str(current_user.id),
                 'operation': 'validate_library_endpoint',
-                'uri': _sanitize_log_input(request.uri),
+                'uri_length': len(request.uri),
                 'project_context': request.project_context.value if request.project_context else None
             }
         )
@@ -193,12 +195,13 @@ async def install_library(
     Validates Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 6.1, 6.2, 6.3, 6.4
     """
     try:
+        masked_uri = f"{request.uri[:4]}...{request.uri[-4:]}" if len(request.uri) > 10 else "***"
         logger.info(
-            f"Installing library URI: {request.uri} in context: {request.project_context.value}",
+            f"Installing library URI: {masked_uri} in context: {request.project_context.value}",
             extra={
                 'user_id': str(current_user.id),
                 'operation': 'install_library_endpoint',
-                'uri': request.uri,
+                'uri_length': len(request.uri),
                 'project_context': request.project_context.value,
                 'version': request.version
             }
@@ -314,11 +317,11 @@ async def search_libraries(
     """
     try:
         logger.info(
-            f"Searching libraries: query='{_sanitize_log_input(q)}', registry={_sanitize_log_input(registry or '')}",
+            f"Searching libraries in registry: {_sanitize_log_input(registry or 'any')}",
             extra={
                 'user_id': str(current_user.id),
                 'operation': 'search_libraries_endpoint',
-                'query': _sanitize_log_input(q),
+                'query_length': len(q),
                 'registry_filter': _sanitize_log_input(registry or '')
             }
         )
@@ -369,7 +372,6 @@ async def search_libraries(
             extra={
                 'user_id': str(current_user.id),
                 'operation': 'search_libraries_endpoint',
-                'query': q,
                 'registry_filter': registry,
                 'results_count': len(search_results),
                 'success': True
@@ -421,11 +423,11 @@ async def list_installed_libraries(
     """
     try:
         logger.info(
-            f"Listing installed libraries for project: {project_id}",
+            "Listing installed libraries for project",
             extra={
                 'user_id': str(current_user.id),
                 'operation': 'list_installed_libraries_endpoint',
-                'project_id': project_id,
+                'project_id_hash': hash(project_id) % 10000, # Non-reversible short ID for logs
                 'project_context': project_context.value if project_context else None
             }
         )

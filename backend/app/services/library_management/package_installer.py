@@ -365,7 +365,7 @@ class PackageInstaller:
             config = self.CONTEXT_CONFIG[project_context]
             
             # Step 1: Create backup of dependency file
-            backup_path = self.file_manager.create_backup(config['dependency_file'])
+            backup_path = await asyncio.to_thread(self.file_manager.create_backup, config['dependency_file'])
             
             # Step 2: Update dependency file
             await self._update_dependency_file(
@@ -426,7 +426,7 @@ class PackageInstaller:
             # Rollback on failure
             if backup_path:
                 try:
-                    await self.rollback(backup_path)
+                    await asyncio.to_thread(self.rollback, backup_path)
                     logger.info("Successfully rolled back changes")
                 except Exception as rollback_error:
                     logger.error(f"Rollback failed: {rollback_error}")
@@ -484,7 +484,7 @@ class PackageInstaller:
         """
         try:
             # Read existing package.json
-            content = self.file_manager.read_file(file_path)
+            content = await asyncio.to_thread(self.file_manager.read_file, file_path)
             package_data = json.loads(content)
             
             # Ensure dependencies section exists
@@ -496,7 +496,7 @@ class PackageInstaller:
             
             # Write updated package.json
             updated_content = json.dumps(package_data, indent=2, ensure_ascii=False)
-            self.file_manager.write_file(file_path, updated_content)
+            await asyncio.to_thread(self.file_manager.write_file, file_path, updated_content)
             
             logger.info(f"Added {library_name}@{version} to {file_path}")
             
@@ -521,8 +521,8 @@ class PackageInstaller:
         """
         try:
             # Read existing requirements.txt
-            if self.file_manager.file_exists(file_path):
-                content = self.file_manager.read_file(file_path)
+            if await asyncio.to_thread(self.file_manager.file_exists, file_path):
+                content = await asyncio.to_thread(self.file_manager.read_file, file_path)
                 lines = content.strip().split('\n') if content.strip() else []
             else:
                 lines = []
@@ -536,7 +536,7 @@ class PackageInstaller:
             
             # Write updated requirements.txt
             updated_content = '\n'.join(lines) + '\n'
-            self.file_manager.write_file(file_path, updated_content)
+            await asyncio.to_thread(self.file_manager.write_file, file_path, updated_content)
             
             logger.info(f"Added {requirement_line} to {file_path}")
             
@@ -599,7 +599,7 @@ class PackageInstaller:
             lock_file = config['lock_file']
             
             # Check if lock file exists
-            if not self.file_manager.file_exists(lock_file):
+            if not await asyncio.to_thread(self.file_manager.file_exists, lock_file):
                 logger.debug(f"Lock file {lock_file} does not exist, skipping update")
                 return
             

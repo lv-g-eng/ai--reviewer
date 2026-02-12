@@ -1,0 +1,10 @@
+{
+  "venvPath": "D:/DT/anaconda3",
+  "venv": "Lib/site-packages",
+  "extraPaths": [
+    "D:/DT/anaconda3/Lib/site-packages",
+    "backend",
+    "."
+  ],
+  "stubPath": "D:/DT/anaconda3/Lib/site-packages"
+}

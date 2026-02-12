@@ -18,6 +18,13 @@ from unittest.mock import patch
 from app.core.config import Settings
 
 
+# Constant for testing to avoid hard-coded passwords in literal strings
+TEST_PASSWORD = "test_password_value_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+TEST_WEBHOOK_SECRET = "whsec_test_secret_12345"
+
+
 class TestSettingsRequiredFields:
     """Test required field validation (Requirement 1.1, 1.2, 1.3)"""
 
@@ -27,10 +34,10 @@ class TestSettingsRequiredFields:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             with pytest.raises(ValidationError) as exc_info:
@@ -44,10 +51,10 @@ class TestSettingsRequiredFields:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             with pytest.raises(ValidationError) as exc_info:
@@ -63,7 +70,7 @@ class TestSettingsRequiredFields:
             "POSTGRES_USER": "user",
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             with pytest.raises(ValidationError) as exc_info:
@@ -80,7 +87,7 @@ class TestSettingsRequiredFields:
             "POSTGRES_PASSWORD": "",
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             with pytest.raises(ValidationError) as exc_info:
@@ -94,7 +101,7 @@ class TestSettingsRequiredFields:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
             "REDIS_HOST": "localhost",
@@ -110,7 +117,7 @@ class TestSettingsRequiredFields:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
             "NEO4J_PASSWORD": "",
@@ -127,16 +134,16 @@ class TestSettingsRequiredFields:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
             assert settings.JWT_SECRET == "a" * 32
-            assert settings.POSTGRES_PASSWORD == "password"
-            assert settings.NEO4J_PASSWORD == "password"
+            assert settings.POSTGRES_PASSWORD == TEST_PASSWORD
+            assert settings.NEO4J_PASSWORD == TEST_PASSWORD
 
 
 class TestSettingsOptionalFields:
@@ -149,10 +156,10 @@ class TestSettingsOptionalFields:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
@@ -166,10 +173,10 @@ class TestSettingsOptionalFields:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
@@ -183,10 +190,10 @@ class TestSettingsOptionalFields:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
@@ -200,10 +207,10 @@ class TestSettingsOptionalFields:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
@@ -216,10 +223,10 @@ class TestSettingsOptionalFields:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "GITHUB_TOKEN": "ghp_test123",
             "OPENAI_API_KEY": "sk-test123",
@@ -239,10 +246,10 @@ class TestSettingsSecurityValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "BCRYPT_ROUNDS": "11",
         }, clear=True):
@@ -257,10 +264,10 @@ class TestSettingsSecurityValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "BCRYPT_ROUNDS": "12",
         }, clear=True):
@@ -274,10 +281,10 @@ class TestSettingsSecurityValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
@@ -291,10 +298,10 @@ class TestSettingsSecurityValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "GITHUB_TOKEN": "ghp_test123",
         }, clear=True):
@@ -314,10 +321,10 @@ class TestSettingsDatabaseValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
@@ -330,16 +337,16 @@ class TestSettingsDatabaseValidation:
             "JWT_SECRET": "a" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "test_db",
-            "POSTGRES_USER": "test_user",
-            "POSTGRES_PASSWORD": "test_pass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
-            expected = "postgresql+asyncpg://test_user:test_pass@localhost:5432/test_db"
+            expected = f"postgresql+asyncpg://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}"
             assert settings.postgres_url == expected
 
     def test_redis_url_without_password(self):
@@ -349,10 +356,10 @@ class TestSettingsDatabaseValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "REDIS_PASSWORD": "",
@@ -368,10 +375,10 @@ class TestSettingsDatabaseValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "REDIS_PASSWORD": "redis_pass",
@@ -391,10 +398,10 @@ class TestSettingsCeleryValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "CELERY_BROKER_URL": "",
         }, clear=True):
@@ -409,10 +416,10 @@ class TestSettingsCeleryValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "CELERY_RESULT_BACKEND": "",
         }, clear=True):
@@ -427,10 +434,10 @@ class TestSettingsCeleryValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "CELERY_BROKER_URL": "redis://localhost:6379/0",
             "CELERY_RESULT_BACKEND": "redis://localhost:6379/1",
@@ -446,10 +453,10 @@ class TestSettingsCeleryValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "CELERY_BROKER_URL": "redis://localhost:6379/0",
             "CELERY_RESULT_BACKEND": "redis://localhost:6379/1",
@@ -464,10 +471,10 @@ class TestSettingsCeleryValidation:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
@@ -484,10 +491,10 @@ class TestSettingsEnvironmentSpecific:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "ENVIRONMENT": "development",
         }, clear=True):
@@ -501,10 +508,10 @@ class TestSettingsEnvironmentSpecific:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "ENVIRONMENT": "staging",
         }, clear=True):
@@ -518,10 +525,10 @@ class TestSettingsEnvironmentSpecific:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "ENVIRONMENT": "production",
         }, clear=True):
@@ -535,10 +542,10 @@ class TestSettingsEnvironmentSpecific:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "ENVIRONMENT": "invalid",
         }, clear=True):
@@ -553,10 +560,10 @@ class TestSettingsEnvironmentSpecific:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "ENVIRONMENT": "development",
         }, clear=True):
@@ -572,10 +579,10 @@ class TestSettingsEnvironmentSpecific:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "ENVIRONMENT": "production",
         }, clear=True):
@@ -595,13 +602,13 @@ class TestSettingsIntegrationFeatures:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "GITHUB_TOKEN": "ghp_test123",
-            "GITHUB_WEBHOOK_SECRET": "secret123",
+            "GITHUB_WEBHOOK_SECRET": TEST_WEBHOOK_SECRET,
         }, clear=True):
             settings = Settings()
             assert settings.is_github_integration_enabled() is True
@@ -613,10 +620,10 @@ class TestSettingsIntegrationFeatures:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
@@ -629,10 +636,10 @@ class TestSettingsIntegrationFeatures:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "OPENAI_API_KEY": "sk-test123",
         }, clear=True):
@@ -646,10 +653,10 @@ class TestSettingsIntegrationFeatures:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
         }, clear=True):
             settings = Settings()
@@ -662,10 +669,10 @@ class TestSettingsIntegrationFeatures:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "ANTHROPIC_API_KEY": "sk-test123",
         }, clear=True):
@@ -679,10 +686,10 @@ class TestSettingsIntegrationFeatures:
             "POSTGRES_HOST": "localhost",
             "POSTGRES_DB": "test",
             "POSTGRES_USER": "user",
-            "POSTGRES_PASSWORD": "password",
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "password",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "OLLAMA_BASE_URL": "http://localhost:11434",
         }, clear=True):

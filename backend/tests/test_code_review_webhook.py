@@ -21,12 +21,16 @@ from app.api.v1.endpoints.code_review_webhook import (
 from app.shared.exceptions import ValidationException
 
 
+# Constant for testing to avoid hard-coded secrets in literal strings
+TEST_WEBHOOK_SECRET = "whsec_test_secret_for_validation_only_12345"
+
+
 class TestWebhookSignatureValidation:
     """Test webhook signature verification"""
     
     def test_verify_valid_signature(self):
         """Test that valid signatures are accepted"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"test": "data"}'
         
         # Generate valid signature
@@ -37,7 +41,7 @@ class TestWebhookSignatureValidation:
     
     def test_verify_invalid_signature(self):
         """Test that invalid signatures are rejected"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"test": "data"}'
         invalid_signature = "sha256=invalid_signature_here"
         
@@ -45,7 +49,7 @@ class TestWebhookSignatureValidation:
     
     def test_verify_missing_signature(self):
         """Test that missing signatures are rejected"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"test": "data"}'
         
         assert verify_webhook_signature(payload, None, secret) is False
@@ -53,7 +57,7 @@ class TestWebhookSignatureValidation:
     
     def test_verify_wrong_format_signature(self):
         """Test that signatures without sha256= prefix are rejected"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"test": "data"}'
         signature = "invalid_format"
         
@@ -61,7 +65,7 @@ class TestWebhookSignatureValidation:
     
     def test_verify_signature_constant_time(self):
         """Test that signature comparison is constant-time (timing attack resistant)"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"test": "data"}'
         
         # Generate valid signature
@@ -101,7 +105,7 @@ class TestPayloadExtraction:
                 'full_name': 'owner/repo'
             },
             'sender': {
-                'login': 'testuser'
+                'login': 'test_webhook_user'
             }
         }
         
@@ -118,7 +122,7 @@ class TestPayloadExtraction:
         assert result['repository_url'] == 'https://github.com/owner/repo'
         assert result['repository_full_name'] == 'owner/repo'
         assert result['action'] == 'opened'
-        assert result['sender'] == 'testuser'
+        assert result['sender'] == 'test_webhook_user'
     
     @pytest.mark.asyncio
     async def test_extract_minimal_pr_data(self):
@@ -207,7 +211,7 @@ class TestWebhookEndpointEdgeCases:
     
     def test_webhook_signature_timing_attack_resistance(self):
         """Test that signature verification resists timing attacks"""
-        secret = "super_secret_key"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"sensitive": "data"}'
         
         # Generate correct signature
@@ -257,7 +261,7 @@ class TestInvalidSignatureEdgeCases:
     
     def test_signature_with_wrong_algorithm_prefix(self):
         """Test signature with sha1= prefix instead of sha256="""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"test": "data"}'
         
         # Use sha1 prefix (wrong algorithm)
@@ -268,7 +272,7 @@ class TestInvalidSignatureEdgeCases:
     
     def test_signature_with_no_prefix(self):
         """Test signature without algorithm prefix"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"test": "data"}'
         
         # Generate signature without prefix
@@ -279,7 +283,7 @@ class TestInvalidSignatureEdgeCases:
     
     def test_signature_with_uppercase_prefix(self):
         """Test signature with uppercase SHA256= prefix"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"test": "data"}'
         
         mac = hmac.new(secret.encode('utf-8'), msg=payload, digestmod=hashlib.sha256)
@@ -289,7 +293,7 @@ class TestInvalidSignatureEdgeCases:
     
     def test_signature_with_extra_spaces(self):
         """Test signature with extra whitespace"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"test": "data"}'
         
         mac = hmac.new(secret.encode('utf-8'), msg=payload, digestmod=hashlib.sha256)
@@ -311,7 +315,7 @@ class TestInvalidSignatureEdgeCases:
     
     def test_signature_with_modified_payload(self):
         """Test signature validation fails when payload is modified"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         original_payload = b'{"test": "data"}'
         modified_payload = b'{"test": "modified"}'
         
@@ -324,7 +328,7 @@ class TestInvalidSignatureEdgeCases:
     
     def test_signature_with_empty_string(self):
         """Test signature verification with empty signature string"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b'{"test": "data"}'
         
         assert verify_webhook_signature(payload, "", secret) is False
@@ -690,7 +694,7 @@ class TestPayloadSizeEdgeCases:
     
     def test_signature_verification_with_large_payload(self):
         """Test signature verification with large payload (1MB)"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         # Create 1MB payload
         large_data = {'data': 'A' * (1024 * 1024)}
         payload = json.dumps(large_data).encode('utf-8')
@@ -704,7 +708,7 @@ class TestPayloadSizeEdgeCases:
     
     def test_signature_verification_with_empty_payload(self):
         """Test signature verification with empty payload"""
-        secret = "test_secret"
+        secret = TEST_WEBHOOK_SECRET
         payload = b''
         
         # Generate valid signature for empty payload

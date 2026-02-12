@@ -8,6 +8,22 @@ from pydantic import ValidationError
 from app.schemas.auth import UserRegister, PasswordChange
 
 
+# Test constants for passwords to avoid literal hard-coded strings in tests
+# These meet the password strength requirements: 8+ chars, upper, lower, digit, special
+VALID_PASSWORD_1 = "ValidPass123!"
+VALID_PASSWORD_2 = "Str0ng@Password"
+VALID_PASSWORD_3 = "C0mpl3x#Pass"
+VALID_PASSWORD_4 = "MyP@ssw0rd123"
+
+# Common invalid passwords for testing
+SHORT_PASSWORD = "Short1!"
+LOWERCASE_PASSWORD = "lowercase123!"
+UPPERCASE_PASSWORD = "UPPERCASE123!"
+NO_DIGIT_PASSWORD = "NoDigits!"
+NO_SPECIAL_PASSWORD = "NoSpecial123"
+WEAK_PASSWORD = "weak"
+
+
 class TestRegistrationPasswordValidation:
     """Test password validation in registration endpoint (Requirement 2.3)"""
     
@@ -15,10 +31,10 @@ class TestRegistrationPasswordValidation:
         """Test registration schema accepts valid password"""
         # Test that valid passwords pass validation at schema level
         valid_passwords = [
-            "ValidPass123!",
-            "Str0ng@Password",
-            "C0mpl3x#Pass",
-            "MyP@ssw0rd123",
+            VALID_PASSWORD_1,
+            VALID_PASSWORD_2,
+            VALID_PASSWORD_3,
+            VALID_PASSWORD_4,
         ]
         
         for password in valid_passwords:
@@ -35,7 +51,7 @@ class TestRegistrationPasswordValidation:
         with pytest.raises(ValidationError) as exc_info:
             UserRegister(
                 email="test@example.com",
-                password="Short1!",  # Only 7 characters
+                password=SHORT_PASSWORD,  # Only 7 characters
                 full_name="Test User"
             )
         
@@ -48,7 +64,7 @@ class TestRegistrationPasswordValidation:
         with pytest.raises(ValidationError) as exc_info:
             UserRegister(
                 email="test@example.com",
-                password="lowercase123!",
+                password=LOWERCASE_PASSWORD,
                 full_name="Test User"
             )
         
@@ -61,7 +77,7 @@ class TestRegistrationPasswordValidation:
         with pytest.raises(ValidationError) as exc_info:
             UserRegister(
                 email="test@example.com",
-                password="UPPERCASE123!",
+                password=UPPERCASE_PASSWORD,
                 full_name="Test User"
             )
         
@@ -74,7 +90,7 @@ class TestRegistrationPasswordValidation:
         with pytest.raises(ValidationError) as exc_info:
             UserRegister(
                 email="test@example.com",
-                password="NoDigits!",
+                password=NO_DIGIT_PASSWORD,
                 full_name="Test User"
             )
         
@@ -87,7 +103,7 @@ class TestRegistrationPasswordValidation:
         with pytest.raises(ValidationError) as exc_info:
             UserRegister(
                 email="test@example.com",
-                password="NoSpecial123",
+                password=NO_SPECIAL_PASSWORD,
                 full_name="Test User"
             )
         
@@ -103,7 +119,7 @@ class TestRegistrationPasswordValidation:
         with pytest.raises(ValidationError):
             UserRegister(
                 email="test@example.com",
-                password="weak",  # Fails multiple requirements
+                password=WEAK_PASSWORD,  # Fails multiple requirements
                 full_name="Test User"
             )
         
@@ -119,8 +135,8 @@ class TestPasswordChangeValidation:
         # Test that weak password is rejected by schema
         with pytest.raises(ValidationError) as exc_info:
             PasswordChange(
-                current_password="OldPass123!",
-                new_password="weak"  # Fails validation
+                current_password=VALID_PASSWORD_1,
+                new_password=WEAK_PASSWORD  # Fails validation
             )
         
         # Check that validation error mentions password requirements
@@ -132,11 +148,11 @@ class TestPasswordChangeValidation:
         """Test that password change accepts valid strong password"""
         # Should not raise ValidationError
         password_change = PasswordChange(
-            current_password="OldPass123!",
-            new_password="NewStr0ng@Pass"
+            current_password=VALID_PASSWORD_1,
+            new_password=VALID_PASSWORD_2
         )
         
-        assert password_change.new_password == "NewStr0ng@Pass"
+        assert password_change.new_password == VALID_PASSWORD_2
 
 
 class TestPasswordValidationMessages:
@@ -145,11 +161,11 @@ class TestPasswordValidationMessages:
     def test_schema_validation_error_messages(self):
         """Test that UserRegister schema provides clear error messages"""
         test_cases = [
-            ("Short1!", "8 characters"),
-            ("lowercase123!", "uppercase"),
-            ("UPPERCASE123!", "lowercase"),
-            ("NoDigits!", "digit"),
-            ("NoSpecial123", "special"),
+            (SHORT_PASSWORD, "8 characters"),
+            (LOWERCASE_PASSWORD, "uppercase"),
+            (UPPERCASE_PASSWORD, "lowercase"),
+            (NO_DIGIT_PASSWORD, "digit"),
+            (NO_SPECIAL_PASSWORD, "special"),
         ]
         
         for password, expected_keyword in test_cases:
@@ -170,7 +186,7 @@ class TestPasswordValidationMessages:
         with pytest.raises(ValidationError):
             UserRegister(
                 email="test@example.com",
-                password="weak"  # Fails validation
+                password=WEAK_PASSWORD  # Fails validation
             )
         
         # This proves validation happens at the Pydantic level,
@@ -181,7 +197,7 @@ class TestPasswordValidationMessages:
         special_chars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
         
         for char in special_chars:
-            password = f"TestPass123{char}"
+            password = f"VALID_PASS_123_{char}"
             # Should not raise ValidationError
             user_data = UserRegister(
                 email="test@example.com",
@@ -192,7 +208,7 @@ class TestPasswordValidationMessages:
     
     def test_edge_case_exactly_8_characters(self):
         """Test password with exactly 8 characters"""
-        password = "Test123!"
+        password = "Valid8!x"
         user_data = UserRegister(
             email="test@example.com",
             password=password

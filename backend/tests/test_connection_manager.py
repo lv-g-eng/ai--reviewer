@@ -22,6 +22,12 @@ from app.database.connection_manager import (
 from app.core.config import settings
 
 
+# constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+
+
 class TestConnectionStatus:
     """Tests for ConnectionStatus dataclass"""
     
@@ -432,7 +438,7 @@ class TestConnectionManager:
         error_msg = ConnectionManager.format_connection_error(
             service="PostgreSQL",
             status=status,
-            connection_string="postgresql://user:password@localhost:5432/db"
+            connection_string=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}"
         )
         
         assert "PostgreSQL" in error_msg

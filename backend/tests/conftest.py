@@ -165,7 +165,7 @@ def neo4j_container():
     try:
         from testcontainers.neo4j import Neo4jContainer
 
-        container = Neo4jContainer("neo4j:5", password="testpassword")
+        container = Neo4jContainer("neo4j:5", password=TEST_PASSWORD)
         container.start()
 
         original_uri = os.environ.get('NEO4J_URI')
@@ -174,7 +174,7 @@ def neo4j_container():
 
         os.environ['NEO4J_URI'] = container.get_connection_url()
         os.environ['NEO4J_USER'] = "neo4j"
-        os.environ['NEO4J_PASSWORD'] = "testpassword"
+        os.environ['NEO4J_PASSWORD'] = TEST_PASSWORD
 
         yield container
 

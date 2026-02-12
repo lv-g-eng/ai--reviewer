@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Header, 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List, Dict, Any, Union, Annotated
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import logging
 
@@ -94,7 +94,7 @@ async def run_code_review(pr_id: str, project_id: str, diff_content: str, db: As
     review = CodeReview(
         pull_request_id=pr_id,
         status="in_progress",
-        started_at=datetime.utcnow()
+        started_at=datetime.now(timezone.utc)
     )
     db.add(review)
     await db.commit()
@@ -126,7 +126,7 @@ async def run_code_review(pr_id: str, project_id: str, diff_content: str, db: As
         
         # Save review results
         review.status = "completed"
-        review.completed_at = datetime.utcnow()
+        review.completed_at = datetime.now(timezone.utc)
         review.summary = {
             "total_issues": len(review_result.comments),
             "severity_counts": {
@@ -174,7 +174,7 @@ async def run_architecture_analysis(
     analysis = ArchitectureAnalysis(
         pull_request_id=pr_id,
         status="in_progress",
-        started_at=datetime.utcnow()
+        started_at=datetime.now(timezone.utc)
     )
     db.add(analysis)
     await db.commit()
@@ -189,7 +189,7 @@ async def run_architecture_analysis(
         
         # Save analysis results
         analysis.status = "completed"
-        analysis.completed_at = datetime.utcnow()
+        analysis.completed_at = datetime.now(timezone.utc)
         analysis.summary = {
             "total_violations": len(report.violations),
             "severity_counts": {
@@ -414,7 +414,7 @@ async def handle_pull_request_event(
             else:
                 existing_pr.status = PRStatus.rejected
         
-            existing_pr.reviewed_at = datetime.now(datetime.utcnow().tzinfo)
+            existing_pr.reviewed_at = datetime.now(timezone.utc)
             await db.commit()
         
         return {"message": "PR closed"}

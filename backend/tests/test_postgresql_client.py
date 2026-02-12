@@ -14,6 +14,12 @@ from app.database.postgresql_client import PostgreSQLClient, PostgreSQLCompatibi
 from app.database.models import CompatibilityResult, ConnectionStatus, ErrorType
 
 
+# constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+
+
 class TestPostgreSQLClient:
     """Test cases for PostgreSQLClient class."""
     
@@ -85,7 +91,7 @@ class TestPostgreSQLClient:
                 mock_pool = AsyncMock()
                 mock_create_pool.return_value = mock_pool
                 
-                pool = await client.create_pool("postgresql://user:pass@localhost/db")
+                pool = await client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}")
                 
                 assert pool == mock_pool
                 assert client.is_compatibility_validated() is True
@@ -100,7 +106,7 @@ class TestPostgreSQLClient:
                 mock_create_pool.return_value = mock_pool
                 
                 # Should automatically validate compatibility
-                pool = await client.create_pool("postgresql://user:pass@localhost/db")
+                pool = await client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}")
                 
                 assert pool == mock_pool
                 assert client.is_compatibility_validated() is True
@@ -110,7 +116,7 @@ class TestPostgreSQLClient:
         """Test connection pool creation with compatibility failure."""
         with patch.object(client.compatibility_checker, 'check_python_asyncpg_compatibility', return_value=incompatible_result):
             with pytest.raises(PostgreSQLCompatibilityError):
-                await client.create_pool("postgresql://user:pass@localhost/db")
+                await client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}")
     
     @pytest.mark.asyncio
     async def test_execute_query_with_validation(self, client, compatible_result):

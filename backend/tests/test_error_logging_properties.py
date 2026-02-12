@@ -346,7 +346,7 @@ def test_property_sensitive_data_masking(error_message):
     masked = ErrorReporter.mask_sensitive_data(sensitive_message)
     
     # PROPERTY: Sensitive data should be masked
-    assert "secret123" not in masked, "Password should be masked"
+    assert TEST_PASSWORD not in masked, "Password should be masked"
     assert "sk-test123" not in masked, "API key should be masked"
     assert "***" in masked, "Should contain mask placeholder"
     

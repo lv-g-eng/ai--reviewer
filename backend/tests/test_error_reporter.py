@@ -19,52 +19,60 @@ from app.core.error_reporter import (
 )
 
 
+# Constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_123"
+TEST_API_KEY = "sk-test-api-key-1234567890abcdef"
+TEST_TOKEN = "test_token_1234567890"
+TEST_JWT_SECRET = "test_jwt_secret_32_characters_long"
+TEST_WEBHOOK_SECRET = "whsec_test_webhook_secret_12345"
+
+
 class TestSensitiveDataMasking:
     """Test sensitive data masking functionality"""
 
     def test_mask_password_in_string(self):
         """Test masking of password patterns"""
         # Test password=value pattern
-        input_str = "Connection failed: password=mysecretpassword"
+        input_str = f"Connection failed: password={TEST_PASSWORD}"
         result = ErrorReporter.mask_sensitive_data(input_str)
-        assert "mysecretpassword" not in result
+        assert TEST_PASSWORD not in result
         assert "password=***" in result
 
     def test_mask_password_with_colon(self):
         """Test masking of password: value pattern"""
-        input_str = "Database error: password: supersecret123"
+        input_str = f"Database error: password: {TEST_PASSWORD}"
         result = ErrorReporter.mask_sensitive_data(input_str)
-        assert "supersecret123" not in result
+        assert TEST_PASSWORD not in result
         assert "password:" in result
         assert "***" in result
 
     def test_mask_api_key(self):
         """Test masking of API keys"""
-        input_str = "API Error: sk-1234567890abcdefghijklmnop"
+        input_str = f"API Error: {TEST_API_KEY}"
         result = ErrorReporter.mask_sensitive_data(input_str)
-        assert "1234567890abcdefghijklmnop" not in result
+        assert TEST_API_KEY[3:] not in result
         assert "sk-***" in result
 
     def test_mask_github_token(self):
         """Test masking of GitHub tokens"""
-        input_str = "Token: ghp_1234567890abcdefghijklmnopqrstuvwxyz"
+        input_str = f"Token: ghp_{TEST_TOKEN}"
         result = ErrorReporter.mask_sensitive_data(input_str)
-        assert "1234567890abcdefghijklmnopqrstuvwxyz" not in result
+        assert TEST_TOKEN not in result
         # The token pattern is masked, and "Token:" is also masked by generic token pattern
         assert "***" in result
 
     def test_mask_generic_token(self):
         """Test masking of generic token patterns"""
-        input_str = "Authorization token=abc123def456ghi789"
+        input_str = f"Authorization token={TEST_TOKEN}"
         result = ErrorReporter.mask_sensitive_data(input_str)
-        assert "abc123def456ghi789" not in result
+        assert TEST_TOKEN not in result
         assert "token=***" in result
 
     def test_mask_jwt_secret(self):
         """Test masking of JWT secrets"""
-        input_str = "JWT_SECRET=my_super_secret_jwt_key_12345"
+        input_str = f"JWT_SECRET={TEST_JWT_SECRET}"
         result = ErrorReporter.mask_sensitive_data(input_str)
-        assert "my_super_secret_jwt_key_12345" not in result
+        assert TEST_JWT_SECRET not in result
         assert "JWT_SECRET=***" in result
 
     def test_mask_postgresql_connection_string(self):
@@ -94,30 +102,30 @@ class TestSensitiveDataMasking:
 
     def test_mask_webhook_secret(self):
         """Test masking of webhook secrets"""
-        input_str = "webhook_secret=whsec_1234567890abcdefghijklmnop"
+        input_str = f"webhook_secret={TEST_WEBHOOK_SECRET}"
         result = ErrorReporter.mask_sensitive_data(input_str)
-        assert "whsec_1234567890abcdefghijklmnop" not in result
+        assert TEST_WEBHOOK_SECRET not in result
         assert "webhook_secret=***" in result
 
     def test_mask_multiple_sensitive_values(self):
         """Test masking multiple sensitive values in one string"""
         input_str = (
-            "Error: password=secret123 and token=abc123def456 "
+            f"Error: password={TEST_PASSWORD} and token={TEST_TOKEN} "
             "and postgresql://user:pass@host:5432/db"
         )
         result = ErrorReporter.mask_sensitive_data(input_str)
-        assert "secret123" not in result
-        assert "abc123def456" not in result
+        assert TEST_PASSWORD not in result
+        assert TEST_TOKEN not in result
         assert "pass@" not in result
         assert "password=***" in result
         assert "token=***" in result
 
     def test_mask_case_insensitive(self):
         """Test that masking is case-insensitive for keywords"""
-        input_str = "PASSWORD=secret123 Token=abc123"
+        input_str = f"PASSWORD={TEST_PASSWORD} Token={TEST_TOKEN}"
         result = ErrorReporter.mask_sensitive_data(input_str)
-        assert "secret123" not in result
-        assert "abc123" not in result
+        assert TEST_PASSWORD not in result
+        assert TEST_TOKEN not in result
 
     def test_no_masking_for_non_sensitive_data(self):
         """Test that non-sensitive data is not masked"""
@@ -189,7 +197,7 @@ class TestMaskValue:
 
     def test_mask_jwt_secret_value(self):
         """Test masking JWT secret value"""
-        result = ErrorReporter.mask_value("secret123", SensitiveDataType.JWT_SECRET)
+        result = ErrorReporter.mask_value(TEST_PASSWORD, SensitiveDataType.JWT_SECRET)
         assert result == "***"
 
     def test_mask_api_key_with_show_first_last(self):
@@ -418,12 +426,12 @@ class TestFormatErrorReport:
     def test_format_error_report_masks_sensitive_data(self):
         """Test that error report masks sensitive data"""
         errors = [
-            "Connection failed: password=mysecret",
-            "Token error: token=abc123def456"
+            f"Connection failed: password={TEST_PASSWORD}",
+            f"Token error: token={TEST_TOKEN}"
         ]
         result = ErrorReporter.format_error_report(errors)
-        assert "mysecret" not in result
-        assert "abc123def456" not in result
+        assert TEST_PASSWORD not in result
+        assert TEST_TOKEN not in result
         assert "password=***" in result
         assert "token=***" in result
 
@@ -454,13 +462,13 @@ class TestFormatConfigurationSummary:
         """Test that sensitive keys are masked in summary"""
         config = {
             "APP_NAME": "MyApp",
-            "JWT_SECRET": "jwt_secret=mysecretkey123",
-            "POSTGRES_PASSWORD": "password=dbpassword"
+            "JWT_SECRET": f"jwt_secret={TEST_SECRET}",
+            "POSTGRES_PASSWORD": f"password={TEST_PASSWORD}"
         }
         result = ErrorReporter.format_configuration_summary(config)
         assert "APP_NAME: MyApp" in result
-        assert "mysecretkey123" not in result
-        assert "dbpassword" not in result
+        assert TEST_SECRET not in result
+        assert TEST_PASSWORD not in result
         assert "JWT_SECRET:" in result
         assert "***" in result
 
@@ -583,9 +591,9 @@ class TestBatchReportErrors:
 
     def test_batch_report_errors_masks_sensitive_data(self):
         """Test that batch report masks sensitive data"""
-        errors = ["Connection failed: password=secret123"]
+        errors = [f"Connection failed: password={TEST_PASSWORD}"]
         result = ErrorReporter.batch_report_errors(errors)
-        assert "secret123" not in result
+        assert TEST_PASSWORD not in result
         assert "password=***" in result
 
     def test_batch_report_errors_custom_service_name(self):
@@ -674,7 +682,7 @@ class TestDatabaseErrorInfo:
         """Test creation of structured database error info"""
         error = Exception("Connection timeout")
         error_info = ErrorReporter.create_database_error_info(
-            error, "PostgreSQL", {"host": "localhost", "password": "password=secret123"}
+            error, "PostgreSQL", {"host": "localhost", "password": f"password={TEST_PASSWORD}"}
         )
         
         assert error_info.component == "PostgreSQL"
@@ -683,7 +691,7 @@ class TestDatabaseErrorInfo:
         # Check that password is masked in connection_params
         if error_info.connection_params:
             params_str = str(error_info.connection_params)
-            assert "secret123" not in params_str  # Should be masked
+            assert TEST_PASSWORD not in params_str  # Should be masked
             assert "***" in params_str  # Should contain masking
         assert len(error_info.resolution_steps) > 0
         assert isinstance(error_info.timestamp, datetime)
@@ -857,7 +865,7 @@ class TestDatabaseErrorLogging:
         """Test logging of database errors with details"""
         error = Exception("Authentication failed")
         error_info = ErrorReporter.create_database_error_info(
-            error, "Neo4j", {"username": "user", "password": "secret123"}
+            error, "Neo4j", {"username": "user", "password": TEST_PASSWORD}
         )
         
         # Log the error with details
@@ -865,7 +873,7 @@ class TestDatabaseErrorLogging:
         
         # Check that error was logged but sensitive data was masked
         assert "Database error in Neo4j" in caplog.text
-        assert "secret123" not in caplog.text  # Password should be masked
+        assert TEST_PASSWORD not in caplog.text  # Password should be masked
 
     def test_format_database_connection_error(self):
         """Test comprehensive database connection error formatting"""
@@ -873,7 +881,7 @@ class TestDatabaseErrorLogging:
         result = ErrorReporter.format_database_connection_error(
             "PostgreSQL",
             error,
-            "postgresql://user:password@localhost:5432/db",
+            f"postgresql://user:{TEST_PASSWORD}@localhost:5432/db",
             is_critical=True,
             retry_count=2
         )

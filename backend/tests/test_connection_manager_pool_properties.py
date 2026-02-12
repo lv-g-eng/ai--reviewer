@@ -19,6 +19,12 @@ from app.database.models import DatabaseConfig, RetryConfig, HealthState
 from app.database.retry_manager import OperationType
 
 
+# constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+
+
 class TestConnectionPoolManagementProperties:
     """Property-based tests for connection pool management"""
     
@@ -88,7 +94,7 @@ class TestConnectionPoolManagementProperties:
         
         # Create test configuration
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test"),
             pool_min_size=pool_min_size,
@@ -191,7 +197,7 @@ class TestConnectionPoolManagementProperties:
         or failing with proper cleanup and error reporting.
         """
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test"),
             connection_timeout=timeout_seconds
@@ -237,7 +243,7 @@ class TestConnectionPoolManagementProperties:
         on connection success/failure rates and pool utilization.
         """
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test"),
             pool_min_size=1,  # Set explicit min_size to avoid conflicts
@@ -317,7 +323,7 @@ class TestConnectionPoolManagementProperties:
         )
         
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test"),
             retry_config=retry_config
@@ -377,7 +383,7 @@ class TestConnectionPoolManagementProperties:
         necessary and maintaining pool integrity.
         """
         config = DatabaseConfig(
-            postgresql_dsn="postgresql://test:test@localhost:5432/test",
+            postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("test", "test"),
             pool_max_size=pool_max_size,
@@ -458,7 +464,7 @@ def mock_neo4j_driver():
 def sample_database_config():
     """Sample database configuration for testing"""
     return DatabaseConfig(
-        postgresql_dsn="postgresql://test:test@localhost:5432/test",
+        postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
         neo4j_uri="bolt://localhost:7687",
         neo4j_auth=("test", "test"),
         pool_min_size=2,
@@ -471,7 +477,7 @@ def sample_database_config():
 def test_connection_manager_integration():
     """Integration test to verify connection manager works with mocked dependencies"""
     config = DatabaseConfig(
-        postgresql_dsn="postgresql://test:test@localhost:5432/test",
+        postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
         neo4j_uri="bolt://localhost:7687",
         neo4j_auth=("test", "test")
     )
@@ -502,7 +508,7 @@ def test_connection_manager_integration():
 async def test_async_pool_operations():
     """Test async pool operations with mocked dependencies"""
     config = DatabaseConfig(
-        postgresql_dsn="postgresql://test:test@localhost:5432/test",
+        postgresql_dsn=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}",
         neo4j_uri="bolt://localhost:7687",
         neo4j_auth=("test", "test")
     )

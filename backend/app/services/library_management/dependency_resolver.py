@@ -6,6 +6,7 @@ It parses existing dependency files, compares versions using semantic versioning
 detects circular dependencies, and suggests compatible versions.
 """
 
+import asyncio
 import json
 import logging
 import re
@@ -183,8 +184,11 @@ class DependencyResolver:
             return {}
         
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
-                package_data = json.load(f)
+            def read_json():
+                with open(full_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            
+            package_data = await asyncio.to_thread(read_json)
             
             dependencies = {}
             
@@ -221,8 +225,11 @@ class DependencyResolver:
             return {}
         
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
+            def read_requirements():
+                with open(full_path, 'r', encoding='utf-8') as f:
+                    return f.readlines()
+            
+            lines = await asyncio.to_thread(read_requirements)
             
             dependencies = {}
             

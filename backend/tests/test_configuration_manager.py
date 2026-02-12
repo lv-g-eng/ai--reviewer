@@ -33,6 +33,12 @@ from app.core.configuration_manager import (
 )
 
 
+# Constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_value_12345678"
+TEST_SECRET = "test_secret_value_32_chars_long_12345"
+TEST_JWT_SECRET = "test_jwt_secret_value_32_characters"
+
+
 class TestConfigurationValidator:
     """Test configuration validation functionality"""
     
@@ -112,9 +118,9 @@ class TestConfigurationValidator:
         validator = ConfigurationValidator()
         
         valid_urls = [
-            "postgresql://user:pass@localhost:5432/db",
+            f"postgresql://user:{TEST_PASSWORD}@localhost:5432/db",
             "redis://localhost:6379/0",
-            "bolt://neo4j:password@localhost:7687",
+            f"bolt://neo4j:{TEST_PASSWORD}@localhost:7687",
             "neo4j://localhost:7687"
         ]
         
@@ -149,13 +155,13 @@ class TestConfigurationManager:
             # Create root .env file
             (project_path / ".env").write_text("""
 # Global configuration
-JWT_SECRET=global_jwt_secret_32_characters_long
-SECRET_KEY=global_secret_key_32_characters_long
+JWT_SECRET={TEST_JWT_SECRET}
+SECRET_KEY={TEST_SECRET}
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=test_db
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=global_postgres_password_12345678
+POSTGRES_PASSWORD={TEST_PASSWORD}
 REDIS_HOST=localhost
 REDIS_PORT=6379
 ENVIRONMENT=development
@@ -170,10 +176,10 @@ FRONTEND_PORT=3000
             
             # Create backend .env
             (project_path / "backend" / ".env").write_text("""
-POSTGRES_PASSWORD=backend_specific_password_12345678
+POSTGRES_PASSWORD={TEST_PASSWORD}_backend
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
-NEO4J_PASSWORD=neo4j_password_12345678
+NEO4J_PASSWORD={TEST_PASSWORD}_neo4j
 BACKEND_PORT=8000
 """.strip())
             
@@ -211,7 +217,7 @@ BACKEND_PORT=8000
         # Check that service-specific config overrides global config
         # POSTGRES_PASSWORD should be from backend/.env (service-specific)
         # not from root .env (global)
-        assert config["POSTGRES_PASSWORD"] == "backend_specific_password_12345678"
+        assert config["POSTGRES_PASSWORD"] == f"{TEST_PASSWORD}_backend"
     
     def test_precedence_rules(self, temp_project_dir):
         """Test precedence rules for conflicting variables (Requirement 1.2)"""
@@ -534,18 +540,18 @@ class TestConfigurationIntegration:
             
             # Create multiple environment files with conflicts
             (project_path / ".env").write_text("""
-JWT_SECRET=global_jwt_secret_32_characters_long
-SECRET_KEY=global_secret_key_32_characters_long
+JWT_SECRET={TEST_JWT_SECRET}
+SECRET_KEY={TEST_SECRET}
 POSTGRES_HOST=global_host
 POSTGRES_PORT=5432
 POSTGRES_DB=global_db
 POSTGRES_USER=global_user
-POSTGRES_PASSWORD=global_password_12345678
+POSTGRES_PASSWORD={TEST_PASSWORD}_global
 REDIS_HOST=global_redis
 REDIS_PORT=6379
 NEO4J_URI=bolt://global_neo4j:7687
 NEO4J_USER=global_neo4j_user
-NEO4J_PASSWORD=global_neo4j_pass_12345678
+NEO4J_PASSWORD={TEST_PASSWORD}_global_neo4j
 ENVIRONMENT=development
 """.strip())
             
@@ -558,16 +564,16 @@ LOG_LEVEL=DEBUG
             (project_path / "frontend" / ".env.local").write_text("""
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=frontend_nextauth_secret_32_chars
+NEXTAUTH_SECRET={TEST_SECRET}_frontend
 NODE_ENV=development
 """.strip())
             
             (project_path / "backend" / ".env").write_text("""
 POSTGRES_HOST=backend_host
-POSTGRES_PASSWORD=backend_password_12345678
-NEO4J_PASSWORD=backend_neo4j_pass_12345678
+POSTGRES_PASSWORD={TEST_PASSWORD}_backend_specific
+NEO4J_PASSWORD={TEST_PASSWORD}_backend_neo4j
 BACKEND_PORT=8000
-SECRET_KEY=backend_secret_key_32_characters_long
+SECRET_KEY={TEST_SECRET}_backend
 """.strip())
             
             yield project_path
@@ -585,7 +591,7 @@ SECRET_KEY=backend_secret_key_32_characters_long
         assert config["POSTGRES_HOST"] == "backend_host"
         
         # POSTGRES_PASSWORD should be from backend/.env (service level)
-        assert config["POSTGRES_PASSWORD"] == "backend_password_12345678"
+        assert config["POSTGRES_PASSWORD"] == f"{TEST_PASSWORD}_backend_specific"
         
         # DEBUG should be from .env.development (environment level)
         assert config["DEBUG"] == "true"

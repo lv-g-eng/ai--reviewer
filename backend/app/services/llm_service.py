@@ -142,6 +142,10 @@ class LLMService:
             logger.error(f"Failed to load model {model_type.value}: {e}")
             return False
             
+    def is_initialized(self) -> bool:
+        """Check if LLM service is initialized"""
+        return self._initialized
+            
     async def unload_model(self, model_type: ModelType):
         """Unload a model to free memory"""
         if self.models[model_type] is not None:

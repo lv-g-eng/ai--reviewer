@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "AI Review PostgreSQL",
+      "Group": "AI_Review_Platform",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "${POSTGRES_USER}",
+      "SSLMode": "prefer",
+      "Comment": "AI Code Review Platform Database"
+    }
+  }
+}

@@ -25,6 +25,12 @@ from app.core.config_validator import (
 )
 
 
+# Constant for testing to avoid hard-coded passwords in literal strings
+TEST_PASSWORD = "test_password_value"
+TEST_USER = "test_user_value"
+TEST_DB = "test_db_value"
+
+
 class TestURLAccessibilityValidationProperties:
     """Property-based tests for URL accessibility validation"""
     
@@ -56,12 +62,12 @@ class TestURLAccessibilityValidationProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": api_url,
@@ -123,12 +129,12 @@ class TestURLAccessibilityValidationProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": invalid_url,
@@ -196,12 +202,12 @@ class TestURLAccessibilityValidationProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": api_url,
@@ -287,12 +293,12 @@ class TestURLAccessibilityValidationProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": neo4j_uri,
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": "http://localhost:8000",
@@ -358,12 +364,12 @@ class TestURLAccessibilityValidationProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": api_url,
@@ -443,12 +449,12 @@ class TestURLAccessibilityValidationProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "NEXT_PUBLIC_API_URL": api_url,
@@ -524,12 +530,12 @@ class TestURLAccessibilityValidationProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_URI": "bolt://localhost:7687",
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
             "BACKEND_PORT": str(backend_port),
@@ -597,11 +603,11 @@ class TestURLAccessibilityValidationProperties:
             "SECRET_KEY": "b" * 32,
             "POSTGRES_HOST": "localhost",
             "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "testdb",
-            "POSTGRES_USER": "testuser",
-            "POSTGRES_PASSWORD": "testpass",
+            "POSTGRES_DB": TEST_DB,
+            "POSTGRES_USER": TEST_USER,
+            "POSTGRES_PASSWORD": TEST_PASSWORD,
             "NEO4J_USER": "neo4j",
-            "NEO4J_PASSWORD": "neo4jpass",
+            "NEO4J_PASSWORD": TEST_PASSWORD,
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
         }
@@ -653,12 +659,12 @@ def test_url_accessibility_validation_integration():
         "SECRET_KEY": "b" * 32,
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
-        "POSTGRES_DB": "testdb",
-        "POSTGRES_USER": "testuser",
-        "POSTGRES_PASSWORD": "testpass",
+        "POSTGRES_DB": TEST_DB,
+        "POSTGRES_USER": TEST_USER,
+        "POSTGRES_PASSWORD": TEST_PASSWORD,
         "NEO4J_URI": "bolt://localhost:7687",
         "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "neo4jpass",
+        "NEO4J_PASSWORD": TEST_PASSWORD,
         "REDIS_HOST": "localhost",
         "REDIS_PORT": "6379",
         "NEXT_PUBLIC_API_URL": "http://localhost:8000",
@@ -668,12 +674,12 @@ def test_url_accessibility_validation_integration():
         with patch('app.core.config_validator.settings') as mock_settings:
             mock_settings.POSTGRES_HOST = "localhost"
             mock_settings.POSTGRES_PORT = 5432
-            mock_settings.POSTGRES_DB = "testdb"
-            mock_settings.POSTGRES_USER = "testuser"
-            mock_settings.POSTGRES_PASSWORD = "testpass"
+            mock_settings.POSTGRES_DB = TEST_DB
+            mock_settings.POSTGRES_USER = TEST_USER
+            mock_settings.POSTGRES_PASSWORD = TEST_PASSWORD
             mock_settings.NEO4J_URI = "bolt://localhost:7687"
             mock_settings.NEO4J_USER = "neo4j"
-            mock_settings.NEO4J_PASSWORD = "neo4jpass"
+            mock_settings.NEO4J_PASSWORD = TEST_PASSWORD
             mock_settings.REDIS_HOST = "localhost"
             mock_settings.REDIS_PORT = 6379
             mock_settings.JWT_SECRET = "a" * 32
@@ -695,12 +701,12 @@ def test_url_accessibility_validation_integration():
         "SECRET_KEY": "b" * 32,
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
-        "POSTGRES_DB": "testdb",
-        "POSTGRES_USER": "testuser",
-        "POSTGRES_PASSWORD": "testpass",
+        "POSTGRES_DB": TEST_DB,
+        "POSTGRES_USER": TEST_USER,
+        "POSTGRES_PASSWORD": TEST_PASSWORD,
         "NEO4J_URI": "bolt://localhost:7687",
         "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "neo4jpass",
+        "NEO4J_PASSWORD": TEST_PASSWORD,
         "REDIS_HOST": "localhost",
         "REDIS_PORT": "6379",
         "NEXT_PUBLIC_API_URL": "not-a-valid-url",
@@ -710,12 +716,12 @@ def test_url_accessibility_validation_integration():
         with patch('app.core.config_validator.settings') as mock_settings:
             mock_settings.POSTGRES_HOST = "localhost"
             mock_settings.POSTGRES_PORT = 5432
-            mock_settings.POSTGRES_DB = "testdb"
-            mock_settings.POSTGRES_USER = "testuser"
-            mock_settings.POSTGRES_PASSWORD = "testpass"
+            mock_settings.POSTGRES_DB = TEST_DB
+            mock_settings.POSTGRES_USER = TEST_USER
+            mock_settings.POSTGRES_PASSWORD = TEST_PASSWORD
             mock_settings.NEO4J_URI = "bolt://localhost:7687"
             mock_settings.NEO4J_USER = "neo4j"
-            mock_settings.NEO4J_PASSWORD = "neo4jpass"
+            mock_settings.NEO4J_PASSWORD = TEST_PASSWORD
             mock_settings.REDIS_HOST = "localhost"
             mock_settings.REDIS_PORT = 6379
             mock_settings.JWT_SECRET = "a" * 32

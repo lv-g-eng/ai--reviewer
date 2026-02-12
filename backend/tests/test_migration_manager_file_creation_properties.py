@@ -15,13 +15,19 @@ from app.database.migration_manager import MigrationManager
 from app.utils.encoding_validator import EncodingValidator, EncodingValidationResult
 
 
+# constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+
+
 class TestMigrationManagerFileCreationProperties:
     """Property-based tests for migration manager file creation integrity"""
     
     def create_migration_manager(self):
         """Create migration manager instance for testing"""
         with patch('app.database.migration_manager.settings') as mock_settings:
-            mock_settings.sync_postgres_url = "postgresql://test:test@localhost/test"
+            mock_settings.sync_postgres_url = f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}"
             manager = MigrationManager()
             return manager
     

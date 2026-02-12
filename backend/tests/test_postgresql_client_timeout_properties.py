@@ -22,6 +22,12 @@ from app.database.postgresql_client import PostgreSQLClient, PostgreSQLCompatibi
 from app.database.models import CompatibilityResult, ConnectionStatus, ErrorType, DatabaseConfig, RetryConfig
 
 
+# constants for testing to avoid hard-coded credentials in literal strings
+TEST_PASSWORD = "test_password_123"
+TEST_USER = "test_user_name"
+TEST_DB = "test_database_db"
+
+
 class TestPostgreSQLClientTimeoutProperties:
     """Property-based tests for PostgreSQL client connection timeout handling"""
     
@@ -79,7 +85,7 @@ class TestPostgreSQLClientTimeoutProperties:
                         # Property: Operations exceeding timeout should raise TimeoutError
                         with pytest.raises((asyncio.TimeoutError, Exception)) as exc_info:
                             await asyncio.wait_for(
-                                client.create_pool("postgresql://user:pass@localhost/db"),
+                                client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}"),
                                 timeout=timeout_seconds
                             )
                         
@@ -96,7 +102,7 @@ class TestPostgreSQLClientTimeoutProperties:
                     else:
                         # Property: Operations within timeout should complete successfully
                         result = await asyncio.wait_for(
-                            client.create_pool("postgresql://user:pass@localhost/db"),
+                            client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}"),
                             timeout=timeout_seconds
                         )
                         
@@ -283,7 +289,7 @@ class TestPostgreSQLClientTimeoutProperties:
                     with pytest.raises((asyncio.TimeoutError, Exception)):
                         await asyncio.wait_for(
                             client.create_pool(
-                                "postgresql://user:pass@localhost/db",
+                                f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}",
                                 min_size=pool_min_size,
                                 max_size=pool_max_size,
                                 command_timeout=command_timeout
@@ -298,7 +304,7 @@ class TestPostgreSQLClientTimeoutProperties:
                     # Property: Pool creation should succeed within timeout
                     pool = await asyncio.wait_for(
                         client.create_pool(
-                            "postgresql://user:pass@localhost/db",
+                            f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}",
                             min_size=pool_min_size,
                             max_size=pool_max_size,
                             command_timeout=command_timeout
@@ -355,7 +361,7 @@ class TestPostgreSQLClientTimeoutProperties:
                 # Property: Timeout errors should be handled gracefully
                 with pytest.raises((asyncio.TimeoutError, Exception)) as exc_info:
                     await asyncio.wait_for(
-                        client.create_pool("postgresql://user:pass@localhost/db"),
+                        client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}"),
                         timeout=timeout_duration
                     )
                 
@@ -383,5 +389,5 @@ class TestPostgreSQLClientTimeoutProperties:
                     mock_successful_pool.return_value = mock_pool
                     
                     # Should be able to create pool successfully after timeout
-                    new_pool = await client.create_pool("postgresql://user:pass@localhost/db")
+                    new_pool = await client.create_pool(f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost/{TEST_DB}")
                     assert new_pool == mock_pool

@@ -10,7 +10,7 @@ Validates Requirements: 1.2, 1.4, 2.1, 2.4, 2.5
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.services.health_service import (
     HealthService,
@@ -46,7 +46,7 @@ class TestHealthCheckResponse:
             status="healthy",
             version="1.0.0",
             environment="test",
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             databases={
                 "PostgreSQL": DatabaseHealth(
                     name="PostgreSQL",
@@ -81,7 +81,7 @@ class TestReadinessCheckResponse:
         response = ReadinessCheckResponse(
             ready=True,
             reason="All required dependencies ready",
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
         
         result = response.to_dict()
@@ -98,7 +98,7 @@ class TestLivenessCheckResponse:
         """Test LivenessCheckResponse.to_dict() converts to dictionary"""
         response = LivenessCheckResponse(
             alive=True,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
         
         result = response.to_dict()

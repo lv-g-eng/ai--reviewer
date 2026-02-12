@@ -32,7 +32,7 @@ async def mock_deps():
     
     # Bypass auth and access checks
     app.dependency_overrides[get_db] = lambda: AsyncMock()
-    app.dependency_overrides[get_current_user] = lambda: {"username": "testuser"}
+    app.dependency_overrides[get_current_user] = lambda: {"username": "test_auth_user"}
     # Correctly override with a simple lambda to avoid query param confusion
     app.dependency_overrides[check_project_access] = lambda: True
     

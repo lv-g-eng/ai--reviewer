@@ -10,7 +10,7 @@ import hmac
 import hashlib
 import logging
 from typing import Dict, Any, Optional, Annotated
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Request, Header, HTTPException, status, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
@@ -174,7 +174,7 @@ async def code_review_webhook(
         
     Validates Requirements: 1.1
     """
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     # Read raw body for signature verification
     body = await request.body()
@@ -334,7 +334,7 @@ async def code_review_webhook(
         pr.lines_added = pr_data.get('lines_added', pr.lines_added)
         pr.lines_deleted = pr_data.get('lines_deleted', pr.lines_deleted)
         pr.status = PRStatus.PENDING
-        pr.updated_at = datetime.utcnow()
+        pr.updated_at = datetime.now(timezone.utc)
         await db.commit()
         
         logger.info(
@@ -354,7 +354,7 @@ async def code_review_webhook(
     )
     
     # Calculate processing time
-    processing_time = (datetime.utcnow() - start_time).total_seconds()
+    processing_time = (datetime.now(timezone.utc) - start_time).total_seconds()
     
     logger.info(
         f"Webhook processed successfully in {processing_time:.3f}s",

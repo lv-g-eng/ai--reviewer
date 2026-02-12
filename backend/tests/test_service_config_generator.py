@@ -93,7 +93,7 @@ class TestServiceConfigGenerator:
             "REDIS_HOST": MagicMock(value="localhost"),
             "REDIS_PORT": MagicMock(value=6379),
             "NEO4J_URI": MagicMock(value="bolt://localhost:7687"),
-            "DATABASE_URL": MagicMock(value="postgresql://user:pass@localhost:5432/db"),
+            "DATABASE_URL": MagicMock(value=f"postgresql://{TEST_USER}:{TEST_PASSWORD}@localhost:5432/{TEST_DB}"),
             "REDIS_URL": MagicMock(value="redis://localhost:6379/0")
         }
         

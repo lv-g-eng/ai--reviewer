@@ -13,15 +13,14 @@
 // ============================================================================
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 
 export interface User {
   id: string;
-  email: string;
+  username: string;
   name?: string;
-  full_name?: string;
   role?: string;
   is_active?: boolean;
   accessToken?: string;
@@ -36,10 +35,11 @@ export interface AuthResponse {
 
 export interface UserResponse {
   id: string;
-  email: string;
-  full_name?: string;
+  username: string;
   role?: string;
   is_active?: boolean;
+  created_at?: string;
+  last_login?: string;
 }
 
 export type AuthErrorType = 'configuration' | 'network' | 'credentials' | 'server' | 'validation';
@@ -142,12 +142,12 @@ export function getUserDetailsUrl(): string {
  */
 export async function authenticateUser(credentials: LoginCredentials): Promise<User> {
   if (process.env.NODE_ENV === 'development') {
-    console.log('[Auth] Authenticating user:', credentials.email);
+    console.log('[Auth] Authenticating user:', credentials.username);
   }
   
   // Validate credentials
-  if (!credentials.email || !credentials.password) {
-    throw createAuthError('validation', 'Email and password are required');
+  if (!credentials.username || !credentials.password) {
+    throw createAuthError('validation', 'Username and password are required');
   }
   
   try {
@@ -162,7 +162,7 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<U
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: credentials.email,
+        username: credentials.username,
         password: credentials.password,
       }),
     });
@@ -175,7 +175,7 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<U
       }
       
       if (loginRes.status === 401) {
-        throw createAuthError('credentials', error.detail || 'Invalid email or password', loginRes.status);
+        throw createAuthError('credentials', error.detail || 'Invalid username or password', loginRes.status);
       } else if (loginRes.status >= 500) {
         throw createAuthError('server', error.detail || 'Server error occurred', loginRes.status);
       } else {
@@ -211,15 +211,14 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<U
     const userData: UserResponse = await meRes.json();
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Auth] User details fetched successfully:', userData.email);
+      console.log('[Auth] User details fetched successfully:', userData.username);
     }
     
     // Combine auth data and user data
     return {
       id: userData.id,
-      email: userData.email,
-      name: userData.full_name || userData.email.split('@')[0],
-      full_name: userData.full_name,
+      username: userData.username,
+      name: userData.username,
       role: userData.role,
       is_active: userData.is_active,
       accessToken: authData.access_token,
@@ -275,7 +274,7 @@ export function getUserFriendlyErrorMessage(error: AuthError): string {
     case 'network':
       return 'Unable to connect to the authentication server. Please check your connection and try again.';
     case 'credentials':
-      return 'Invalid email or password. Please try again.';
+      return 'Invalid username or password. Please try again.';
     case 'server':
       return 'The authentication server encountered an error. Please try again later.';
     case 'validation':
@@ -319,11 +318,12 @@ export function handleAuthError(error: unknown): AuthError {
 // ============================================================================
 
 /**
- * Validate email format
+ * Validate username format
  */
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+export function isValidUsername(username: string): boolean {
+  // Username should be alphanumeric with optional underscores/hyphens, 3-50 chars
+  const usernameRegex = /^[a-zA-Z0-9_-]{3,50}$/;
+  return usernameRegex.test(username);
 }
 
 /**
@@ -360,10 +360,10 @@ export function isValidPassword(password: string): { valid: boolean; errors: str
 export function validateCredentials(credentials: LoginCredentials): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
-  if (!credentials.email) {
-    errors.push('Email is required');
-  } else if (!isValidEmail(credentials.email)) {
-    errors.push('Invalid email format');
+  if (!credentials.username) {
+    errors.push('Username is required');
+  } else if (!isValidUsername(credentials.username)) {
+    errors.push('Invalid username format (3-50 alphanumeric characters, underscores, or hyphens)');
   }
   
   if (!credentials.password) {

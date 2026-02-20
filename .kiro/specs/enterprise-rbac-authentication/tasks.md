@@ -112,7 +112,7 @@ The implementation follows a bottom-up approach: data models â†’ core services â
     - **Property 29: Role updates apply immediately**
     - **Validates: Requirements 8.2**
 
-- [ ] 5. Checkpoint - Ensure core services work
+- [x] 5. Checkpoint - Ensure core services work
   - Run all tests for authentication and RBAC services
   - Verify password hashing, token generation, and permission checking
   - Ask the user if questions arise
@@ -152,25 +152,25 @@ The implementation follows a bottom-up approach: data models â†’ core services â
     - **Property 10: Visitors cannot modify resources**
     - **Validates: Requirements 2.5**
   
-  - [ ] 6.7 Create project access middleware
+  - [x] 6.7 Create project access middleware
     - Implement check_project_access middleware that validates project access
     - Extract project_id from request params
     - Use RBAC service to check ownership or access grants
     - _Requirements: 2.4, 4.3_
   
-  - [ ] 6.8 Write property test for project access middleware
+  - [x] 6.8 Write property test for project access middleware
     - **Property 9: Unauthorized project access is denied**
     - **Validates: Requirements 2.4, 4.3**
 
 - [ ] 7. Implement Audit Service
-  - [ ] 7.1 Create audit logging functions
+  - [x] 7.1 Create audit logging functions
     - Implement log_action function that creates AuditLog entries
     - Extract IP address and user agent from request context
     - Ensure immediate persistence to database
     - Prevent modification/deletion of audit logs
     - _Requirements: 7.1, 7.3, 7.4_
   
-  - [ ] 7.2 Write property tests for audit logging
+  - [x] 7.2 Write property tests for audit logging
     - **Property 24: Audit logs contain required fields**
     - **Validates: Requirements 7.1**
     - **Property 25: Audit logs persist immediately**
@@ -178,29 +178,29 @@ The implementation follows a bottom-up approach: data models â†’ core services â
     - **Property 26: Users cannot modify audit logs**
     - **Validates: Requirements 7.4**
   
-  - [ ] 7.3 Implement audit log query functions
+  - [x] 7.3 Implement audit log query functions
     - Create query_logs function with filters for userId, action, date range
     - Implement pagination support
     - _Requirements: 7.5_
   
-  - [ ] 7.4 Write property test for audit log queries
+  - [x] 7.4 Write property test for audit log queries
     - **Property 27: Audit log queries filter correctly**
     - **Validates: Requirements 7.5**
   
-  - [ ] 7.5 Add audit logging to sensitive operations
+  - [x] 7.5 Add audit logging to sensitive operations
     - Integrate log_action calls for: login, logout, project access, user CRUD, role changes, config modifications
     - Use decorator pattern for automatic logging
     - _Requirements: 7.2_
 
 - [ ] 8. Implement API endpoints
-  - [ ] 8.1 Create authentication endpoints
+  - [x] 8.1 Create authentication endpoints
     - POST /auth/login - accepts username/password, returns JWT
     - POST /auth/logout - invalidates session
     - POST /auth/refresh - refreshes JWT token
     - Apply audit logging to all endpoints
     - _Requirements: 1.1, 1.2, 1.3, 10.5_
   
-  - [ ] 8.2 Create user management endpoints
+  - [x] 8.2 Create user management endpoints
     - POST /users - create user (admin only)
     - GET /users - list users (admin only)
     - GET /users/{id} - get user details
@@ -210,7 +210,7 @@ The implementation follows a bottom-up approach: data models â†’ core services â
     - Prevent deletion of last admin
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
   
-  - [ ] 8.3 Write property tests for user management
+  - [x] 8.3 Write property tests for user management
     - **Property 28: User creation requires all fields**
     - **Validates: Requirements 8.1**
     - **Property 30: User deletion invalidates sessions**
@@ -218,7 +218,7 @@ The implementation follows a bottom-up approach: data models â†’ core services â
     - **Property 31: User list contains required fields**
     - **Validates: Requirements 8.5**
   
-  - [ ] 8.4 Create project management endpoints
+  - [x] 8.4 Create project management endpoints
     - POST /projects - create project (programmer/admin)
     - GET /projects - list accessible projects
     - GET /projects/{id} - get project details
@@ -229,27 +229,27 @@ The implementation follows a bottom-up approach: data models â†’ core services â
     - Apply check_project_access middleware
     - _Requirements: 2.3, 2.4, 4.1, 4.2, 4.5_
   
-  - [ ] 8.5 Write property tests for project management
+  - [x] 8.5 Write property tests for project management
     - **Property 8: Project creation sets ownership**
     - **Validates: Requirements 2.3, 4.1**
     - **Property 11: Visitors have read-only access to assigned projects**
     - **Validates: Requirements 2.6**
   
-  - [ ] 8.6 Create audit log endpoints
+  - [x] 8.6 Create audit log endpoints
     - GET /audit/logs - query audit logs (admin only)
     - GET /audit/logs/user/{userId} - get user's audit logs (admin only)
     - Apply check_role(ADMIN) middleware
     - _Requirements: 7.5_
 
 - [ ] 9. Implement session management
-  - [ ] 9.1 Create session lifecycle functions
+  - [x] 9.1 Create session lifecycle functions
     - Implement create_session function on login
     - Implement invalidate_session function on logout
     - Implement invalidate_all_user_sessions for password changes
     - Support concurrent sessions per user
     - _Requirements: 10.1, 10.3, 10.4_
   
-  - [ ] 9.2 Write property tests for session management
+  - [x] 9.2 Write property tests for session management
     - **Property 33: Login creates session with expiration**
     - **Validates: Requirements 10.1**
     - **Property 34: Concurrent sessions are supported**
@@ -263,15 +263,15 @@ The implementation follows a bottom-up approach: data models â†’ core services â
   - Verify audit logging is working
   - Ask the user if questions arise
 
-- [ ] 11. Implement frontend route guard
-  - [ ] 11.1 Create route guard component
+- [x] 11. Implement frontend route guard
+  - [x] 11.1 Create route guard component
     - Implement RouteGuard class that checks user permissions
     - Add can_activate method that validates route access
     - Add get_redirect_path method for unauthorized users
     - Check token validity on each navigation
     - _Requirements: 5.1, 5.2, 5.4, 5.5_
   
-  - [ ] 11.2 Write property tests for route guard
+  - [x] 11.2 Write property tests for route guard
     - **Property 19: Non-Admins cannot access admin routes**
     - **Validates: Requirements 5.1**
     - **Property 20: Users without config permissions cannot access settings**
@@ -279,25 +279,25 @@ The implementation follows a bottom-up approach: data models â†’ core services â
     - **Property 22: Expired sessions redirect to login**
     - **Validates: Requirements 5.4**
   
-  - [ ] 11.3 Apply route guards to protected routes
+  - [x] 11.3 Apply route guards to protected routes
     - Protect /admin/* routes with ADMIN role check
     - Protect /settings/* routes with MODIFY_CONFIG permission check
     - Redirect to /unauthorized for failed checks
     - Redirect to /login for expired sessions
     - _Requirements: 5.1, 5.2, 5.4_
 
-- [ ] 12. Implement permission-based UI components
-  - [ ] 12.1 Create permission HOC/decorator
+- [x] 12. Implement permission-based UI components
+  - [x] 12.1 Create permission HOC/decorator
     - Implement with_permission decorator for components
     - Implement CanAccess component for conditional rendering
     - Check user permissions from auth context
     - _Requirements: 5.3_
   
-  - [ ] 12.2 Write property test for conditional rendering
+  - [x] 12.2 Write property test for conditional rendering
     - **Property 21: UI elements hidden without permissions**
     - **Validates: Requirements 5.3**
   
-  - [ ] 12.3 Apply permission checks to UI elements
+  - [x] 12.3 Apply permission checks to UI elements
     - Hide Delete buttons without DELETE_* permissions
     - Hide Configure buttons without MODIFY_CONFIG permission
     - Hide user management UI for non-admins

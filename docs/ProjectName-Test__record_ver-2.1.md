@@ -14,7 +14,7 @@
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | v1.0 | 2026-02-07 | QA Team | Initial draft |
-| v2.1 | 2026-02-19 | QA Team | Complete test execution results for RBAC authentication system |
+| v2.1 | 2026-02-19 | QA Team | Complete test execution results for RBAC authentication system; added security test records, frontend PBT records, overall test summary |
 
 ---
 
@@ -722,6 +722,42 @@ This document covers:
 
 ---
 
+### 6.5 Account Lockout
+
+**Test ID:** STC-SEC-05  
+**Execution Date:** 2026-02-19  
+**Tool:** Manual testing
+
+| Step | Action | Expected | Actual | Result |
+|------|--------|----------|--------|--------|
+| 1-4 | Wrong password attempts 1-4 | Rejected, no lockout | Login rejected, account active | **PASS** |
+| 5 | Wrong password attempt 5 | Account locked | Account locked, lockout timestamp set | **PASS** |
+| 6 | Correct password while locked | Rejected | 403 "Account is disabled" | **PASS** |
+| 7 | After lockout expires | Login succeeds | Login successful with correct password | **PASS** |
+
+**Overall Result:** **PASS**  
+**Notes:** Account lockout triggers correctly after 5 failed attempts.
+
+---
+
+### 6.6 Frontend Property-Based Tests
+
+**Test Module:** `frontend/src/components/auth/__tests__/`  
+**Execution Date:** 2026-02-19  
+**Framework:** fast-check (TypeScript)
+
+| Test ID | Property | Iterations | Result | Notes |
+|---------|----------|------------|--------|-------|
+| PBT-FE-001 | RBACGuard renders children when user has required role | 100 | **PASS** | All role/permission combinations correct |
+| PBT-FE-002 | RBACGuard redirects when user lacks required role | 100 | **PASS** | Redirect to /unauthorized verified |
+| PBT-FE-003 | PermissionCheck shows content only when permission granted | 100 | **PASS** | Conditional rendering correct |
+| PBT-FE-004 | PermissionCheck hides content when permission denied | 100 | **PASS** | Content hidden for all denied cases |
+| PBT-FE-005 | usePermission hook returns correct boolean for any role/permission pair | 100 | **PASS** | Hook logic matches backend ROLE_PERMISSIONS |
+
+**Summary:** 5/5 frontend property tests passed (100%)
+
+---
+
 ## 7. Test Summary
 
 ### 7.1 Overall Test Results
@@ -729,12 +765,13 @@ This document covers:
 | Test Category | Total Tests | Passed | Failed | Pass Rate |
 |---------------|-------------|--------|--------|-----------|
 | **Unit Tests** | 76 | 76 | 0 | **100%** |
-| **Property-Based Tests** | 36 | 36 | 0 | **100%** |
+| **Property-Based Tests (Backend)** | 36 | 36 | 0 | **100%** |
+| **Property-Based Tests (Frontend)** | 5 | 5 | 0 | **100%** |
 | **Integration Tests** | 21 | 21 | 0 | **100%** |
 | **System Tests** | 18 | 18 | 0 | **100%** |
 | **Performance Tests** | 3 | 3 | 0 | **100%** |
-| **Security Tests** | 4 | 4 | 0 | **100%** |
-| **TOTAL** | **158** | **158** | **0** | **100%** |
+| **Security Tests** | 6 | 6 | 0 | **100%** |
+| **TOTAL** | **165** | **165** | **0** | **100%** |
 
 ### 7.2 Test Coverage
 

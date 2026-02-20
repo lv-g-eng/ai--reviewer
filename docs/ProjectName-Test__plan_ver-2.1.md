@@ -14,7 +14,7 @@
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | v1.0 | 2026-02-07 | QA Team | Initial draft |
-| v2.1 | 2026-02-19 | QA Team | Complete revision with RBAC authentication, property-based testing, comprehensive test coverage |
+| v2.1 | 2026-02-19 | QA Team | Complete revision with RBAC authentication, property-based testing, comprehensive test coverage; added STC-SEC-04 to STC-SEC-06, Section 6 test data, Section 7 defect management, Section 8 metrics, Section 9 entry/exit criteria, Section 10 risks |
 
 ---
 
@@ -956,6 +956,64 @@ This test plan covers white-box and black-box testing activities used to verify 
 **Priority:** Critical
 
 ---
+
+**STC-SEC-05: Account Lockout**
+
+**Description:** Verify account lockout after repeated failed login attempts
+
+**Prerequisite:** Valid user account exists
+
+**Test Script:**
+1. Attempt login with wrong password (attempt 1)
+2. Verify login rejected, no lockout yet
+3. Repeat wrong password attempts 2-4
+4. Verify each rejected, no lockout yet
+5. Attempt wrong password (attempt 5)
+6. Verify account locked
+7. Attempt login with correct password
+8. Verify still rejected due to lockout
+9. Wait for lockout period to expire
+10. Attempt login with correct password
+11. Verify login succeeds
+
+**Expected Result:** Account locked after 5 failed attempts, unlocks after lockout period
+
+**Priority:** Critical
+
+---
+
+**STC-SEC-06: Rate Limiting**
+
+**Description:** Verify API rate limiting prevents abuse
+
+**Prerequisite:** Valid user account, API access
+
+**Test Script:**
+1. Send 100 requests to /api/auth/login within 1 minute
+2. Verify first 100 requests processed
+3. Send request 101
+4. Verify 429 Too Many Requests response
+5. Wait for rate limit window to reset
+6. Send request again
+7. Verify request processed normally
+
+**Expected Result:** Rate limiting enforced at 100 requests/minute per user
+
+**Priority:** High
+
+---
+
+### 5.9 Frontend Property-Based Tests
+
+**Test Module:** `frontend/src/components/auth/__tests__/`
+
+| PBT ID | Property | Framework | Iterations | Priority |
+|--------|----------|-----------|------------|----------|
+| PBT-FE-001 | RBACGuard renders children when user has required role | fast-check | 100 | Critical |
+| PBT-FE-002 | RBACGuard redirects when user lacks required role | fast-check | 100 | Critical |
+| PBT-FE-003 | PermissionCheck shows content only when permission granted | fast-check | 100 | Critical |
+| PBT-FE-004 | PermissionCheck hides content when permission denied | fast-check | 100 | Critical |
+| PBT-FE-005 | usePermission hook returns correct boolean for any role/permission pair | fast-check | 100 | High |
 
 ## 6. Test Data Management
 

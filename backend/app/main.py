@@ -93,6 +93,13 @@ async def lifespan(app: FastAPI):
         await llm_service.initialize()
         print("✅ LLM service initialized")
     
+    # Initialize RBAC authentication system
+    try:
+        from app.auth import auth_settings
+        print(f"✅ RBAC Authentication initialized (JWT expiry: {auth_settings.jwt_access_token_expire_minutes}min)")
+    except Exception as e:
+        print(f"⚠️  RBAC Authentication initialization warning: {e}")
+    
     # Log startup summary (Requirement 11.1, 11.2, 11.3, 11.4, 11.5, 11.6)
     from app.core.logging_config import log_startup_summary, log_database_status
     import logging

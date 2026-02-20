@@ -20,7 +20,9 @@ last_updated: 2026-02-16
 | Version | Date | Author | Reviewer | Changes |
 |---------|------|--------|----------|---------|
 | v1.0 | 2026-02-07 | BaiXuan Zhang | Dr. Siraprapa | Initial draft |
+| v2.0 | 2026-02-13 | BaiXuan Zhang | Dr. Siraprapa | Added system architecture, database schema, component design |
 | v2.1 | 2026-02-16 | BaiXuan Zhang | Dr. Siraprapa | Added security design, deployment architecture, complete database design, API specs, architecture diagrams |
+| v2.1 | 2026-02-19 | BaiXuan Zhang | Dr. Siraprapa | Completed RBAC component design, updated technology stack, added ADR-005, aligned with enterprise_rbac_auth implementation |
 
 ---
 
@@ -312,208 +314,179 @@ See: `docs/diagram/entity-relationship-diagram.puml` (Original comprehensive dia
 
 ### 3.2.1 Users Table
 
-```sql
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('guest', 'user', 'programmer', 'reviewer', 'manager', 'admin')),
-    is_active BOOLEAN DEFAULT TRUE,
-    email_verified BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP,
-    failed_login_attempts INTEGER DEFAULT 0,
-    locked_until TIMESTAMP,
-    CONSTRAINT username_format CHECK (username ~ '^[a-zA-Z][a-zA-Z0-9_]{2,29}$'),
-    CONSTRAINT email_format CHECK (email ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-);
+Stores user account information for authentication and authorization.
 
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_username ON users(LOWER(username));
-CREATE INDEX idx_users_role ON users(role);
-```
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, auto-generated | Unique user identifier |
+| username | VARCHAR(50) | UNIQUE, NOT NULL | Login username (3-30 chars, alphanumeric + underscore, starts with letter) |
+| email | VARCHAR(100) | UNIQUE, NOT NULL | User email address |
+| password_hash | VARCHAR(255) | NOT NULL | bcrypt-hashed password |
+| role | VARCHAR(20) | NOT NULL, CHECK | One of: guest, user, programmer, reviewer, manager, admin |
+| is_active | BOOLEAN | DEFAULT TRUE | Account active status |
+| email_verified | BOOLEAN | DEFAULT FALSE | Email verification status |
+| created_at | TIMESTAMP | DEFAULT NOW | Account creation time |
+| updated_at | TIMESTAMP | DEFAULT NOW | Last update time |
+| last_login | TIMESTAMP | NULLABLE | Last successful login time |
+| failed_login_attempts | INTEGER | DEFAULT 0 | Consecutive failed login count |
+| locked_until | TIMESTAMP | NULLABLE | Account lockout expiry time |
+
+Indexes: email, username (case-insensitive), role
 
 ### 3.2.2 Sessions Table
 
-```sql
-CREATE TABLE sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    access_token VARCHAR(500) NOT NULL,
-    refresh_token VARCHAR(500),
-    expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ip_address VARCHAR(45),
-    user_agent TEXT,
-    is_revoked BOOLEAN DEFAULT FALSE,
-    CONSTRAINT valid_expiry CHECK (expires_at > created_at)
-);
+Tracks active user sessions for token management and audit.
 
-CREATE INDEX idx_sessions_user_id ON sessions(user_id);
-CREATE INDEX idx_sessions_access_token ON sessions(access_token);
-CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
-```
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, auto-generated | Unique session identifier |
+| user_id | UUID | FK → users, CASCADE | Owning user |
+| access_token | VARCHAR(500) | NOT NULL | JWT access token |
+| refresh_token | VARCHAR(500) | NULLABLE | JWT refresh token |
+| expires_at | TIMESTAMP | NOT NULL | Session expiry time (must be after created_at) |
+| created_at | TIMESTAMP | DEFAULT NOW | Session creation time |
+| ip_address | VARCHAR(45) | NULLABLE | Client IP address |
+| user_agent | TEXT | NULLABLE | Client user agent string |
+| is_revoked | BOOLEAN | DEFAULT FALSE | Manual revocation flag |
+
+Indexes: user_id, access_token, expires_at
 
 ### 3.2.3 Projects Table
 
-```sql
-CREATE TABLE projects (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(200) NOT NULL,
-    github_url VARCHAR(500) UNIQUE NOT NULL,
-    repository_id VARCHAR(100) NOT NULL,
-    default_branch VARCHAR(100) DEFAULT 'main',
-    webhook_secret VARCHAR(255),
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_analyzed TIMESTAMP,
-    CONSTRAINT github_url_format CHECK (github_url ~ '^https://github\.com/[a-zA-Z0-9-]+/[a-zA-Z0-9._-]+$')
-);
+Stores connected GitHub repository configurations.
 
-CREATE INDEX idx_projects_owner_id ON projects(owner_id);
-CREATE INDEX idx_projects_github_url ON projects(github_url);
-CREATE INDEX idx_projects_is_active ON projects(is_active);
-```
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, auto-generated | Unique project identifier |
+| owner_id | UUID | FK → users, CASCADE | Project owner |
+| name | VARCHAR(200) | NOT NULL | Display name |
+| github_url | VARCHAR(500) | UNIQUE, NOT NULL | GitHub repository URL (format: https://github.com/{owner}/{repo}) |
+| repository_id | VARCHAR(100) | NOT NULL | GitHub repository ID |
+| default_branch | VARCHAR(100) | DEFAULT 'main' | Default analysis branch |
+| webhook_secret | VARCHAR(255) | NULLABLE | HMAC webhook verification secret |
+| is_active | BOOLEAN | DEFAULT TRUE | Project active status |
+| created_at | TIMESTAMP | DEFAULT NOW | Creation time |
+| updated_at | TIMESTAMP | DEFAULT NOW | Last update time |
+| last_analyzed | TIMESTAMP | NULLABLE | Last analysis completion time |
+
+Indexes: owner_id, github_url, is_active
 
 ### 3.2.4 Project Members Table
 
-```sql
-CREATE TABLE project_members (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('owner', 'maintainer', 'contributor', 'viewer')),
-    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(project_id, user_id)
-);
+Manages team membership and per-project role assignments.
 
-CREATE INDEX idx_project_members_project_id ON project_members(project_id);
-CREATE INDEX idx_project_members_user_id ON project_members(user_id);
-```
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, auto-generated | Unique membership identifier |
+| project_id | UUID | FK → projects, CASCADE | Associated project |
+| user_id | UUID | FK → users, CASCADE | Associated user |
+| role | VARCHAR(20) | NOT NULL, CHECK | One of: owner, maintainer, contributor, viewer |
+| joined_at | TIMESTAMP | DEFAULT NOW | Membership creation time |
+
+Constraints: UNIQUE(project_id, user_id). Indexes: project_id, user_id
 
 ### 3.2.5 Pull Requests Table
 
-```sql
-CREATE TABLE pull_requests (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    pr_number INTEGER NOT NULL,
-    github_pr_id VARCHAR(100) NOT NULL,
-    title VARCHAR(500) NOT NULL,
-    author VARCHAR(100) NOT NULL,
-    source_branch VARCHAR(100) NOT NULL,
-    target_branch VARCHAR(100) NOT NULL,
-    status VARCHAR(20) NOT NULL CHECK (status IN ('open', 'closed', 'merged')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    closed_at TIMESTAMP,
-    UNIQUE(project_id, pr_number)
-);
+Records GitHub pull requests submitted for analysis.
 
-CREATE INDEX idx_pull_requests_project_id ON pull_requests(project_id);
-CREATE INDEX idx_pull_requests_status ON pull_requests(status);
-CREATE INDEX idx_pull_requests_author ON pull_requests(author);
-```
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, auto-generated | Unique PR record identifier |
+| project_id | UUID | FK → projects, CASCADE | Associated project |
+| pr_number | INTEGER | NOT NULL | GitHub PR number |
+| github_pr_id | VARCHAR(100) | NOT NULL | GitHub internal PR ID |
+| title | VARCHAR(500) | NOT NULL | PR title |
+| author | VARCHAR(100) | NOT NULL | GitHub username of PR author |
+| source_branch | VARCHAR(100) | NOT NULL | Feature branch name |
+| target_branch | VARCHAR(100) | NOT NULL | Target merge branch |
+| status | VARCHAR(20) | NOT NULL, CHECK | One of: open, closed, merged |
+| created_at | TIMESTAMP | DEFAULT NOW | PR creation time |
+| updated_at | TIMESTAMP | DEFAULT NOW | Last update time |
+| closed_at | TIMESTAMP | NULLABLE | PR close/merge time |
+
+Constraints: UNIQUE(project_id, pr_number). Indexes: project_id, status, author
 
 ### 3.2.6 Analyses Table
 
-```sql
-CREATE TABLE analyses (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    pr_id UUID NOT NULL REFERENCES pull_requests(id) ON DELETE CASCADE,
-    status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
-    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP,
-    processing_time INTEGER, -- seconds
-    total_issues INTEGER DEFAULT 0,
-    critical_issues INTEGER DEFAULT 0,
-    high_issues INTEGER DEFAULT 0,
-    medium_issues INTEGER DEFAULT 0,
-    low_issues INTEGER DEFAULT 0,
-    quality_score DECIMAL(5,2),
-    error_message TEXT,
-    CONSTRAINT valid_completion CHECK (
-        (status = 'completed' AND completed_at IS NOT NULL) OR
-        (status != 'completed' AND completed_at IS NULL)
-    )
-);
+Stores analysis job status and aggregate results per pull request.
 
-CREATE INDEX idx_analyses_pr_id ON analyses(pr_id);
-CREATE INDEX idx_analyses_status ON analyses(status);
-CREATE INDEX idx_analyses_completed_at ON analyses(completed_at);
-```
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, auto-generated | Unique analysis identifier |
+| pr_id | UUID | FK → pull_requests, CASCADE | Associated pull request |
+| status | VARCHAR(20) | NOT NULL, CHECK | One of: pending, processing, completed, failed |
+| started_at | TIMESTAMP | DEFAULT NOW | Analysis start time |
+| completed_at | TIMESTAMP | NULLABLE | Analysis completion time (required when status=completed) |
+| processing_time | INTEGER | NULLABLE | Duration in seconds |
+| total_issues | INTEGER | DEFAULT 0 | Total issue count |
+| critical_issues | INTEGER | DEFAULT 0 | Critical severity count |
+| high_issues | INTEGER | DEFAULT 0 | High severity count |
+| medium_issues | INTEGER | DEFAULT 0 | Medium severity count |
+| low_issues | INTEGER | DEFAULT 0 | Low severity count |
+| quality_score | DECIMAL(5,2) | NULLABLE | Computed quality score (0-100) |
+| error_message | TEXT | NULLABLE | Failure reason if status=failed |
+
+Indexes: pr_id, status, completed_at
 
 ### 3.2.7 Issues Table
 
-```sql
-CREATE TABLE issues (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    analysis_id UUID NOT NULL REFERENCES analyses(id) ON DELETE CASCADE,
-    severity VARCHAR(20) NOT NULL CHECK (severity IN ('critical', 'high', 'medium', 'low')),
-    category VARCHAR(100) NOT NULL,
-    title VARCHAR(200) NOT NULL,
-    description TEXT NOT NULL,
-    suggestion TEXT,
-    file_path VARCHAR(500) NOT NULL,
-    line_number INTEGER NOT NULL,
-    code_snippet TEXT,
-    rule_id VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    user_feedback VARCHAR(20) CHECK (user_feedback IN ('accept', 'dismiss', 'false_positive')),
-    feedback_comment TEXT,
-    feedback_at TIMESTAMP
-);
+Stores individual code issues detected during analysis.
 
-CREATE INDEX idx_issues_analysis_id ON issues(analysis_id);
-CREATE INDEX idx_issues_severity ON issues(severity);
-CREATE INDEX idx_issues_category ON issues(category);
-CREATE INDEX idx_issues_file_path ON issues(file_path);
-```
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, auto-generated | Unique issue identifier |
+| analysis_id | UUID | FK → analyses, CASCADE | Parent analysis |
+| severity | VARCHAR(20) | NOT NULL, CHECK | One of: critical, high, medium, low |
+| category | VARCHAR(100) | NOT NULL | Issue category (security, performance, style, etc.) |
+| title | VARCHAR(200) | NOT NULL | Short issue title |
+| description | TEXT | NOT NULL | Detailed issue description |
+| suggestion | TEXT | NULLABLE | AI-generated fix suggestion |
+| file_path | VARCHAR(500) | NOT NULL | Relative file path |
+| line_number | INTEGER | NOT NULL | Line number in file |
+| code_snippet | TEXT | NULLABLE | Relevant code excerpt |
+| rule_id | VARCHAR(100) | NULLABLE | Triggered rule identifier |
+| created_at | TIMESTAMP | DEFAULT NOW | Issue creation time |
+| user_feedback | VARCHAR(20) | CHECK, NULLABLE | One of: accept, dismiss, false_positive |
+| feedback_comment | TEXT | NULLABLE | User feedback comment |
+| feedback_at | TIMESTAMP | NULLABLE | Feedback submission time |
+
+Indexes: analysis_id, severity, category, file_path
 
 ### 3.2.8 Quality Metrics Table
 
-```sql
-CREATE TABLE quality_metrics (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    metric_date DATE NOT NULL,
-    total_lines INTEGER,
-    code_coverage DECIMAL(5,2),
-    avg_complexity DECIMAL(5,2),
-    technical_debt INTEGER, -- hours
-    maintainability_index DECIMAL(5,2),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(project_id, metric_date)
-);
+Stores daily aggregated quality metrics per project for trend analysis.
 
-CREATE INDEX idx_quality_metrics_project_id ON quality_metrics(project_id);
-CREATE INDEX idx_quality_metrics_date ON quality_metrics(metric_date);
-```
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, auto-generated | Unique metric record identifier |
+| project_id | UUID | FK → projects, CASCADE | Associated project |
+| metric_date | DATE | NOT NULL | Metric snapshot date |
+| total_lines | INTEGER | NULLABLE | Total lines of code |
+| code_coverage | DECIMAL(5,2) | NULLABLE | Test coverage percentage |
+| avg_complexity | DECIMAL(5,2) | NULLABLE | Average cyclomatic complexity |
+| technical_debt | INTEGER | NULLABLE | Estimated technical debt in hours |
+| maintainability_index | DECIMAL(5,2) | NULLABLE | Maintainability index score |
+| created_at | TIMESTAMP | DEFAULT NOW | Record creation time |
+
+Constraints: UNIQUE(project_id, metric_date). Indexes: project_id, metric_date
 
 ### 3.2.9 Audit Logs Table
 
-```sql
-CREATE TABLE audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    action VARCHAR(100) NOT NULL,
-    resource_type VARCHAR(50) NOT NULL,
-    resource_id UUID,
-    details JSONB,
-    ip_address VARCHAR(45),
-    user_agent TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+Immutable record of all security-relevant system actions. No UPDATE or DELETE operations are permitted.
 
-CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
-CREATE INDEX idx_audit_logs_action ON audit_logs(action);
-CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp);
-CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
-```
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PK, auto-generated | Unique log entry identifier |
+| user_id | UUID | FK → users, SET NULL | Acting user (nullable for system actions) |
+| action | VARCHAR(100) | NOT NULL | Action type (e.g., LOGIN, CREATE_USER, UPDATE_USER_ROLE) |
+| resource_type | VARCHAR(50) | NOT NULL | Affected resource type |
+| resource_id | UUID | NULLABLE | Affected resource identifier |
+| details | JSONB | NULLABLE | Additional action context |
+| ip_address | VARCHAR(45) | NULLABLE | Client IP address |
+| user_agent | TEXT | NULLABLE | Client user agent string |
+| timestamp | TIMESTAMP | DEFAULT NOW | Action timestamp |
+
+Indexes: user_id, action, timestamp, (resource_type, resource_id)
 
 
 ## 3.3 Neo4j Graph Database Schema
@@ -521,148 +494,96 @@ CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 ### 3.3.1 Node Types
 
 #### Module Node
-```cypher
-CREATE CONSTRAINT module_unique IF NOT EXISTS
-FOR (m:Module) REQUIRE m.id IS UNIQUE;
 
-CREATE INDEX module_project IF NOT EXISTS
-FOR (m:Module) ON (m.project_id);
+Represents a source code module (file or package). Unique constraint on `id`, indexed by `project_id`.
 
-// Properties:
-// - id: UUID
-// - project_id: UUID
-// - name: String
-// - path: String
-// - language: String
-// - lines_of_code: Integer
-// - complexity: Integer
-// - created_at: DateTime
-// - updated_at: DateTime
-```
+| Property | Type | Description |
+|----------|------|-------------|
+| id | UUID | Unique module identifier |
+| project_id | UUID | Owning project |
+| name | String | Module name |
+| path | String | File system path |
+| language | String | Programming language |
+| lines_of_code | Integer | Total lines of code |
+| complexity | Integer | Cyclomatic complexity |
+| created_at | DateTime | Creation timestamp |
+| updated_at | DateTime | Last update timestamp |
 
 #### Class Node
-```cypher
-CREATE CONSTRAINT class_unique IF NOT EXISTS
-FOR (c:Class) REQUIRE c.id IS UNIQUE;
 
-// Properties:
-// - id: UUID
-// - module_id: UUID
-// - name: String
-// - file_path: String
-// - line_start: Integer
-// - line_end: Integer
-// - complexity: Integer
-// - methods_count: Integer
-// - is_abstract: Boolean
-```
+Represents a class definition within a module. Unique constraint on `id`.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | UUID | Unique class identifier |
+| module_id | UUID | Containing module |
+| name | String | Class name |
+| file_path | String | Source file path |
+| line_start | Integer | Start line number |
+| line_end | Integer | End line number |
+| complexity | Integer | Cyclomatic complexity |
+| methods_count | Integer | Number of methods |
+| is_abstract | Boolean | Abstract class flag |
 
 #### Function Node
-```cypher
-CREATE CONSTRAINT function_unique IF NOT EXISTS
-FOR (f:Function) REQUIRE f.id IS UNIQUE;
 
-// Properties:
-// - id: UUID
-// - parent_id: UUID (module or class)
-// - name: String
-// - file_path: String
-// - line_start: Integer
-// - line_end: Integer
-// - complexity: Integer
-// - parameters_count: Integer
-// - is_async: Boolean
-```
+Represents a function or method definition. Unique constraint on `id`.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | UUID | Unique function identifier |
+| parent_id | UUID | Containing module or class |
+| name | String | Function name |
+| file_path | String | Source file path |
+| line_start | Integer | Start line number |
+| line_end | Integer | End line number |
+| complexity | Integer | Cyclomatic complexity |
+| parameters_count | Integer | Number of parameters |
+| is_async | Boolean | Async function flag |
 
 ### 3.3.2 Relationship Types
 
 #### DEPENDS_ON
-```cypher
-// Module A depends on Module B
-CREATE (a:Module)-[:DEPENDS_ON {
-    type: 'import',
-    strength: 5,
-    created_at: datetime()
-}]->(b:Module)
 
-// Properties:
-// - type: String (import, call, inheritance, composition)
-// - strength: Integer (1-10, based on usage frequency)
-// - created_at: DateTime
-// - last_updated: DateTime
-```
+Directed dependency from one module to another (import, call, inheritance, or composition).
+
+| Property | Type | Description |
+|----------|------|-------------|
+| type | String | Dependency type: import, call, inheritance, composition |
+| strength | Integer | Usage frequency score (1-10) |
+| created_at | DateTime | Relationship creation time |
+| last_updated | DateTime | Last update time |
 
 #### CALLS
-```cypher
-// Function A calls Function B
-CREATE (a:Function)-[:CALLS {
-    call_count: 3,
-    is_recursive: false
-}]->(b:Function)
 
-// Properties:
-// - call_count: Integer
-// - is_recursive: Boolean
-// - call_sites: List<Integer> (line numbers)
-```
+Directed call relationship from one function to another.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| call_count | Integer | Number of call sites |
+| is_recursive | Boolean | Whether the call is recursive |
+| call_sites | List\<Integer\> | Line numbers of call sites |
 
 #### INHERITS
-```cypher
-// Class A inherits from Class B
-CREATE (a:Class)-[:INHERITS {
-    inheritance_type: 'single'
-}]->(b:Class)
 
-// Properties:
-// - inheritance_type: String (single, multiple, interface)
-```
+Directed inheritance relationship from subclass to superclass.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| inheritance_type | String | One of: single, multiple, interface |
 
 #### CONTAINS
-```cypher
-// Module contains Class
-CREATE (m:Module)-[:CONTAINS]->(c:Class)
 
-// Class contains Function
-CREATE (c:Class)-[:CONTAINS]->(f:Function)
-```
+Structural containment: Module → Class, Class → Function.
 
-### 3.3.3 Common Queries
+### 3.3.3 Common Query Patterns
 
-#### Find Circular Dependencies
-```cypher
-MATCH path = (m:Module)-[:DEPENDS_ON*2..10]->(m)
-WHERE m.project_id = $project_id
-RETURN path, length(path) as cycle_length
-ORDER BY cycle_length
-```
+The following query patterns are used for architectural analysis:
 
-#### Calculate Module Coupling
-```cypher
-MATCH (m:Module {project_id: $project_id})
-OPTIONAL MATCH (m)-[r:DEPENDS_ON]->()
-WITH m, count(r) as outgoing
-OPTIONAL MATCH ()-[r:DEPENDS_ON]->(m)
-WITH m, outgoing, count(r) as incoming
-RETURN m.name, outgoing, incoming, (outgoing + incoming) as total_coupling
-ORDER BY total_coupling DESC
-```
-
-#### Find Layer Violations
-```cypher
-// Assuming layers are defined by path patterns
-MATCH (presentation:Module)-[:DEPENDS_ON]->(data:Module)
-WHERE presentation.path STARTS WITH 'src/ui/'
-  AND data.path STARTS WITH 'src/data/'
-  AND NOT exists((presentation)-[:DEPENDS_ON]->(:Module {path: 'src/business/'}))
-RETURN presentation.name, data.name
-```
-
-#### Get Dependency Graph for Visualization
-```cypher
-MATCH (m:Module {project_id: $project_id})
-OPTIONAL MATCH (m)-[r:DEPENDS_ON]->(target:Module)
-RETURN m, collect({target: target, relationship: r}) as dependencies
-```
+- **Circular Dependency Detection**: Traverse DEPENDS_ON relationships to find cycles of length 2-10 within a project
+- **Module Coupling Calculation**: Count incoming and outgoing DEPENDS_ON edges per module; rank by total coupling
+- **Layer Violation Detection**: Match DEPENDS_ON edges that skip architectural layers (e.g., presentation → data without passing through service)
+- **Dependency Graph Export**: Collect all modules and their DEPENDS_ON targets for visualization rendering
 
 ---
 
@@ -732,141 +653,159 @@ See: `docs/diagram/class-diagram.puml` (Original comprehensive diagram with all 
 
 ### 4.2.1 Authentication Service
 
-**Purpose**: Manages user authentication, authorization, and session management.
+**Purpose**: Manages user authentication, JWT token lifecycle, and session management.
 
-**Technologies**: FastAPI, PyJWT, bcrypt, Redis
+**Technologies**: FastAPI, PyJWT, bcrypt, SQLAlchemy
+
+**Implementation**: `enterprise_rbac_auth/services/auth_service.py`
 
 **Class Structure**:
-```python
-class AuthService:
-    """Main authentication service"""
-    
-    def __init__(self, db: Database, redis: RedisClient, jwt_manager: JWTManager):
-        self.db = db
-        self.redis = redis
-        self.jwt_manager = jwt_manager
-    
-    async def register(self, user_data: RegisterDTO) -> User:
-        """
-        Register a new user
-        
-        Args:
-            user_data: Registration data (username, email, password)
-        
-        Returns:
-            Created user object
-        
-        Raises:
-            ValidationError: Invalid input data
-            DuplicateUserError: Username or email already exists
-        """
-        # Validate input
-        self._validate_registration_data(user_data)
-        
-        # Check for duplicates
-        if await self.db.user_exists(user_data.email, user_data.username):
-            raise DuplicateUserError("Email or username already exists")
-        
-        # Hash password
-        password_hash = bcrypt.hashpw(
-            user_data.password.encode('utf-8'),
-            bcrypt.gensalt(rounds=12)
-        )
-        
-        # Create user
-        user = await self.db.create_user({
-            'username': user_data.username,
-            'email': user_data.email,
-            'password_hash': password_hash,
-            'role': 'user'
-        })
-        
-        # Send verification email
-        await self._send_verification_email(user)
-        
-        return user
-    
-    async def login(self, credentials: LoginDTO) -> SessionDTO:
-        """
-        Authenticate user and create session
-        
-        Args:
-            credentials: Login credentials (email/username, password)
-        
-        Returns:
-            Session with access and refresh tokens
-        
-        Raises:
-            AuthenticationError: Invalid credentials
-            AccountLockedError: Account is locked
-        """
-        # Find user
-        user = await self.db.find_user_by_email_or_username(credentials.identifier)
-        if not user:
-            raise AuthenticationError("Invalid credentials")
-        
-        # Check account status
-        if user.locked_until and user.locked_until > datetime.now():
-            raise AccountLockedError(f"Account locked until {user.locked_until}")
-        
-        # Verify password
-        if not bcrypt.checkpw(credentials.password.encode('utf-8'), user.password_hash):
-            await self._handle_failed_login(user)
-            raise AuthenticationError("Invalid credentials")
-        
-        # Reset failed attempts
-        await self.db.reset_failed_login_attempts(user.id)
-        
-        # Generate tokens
-        access_token = self.jwt_manager.create_access_token(user)
-        refresh_token = self.jwt_manager.create_refresh_token(user)
-        
-        # Create session
-        session = await self.db.create_session({
-            'user_id': user.id,
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-            'expires_at': datetime.now() + timedelta(hours=24)
-        })
-        
-        # Update last login
-        await self.db.update_last_login(user.id)
-        
-        return SessionDTO(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            user=UserDTO.from_orm(user)
-        )
-    
-    async def validate_token(self, token: str) -> User:
-        """Validate JWT token and return user"""
-        try:
-            payload = self.jwt_manager.decode_token(token)
-            user_id = payload.get('sub')
-            
-            # Check if token is revoked
-            if await self.redis.is_token_revoked(token):
-                raise TokenRevokedError("Token has been revoked")
-            
-            # Get user
-            user = await self.db.get_user(user_id)
-            if not user or not user.is_active:
-                raise AuthenticationError("User not found or inactive")
-            
-            return user
-        except jwt.ExpiredSignatureError:
-            raise TokenExpiredError("Token has expired")
-        except jwt.InvalidTokenError:
-            raise AuthenticationError("Invalid token")
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `hash_password` | `(password: str) → str` | Hash password using bcrypt with configurable rounds |
+| `verify_password` | `(password: str, password_hash: str) → bool` | Verify plain-text password against stored bcrypt hash |
+| `generate_token` | `(user_id, username, role) → str` | Generate signed JWT with user_id, username, role, iat, exp, jti claims |
+| `validate_token` | `(token: str) → Optional[TokenPayload]` | Decode and validate JWT; returns None on expiry or tampering |
+| `refresh_token` | `(token: str) → Optional[str]` | Issue new token if current token is within 10-min refresh window |
+| `login` | `(db, username, password, ip_address, device_info) → AuthResult` | Authenticate user, create Session record, update last_login |
+| `logout` | `(db, user_id, token) → bool` | Invalidate specific session by setting is_valid=False |
+| `invalidate_all_user_sessions` | `(db, user_id) → bool` | Invalidate all active sessions (used on password change / deactivation) |
+
+**Key Design Decisions**:
+- Stateless design: no instance state, all methods are `@staticmethod`
+- Generic error messages on login failure to prevent username enumeration
+- JWT payload includes `jti` (JWT ID) for uniqueness and future revocation support
+- Session records stored in PostgreSQL for audit trail; token validity checked via `is_valid` flag
+
+**Design Notes**:
+- Stateless design: no instance state, all methods are static
+- Generic error messages on login failure to prevent username enumeration
+- JWT payload includes `jti` (JWT ID) for uniqueness and future revocation support
+- Session records stored in PostgreSQL for audit trail; token validity checked via `is_valid` flag
+- The original async design (register, login, validate_token as instance methods) was superseded by the current stateless `@staticmethod` implementation for simplicity and testability
+
+---
+
+### 4.2.2 RBAC Service
+
+**Purpose**: Manages role-based permissions and project-level access control.
+
+**Technologies**: SQLAlchemy, Python Enum
+
+**Implementation**: `enterprise_rbac_auth/services/rbac_service.py`
+
+**Role Hierarchy**:
+```
+ADMIN > MANAGER > REVIEWER > PROGRAMMER > VISITOR
 ```
 
-**Key Methods**:
-- `register(user_data: RegisterDTO) -> User`: Register new user
-- `login(credentials: LoginDTO) -> SessionDTO`: Authenticate and create session
-- `logout(token: str) -> None`: Revoke session
-- `validate_token(token: str) -> User`: Validate JWT token
-- `refresh_token(refresh_token: str) -> SessionDTO`: Refresh access token
-- `change_password(user_id: UUID, old_password: str, new_password: str) -> None`: Change password
+**Permission Matrix**:
+
+| Permission | ADMIN | MANAGER | REVIEWER | PROGRAMMER | VISITOR |
+|------------|-------|---------|----------|------------|---------|
+| CREATE_USER | ✓ | | | | |
+| READ_USER | ✓ | ✓ | | | |
+| UPDATE_USER | ✓ | | | | |
+| DELETE_USER | ✓ | | | | |
+| CREATE_PROJECT | ✓ | ✓ | | ✓ | |
+| VIEW_PROJECT | ✓ | ✓ | ✓ | ✓ | ✓ |
+| UPDATE_PROJECT | ✓ | ✓ | | ✓ | |
+| DELETE_PROJECT | ✓ | ✓ | | ✓ | |
+| TRIGGER_ANALYSIS | ✓ | ✓ | ✓ | ✓ | |
+| VIEW_ANALYSIS | ✓ | ✓ | ✓ | ✓ | ✓ |
+| MANAGE_USERS | ✓ | | | | |
+| VIEW_AUDIT_LOGS | ✓ | ✓ | | | |
+
+**Class Structure**:
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `has_permission` | `(db, user_id, permission) → bool` | Check if user's role includes the requested permission |
+| `get_role_permissions` | `(role) → list[Permission]` | Return permission list for a given role from ROLE_PERMISSIONS map |
+| `can_access_project` | `(db, user_id, project_id, permission) → bool` | Project access: ADMIN always True; owner always True; others need ProjectAccess grant for VIEW; write permissions denied for non-owners |
+| `grant_project_access` | `(db, project_id, user_id, granted_by) → bool` | Create ProjectAccess record; only admin or project owner may grant |
+| `revoke_project_access` | `(db, project_id, user_id, revoked_by) → bool` | Delete ProjectAccess record; only admin or project owner may revoke |
+| `assign_role` | `(db, user_id, new_role, assigned_by) → bool` | Update user.role; only admin may assign roles; effect is immediate |
+| `validate_role` | `(role: str) → bool` | Validate role string against Role enum |
+
+---
+
+### 4.2.3 Audit Service
+
+**Purpose**: Records all security-relevant actions with immutable audit trail.
+
+**Technologies**: SQLAlchemy, PostgreSQL JSONB
+
+**Implementation**: `enterprise_rbac_auth/services/audit_service.py`
+
+**Logged Actions**:
+- `LOGIN`, `LOGOUT`, `LOGIN_FAILED`
+- `CREATE_USER`, `UPDATE_USER`, `DELETE_USER`, `UPDATE_USER_ROLE`
+- `CREATE_PROJECT`, `UPDATE_PROJECT`, `DELETE_PROJECT`
+- `GRANT_ACCESS`, `REVOKE_ACCESS`
+- `TRIGGER_ANALYSIS`, `VIEW_ANALYSIS`
+- `UPDATE_CONFIG`
+
+**Immutability Enforcement**: No `UPDATE` or `DELETE` endpoints exposed. API layer returns `403 Forbidden` for any modification attempt.
+
+---
+
+### 4.2.4 Authorization Middleware
+
+**Purpose**: Intercepts requests to validate JWT tokens and enforce RBAC before reaching route handlers.
+
+**Technologies**: FastAPI dependency injection, PyJWT
+
+**Implementation**: `enterprise_rbac_auth/middleware/auth_middleware.py`
+
+**Middleware Flow**:
+```
+Request → Extract Bearer token → validate_token()
+    → Token invalid/missing → 401 Unauthorized
+    → Token valid → Load user from DB
+    → User inactive → 401 Unauthorized
+    → Check required role/permission via RBACService
+    → Permission denied → 403 Forbidden
+    → Permission granted → Inject user into request context → Route handler
+```
+
+**Key Functions**:
+
+| Function | Description |
+|----------|-------------|
+| `get_current_user(token, db)` | Dependency: validates token and returns active user |
+| `require_role(required_role)` | Dependency factory: enforces minimum role level |
+| `require_permission(permission)` | Dependency factory: enforces specific permission |
+| `require_project_access(permission)` | Dependency factory: enforces project-level access via RBACService |
+
+---
+
+### 4.2.5 Architecture Evaluation Tools
+
+**Purpose**: Static analysis of codebase architecture layers and dependency relationships.
+
+**Technologies**: Python AST, NetworkX, pytest
+
+**Implementation**: `tools/architecture_evaluation/`
+
+| Module | Responsibility |
+|--------|---------------|
+| `layer_analyzer.py` | Detects layer violations using import path patterns |
+| `integration_analyzer.py` | Builds dependency graph and detects circular dependencies |
+| `system_inspector.py` | Inspects running system for architectural compliance |
+| `models.py` | Data models: `LayerViolation`, `CircularDependency`, `ArchitectureReport` |
+
+**Layer Definition**:
+
+Layers are identified by import path patterns. The allowed dependency flow is: `presentation → service → data`. A violation occurs when a presentation-layer module directly imports from the data layer, bypassing the service layer.
+
+| Layer | Path Patterns |
+|-------|---------------|
+| presentation | `api/`, `routes/` |
+| service | `services/` |
+| data | `models/`, `database/` |
+| middleware | `middleware/` |
 
 
 ---
@@ -988,27 +927,16 @@ For complete API specifications with request/response examples, see: **[ProjectN
 
 ## 6.3 WebSocket Events
 
-For real-time updates:
+For real-time updates, the frontend subscribes to the following server-emitted events:
 
-```typescript
-// Client subscribes to analysis updates
-socket.on('analysis:started', (data) => {
-  console.log(`Analysis ${data.analysis_id} started`);
-});
+| Event | Payload Fields | Description |
+|-------|---------------|-------------|
+| `analysis:started` | `analysis_id` | Fired when an analysis job begins processing |
+| `analysis:progress` | `analysis_id`, `percentage` | Periodic progress updates during analysis |
+| `analysis:completed` | `analysis_id`, `total_issues`, `quality_score` | Fired when analysis finishes successfully |
+| `analysis:failed` | `analysis_id`, `error` | Fired when analysis encounters an unrecoverable error |
 
-socket.on('analysis:progress', (data) => {
-  console.log(`Progress: ${data.percentage}%`);
-});
-
-socket.on('analysis:completed', (data) => {
-  console.log(`Analysis completed with ${data.total_issues} issues`);
-  // Refresh UI
-});
-
-socket.on('analysis:failed', (data) => {
-  console.error(`Analysis failed: ${data.error}`);
-});
-```
+The client uses these events to update the UI in real time without polling, refreshing issue counts and quality scores as soon as results are available.
 
 ---
 
@@ -1035,100 +963,36 @@ For complete deployment architecture including infrastructure details, container
 
 ### Kubernetes Deployment
 
-```yaml
-# Example: Analysis Service Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: analysis-service
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: analysis-service
-  template:
-    metadata:
-      labels:
-        app: analysis-service
-    spec:
-      containers:
-      - name: analysis-service
-        image: <account>.dkr.ecr.us-east-1.amazonaws.com/analysis-service:latest
-        ports:
-        - containerPort: 8003
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: url
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8003
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8003
-          initialDelaySeconds: 10
-          periodSeconds: 5
-```
+Each service is deployed as a Kubernetes `Deployment` with the following configuration pattern:
+
+- **Replicas**: 3 (minimum for high availability)
+- **Image**: pulled from AWS ECR with environment-specific tags
+- **Environment variables**: injected from Kubernetes Secrets (e.g., database credentials)
+- **Resource limits**: CPU 1000m / Memory 1Gi per container; requests at 500m / 512Mi
+- **Health checks**: liveness probe on `/health` (initial delay 30s, period 10s); readiness probe on `/ready` (initial delay 10s, period 5s)
+
+See: `docs/diagram/deployment-architecture.puml` for the complete deployment topology.
 
 ## 7.2 Scaling Strategy
 
 ### Horizontal Pod Autoscaler (HPA)
 
-```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: analysis-service-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: analysis-service
-  minReplicas: 3
-  maxReplicas: 20
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
-```
+The HPA is configured for each stateless service with the following policy:
+
+- **Min replicas**: 3
+- **Max replicas**: 20
+- **Scale-up trigger**: CPU utilization > 70% or Memory utilization > 80%
+- **Scale-down**: gradual, with stabilization window to prevent thrashing
 
 ### Worker Autoscaling
 
-```python
-# Celery worker autoscaling based on queue depth
-from celery import Celery
+Celery workers scale based on Redis queue depth:
 
-app = Celery('tasks', broker='redis://localhost:6379/0')
-
-app.conf.update(
-    worker_autoscaler='10,3',  # max 10, min 3 workers
-    worker_prefetch_multiplier=1,
-    task_acks_late=True,
-)
-```
+- **Min workers**: 3
+- **Max workers**: 10
+- **Prefetch multiplier**: 1 (one task per worker at a time for fair distribution)
+- **Late acknowledgement**: enabled (tasks re-queued on worker crash)
+- **Scale-up trigger**: queue depth > 20 pending tasks
 
 ---
 

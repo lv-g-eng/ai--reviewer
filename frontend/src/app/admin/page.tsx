@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import MainLayout from '@/components/layout/main-layout';
+import { RBACGuard } from '@/components/auth/RBACGuard';
+import { Role } from '@/types/rbac';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -160,8 +162,9 @@ export default function AdminPage() {
   });
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <RBACGuard requiredRole={Role.ADMIN}>
+      <MainLayout>
+        <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
@@ -499,5 +502,6 @@ export default function AdminPage() {
         </Tabs>
       </div>
     </MainLayout>
+    </RBACGuard>
   );
 }

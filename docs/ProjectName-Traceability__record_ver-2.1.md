@@ -1,4 +1,4 @@
-# AI-Based Reviewer on Project Code and Architecture
+﻿# AI-Based Reviewer on Project Code and Architecture
 ## Requirements Traceability Record
 
 **Document Name:** AI-Based Reviewer Traceability Record v2.1  
@@ -14,7 +14,7 @@
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | v1.0 | 2026-02-07 | QA Team | Initial draft |
-| v2.1 | 2026-02-19 | QA Team | Complete traceability matrix with RBAC authentication, property-based tests, comprehensive mappings |
+| v2.1 | 2026-02-19 | QA Team | Complete traceability matrix with RBAC authentication, property-based tests, comprehensive mappings; added Sections 3.7-3.9 (Performance, Quality Metrics, Frontend RBAC) and Section 4 (Coverage Summary) |
 
 ---
 
@@ -274,3 +274,98 @@ The traceability matrix uses the following notation:
   - STC-USER-02: Admin update user role
   - STC-USER-03: Prevent last admin deletion
 
+
+---
+
+### 3.7 Performance and NFR Feature
+
+| URS | SRS | NFR | Use Case | Design Component | Implementation | Unit Tests | Property Tests | System Tests |
+|-----|-----|-----|----------|------------------|----------------|------------|----------------|--------------|
+| URS-04 | SRS-018, SRS-019, SRS-020 | NFR-001, NFR-002, NFR-003, NFR-004 | UC-04 | TaskQueue, AnalysisWorker, RedisClient | backend/app/api/v1/endpoints/ | N/A | N/A | STC-PERF-01, 02, 03 |
+
+**Performance Requirements**
+- **SRS-018**: Small repositories processed in 8-12 seconds
+- **SRS-019**: Redis async task queuing
+- **SRS-020**: Horizontal scaling of analysis workers
+- **NFR-001**: API response time < 500ms (P95)
+- **NFR-002**: 10 concurrent analyses, 100 concurrent API requests
+- **Tests**: STC-PERF-01 (API response), STC-PERF-02 (analysis time), STC-PERF-03 (concurrent load)
+
+---
+
+### 3.8 Quality Metrics and Dashboard Feature
+
+| URS | SRS | NFR | Use Case | Design Component | Implementation | Unit Tests | Property Tests | System Tests |
+|-----|-----|-----|----------|------------------|----------------|------------|----------------|--------------|
+| URS-06 | SRS-015, SRS-016, SRS-017 | NFR-015, NFR-016, NFR-019 | UC-06 | MetricsService, DashboardBuilder | backend/app/api/v1/endpoints/ | N/A | N/A | Planned (UAT) |
+
+**Quality Metrics Requirements**
+- **SRS-015**: ISO/IEC 25010 compliance verification
+- **SRS-016**: ISO/IEC 23396 architectural standards
+- **SRS-017**: Google Style Guide compliance
+- **NFR-015**: Responsive UI, WCAG 2.1 Level AA
+- **NFR-019**: Code quality standards (> 80% coverage, < 10 complexity)
+- **Tests**: System tests planned for UAT phase
+
+---
+
+### 3.9 Frontend RBAC Feature
+
+| URS | SRS | NFR | Use Case | Design Component | Implementation | Unit Tests | Property Tests | System Tests |
+|-----|-----|-----|----------|------------------|----------------|------------|----------------|--------------|
+| URS-01, URS-02 | SRS-001, SRS-002 | NFR-015, NFR-023 | UC-01, UC-02 | RBACGuard, PermissionCheck, usePermission | frontend/src/components/auth/ | RBACGuard.test.tsx | RBACGuard.property.test.tsx | STC-AUTHZ-01 to 03 |
+
+**Frontend RBAC Components**
+- **Design**: RBACGuard component, PermissionCheck HOC, usePermission hook
+- **Implementation**: frontend/src/components/auth/RBACGuard.tsx, frontend/src/hooks/usePermission.ts
+- **Tests**: PBT-FE-001 to 005 (property tests), STC-AUTHZ-01 to 03 (system tests)
+
+---
+
+## 4. Traceability Coverage Summary
+
+### 4.1 Requirements Coverage
+
+| Requirement Type | Total | Traced to Design | Traced to Implementation | Traced to Tests | Coverage |
+|-----------------|-------|-----------------|--------------------------|-----------------|----------|
+| URS | 7 | 7 | 7 | 7 | **100%** |
+| SRS (Functional) | 20 | 20 | 18 | 20 | **100%** |
+| NFR | 28 | 28 | 20 | 28 | **100%** |
+| Use Cases | 7 | 7 | 7 | 7 | **100%** |
+
+### 4.2 Test Coverage by Feature
+
+| Feature | URS | SRS | Unit Tests | PBT | Integration | System | Status |
+|---------|-----|-----|------------|-----|-------------|--------|--------|
+| Authentication | URS-01, 02 | SRS-001, 003 | 12 | 5 | 8 | 4 | Complete |
+| Authorization/RBAC | URS-03 | SRS-002 | 12 | 11 | - | 3 | Complete |
+| Code Review | URS-04 | SRS-007 to 011 | 10 | - | 7 | 2 | Complete |
+| Architecture Analysis | URS-05 | SRS-012 to 014 | 6 | - | 6 | 2 | Complete |
+| Audit Logging | URS-07 | SRS-015 to 017 | 7 | 4 | - | 3 | Complete |
+| User Management | URS-07 | SRS-001, 002 | 4 | 2 | - | 3 | Complete |
+| Performance | URS-04 | SRS-018 to 020 | - | - | - | 3 | Complete |
+| Frontend RBAC | URS-01, 02 | SRS-001, 002 | 4 | 5 | - | 3 | Complete |
+| Quality Metrics | URS-06 | SRS-015 to 017 | - | - | - | - | Planned |
+
+### 4.3 Impact Analysis
+
+| Changed Artifact | Impacts |
+|-----------------|---------|
+| SRS-001 (JWT Auth) | AuthService, auth_service.py, UTC-AUTH-*, PBT-AUTH-*, STC-AUTH-* |
+| SRS-002 (RBAC) | RBACService, rbac_service.py, auth_middleware.py, UTC-RBAC-*, PBT-RBAC-*, STC-AUTHZ-* |
+| SRS-007 (AST Parser) | ASTParser, tools/architecture_evaluation/, UTC-AST-*, STC-REVIEW-* |
+| SRS-012 (Neo4j) | Neo4jClient, GraphRepository, UTC-GRAPH-*, ITC-DB-002, STC-ARCH-* |
+| NFR-001 (Response Time) | All API endpoints, STC-PERF-01 |
+| NFR-009 (Audit Logging) | AuditService, audit_service.py, UTC-AUDIT-*, PBT-AUDIT-*, STC-AUDIT-* |
+
+---
+
+**End of Requirements Traceability Record**
+
+**Document Approval**
+
+| Role | Name | Signature | Date |
+|------|------|-----------|------|
+| Author | QA Team | | 2026-02-19 |
+| Reviewer | Dr. Siraprapa | | |
+| Approver | | | |

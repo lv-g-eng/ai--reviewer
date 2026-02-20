@@ -8,9 +8,8 @@ import jwt
 import uuid
 from sqlalchemy.orm import Session as DBSession
 
-from ..config import settings
-from ..models import User, Session as SessionModel, Role
-from ..database import get_db
+from app.auth.config import auth_settings
+from app.auth.models import User, Session as SessionModel, Role
 
 
 class AuthResult:
@@ -72,7 +71,7 @@ class AuthService:
             Hashed password as a string
         """
         # Generate salt and hash the password
-        salt = bcrypt.gensalt(rounds=settings.bcrypt_rounds)
+        salt = bcrypt.gensalt(rounds=auth_settings.bcrypt_rounds)
         hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
         return hashed.decode('utf-8')
     
@@ -111,7 +110,7 @@ class AuthService:
         """
         now = datetime.now(timezone.utc)
         iat = int(now.timestamp())
-        exp = int((now + timedelta(minutes=settings.jwt_access_token_expire_minutes)).timestamp())
+        exp = int((now + timedelta(minutes=auth_settings.jwt_access_token_expire_minutes)).timestamp())
         
         payload = TokenPayload(
             user_id=user_id,
@@ -123,8 +122,8 @@ class AuthService:
         
         token = jwt.encode(
             payload.to_dict(),
-            settings.jwt_secret_key,
-            algorithm=settings.jwt_algorithm
+            auth_settings.jwt_secret_key,
+            algorithm=auth_settings.jwt_algorithm
         )
         
         return token
@@ -143,8 +142,8 @@ class AuthService:
         try:
             payload = jwt.decode(
                 token,
-                settings.jwt_secret_key,
-                algorithms=[settings.jwt_algorithm]
+                auth_settings.jwt_secret_key,
+                algorithms=[auth_settings.jwt_algorithm]
             )
             return TokenPayload.from_dict(payload)
         except jwt.ExpiredSignatureError:
@@ -175,8 +174,8 @@ class AuthService:
         try:
             payload_dict = jwt.decode(
                 token,
-                settings.jwt_secret_key,
-                algorithms=[settings.jwt_algorithm],
+                auth_settings.jwt_secret_key,
+                algorithms=[auth_settings.jwt_algorithm],
                 options={"verify_exp": False}  # Don't verify expiration yet
             )
             payload = TokenPayload.from_dict(payload_dict)
@@ -243,7 +242,7 @@ class AuthService:
             
             # Create session record
             now = datetime.now(timezone.utc)
-            expires_at = now + timedelta(minutes=settings.session_expire_minutes)
+            expires_at = now + timedelta(minutes=auth_settings.session_expire_minutes)
             
             session = SessionModel(
                 id=str(uuid.uuid4()),
@@ -294,7 +293,7 @@ class AuthService:
             Created SessionModel instance
         """
         now = datetime.now(timezone.utc)
-        expires_at = now + timedelta(minutes=settings.session_expire_minutes)
+        expires_at = now + timedelta(minutes=auth_settings.session_expire_minutes)
         
         session = SessionModel(
             id=str(uuid.uuid4()),
@@ -378,4 +377,3 @@ class AuthService:
         except Exception:
             db.rollback()
             return False
-

@@ -366,3 +366,220 @@ class TestPermissionAuthorization:
                 assert exc_info.value.status_code == 403
         finally:
             db_session.close()
+
+
+
+class TestProjectAccessMiddleware:
+    """Property-based tests for project access middleware."""
+    
+    # Feature: enterprise-rbac-authentication, Property 9: Unauthorized project access is denied
+    # **Validates: Requirements 2.4, 4.3**
+    @given(
+        user_id=st.uuids(),
+        username=st.text(min_size=3, max_size=50, alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd'))),
+        project_id=st.uuids(),
+        owner_id=st.uuids(),
+        permission=st.sampled_from([Permission.VIEW_PROJECT, Permission.UPDATE_PROJECT, Permission.DELETE_PROJECT])
+    )
+    @settings(max_examples=100, deadline=None)
+    def test_property_9_unauthorized_project_access_denied(self, user_id, username, project_id, owner_id, permission):
+        """
+        Property 9: Unauthorized project access is denied
+        
+        For any user attempting to access a project they don't own and haven't been granted access to,
+        the authorization middleware should return a 403 Forbidden response.
+        """
+        from unittest.mock import patch
+        from ..models import Project
+        
+        # Ensure user is not the owner
+        assume(user_id.hex != owner_id.hex)
+        
+        # Create test database session
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        Session = sessionmaker(bind=engine)
+        db_session = Session()
+        
+        try:
+            # Generate token with PROGRAMMER role (not admin, to test access control)
+            token = AuthService.generate_token(user_id.hex, username, Role.PROGRAMMER)
+            
+            # Create user in test database
+            user = User(
+                id=user_id.hex,
+                username=username,
+                password_hash=AuthService.hash_password("test_password"),
+                role=Role.PROGRAMMER,
+                is_active=True
+            )
+            db_session.add(user)
+            
+            # Create project owned by someone else
+            project = Project(
+                id=project_id.hex,
+                name="Test Project",
+                description="Test Description",
+                owner_id=owner_id.hex
+            )
+            db_session.add(project)
+            db_session.commit()
+            
+            # Create mock request and credentials
+            request = Mock(spec=Request)
+            request.state = Mock()
+            request.path_params = {"project_id": project_id.hex}
+            credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+            
+            # Create project access checker
+            project_access_checker = AuthMiddleware.check_project_access(permission)
+            
+            # Mock get_db to return our test session
+            with patch('enterprise_rbac_auth.middleware.auth_middleware.get_db') as mock_get_db:
+                mock_get_db.return_value = iter([db_session])
+                
+                # Test that unauthorized access is denied
+                with pytest.raises(HTTPException) as exc_info:
+                    import asyncio
+                    asyncio.run(project_access_checker(request, credentials))
+                
+                assert exc_info.value.status_code == 403
+                assert "access" in exc_info.value.detail.lower()
+        finally:
+            db_session.close()
+    
+    @given(
+        user_id=st.uuids(),
+        username=st.text(min_size=3, max_size=50, alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd'))),
+        project_id=st.uuids(),
+        permission=st.sampled_from([Permission.VIEW_PROJECT, Permission.UPDATE_PROJECT, Permission.DELETE_PROJECT])
+    )
+    @settings(max_examples=100, deadline=None)
+    def test_project_owner_has_access(self, user_id, username, project_id, permission):
+        """
+        Test that project owners can access their own projects.
+        """
+        from unittest.mock import patch
+        from ..models import Project
+        
+        # Create test database session
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        Session = sessionmaker(bind=engine)
+        db_session = Session()
+        
+        try:
+            # Generate token with PROGRAMMER role
+            token = AuthService.generate_token(user_id.hex, username, Role.PROGRAMMER)
+            
+            # Create user in test database
+            user = User(
+                id=user_id.hex,
+                username=username,
+                password_hash=AuthService.hash_password("test_password"),
+                role=Role.PROGRAMMER,
+                is_active=True
+            )
+            db_session.add(user)
+            
+            # Create project owned by the user
+            project = Project(
+                id=project_id.hex,
+                name="Test Project",
+                description="Test Description",
+                owner_id=user_id.hex
+            )
+            db_session.add(project)
+            db_session.commit()
+            
+            # Create mock request and credentials
+            request = Mock(spec=Request)
+            request.state = Mock()
+            request.path_params = {"project_id": project_id.hex}
+            credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+            
+            # Create project access checker
+            project_access_checker = AuthMiddleware.check_project_access(permission)
+            
+            # Mock get_db to return our test session
+            with patch('enterprise_rbac_auth.middleware.auth_middleware.get_db') as mock_get_db:
+                mock_get_db.return_value = iter([db_session])
+                
+                # Test that owner has access
+                import asyncio
+                payload = asyncio.run(project_access_checker(request, credentials))
+                
+                # Verify payload is returned (no exception raised)
+                assert payload is not None
+                assert payload.user_id == user_id.hex
+        finally:
+            db_session.close()
+    
+    @given(
+        user_id=st.uuids(),
+        username=st.text(min_size=3, max_size=50, alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd'))),
+        project_id=st.uuids(),
+        permission=st.sampled_from([Permission.VIEW_PROJECT, Permission.UPDATE_PROJECT, Permission.DELETE_PROJECT])
+    )
+    @settings(max_examples=100, deadline=None)
+    def test_admin_bypasses_project_access(self, user_id, username, project_id, permission):
+        """
+        Test that admins can access all projects regardless of ownership.
+        """
+        from unittest.mock import patch
+        from ..models import Project
+        import uuid
+        
+        # Create test database session
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        Session = sessionmaker(bind=engine)
+        db_session = Session()
+        
+        try:
+            # Generate token with ADMIN role
+            token = AuthService.generate_token(user_id.hex, username, Role.ADMIN)
+            
+            # Create admin user in test database
+            admin_user = User(
+                id=user_id.hex,
+                username=username,
+                password_hash=AuthService.hash_password("test_password"),
+                role=Role.ADMIN,
+                is_active=True
+            )
+            db_session.add(admin_user)
+            
+            # Create project owned by someone else
+            other_owner_id = uuid.uuid4().hex
+            project = Project(
+                id=project_id.hex,
+                name="Test Project",
+                description="Test Description",
+                owner_id=other_owner_id
+            )
+            db_session.add(project)
+            db_session.commit()
+            
+            # Create mock request and credentials
+            request = Mock(spec=Request)
+            request.state = Mock()
+            request.path_params = {"project_id": project_id.hex}
+            credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+            
+            # Create project access checker
+            project_access_checker = AuthMiddleware.check_project_access(permission)
+            
+            # Mock get_db to return our test session
+            with patch('enterprise_rbac_auth.middleware.auth_middleware.get_db') as mock_get_db:
+                mock_get_db.return_value = iter([db_session])
+                
+                # Test that admin has access
+                import asyncio
+                payload = asyncio.run(project_access_checker(request, credentials))
+                
+                # Verify payload is returned (no exception raised)
+                assert payload is not None
+                assert payload.role == Role.ADMIN.value
+        finally:
+            db_session.close()

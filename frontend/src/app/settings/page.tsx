@@ -1,6 +1,8 @@
 'use client';
 
 import MainLayout from '@/components/layout/main-layout';
+import { RBACGuard } from '@/components/auth/RBACGuard';
+import { Permission } from '@/types/rbac';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +13,8 @@ import { Settings, User, Bell, Shield, Palette } from 'lucide-react';
 
 export default function SettingsPage() {
   return (
-    <MainLayout>
+    <RBACGuard requiredPermission={Permission.MODIFY_CONFIG}>
+      <MainLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -177,5 +180,6 @@ export default function SettingsPage() {
         </Tabs>
       </div>
     </MainLayout>
+    </RBACGuard>
   );
 }

@@ -22,6 +22,7 @@ last_updated: 2026-02-16
 | v1.0 | 2026-02-07 | BaiXuan Zhang | Dr. Siraprapa | Initial draft |
 | v2.0 | 2026-02-13 | BaiXuan Zhang | Dr. Siraprapa | Complete revision with proposal alignment, added use cases |
 | v2.1 | 2026-02-16 | BaiXuan Zhang | Dr. Siraprapa | Added NFR, completed all use cases, added RTM, API specs |
+| v2.1 | 2026-02-19 | BaiXuan Zhang | Dr. Siraprapa | Added Section 10 Acceptance Criteria, Section 11 Glossary, Section 12 Appendices; aligned roles with enterprise_rbac_auth implementation (5 roles: Admin, Manager, Reviewer, Programmer, Visitor) |
 
 ---
 
@@ -154,10 +155,10 @@ GitHub webhook receivers for real-time PR event notifications with automated com
 | Role | Access Level | Definition | Responsibilities |
 |------|--------------|------------|------------------|
 | **Administrator** | Full system access | System-level configuration and management | User account management, system configuration, compliance settings, platform health monitoring, integration setup, security policy enforcement |
+| **Manager** | Read-only comprehensive + project management | Project oversight and reporting | Dashboard monitoring, report generation, quality metrics review, team performance analysis, compliance oversight, project creation |
 | **Pull Request Reviewer** | Read/Write analysis access | Code review and quality assurance | Code review execution, AI suggestion acceptance/rejection, architectural compliance validation, feedback provision to developers |
-| **Programmer** | Read-only analysis, Write own code | Software developer submitting code | Code submission, PR creation, AI feedback interpretation, suggested fix implementation, code quality improvement |
-| **Manager** | Read-only comprehensive | Project oversight and reporting | Dashboard monitoring, report generation, quality metrics review, team performance analysis, compliance oversight, strategic planning |
-| **Guest** | Limited public access | Unauthenticated visitor | Platform information viewing, documentation access (no code or analysis access) |
+| **Programmer** | Read/Write own projects | Software developer submitting code | Code submission, PR creation, AI feedback interpretation, suggested fix implementation, project creation and management |
+| **Visitor** | Read-only on granted projects | Limited read-only access | View project details and analysis results for projects explicitly granted by admin or project owner |
 
 ## 2.3 Constraints
 
@@ -203,7 +204,7 @@ GitHub webhook receivers for real-time PR event notifications with automated com
 | ID | Priority | Requirement | Acceptance Criteria |
 |----|----------|-------------|---------------------|
 | **SRS-001** | Must Have | System shall authenticate users using JWT tokens with bcrypt password hashing | - JWT tokens expire after 24 hours<br>- Refresh tokens valid for 7 days<br>- Password hash uses bcrypt with cost factor 12<br>- Tokens include user ID, role, and expiry |
-| **SRS-002** | Must Have | System shall implement role-based access control (RBAC) with 5 roles | - Permissions enforced at API level<br>- Role hierarchy: Guest < User < Programmer < Reviewer < Manager < Admin<br>- Unauthorized access returns HTTP 403<br>- All access attempts logged |
+| **SRS-002** | Must Have | System shall implement role-based access control (RBAC) with 5 roles | - Permissions enforced at API level<br>- Roles: Visitor < Programmer < Reviewer < Manager < Admin<br>- Unauthorized access returns HTTP 403<br>- All access attempts logged |
 | **SRS-003** | Must Have | System shall support OAuth 2.0 for GitHub integration | - Authorization code flow implemented<br>- Tokens stored encrypted<br>- Supports token refresh<br>- Revocation supported |
 
 ## 4.2 Repository Management

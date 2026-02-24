@@ -8,15 +8,15 @@ email-validator==2.2.0
 
 # Database Drivers
 # Using psycopg (v3) instead of psycopg2 for better Windows compatibility
-psycopg[binary]==3.3.2
+psycopg[binary]==3.3.3
 asyncpg==0.31.0
 neo4j==6.1.0
-redis==7.1.1
+redis==7.2.0
 # hiredis is optional for redis performance, skip if build issues on Windows
 # hiredis==3.0.0
 
 # SQLAlchemy (ORM for PostgreSQL)
-SQLAlchemy==2.0.46
+SQLAlchemy==2.0.47
 alembic==1.13.3
 
 # Authentication & Security - UPDATED for CVE fixes

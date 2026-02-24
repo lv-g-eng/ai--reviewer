@@ -2,16 +2,16 @@
 # Core framework and database
 fastapi==0.128.7
 uvicorn[standard]==0.32.0
-sqlalchemy==2.0.46
+sqlalchemy==2.0.47
 asyncpg==0.31.0
-psycopg[binary]==3.3.2
+psycopg[binary]==3.3.3
 alembic==1.13.3
 
 # Graph database
 neo4j==6.1.0
 
 # Cache and message queue
-redis==7.1.1
+redis==7.2.0
 celery==5.4.0
 
 # Authentication and security

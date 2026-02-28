@@ -37,6 +37,34 @@ The parser system provides a unified interface for parsing source code across di
 
 **Note**: The JavaScript parser uses tree-sitter when available for better performance and accuracy. If tree-sitter language bindings are not installed, it automatically falls back to esprima. TypeScript parsing works best with tree-sitter; esprima may have limitations with TypeScript-specific syntax.
 
+### Java
+- **Parser**: `JavaParser`
+- **Technology**: Tree-sitter-java
+- **File Extensions**: `.java`
+- **Features**:
+  - Class, interface, and enum extraction
+  - Method and constructor extraction
+  - Field (property) extraction
+  - Import statement parsing
+  - Cyclomatic complexity calculation
+  - Nesting depth analysis
+  - Modifier extraction (public, private, static, etc.)
+  - Javadoc comment extraction
+  - Line counting (code, comments, blank)
+
+### Go
+- **Parser**: `GoParser`
+- **Technology**: Tree-sitter-go
+- **File Extensions**: `.go`
+- **Features**:
+  - Function and method extraction (with receivers)
+  - Import statement parsing
+  - Cyclomatic complexity calculation
+  - Nesting depth analysis
+  - Package name extraction
+  - Line counting (code, comments, blank)
+  - **Note**: Go doesn't have classes, so class extraction returns empty list
+
 ## Architecture
 
 ### Base Parser
@@ -229,6 +257,12 @@ pip install esprima  # Fallback parser
 pip install tree-sitter
 pip install tree-sitter-javascript
 pip install tree-sitter-typescript
+
+# Java parser
+pip install tree-sitter-java
+
+# Go parser
+pip install tree-sitter-go
 ```
 
 ## Testing
@@ -280,15 +314,18 @@ ParserFactory._parsers['go'] = (GoParser, {})
 
 This implementation satisfies the following requirements from the spec:
 
-- **Requirement 2.1**: Parse source code into AST representation ✓
-- **Requirement 9.1**: Support Python code parsing ✓
-- **Requirement 9.2**: Support JavaScript/TypeScript code parsing ✓
+- **Requirement 1.2**: AST_Parser SHALL parse all modified files and generate abstract syntax trees within 2 seconds per file ✓
+- **Task 7.1**: Create multi-language AST parser ✓
+  - Implement Python parser using ast module ✓
+  - Implement JavaScript/TypeScript parser using tree-sitter ✓
+  - Implement Java parser using tree-sitter ✓
+  - Implement Go parser using tree-sitter ✓
 
 The parsers provide the foundation for:
-- Dependency extraction (Requirement 2.2)
-- Graph database storage (Requirement 2.3)
-- Architecture analysis (Requirement 2.4)
-- Drift detection (Requirement 2.5)
+- Dependency extraction (Requirement 1.3)
+- Graph database storage (Requirement 1.3)
+- Architecture analysis (Requirement 1.6)
+- Circular dependency detection (Requirement 1.6)
 
 ## Performance Considerations
 
@@ -314,9 +351,10 @@ The parsers provide the foundation for:
 ## Future Enhancements
 
 Potential improvements:
-- Add support for more languages (Java, C++, Go, Rust)
+- Add support for more languages (C++, Rust, Ruby, PHP, C#)
 - Implement incremental parsing for large files
 - Add semantic analysis (type inference, scope analysis)
 - Improve error recovery for malformed code
 - Add support for language-specific metrics
 - Implement parallel parsing for multiple files
+- Add caching layer for frequently parsed files

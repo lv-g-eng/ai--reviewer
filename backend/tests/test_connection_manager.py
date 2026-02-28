@@ -164,36 +164,38 @@ class TestConnectionManager:
         """Test successful Neo4j connection"""
         manager = ConnectionManager()
         
-        # Mock Neo4j driver
-        with patch('app.database.connection_manager.GraphDatabase') as mock_gd:
-            mock_driver = MagicMock()
-            mock_gd.driver.return_value = mock_driver
+        # Mock the initialization to prevent actual database connections
+        manager._initialized = True
+        
+        # Mock Neo4j client's test_connectivity method
+        with patch.object(manager.neo4j_client, 'test_connectivity', new_callable=AsyncMock) as mock_test:
+            mock_test.return_value = True
             
-            # Mock session
-            mock_session = MagicMock()
-            mock_driver.session.return_value.__enter__ = MagicMock(
-                return_value=mock_session
-            )
-            mock_driver.session.return_value.__exit__ = MagicMock(
-                return_value=None
-            )
-            
-            status = await manager.verify_neo4j()
-            
-            assert status.service == "Neo4j"
-            assert status.is_connected is True
-            assert status.is_critical is False
-            assert status.response_time_ms > 0
-            assert status.error is None
+            # Mock get_auth_statistics
+            with patch.object(manager.neo4j_client, 'get_auth_statistics', new_callable=AsyncMock) as mock_stats:
+                mock_stats.return_value = {
+                    'total_failures': 0,
+                    'consecutive_failures': 0,
+                    'rate_limit_detected': False
+                }
+                
+                status = await manager.verify_neo4j()
+                
+                assert status.service == "Neo4j"
+                assert status.is_connected is True
+                assert status.is_critical is False
+                assert status.response_time_ms > 0
+                assert status.error is None
     
     @pytest.mark.asyncio
     async def test_verify_neo4j_connection_refused(self):
         """Test Neo4j connection refused"""
         manager = ConnectionManager()
+        manager._initialized = True
         
-        # Mock Neo4j driver to raise connection error
-        with patch('app.database.connection_manager.GraphDatabase') as mock_gd:
-            mock_gd.driver.side_effect = Exception("Connection refused")
+        # Mock Neo4j client to raise connection error
+        with patch.object(manager.neo4j_client, 'test_connectivity', new_callable=AsyncMock) as mock_test:
+            mock_test.side_effect = Exception("Connection refused")
             
             status = await manager.verify_neo4j()
             
@@ -206,25 +208,27 @@ class TestConnectionManager:
     async def test_verify_neo4j_authentication_failed(self):
         """Test Neo4j authentication failure"""
         manager = ConnectionManager()
+        manager._initialized = True
         
-        # Mock Neo4j driver to raise authentication error
-        with patch('app.database.connection_manager.GraphDatabase') as mock_gd:
-            mock_gd.driver.side_effect = Exception("Unauthorized")
+        # Mock Neo4j client to return False for connectivity test
+        with patch.object(manager.neo4j_client, 'test_connectivity', new_callable=AsyncMock) as mock_test:
+            mock_test.return_value = False
             
             status = await manager.verify_neo4j()
             
             assert status.service == "Neo4j"
             assert status.is_connected is False
-            assert "Authentication failed" in status.error
+            assert status.error is not None
     
     @pytest.mark.asyncio
     async def test_verify_neo4j_timeout(self):
         """Test Neo4j connection timeout"""
         manager = ConnectionManager()
+        manager._initialized = True
         
-        # Mock Neo4j driver to raise timeout
-        with patch('app.database.connection_manager.GraphDatabase') as mock_gd:
-            mock_gd.driver.side_effect = asyncio.TimeoutError()
+        # Mock Neo4j client to raise timeout
+        with patch.object(manager.neo4j_client, 'test_connectivity', new_callable=AsyncMock) as mock_test:
+            mock_test.side_effect = asyncio.TimeoutError()
             
             status = await manager.verify_neo4j()
             

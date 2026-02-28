@@ -4,6 +4,7 @@ Pydantic schemas for authentication
 from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
 from datetime import datetime
+import uuid
 from app.utils.password import validate_password_strength
 
 
@@ -63,6 +64,13 @@ class UserResponse(BaseModel):
     
     class Config:
         from_attributes = True
+        
+    @validator('id', pre=True)
+    def convert_uuid_to_str(cls, v):
+        """Convert UUID to string"""
+        if isinstance(v, uuid.UUID):
+            return str(v)
+        return v
 
 
 class Message(BaseModel):

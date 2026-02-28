@@ -6,9 +6,13 @@
  */
 
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Lazy load heavy visualization components
+// Note: These components are commented out as they don't exist yet
+// Uncomment when the components are implemented
+
+/*
 const D3ArchitectureGraph = lazy(() => 
   import('../visualizations/D3ArchitectureGraph').then(module => ({
     default: module.D3ArchitectureGraph
@@ -32,6 +36,7 @@ const CodeEditor = lazy(() =>
     default: module.CodeEditor
   }))
 );
+*/
 
 // Loading components with skeleton UI
 const GraphLoadingSkeleton: React.FC = () => (
@@ -105,6 +110,8 @@ const AnalyticsErrorFallback: React.FC<{ error: Error; resetErrorBoundary: () =>
 );
 
 // Preloading hook for intelligent component preloading
+// Commented out until components are implemented
+/*
 const useComponentPreloader = () => {
   const [preloadedComponents, setPreloadedComponents] = useState<Set<string>>(new Set());
   
@@ -137,8 +144,20 @@ const useComponentPreloader = () => {
   
   return { preloadComponent, preloadedComponents };
 };
+*/
+
+// Placeholder hook
+const useComponentPreloader = () => {
+  const preloadComponent = useCallback(async (componentName: string) => {
+    console.log(`Preload requested for ${componentName} but components not yet implemented`);
+  }, []);
+  
+  return { preloadComponent, preloadedComponents: new Set<string>() };
+};
 
 // Optimized lazy component wrappers
+// Commented out until components are implemented
+/*
 interface LazyArchitectureGraphProps {
   data: any;
   onNodeClick?: (node: any) => void;
@@ -193,6 +212,7 @@ export const LazyFlowDiagram: React.FC<LazyFlowDiagramProps> = ({
     </ErrorBoundary>
   );
 };
+*/
 
 interface LazyAnalyticsProps {
   data: any[];

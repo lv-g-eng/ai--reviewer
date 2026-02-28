@@ -518,9 +518,6 @@ export default function PullRequestReviewPage() {
                           onWontFix={() => {
                             console.log("Won't fix comment:", comment.id);
                           }}
-                          onAskAI={() => {
-                            console.log('Ask AI about comment:', comment.id);
-                          }}
                         />
                       ))
                     )}

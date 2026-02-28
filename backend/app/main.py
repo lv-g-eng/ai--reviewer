@@ -1,27 +1,19 @@
 """
 Main FastAPI application entry point
 """
-import time
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
-from app.core.logging_config import setup_logging, log_request, log_exception
+from app.core.logging_config import setup_logging, log_request
 from app.api.v1.router import api_router
+from app.api.exception_handlers import register_exception_handlers
 from app.database.postgresql import init_postgres, close_postgres
 from app.database.neo4j_db import init_neo4j, close_neo4j
 from app.database.redis_db import init_redis, close_redis
-from app.shared.exceptions import (
-    ServiceException,
-    AuthenticationException,
-    AuthorizationException,
-    ValidationException,
-    DatabaseException,
-    LLMProviderException
-)
 
 
 @asynccontextmanager
@@ -29,6 +21,25 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     # Startup
     setup_logging(level=settings.LOG_LEVEL, enable_json=True)
+    
+    # Initialize OpenTelemetry tracing if enabled (Requirement 18.1)
+    if settings.is_tracing_enabled():
+        from app.core.tracing import setup_tracing
+        tracing_config = setup_tracing(
+            service_name=settings.PROJECT_NAME,
+            service_version=settings.VERSION,
+            environment=settings.ENVIRONMENT,
+            otlp_endpoint=settings.OTLP_ENDPOINT,
+            enable_console_export=settings.TRACING_CONSOLE_EXPORT,
+            sample_rate=settings.TRACING_SAMPLE_RATE,
+        )
+        # Instrument HTTP clients
+        tracing_config.instrument_httpx()
+        tracing_config.instrument_redis()
+    
+    # Setup graceful shutdown handler (Requirement 12.10)
+    from app.services.graceful_shutdown import setup_graceful_shutdown
+    shutdown_handler = setup_graceful_shutdown(shutdown_timeout=30)
     
     # Run comprehensive startup validation (Requirement 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7)
     from app.core.startup_validator import run_startup_validation
@@ -131,7 +142,15 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    # Shutdown (gracefully handle if connections weren't established)
+    # Shutdown - use graceful shutdown handler (Requirement 12.10)
+    logger.info("Application shutdown initiated...")
+    
+    # The graceful shutdown handler will handle:
+    # - Completing in-flight requests
+    # - Closing database connections cleanly
+    # - Stopping background tasks
+    
+    # Close database connections (gracefully handled if connections weren't established)
     try:
         await close_postgres()
     except Exception:
@@ -147,25 +166,233 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
     
-    print("✅ Shutdown complete")
+    logger.info("✅ Shutdown complete")
 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="AI-powered code review and architecture analysis platform",
+    description="""
+# AI-Based Code Review and Architecture Analysis Platform
+
+An intelligent web-based platform that automates code review and architectural analysis using:
+- **AST Parsing**: Abstract Syntax Tree analysis for code structure
+- **Neo4j Graph Database**: Dependency graphs and architectural relationships
+- **LLM Integration**: GPT-4, Claude 3.5, and Ollama for intelligent analysis
+- **GitHub Integration**: Automated PR reviews via webhooks
+
+## Features
+
+- 🔍 **Automated Code Review**: AI-powered analysis of pull requests
+- 🏗️ **Architecture Analysis**: Detect patterns, circular dependencies, and drift
+- 📊 **Metrics & Visualization**: Interactive dependency graphs and quality metrics
+- 🔐 **Enterprise Security**: RBAC, JWT authentication, audit logging
+- 📈 **Monitoring**: Prometheus metrics, distributed tracing, health checks
+
+## Authentication
+
+Most endpoints require JWT authentication. Include the token in the Authorization header:
+
+```
+Authorization: Bearer <your_jwt_token>
+```
+
+### Getting Started with Authentication
+
+1. **Register a new user** (if you don't have an account):
+   ```bash
+   curl -X POST "http://localhost:8000/api/v1/auth/register" \\
+     -H "Content-Type: application/json" \\
+     -d '{
+       "email": "user@example.com",
+       "password": "SecurePassword123!",
+       "full_name": "John Doe"
+     }'
+   ```
+
+2. **Login to get your JWT token**:
+   ```bash
+   curl -X POST "http://localhost:8000/api/v1/auth/login" \\
+     -H "Content-Type: application/json" \\
+     -d '{
+       "email": "user@example.com",
+       "password": "SecurePassword123!"
+     }'
+   ```
+
+   Response:
+   ```json
+   {
+     "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+     "token_type": "bearer",
+     "expires_in": 86400
+   }
+   ```
+
+3. **Use the token in subsequent requests**:
+   ```bash
+   curl -X GET "http://localhost:8000/api/v1/projects" \\
+     -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   ```
+
+### Using Authentication in Swagger UI
+
+1. Click the **"Authorize"** button at the top right
+2. Enter your JWT token in the format: `Bearer <your_token>`
+3. Click **"Authorize"** to apply the token to all requests
+4. The lock icon (🔒) will turn closed, indicating you're authenticated
+
+### Token Expiration
+
+- Access tokens expire after 24 hours
+- Use the `/api/v1/auth/refresh` endpoint to get a new token without re-authenticating
+- Refresh tokens are valid for 7 days
+
+## Rate Limiting
+
+API endpoints are rate-limited to 100 requests per minute per user.
+Exceeding this limit will result in HTTP 429 responses.
+
+## Error Responses
+
+All endpoints return standardized error responses:
+
+```json
+{
+  "detail": "Error message",
+  "error_code": "ERROR_CODE",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+Common HTTP status codes:
+- **400**: Bad Request - Invalid input
+- **401**: Unauthorized - Missing or invalid authentication
+- **403**: Forbidden - Insufficient permissions
+- **404**: Not Found - Resource doesn't exist
+- **429**: Too Many Requests - Rate limit exceeded
+- **500**: Internal Server Error - Server-side error
+- **503**: Service Unavailable - Service temporarily unavailable
+    """,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    docs_url="/docs",
+    redoc_url="/redoc",
     lifespan=lifespan,
+    swagger_ui_parameters={
+        "persistAuthorization": True,
+        "displayRequestDuration": True,
+        "filter": True,
+        "tryItOutEnabled": True,
+    },
+    contact={
+        "name": "API Support",
+        "email": "support@example.com",
+    },
+    license_info={
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT",
+    },
+    openapi_tags=[
+        {
+            "name": "Health",
+            "description": "Health check endpoints for monitoring service status and readiness"
+        },
+        {
+            "name": "Authentication",
+            "description": "User authentication endpoints (register, login, logout, token refresh)"
+        },
+        {
+            "name": "RBAC Authentication",
+            "description": "Role-Based Access Control authentication with enterprise features"
+        },
+        {
+            "name": "RBAC User Management",
+            "description": "User management with role-based permissions"
+        },
+        {
+            "name": "RBAC Project Management",
+            "description": "Project management with access control"
+        },
+        {
+            "name": "RBAC Audit Logs",
+            "description": "Audit log queries for RBAC operations"
+        },
+        {
+            "name": "Webhooks",
+            "description": "GitHub webhook handlers for automated PR analysis"
+        },
+        {
+            "name": "GitHub Integration",
+            "description": "GitHub API integration for repository and PR management"
+        },
+        {
+            "name": "Code Review",
+            "description": "Automated code review endpoints"
+        },
+        {
+            "name": "PR Analysis",
+            "description": "Pull request analysis and review generation"
+        },
+        {
+            "name": "Architecture Analysis",
+            "description": "Repository architecture analysis and pattern detection"
+        },
+        {
+            "name": "Local LLM",
+            "description": "Local LLM (Ollama) integration for code analysis"
+        },
+        {
+            "name": "Library Management",
+            "description": "Manage code libraries and dependencies"
+        },
+        {
+            "name": "Repository Management",
+            "description": "Repository CRUD operations and management"
+        },
+        {
+            "name": "Audit Logs",
+            "description": "System-wide audit log queries and compliance reporting"
+        },
+        {
+            "name": "User Data Management",
+            "description": "User data export and deletion (GDPR compliance)"
+        },
+        {
+            "name": "Metrics",
+            "description": "Prometheus metrics endpoint for monitoring"
+        },
+        {
+            "name": "Database",
+            "description": "Database management and migration endpoints"
+        },
+    ],
 )
 
-# CORS middleware
+# Instrument FastAPI for OpenTelemetry tracing (Requirement 18.1)
+if settings.is_tracing_enabled():
+    from app.core.tracing import get_tracing_config
+    tracing_config = get_tracing_config()
+    if tracing_config:
+        tracing_config.instrument_fastapi(app)
+
+# CORS middleware (Requirement 8.8)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=settings.CORS_ALLOW_METHODS,
+    allow_headers=settings.CORS_ALLOW_HEADERS,
+    expose_headers=settings.CORS_EXPOSE_HEADERS,
+    max_age=settings.CORS_MAX_AGE,
 )
+
+# Rate limiting middleware (Requirement 8.6)
+from app.middleware.rate_limiting import configure_rate_limiting
+configure_rate_limiting(app)
+
+# Prometheus metrics middleware (Requirement 7.3)
+from app.middleware.prometheus_middleware import configure_prometheus_middleware
+configure_prometheus_middleware(app)
 
 # Compression middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -173,42 +400,8 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 # Request Logging Middleware
 app.middleware("http")(log_request)
 
-# Global Exception Handlers
-@app.exception_handler(ServiceException)
-async def service_exception_handler(request: Request, exc: ServiceException):
-    log_exception(exc, {"path": request.url.path, "method": request.method})
-    
-    # Map exception types to status codes
-    status_code = 400
-    if isinstance(exc, AuthenticationException):
-        status_code = 401
-    elif isinstance(exc, AuthorizationException):
-        status_code = 403
-    elif isinstance(exc, ValidationException):
-        status_code = 422
-    elif isinstance(exc, (DatabaseException, LLMProviderException)):
-        status_code = 500
-        
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "message": exc.message,
-            "error_code": exc.error_code,
-            "details": exc.details
-        },
-    )
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    log_exception(exc, {"path": request.url.path, "method": request.method})
-    return JSONResponse(
-        status_code=500,
-        content={
-            "message": "Internal Server Error",
-            "error_code": "INTERNAL_ERROR",
-            "detail": str(exc)
-        },
-    )
+# Register exception handlers (Requirement 2.5, 12.1, 12.3)
+register_exception_handlers(app)
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)

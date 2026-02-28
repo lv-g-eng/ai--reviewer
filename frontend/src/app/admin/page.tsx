@@ -317,7 +317,11 @@ export default function AdminPage() {
                       <TableCell>{formatDateTime(user.lastLogin)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => window.location.href = '/dashboard'}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm">

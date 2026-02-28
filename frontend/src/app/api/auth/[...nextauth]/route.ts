@@ -37,7 +37,7 @@ const authOptions: NextAuthOptions = {
 
           // Use the authentication service utility
           const user = await authenticateUser({
-            email: credentials.email,
+            username: credentials.email,
             password: credentials.password,
           });
 
@@ -47,8 +47,8 @@ const authOptions: NextAuthOptions = {
 
           return {
             id: user.id,
-            email: user.email,
-            name: user.name || user.email.split('@')[0],
+            email: user.email || user.username,
+            name: user.name || user.email?.split('@')[0] || user.username,
             role: user.role || 'user',
             accessToken: user.accessToken || '',
             refreshToken: user.refreshToken || '',

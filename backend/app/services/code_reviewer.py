@@ -5,8 +5,6 @@ Handles automated code review using LLM analysis with standards classification
 """
 from typing import Dict, List, Optional
 import asyncio
-from dataclasses import dataclass
-from enum import Enum
 import logging
 
 from app.services.llm_client import get_llm_client

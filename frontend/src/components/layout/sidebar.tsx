@@ -23,8 +23,6 @@ const navigation = [
   { name: 'Analysis Queue', href: '/queue', icon: Activity },
   { name: 'Metrics', href: '/metrics', icon: TrendingUp },
   { name: 'Search', href: '/search', icon: Search },
-  { name: 'Settings', href: '/settings', icon: Settings },
-  { name: 'Admin', href: '/admin', icon: Users, adminOnly: true },
 ]
 
 interface SidebarProps {

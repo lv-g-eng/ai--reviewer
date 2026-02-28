@@ -12,7 +12,6 @@ import {
   GitPullRequest,
   CheckCircle2,
   AlertCircle,
-  Settings,
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -64,37 +63,29 @@ export default function ProfilePage() {
       <div className="space-y-6">
         {/* Profile Header */}
         <Card className="p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-6">
-              <Avatar className="h-24 w-24">
-                <div className="h-full w-full rounded-full bg-primary flex items-center justify-center text-primary-foreground text-3xl font-bold">
-                  {user.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
-                </div>
-              </Avatar>
-              <div>
-                <h1 className="text-3xl font-bold">{user.name}</h1>
-                <div className="flex items-center gap-4 mt-2 text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    <span>{user.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>Joined {new Date(user.joinedDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
-                <Badge className="mt-2">{user.role}</Badge>
+          <div className="flex items-center gap-6">
+            <Avatar className="h-24 w-24">
+              <div className="h-full w-full rounded-full bg-primary flex items-center justify-center text-primary-foreground text-3xl font-bold">
+                {user.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')}
               </div>
+            </Avatar>
+            <div>
+              <h1 className="text-3xl font-bold">{user.name}</h1>
+              <div className="flex items-center gap-4 mt-2 text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  <span>{user.email}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>Joined {new Date(user.joinedDate).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <Badge className="mt-2">{user.role}</Badge>
             </div>
-            <Button variant="outline" asChild>
-              <a href="/settings">
-                <Settings className="h-4 w-4 mr-2" />
-                Edit Profile
-              </a>
-            </Button>
           </div>
         </Card>
 

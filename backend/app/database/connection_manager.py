@@ -1447,13 +1447,13 @@ class ConnectionManager:
         """
         error_str = str(error).lower()
         
-        if "connection refused" in error_str or "refused" in error_str:
+        if "connection refused" in error_str or "errno 111" in error_str:
             return "Connection refused"
         elif "authentication" in error_str or "password" in error_str or "auth" in error_str:
             return "Authentication failed"
         elif "timeout" in error_str:
             return "Connection timeout"
-        elif "host" in error_str or "resolve" in error_str or "name" in error_str:
+        elif "could not translate host name" in error_str or "name or service not known" in error_str or "nodename nor servname provided" in error_str:
             return "Cannot resolve hostname"
         elif "connection reset" in error_str:
             return "Connection reset by peer"
@@ -1461,6 +1461,8 @@ class ConnectionManager:
             return "No route to host"
         elif "permission denied" in error_str:
             return "Permission denied"
+        elif "service unavailable" in error_str:
+            return "Service unavailable"
         else:
             # Return first 100 characters of error
             return error_str[:100] if error_str else "Unknown error"

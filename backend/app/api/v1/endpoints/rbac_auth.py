@@ -106,7 +106,11 @@ async def logout(
     Logout user and invalidate current session.
     
     Requires valid JWT token in Authorization header.
+    Adds token to Redis blacklist to prevent reuse.
     """
+    from app.utils.jwt import revoke_token, decode_token
+    from datetime import datetime, timezone
+    
     # Extract token from Authorization header
     auth_header = request.headers.get("authorization", "")
     token = auth_header.replace("Bearer ", "") if auth_header.startswith("Bearer ") else ""
@@ -117,7 +121,17 @@ async def logout(
             detail="Token not provided"
         )
     
-    # Invalidate session
+    # Decode token to get JTI and expiration
+    payload = decode_token(token)
+    if payload and 'jti' in payload and 'exp' in payload:
+        jti = payload['jti']
+        exp_timestamp = payload['exp']
+        expires_at = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
+        
+        # Add token to Redis blacklist
+        await revoke_token(jti, expires_at)
+    
+    # Invalidate session in database
     success = AuthService.logout(db, current_user.user_id, token)
     
     if success:

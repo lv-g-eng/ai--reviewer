@@ -2,6 +2,9 @@
  * Jest setup file for Next.js frontend tests
  */
 
+// Import jest-dom matchers
+import '@testing-library/jest-dom';
+
 // Mock environment variables
 process.env.NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 process.env.NEXT_PUBLIC_APP_ENV = process.env.NEXT_PUBLIC_APP_ENV || 'test';

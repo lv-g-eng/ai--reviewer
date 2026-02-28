@@ -15,6 +15,8 @@ const customJestConfig = {
     '^@/components/(.*)$': '<rootDir>/src/components/$1',
     '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
     '^@/hooks/(.*)$': '<rootDir>/src/hooks/$1',
+    // Mock lucide-react
+    '^lucide-react$': '<rootDir>/__mocks__/lucide-react.tsx',
   },
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',

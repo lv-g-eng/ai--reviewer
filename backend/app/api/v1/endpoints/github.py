@@ -2,11 +2,10 @@
 GitHub webhook and integration endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header, BackgroundTasks
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List, Dict, Any, Union, Annotated
+from typing import Optional, List, Dict, Any, Annotated
 from datetime import datetime, timezone
-import json
 import logging
 
 from app.database.postgresql import get_db
@@ -17,10 +16,9 @@ from app.schemas.architecture import ArchitectureReport, ArchitectureViolation
 from app.services.github_client import get_github_client
 from app.services.code_reviewer import CodeReviewer
 from app.services.architecture_analyzer import ArchitectureAnalyzer
-from app.utils.diff_parser import DiffParser
 from app.api.dependencies import get_current_user, check_project_access
 from app.services.redis_cache_service import get_cache_service
-from app.services.llm_client import get_llm_client
+from app.services.agentic_ai_service import create_agentic_ai_service
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +100,8 @@ async def run_code_review(pr_id: str, project_id: str, diff_content: str, db: As
     
     try:
         # Initialize code reviewer
-        reviewer = CodeReviewer()
+        agentic_service = create_agentic_ai_service()
+        reviewer = CodeReviewer(agentic_ai_service=agentic_service)
         
         # Get PR data
         stmt = select(PullRequest).where(PullRequest.id == pr_id)
@@ -680,3 +679,190 @@ async def get_pr_files(
         "pr_number": pr.github_pr_number,
         "files": parsed_files
     }
+
+
+
+from pydantic import BaseModel
+
+class GitHubConnectRequest(BaseModel):
+    code: str
+
+@router.post("/connect")
+async def connect_github(
+    request: GitHubConnectRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    """
+    Connect user's GitHub account using OAuth code
+    
+    Exchange OAuth code for GitHub access token and store it
+    """
+    try:
+        import httpx
+        from app.core.config import settings
+        
+        logger.info(f"Connecting GitHub for user {current_user.email}")
+        
+        if not settings.GITHUB_CLIENT_ID or not settings.GITHUB_CLIENT_SECRET:
+            logger.error("GitHub OAuth credentials not configured")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="GitHub OAuth is not configured on the server"
+            )
+        
+        # Exchange code for access token
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://github.com/login/oauth/access_token",
+                headers={"Accept": "application/json"},
+                data={
+                    "client_id": settings.GITHUB_CLIENT_ID,
+                    "client_secret": settings.GITHUB_CLIENT_SECRET,
+                    "code": request.code
+                }
+            )
+            
+            logger.info(f"GitHub token exchange response status: {response.status_code}")
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Failed to exchange code for token"
+                )
+            
+            token_data = response.json()
+            access_token = token_data.get("access_token")
+            
+            if not access_token:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No access token received"
+                )
+            
+            # Get GitHub user info
+            user_response = await client.get(
+                "https://api.github.com/user",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/json"
+                }
+            )
+            
+            if user_response.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Failed to get GitHub user info"
+                )
+            
+            github_user = user_response.json()
+            
+            # Store GitHub token in user record
+            current_user.github_token = access_token
+            current_user.github_username = github_user.get("login")
+            await db.commit()
+            
+            return {
+                "message": "GitHub account connected successfully",
+                "username": github_user.get("login")
+            }
+            
+    except Exception as e:
+        logger.error(f"Error connecting GitHub: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to connect GitHub account"
+        )
+
+
+@router.get("/status")
+async def get_github_status(
+    current_user: Annotated[User, Depends(get_current_user)]
+):
+    """
+    Check if user's GitHub account is connected
+    """
+    return {
+        "connected": bool(current_user.github_token),
+        "username": current_user.github_username
+    }
+
+
+@router.get("/repositories")
+async def get_user_repositories(
+    current_user: Annotated[User, Depends(get_current_user)]
+):
+    """
+    Get user's GitHub repositories
+    """
+    if not current_user.github_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="GitHub account not connected"
+        )
+    
+    try:
+        import httpx
+        
+        async with httpx.AsyncClient() as client:
+            # Get user's repositories
+            response = await client.get(
+                "https://api.github.com/user/repos",
+                headers={
+                    "Authorization": f"Bearer {current_user.github_token}",
+                    "Accept": "application/json"
+                },
+                params={
+                    "sort": "updated",
+                    "per_page": 100
+                }
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Failed to fetch repositories"
+                )
+            
+            repos = response.json()
+            
+            # Format repository data
+            formatted_repos = [
+                {
+                    "id": repo["id"],
+                    "name": repo["name"],
+                    "full_name": repo["full_name"],
+                    "description": repo.get("description"),
+                    "html_url": repo["html_url"],
+                    "private": repo["private"],
+                    "language": repo.get("language"),
+                    "updated_at": repo["updated_at"]
+                }
+                for repo in repos
+            ]
+            
+            return {"repositories": formatted_repos}
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching repositories: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch repositories"
+        )
+
+
+@router.delete("/disconnect")
+async def disconnect_github(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    """
+    Disconnect user's GitHub account
+    """
+    current_user.github_token = None
+    current_user.github_username = None
+    await db.commit()
+    
+    return {"message": "GitHub account disconnected successfully"}

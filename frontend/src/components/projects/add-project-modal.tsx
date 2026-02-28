@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import axios from 'axios'
 import {
   Dialog,
   DialogContent,
@@ -17,165 +16,336 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Github, ExternalLink } from 'lucide-react'
+import { useCreateProject } from '@/hooks/useProjects'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Card } from '@/components/ui/card'
 
 const projectSchema = z.object({
+  github_repo_url: z.string().url('Must be a valid GitHub repository URL'),
   name: z.string().min(3, 'Name must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  repository: z.string().url('Must be a valid URL').or(z.string().regex(/^[\w-]+\/[\w-]+\/[\w-]+$/, 'Must be a valid repository path')),
-  webhookUrl: z.string().url('Must be a valid webhook URL').optional().or(z.literal('')),
+  description: z.string().optional().or(z.literal('')),
 })
 
 type ProjectFormData = z.infer<typeof projectSchema>
 
 interface AddProjectModalProps {
   open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess?: () => void
-  project?: {
-    id: string
-    name: string
-    description: string
-    repository: string
-    webhookUrl?: string
-  }
+  onClose: () => void
 }
 
-export function AddProjectModal({ open, onOpenChange, onSuccess, project }: AddProjectModalProps) {
+interface GitHubRepo {
+  id: number
+  name: string
+  full_name: string
+  description: string | null
+  html_url: string
+  private: boolean
+}
+
+export function AddProjectModal({ open, onClose }: AddProjectModalProps) {
   const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
-  const isEdit = !!project
+  const createProject = useCreateProject()
+  const [step, setStep] = useState<'github' | 'select-repo' | 'confirm'>('github')
+  const [githubConnected, setGithubConnected] = useState(false)
+  const [githubUsername, setGithubUsername] = useState<string | null>(null)
+  const [repositories, setRepositories] = useState<GitHubRepo[]>([])
+  const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null)
+  const [loadingRepos, setLoadingRepos] = useState(false)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
-    defaultValues: project || {
+    defaultValues: {
+      github_repo_url: '',
       name: '',
       description: '',
-      repository: '',
-      webhookUrl: '',
     },
   })
 
-  const onSubmit = async (data: ProjectFormData) => {
-    setIsLoading(true)
+  // Check if GitHub is already connected
+  useEffect(() => {
+    if (open) {
+      checkGitHubConnection()
+    }
+  }, [open])
 
+  const checkGitHubConnection = async () => {
     try {
-      if (isEdit) {
-        await axios.put(`/api/v1/projects/${project.id}`, data)
-        toast({
-          title: 'Project Updated',
-          description: 'Project has been updated successfully',
-        })
-      } else {
-        await axios.post('/api/v1/projects', data)
-        toast({
-          title: 'Project Created',
-          description: 'Project has been created successfully',
-        })
+      const response = await fetch('/api/github/status')
+      if (response.ok) {
+        const data = await response.json()
+        setGithubConnected(data.connected)
+        setGithubUsername(data.username)
+        if (data.connected) {
+          setStep('select-repo')
+          fetchRepositories()
+        }
       }
-      
-      reset()
-      onOpenChange(false)
-      onSuccess?.()
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: isEdit ? 'Update Failed' : 'Creation Failed',
-        description: error.response?.data?.detail || 'An error occurred',
-      })
-    } finally {
-      setIsLoading(false)
+    } catch (error) {
+      console.error('Failed to check GitHub connection:', error)
     }
   }
 
+  const connectGitHub = () => {
+    // Redirect to GitHub OAuth
+    const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID
+    
+    if (!clientId) {
+      toast({
+        variant: 'destructive',
+        title: 'Configuration Error',
+        description: 'GitHub Client ID is not configured. Please contact administrator.',
+      })
+      return
+    }
+    
+    const redirectUri = encodeURIComponent(`${window.location.origin}/api/github/callback`)
+    const scope = 'repo,read:user'
+    const state = Math.random().toString(36).substring(7) // CSRF protection
+    
+    // Store state in sessionStorage for verification
+    sessionStorage.setItem('github_oauth_state', state)
+    
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`
+  }
+
+  const fetchRepositories = async () => {
+    setLoadingRepos(true)
+    try {
+      const response = await fetch('/api/github/repositories')
+      if (response.ok) {
+        const data = await response.json()
+        setRepositories(data.repositories || [])
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to fetch repositories',
+          description: 'Please try reconnecting your GitHub account',
+        })
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to fetch GitHub repositories',
+      })
+    } finally {
+      setLoadingRepos(false)
+    }
+  }
+
+  const handleRepoSelect = (repo: GitHubRepo) => {
+    setSelectedRepo(repo)
+    setValue('github_repo_url', repo.html_url)
+    setValue('name', repo.name)
+    setValue('description', repo.description || '')
+    setStep('confirm')
+  }
+
+  const onSubmit = async (data: ProjectFormData) => {
+    try {
+      await createProject.mutateAsync({
+        name: data.name,
+        description: data.description || null,
+        github_repo_url: data.github_repo_url,
+      })
+      
+      toast({
+        title: 'Project Created',
+        description: 'Project has been created successfully',
+      })
+      
+      reset()
+      setStep('github')
+      setSelectedRepo(null)
+      onClose()
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Creation Failed',
+        description: error.response?.data?.detail || 'An error occurred',
+      })
+    }
+  }
+
+  const handleClose = () => {
+    reset()
+    setStep('github')
+    setSelectedRepo(null)
+    onClose()
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit Project' : 'Add New Project'}</DialogTitle>
+          <DialogTitle>Add New Project</DialogTitle>
           <DialogDescription>
-            {isEdit ? 'Update project information' : 'Add a new project to start code review and analysis'}
+            {step === 'github' && 'Connect your GitHub account to import repositories'}
+            {step === 'select-repo' && 'Select a repository from your GitHub account'}
+            {step === 'confirm' && 'Confirm project details'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Project Name</Label>
-            <Input
-              id="name"
-              placeholder="My Awesome Project"
-              {...register('name')}
-              disabled={isLoading}
-            />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
+
+        {/* Step 1: Connect GitHub */}
+        {step === 'github' && (
+          <div className="space-y-4 py-4">
+            <Card className="p-6 text-center space-y-4">
+              <Github className="h-16 w-16 mx-auto text-muted-foreground" />
+              <div>
+                <h3 className="text-lg font-semibold">Connect GitHub Account</h3>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Connect your GitHub account to import repositories and enable automatic code reviews
+                </p>
+              </div>
+              <Button onClick={connectGitHub} className="w-full">
+                <Github className="mr-2 h-4 w-4" />
+                Connect with GitHub
+              </Button>
+            </Card>
+          </div>
+        )}
+
+        {/* Step 2: Select Repository */}
+        {step === 'select-repo' && (
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Github className="h-5 w-5" />
+                <span className="text-sm font-medium">
+                  Connected as {githubUsername}
+                </span>
+              </div>
+              <Button variant="outline" size="sm" onClick={fetchRepositories}>
+                Refresh
+              </Button>
+            </div>
+
+            {loadingRepos ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="max-h-[400px] overflow-y-auto space-y-2">
+                {repositories.length === 0 ? (
+                  <Card className="p-6 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No repositories found
+                    </p>
+                  </Card>
+                ) : (
+                  repositories.map((repo) => (
+                    <Card
+                      key={repo.id}
+                      className="p-4 cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => handleRepoSelect(repo)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium">{repo.name}</h4>
+                            {repo.private && (
+                              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
+                                Private
+                              </span>
+                            )}
+                          </div>
+                          {repo.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {repo.description}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {repo.full_name}
+                          </p>
+                        </div>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </div>
             )}
           </div>
+        )}
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              placeholder="Brief description of your project"
-              {...register('description')}
-              disabled={isLoading}
-            />
-            {errors.description && (
-              <p className="text-sm text-destructive">{errors.description.message}</p>
-            )}
-          </div>
+        {/* Step 3: Confirm Details */}
+        {step === 'confirm' && selectedRepo && (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+            <Card className="p-4 bg-muted">
+              <div className="flex items-center gap-2 mb-2">
+                <Github className="h-4 w-4" />
+                <span className="text-sm font-medium">Selected Repository</span>
+              </div>
+              <p className="text-sm">{selectedRepo.full_name}</p>
+            </Card>
 
-          <div className="space-y-2">
-            <Label htmlFor="repository">Repository URL</Label>
-            <Input
-              id="repository"
-              placeholder="https://github.com/username/repo or github.com/username/repo"
-              {...register('repository')}
-              disabled={isLoading}
-            />
-            {errors.repository && (
-              <p className="text-sm text-destructive">{errors.repository.message}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Enter the full repository URL or path (e.g., github.com/user/repo)
-            </p>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Project Name</Label>
+              <Input
+                id="name"
+                placeholder="My Awesome Project"
+                {...register('name')}
+                disabled={createProject.isPending}
+              />
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name.message}</p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="webhookUrl">Webhook URL (Optional)</Label>
-            <Input
-              id="webhookUrl"
-              placeholder="https://your-domain.com/webhook"
-              {...register('webhookUrl')}
-              disabled={isLoading}
-            />
-            {errors.webhookUrl && (
-              <p className="text-sm text-destructive">{errors.webhookUrl.message}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Configure webhook to receive real-time updates
-            </p>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Input
+                id="description"
+                placeholder="Brief description of your project"
+                {...register('description')}
+                disabled={createProject.isPending}
+              />
+              {errors.description && (
+                <p className="text-sm text-destructive">{errors.description.message}</p>
+              )}
+            </div>
 
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep('select-repo')}
+                disabled={createProject.isPending}
+              >
+                Back
+              </Button>
+              <Button type="submit" disabled={createProject.isPending}>
+                {createProject.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Project
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+
+        {step !== 'confirm' && (
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
+              onClick={handleClose}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEdit ? 'Update Project' : 'Create Project'}
-            </Button>
           </DialogFooter>
-        </form>
+        )}
       </DialogContent>
     </Dialog>
   )

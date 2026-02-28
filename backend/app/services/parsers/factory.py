@@ -5,6 +5,8 @@ from typing import Optional
 from app.services.parsers.base_parser import BaseASTParser
 from app.services.parsers.python_parser import PythonASTParser
 from app.services.parsers.javascript_parser import JavaScriptParser
+from app.services.parsers.java_parser import JavaParser
+from app.services.parsers.go_parser import GoParser
 
 
 class ParserFactory:
@@ -15,6 +17,8 @@ class ParserFactory:
     - Python (using ast module)
     - JavaScript (using tree-sitter with esprima fallback)
     - TypeScript (using tree-sitter with esprima fallback)
+    - Java (using tree-sitter)
+    - Go (using tree-sitter)
     """
     
     _parsers = {
@@ -26,6 +30,8 @@ class ParserFactory:
         'ts': (JavaScriptParser, {'language': 'typescript'}),
         'jsx': (JavaScriptParser, {'language': 'javascript'}),
         'tsx': (JavaScriptParser, {'language': 'typescript'}),
+        'java': (JavaParser, {}),
+        'go': (GoParser, {}),
     }
     
     @classmethod

@@ -77,6 +77,8 @@ class Settings(BaseSettings):
     # External APIs - Optional integrations
     GITHUB_TOKEN: Optional[str] = Field(default=None, description="GitHub API token")
     GITHUB_WEBHOOK_SECRET: Optional[str] = Field(default=None, description="GitHub webhook secret")
+    GITHUB_CLIENT_ID: Optional[str] = Field(default=None, description="GitHub OAuth client ID")
+    GITHUB_CLIENT_SECRET: Optional[str] = Field(default=None, description="GitHub OAuth client secret")
     OPENAI_API_KEY: Optional[str] = Field(default=None, description="OpenAI API key")
     ANTHROPIC_API_KEY: Optional[str] = Field(default=None, description="Anthropic Claude API key")
     OLLAMA_BASE_URL: Optional[str] = Field(default=None, description="Ollama local LLM base URL")
@@ -92,7 +94,7 @@ class Settings(BaseSettings):
     # NON-SECRETS (safe to expose)
     # ========================================
 
-    # CORS
+    # CORS Configuration (Requirement 8.8)
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:8000", 
@@ -100,9 +102,26 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://127.0.0.1:8000",
     ]
+    CORS_ALLOW_CREDENTIALS: bool = True
+    CORS_ALLOW_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+    CORS_ALLOW_HEADERS: List[str] = [
+        "Accept",
+        "Accept-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "X-CSRF-Token",
+    ]
+    CORS_EXPOSE_HEADERS: List[str] = [
+        "X-RateLimit-Limit",
+        "X-RateLimit-Remaining",
+        "X-RateLimit-Reset",
+        "Retry-After",
+    ]
+    CORS_MAX_AGE: int = 600  # 10 minutes
 
-    # Rate Limiting
-    RATE_LIMIT_PER_MINUTE: int = 60
+    # Rate Limiting (Requirement 8.6)
+    RATE_LIMIT_PER_MINUTE: int = 100  # 100 requests per minute per user
 
     # Password Security
     BCRYPT_ROUNDS: int = 12
@@ -110,6 +129,23 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     DEBUG: bool = False
+
+    # OpenTelemetry Tracing Configuration (Requirement 18.1)
+    TRACING_ENABLED: bool = Field(default=True, description="Enable OpenTelemetry distributed tracing")
+    OTLP_ENDPOINT: str = Field(default="http://localhost:4317", description="OTLP collector endpoint for AWS X-Ray")
+    TRACING_SAMPLE_RATE: float = Field(default=1.0, description="Trace sampling rate (0.0 to 1.0)")
+    TRACING_CONSOLE_EXPORT: bool = Field(default=False, description="Enable console exporter for debugging")
+
+    # TLS/SSL Configuration (Requirement 8.5)
+    SSL_ENABLED: bool = Field(default=False, description="Enable TLS/SSL for server")
+    SSL_CERT_FILE: Optional[str] = Field(default=None, description="Path to SSL certificate file")
+    SSL_KEY_FILE: Optional[str] = Field(default=None, description="Path to SSL private key file")
+    SSL_CA_FILE: Optional[str] = Field(default=None, description="Path to CA certificate bundle")
+    SSL_VERIFY_MODE: str = Field(default="CERT_REQUIRED", description="Certificate verification mode")
+
+    # Data Encryption at Rest (Requirement 8.4)
+    ENCRYPTION_KEY: Optional[str] = Field(default=None, description="Base64-encoded 32-byte AES-256 encryption key")
+    AWS_KMS_KEY_ID: Optional[str] = Field(default=None, description="AWS KMS key ID for encryption key management")
 
     # Celery Configuration (Requirement 1.1, 1.2, 1.3)
     CELERY_BROKER_URL: Optional[str] = Field(default=None, description="Celery broker URL")
@@ -375,6 +411,132 @@ class Settings(BaseSettings):
     def is_ollama_enabled(self) -> bool:
         """Check if Ollama local LLM is enabled (Requirement 1.4)"""
         return bool(self.OLLAMA_BASE_URL)
+
+    def is_ssl_enabled(self) -> bool:
+        """Check if SSL/TLS is enabled (Requirement 8.5)"""
+        return self.SSL_ENABLED and bool(self.SSL_CERT_FILE and self.SSL_KEY_FILE)
+
+    def validate_ssl_config(self) -> List[str]:
+        """
+        Validate SSL/TLS configuration.
+        
+        Validates Requirement 8.5
+        """
+        errors = []
+        
+        if self.SSL_ENABLED:
+            if not self.SSL_CERT_FILE:
+                errors.append("SSL_CERT_FILE is required when SSL_ENABLED is true")
+            if not self.SSL_KEY_FILE:
+                errors.append("SSL_KEY_FILE is required when SSL_ENABLED is true")
+            
+            # Check if files exist
+            if self.SSL_CERT_FILE:
+                from pathlib import Path
+                if not Path(self.SSL_CERT_FILE).exists():
+                    errors.append(f"SSL certificate file not found: {self.SSL_CERT_FILE}")
+            
+            if self.SSL_KEY_FILE:
+                from pathlib import Path
+                if not Path(self.SSL_KEY_FILE).exists():
+                    errors.append(f"SSL key file not found: {self.SSL_KEY_FILE}")
+        
+        return errors
+
+    def validate_cors_config(self) -> List[str]:
+        """
+        Validate CORS configuration.
+        
+        Validates Requirement 8.8
+        """
+        warnings = []
+        
+        # Check if wildcard origin is used (security risk)
+        if "*" in self.ALLOWED_ORIGINS:
+            warnings.append(
+                "CORS allows all origins (*). This is a security risk in production. "
+                "Restrict to specific approved domains."
+            )
+        
+        # Check if localhost is allowed in production
+        if self.ENVIRONMENT == "production":
+            localhost_origins = [
+                origin for origin in self.ALLOWED_ORIGINS
+                if "localhost" in origin or "127.0.0.1" in origin
+            ]
+            if localhost_origins:
+                warnings.append(
+                    f"CORS allows localhost origins in production: {localhost_origins}. "
+                    "Remove these in production environment."
+                )
+        
+        # Check if credentials are allowed with wildcard
+        if self.CORS_ALLOW_CREDENTIALS and "*" in self.ALLOWED_ORIGINS:
+            warnings.append(
+                "CORS allows credentials with wildcard origin. "
+                "This is not allowed by browsers and will fail."
+            )
+        
+        return warnings
+
+    def validate_rate_limiting_config(self) -> List[str]:
+        """
+        Validate rate limiting configuration.
+        
+        Validates Requirement 8.6
+        """
+        warnings = []
+        
+        # Check if rate limit is too high
+        if self.RATE_LIMIT_PER_MINUTE > 1000:
+            warnings.append(
+                f"Rate limit is very high ({self.RATE_LIMIT_PER_MINUTE} requests/minute). "
+                "Consider reducing for better protection against abuse."
+            )
+        
+        # Check if rate limit is too low
+        if self.RATE_LIMIT_PER_MINUTE < 10:
+            warnings.append(
+                f"Rate limit is very low ({self.RATE_LIMIT_PER_MINUTE} requests/minute). "
+                "This may impact legitimate users."
+            )
+        
+        return warnings
+
+    def validate_tracing_config(self) -> List[str]:
+        """
+        Validate OpenTelemetry tracing configuration.
+        
+        Validates Requirement 18.1
+        """
+        warnings = []
+        
+        # Check if tracing is enabled
+        if not self.TRACING_ENABLED:
+            warnings.append("OpenTelemetry tracing is disabled. Enable for production observability.")
+        
+        # Check sample rate
+        if self.TRACING_SAMPLE_RATE < 0.0 or self.TRACING_SAMPLE_RATE > 1.0:
+            warnings.append(
+                f"TRACING_SAMPLE_RATE must be between 0.0 and 1.0, got {self.TRACING_SAMPLE_RATE}"
+            )
+        
+        # Check if sample rate is too low in production
+        if self.ENVIRONMENT == "production" and self.TRACING_SAMPLE_RATE < 0.1:
+            warnings.append(
+                f"TRACING_SAMPLE_RATE is very low ({self.TRACING_SAMPLE_RATE}) in production. "
+                "Consider increasing for better observability."
+            )
+        
+        # Check OTLP endpoint
+        if self.TRACING_ENABLED and not self.OTLP_ENDPOINT:
+            warnings.append("OTLP_ENDPOINT is required when TRACING_ENABLED is true")
+        
+        return warnings
+
+    def is_tracing_enabled(self) -> bool:
+        """Check if OpenTelemetry tracing is enabled (Requirement 18.1)"""
+        return self.TRACING_ENABLED
 
     model_config = SettingsConfigDict(
         env_file=".env",

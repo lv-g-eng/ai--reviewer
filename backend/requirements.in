@@ -25,6 +25,7 @@ passlib[bcrypt]
 cryptography
 bcrypt
 PyJWT
+bleach
 
 # Task Queue
 celery
@@ -50,3 +51,14 @@ websockets
 slowapi
 prometheus-client
 python-json-logger
+watchtower
+boto3
+
+# OpenTelemetry for distributed tracing
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-instrumentation-fastapi
+opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-instrumentation-httpx
+opentelemetry-instrumentation-redis
+opentelemetry-instrumentation-sqlalchemy

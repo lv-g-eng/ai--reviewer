@@ -5,6 +5,7 @@ import pytest
 import asyncio
 import json
 import os
+import subprocess
 from typing import AsyncGenerator, Dict, Any, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -17,6 +18,51 @@ os.environ["TESTING"] = "true"
 from app.main import app
 from app.database.postgresql import Base, get_db
 from app.core.config import settings
+
+# Import common fixtures to make them available to all tests
+from tests.fixtures.common_fixtures import (
+    mock_http_client,
+    mock_circuit_breaker,
+    mock_redis_client as common_mock_redis_client,
+    mock_logger,
+    sample_user_data,
+    sample_project_data,
+    sample_pull_request_data,
+    mock_db_session as common_mock_db_session,
+    mock_request,
+    mock_response,
+    mock_audit_service
+)
+
+
+def is_docker_available() -> bool:
+    """Check if Docker is available and running"""
+    try:
+        result = subprocess.run(
+            ["docker", "ps"],
+            capture_output=True,
+            timeout=5
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        return False
+
+
+def pytest_configure(config):
+    """Configure pytest with custom markers"""
+    config.addinivalue_line(
+        "markers",
+        "requires_docker: mark test as requiring Docker to run"
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip tests that require Docker if Docker is not available"""
+    if not is_docker_available():
+        skip_docker = pytest.mark.skip(reason="Docker is not available - start Docker to run these tests")
+        for item in items:
+            if "requires_docker" in item.keywords:
+                item.add_marker(skip_docker)
 
 # Test database URL
 TEST_DATABASE_URL = settings.postgres_url.replace("/ai_code_review", "/ai_code_review_test")
@@ -47,6 +93,12 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.begin())
         await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.fixture(scope="function")
+async def async_session(db_session: AsyncSession) -> AsyncSession:
+    """Alias for db_session to match test expectations"""
+    return db_session
 
 
 @pytest.fixture

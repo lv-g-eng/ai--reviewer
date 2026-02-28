@@ -108,18 +108,18 @@ export function DynamicContent() {
             </div>
           )}
 
-          {hasRole(Role.PROGRAMMER) && (
+          {hasRole(Role.DEVELOPER) && (
             <div className="p-4 bg-blue-50 rounded">
               <Edit className="h-5 w-5 text-blue-600 mb-2" />
-              <p className="font-semibold">Programmer Access</p>
+              <p className="font-semibold">Developer Access</p>
               <p className="text-sm text-gray-600">You can create and manage projects.</p>
             </div>
           )}
 
-          {hasRole(Role.VISITOR) && (
+          {hasRole(Role.REVIEWER) && (
             <div className="p-4 bg-gray-50 rounded">
               <Eye className="h-5 w-5 text-gray-600 mb-2" />
-              <p className="font-semibold">Visitor Access</p>
+              <p className="font-semibold">Reviewer Access</p>
               <p className="text-sm text-gray-600">You have read-only access.</p>
             </div>
           )}

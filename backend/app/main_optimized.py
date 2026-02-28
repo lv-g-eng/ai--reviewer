@@ -185,6 +185,10 @@ async def lifespan(app: FastAPI):
     """Optimized application lifespan with graceful degradation"""
     logger.info("🚀 Starting AI Code Review Platform (Optimized)")
     
+    # Setup graceful shutdown handler (Requirement 12.10)
+    from app.services.graceful_shutdown import setup_graceful_shutdown
+    shutdown_handler = setup_graceful_shutdown(shutdown_timeout=30)
+    
     try:
         # Initialize services with graceful degradation
         init_results = await health_service.initialize_services()
@@ -213,7 +217,7 @@ async def lifespan(app: FastAPI):
         yield
     
     finally:
-        # Cleanup
+        # Cleanup - graceful shutdown handler will manage this (Requirement 12.10)
         logger.info("🛑 Shutting down application...")
         try:
             # Graceful cleanup of connections

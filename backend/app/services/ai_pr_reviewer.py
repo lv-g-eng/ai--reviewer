@@ -7,13 +7,9 @@ performing contextual analysis against design standards and architectural patter
 
 import json
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
-
-import openai
-from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -39,82 +35,17 @@ class ReviewResult:
 class AIPRReviewer:
     """AI-powered Pull Request Reviewer."""
     
-    def __init__(self, openai_api_key: str, model: str = "gpt-4"):
+    def __init__(self, agentic_ai_service: Optional[Any] = None):
         """
         Initialize the AI PR Reviewer.
         
         Args:
-            openai_api_key: OpenAI API key
-            model: OpenAI model to use for analysis
+            agentic_ai_service: Service for complex reasoning and decision support
         """
-        self.llm = ChatOpenAI(
-            api_key=openai_api_key,
-            model=model,
-            temperature=0.1  # Low temperature for consistent, analytical responses
-        )
-        
-        # Initialize prompt templates
-        self._setup_prompts()
+        self.agentic_service = agentic_ai_service
+        self.logger = logger
     
-    def _setup_prompts(self):
-        """Setup LangChain prompt templates for different analysis types."""
-        
-        # Main analysis prompt
-        self.analysis_prompt = PromptTemplate(
-            input_variables=["git_diff", "design_standard", "architectural_patterns"],
-            template="""
-You are an expert code reviewer specializing in architectural compliance and code quality.
-Analyze the following Git diff against the provided design standards and architectural patterns.
-
-Git Diff:
-{git_diff}
-
-Design Standard:
-{design_standard}
-
-Architectural Patterns:
-{architectural_patterns}
-
-Please provide a comprehensive analysis focusing on:
-1. Architectural compliance (layer violations, pattern adherence)
-2. Security vulnerabilities
-3. Code quality issues
-4. Performance implications
-5. Maintainability concerns
-
-Return your analysis in JSON format with the following structure:
-{{
-    "architectural_issues": ["List of architectural violations"],
-    "security_issues": ["List of security concerns"],
-    "code_quality_issues": ["List of code quality problems"],
-    "suggestions": ["Specific refactoring suggestions"]
-}}
-"""
-        )
-        
-        # Safety scoring prompt
-        self.safety_prompt = PromptTemplate(
-            input_variables=["analysis", "git_diff"],
-            template="""
-Based on the following analysis of a Git diff, assign a safety score from 0-100.
-
-Analysis:
-{analysis}
-
-Git Diff:
-{git_diff}
-
-Consider these factors in your scoring:
-- Architectural compliance (40%)
-- Security vulnerabilities (30%)
-- Code quality (20%)
-- Performance impact (10%)
-
-Return only the numerical score (0-100).
-"""
-        )
-    
-    def analyze_pr(
+    async def analyze_pr(
         self, 
         git_diff: str, 
         design_standard: str,
@@ -136,17 +67,27 @@ Return only the numerical score (0-100).
             if architectural_patterns is None:
                 architectural_patterns = self._get_default_architectural_patterns()
             
-            # Perform main analysis
-            analysis_result = self.llm.invoke(
-                self.analysis_prompt.format(
-                    git_diff=git_diff,
-                    design_standard=design_standard,
-                    architectural_patterns=json.dumps(architectural_patterns, indent=2)
-                )
-            ).content
+            analysis_data = {}
             
-            # Parse analysis result
-            analysis_data = self._parse_analysis_result(analysis_result)
+            if self.agentic_service:
+                # Use Agentic AI for complex reasoning
+                context = {
+                    "git_diff": git_diff,
+                    "design_standard": design_standard,
+                    "architectural_patterns": architectural_patterns
+                }
+                
+                # Perform reasoning task
+                result = await self.agentic_service.perform_complex_reasoning(
+                    task_type="pr_review",
+                    context=context
+                )
+                
+                # Parse reasoning result (assuming it returns JSON-like structure in reasoning_chain)
+                if result.reasoning_chain:
+                    analysis_data = self._parse_analysis_result(result.reasoning_chain[0])
+            else:
+                self.logger.warning("Agentic AI Service not available, returning empty analysis")
             
             # Calculate safety score
             safety_score = self._calculate_safety_score(analysis_data, git_diff)
@@ -372,20 +313,17 @@ def create_design_standard_file():
 
 if __name__ == "__main__":
     # Example usage
-    import os
+    from app.services.agentic_ai_service import create_agentic_ai_service
+    import asyncio
     
-    # Load environment variables
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-    
-    if not openai_api_key:
-        print("Please set OPENAI_API_KEY environment variable")
-        exit(1)
+    # Create Agentic AI Service (assumes Ollama is running)
+    agentic_service = create_agentic_ai_service()
     
     # Create sample design standard
     create_design_standard_file()
     
     # Sample git diff
-    sample_diff = """
+    sample_diff = '''
 diff --git a/src/components/UserComponent.tsx b/src/components/UserComponent.tsx
 new file mode 100644
 index 0000000..abc1234
@@ -437,26 +375,29 @@ index 0000000..abc1234
 +};
 +
 +export default UserComponent;
-"""
+'''
     
     # Read design standard
     with open("design_standard.txt", "r") as f:
         design_standard = f.read()
     
     # Initialize reviewer
-    reviewer = AIPRReviewer(openai_api_key)
+    reviewer = AIPRReviewer(agentic_service)
     
     # Perform analysis
-    result = reviewer.analyze_pr(sample_diff, design_standard)
-    
-    # Generate report
-    report = reviewer.generate_markdown_report(result)
-    
-    print("=== AI PR Review Report ===")
-    print(report)
-    
-    # Save report
-    with open("pr_review_report.md", "w") as f:
-        f.write(report)
-    
-    print("\nReport saved to pr_review_report.md")
+    async def run_analysis():
+        result = await reviewer.analyze_pr(sample_diff, design_standard)
+        
+        # Generate report
+        report = reviewer.generate_markdown_report(result)
+        
+        print("=== AI PR Review Report ===")
+        print(report)
+        
+        # Save report
+        with open("pr_review_report.md", "w") as f:
+            f.write(report)
+        
+        print("\\nReport saved to pr_review_report.md")
+
+    asyncio.run(run_analysis())

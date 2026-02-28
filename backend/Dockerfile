@@ -2,8 +2,8 @@
 # Validates Requirements: 10.1, 10.2, 10.3, 10.4, 10.5
 
 # Stage 1: Builder
-# Use Python slim-bookworm image for security updates
-FROM python:3.14-slim-bookworm AS builder
+# Use Python 3.11 slim-bookworm image for better compatibility
+FROM python:3.11-slim-bookworm AS builder
 
 # Set working directory
 WORKDIR /build
@@ -25,21 +25,18 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 
 # Stage 2: Runtime
-# Use minimal Alpine Linux image with specific version for reproducibility
-FROM python:3.14-alpine3.21
+# Use Python 3.11 slim-bookworm for compatibility with pydantic-core
+FROM python:3.11-slim-bookworm
 
 # Set working directory
 WORKDIR /app
 
 # Security: Upgrade all packages to latest versions
-RUN apk upgrade --no-cache
-
-# Install runtime dependencies and healthcheck tool
-RUN apk add --no-cache \
-    libpq \
-    libstdc++ \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+    libpq5 \
     curl \
-    && rm -rf /var/cache/apk/*
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
@@ -57,8 +54,8 @@ COPY alembic ./alembic
 COPY alembic.ini .
 
 # Create non-root user for security
-RUN addgroup -g 1000 appuser && \
-    adduser -D -u 1000 -G appuser appuser && \
+RUN groupadd -g 1000 appuser && \
+    useradd -r -u 1000 -g appuser appuser && \
     chown -R appuser:appuser /app && \
     mkdir -p /app/logs && chown appuser:appuser /app/logs && \
     touch app.log && chown appuser:appuser app.log

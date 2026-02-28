@@ -1,12 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
+export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
+    const body = await request.json();
+    const { email, password, name } = body;
 
-    // In a real app, you would validate the input and create a user in your database
-    // This is a simplified example
-    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/register`, {
+    if (!email || !password || !name) {
+      return NextResponse.json(
+        { detail: 'Email, password, and name are required' },
+        { status: 400 }
+      );
+    }
+
+    // Call backend register endpoint
+    const response = await fetch(`${BACKEND_URL}/api/v1/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -14,18 +23,18 @@ export async function POST(request: Request) {
       body: JSON.stringify({ email, password, name }),
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-      return NextResponse.json(
-        { error: data.message || 'Registration failed' },
-        { status: response.status }
-      );
+      const error = await response.json();
+      return NextResponse.json(error, { status: response.status });
     }
 
+    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error('Registration error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { detail: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

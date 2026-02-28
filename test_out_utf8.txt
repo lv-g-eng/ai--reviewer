@@ -1,0 +1,788 @@
+﻿
+=================================== ERRORS ====================================
+________________ ERROR collecting tests/test_ai_pr_reviewer.py ________________
+ImportError while importing test module 'D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_ai_pr_reviewer.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+D:\DT\anaconda\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+backend\tests\test_ai_pr_reviewer.py:14: in <module>
+    from app.services.architectural_drift_detector import ArchitecturalDriftDetector
+backend\app\services\architectural_drift_detector.py:14: in <module>
+    from app.services.architecture_golden_standard import GoldenStandardManager
+E   ModuleNotFoundError: No module named 'app.services.architecture_golden_standard'
+_____________ ERROR collecting tests/test_database_integration.py _____________
+ImportError while importing test module 'D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_database_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+D:\DT\anaconda\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+backend\tests\test_database_integration.py:18: in <module>
+    from app.models import User, Project, PullRequest, PRStatus, AuditLogEntry
+E   ImportError: cannot import name 'AuditLogEntry' from 'app.models' (D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\app\models\__init__.py)
+____________ ERROR collecting tests/test_database_optimization.py _____________
+D:\DT\anaconda\Lib\site-packages\_pytest\python.py:493: in importtestmodule
+    mod = import_path(
+D:\DT\anaconda\Lib\site-packages\_pytest\pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+D:\DT\anaconda\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+D:\DT\anaconda\Lib\site-packages\_pytest\assertion\rewrite.py:184: in exec_module
+    exec(co, module.__dict__)
+backend\tests\test_database_optimization.py:8: in <module>
+    from app.database.optimizations import DatabaseOptimizer, db_optimizer
+E     File "D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\app\database\optimizations.py", line 271
+E       "avg_time_ms": float(row.mean_exec_time),
+E   IndentationError: unexpected indent
+============================== warnings summary ===============================
+..\..\DT\anaconda\Lib\site-packages\pydantic\_internal\_model_construction.py:66
+  D:\DT\anaconda\Lib\site-packages\pydantic\_internal\_model_construction.py:66: UserWarning: `validate_celery_config` overrides an existing Pydantic `@model_validator` decorator
+    warnings.warn(f'`{k}` overrides an existing Pydantic `{existing.decorator_info.decorator_repr}` decorator')
+
+..\..\DT\anaconda\Lib\site-packages\pydantic\_internal\_config.py:291
+..\..\DT\anaconda\Lib\site-packages\pydantic\_internal\_config.py:291
+..\..\DT\anaconda\Lib\site-packages\pydantic\_internal\_config.py:291
+  D:\DT\anaconda\Lib\site-packages\pydantic\_internal\_config.py:291: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.9/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+backend\app\schemas\auth.py:16
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\app\schemas\auth.py:16: PydanticDeprecatedSince20: Pydantic V1 style `@validator` validators are deprecated. You should migrate to Pydantic V2 style `@field_validator` validators, see the migration guide for more details. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.9/migration/
+    @validator('password')
+
+backend\app\schemas\auth.py:47
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\app\schemas\auth.py:47: PydanticDeprecatedSince20: Pydantic V1 style `@validator` validators are deprecated. You should migrate to Pydantic V2 style `@field_validator` validators, see the migration guide for more details. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.9/migration/
+    @validator('new_password')
+
+..\..\DT\anaconda\Lib\site-packages\pydantic\_internal\_fields.py:132
+  D:\DT\anaconda\Lib\site-packages\pydantic\_internal\_fields.py:132: UserWarning: Field "model_type" in GenerateRequest has conflict with protected namespace "model_".
+  
+  You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+    warnings.warn(
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:59
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:59: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:60
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:60: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:61
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:61: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(13, "Multi-Provider LLM Support")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:126
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:126: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:127
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:127: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:128
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:128: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(13, "Multi-Provider LLM Support")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:190
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:190: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:191
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:191: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:192
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:192: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(13, "Multi-Provider LLM Support")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:242
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:242: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:243
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:243: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:244
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:244: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(13, "Multi-Provider LLM Support")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:289
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:289: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:290
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:290: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:291
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:291: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(13, "Multi-Provider LLM Support")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:333
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:333: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:334
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:334: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:335
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:335: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(13, "Multi-Provider LLM Support")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:380
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:380: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:381
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:381: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:382
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:382: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(13, "Multi-Provider LLM Support")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:429
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:429: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:430
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:430: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:431
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:431: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(13, "Multi-Provider LLM Support")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:495
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:495: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:496
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:496: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:497
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:497: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(13, "Multi-Provider LLM Support")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:513
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:513: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:514
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:514: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_agentic_ai_multi_provider_properties.py:515
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_agentic_ai_multi_provider_properties.py:515: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(13, "Multi-Provider LLM Support")
+
+backend\tests\test_circuit_breaker_properties.py:36
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:36: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_circuit_breaker_properties.py:37
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:37: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_circuit_breaker_properties.py:38
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:38: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(42, "Circuit Breaker Activation")
+
+backend\tests\test_circuit_breaker_properties.py:92
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:92: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_circuit_breaker_properties.py:93
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:93: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_circuit_breaker_properties.py:94
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:94: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(42, "Circuit Breaker Activation")
+
+backend\tests\test_circuit_breaker_properties.py:140
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:140: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_circuit_breaker_properties.py:141
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:141: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_circuit_breaker_properties.py:142
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:142: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(42, "Circuit Breaker Activation")
+
+backend\tests\test_circuit_breaker_properties.py:195
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:195: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_circuit_breaker_properties.py:196
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:196: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_circuit_breaker_properties.py:197
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:197: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(42, "Circuit Breaker Activation")
+
+backend\tests\test_circuit_breaker_properties.py:259
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:259: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_circuit_breaker_properties.py:260
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:260: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_circuit_breaker_properties.py:261
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_circuit_breaker_properties.py:261: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(42, "Circuit Breaker Activation")
+
+backend\tests\test_code_parsing_completeness_properties.py:314
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:314: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_code_parsing_completeness_properties.py:315
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:315: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_code_parsing_completeness_properties.py:316
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:316: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(6, "Code Parsing Completeness")
+
+backend\tests\test_code_parsing_completeness_properties.py:366
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:366: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_code_parsing_completeness_properties.py:367
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:367: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_code_parsing_completeness_properties.py:368
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:368: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(6, "Code Parsing Completeness")
+
+backend\tests\test_code_parsing_completeness_properties.py:423
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:423: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_code_parsing_completeness_properties.py:424
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:424: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_code_parsing_completeness_properties.py:425
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:425: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(6, "Code Parsing Completeness")
+
+backend\tests\test_code_parsing_completeness_properties.py:476
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:476: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_code_parsing_completeness_properties.py:477
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:477: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_code_parsing_completeness_properties.py:478
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:478: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(6, "Code Parsing Completeness")
+
+backend\tests\test_code_parsing_completeness_properties.py:514
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:514: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_code_parsing_completeness_properties.py:515
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:515: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_code_parsing_completeness_properties.py:516
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:516: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(6, "Code Parsing Completeness")
+
+backend\tests\test_code_parsing_completeness_properties.py:555
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:555: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_code_parsing_completeness_properties.py:556
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:556: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_code_parsing_completeness_properties.py:557
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:557: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(6, "Code Parsing Completeness")
+
+backend\tests\test_code_parsing_completeness_properties.py:587
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:587: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_code_parsing_completeness_properties.py:588
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:588: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_code_parsing_completeness_properties.py:589
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_code_parsing_completeness_properties.py:589: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(6, "Code Parsing Completeness")
+
+backend\tests\test_data_cleanup_tasks.py:25
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_data_cleanup_tasks.py:25: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+backend\tests\test_data_cleanup_tasks.py:186
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_data_cleanup_tasks.py:186: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+backend\tests\test_data_cleanup_tasks.py:246
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_data_cleanup_tasks.py:246: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_data_lifecycle.py:21
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_data_lifecycle.py:21: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+backend\tests\test_data_lifecycle.py:33
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_data_lifecycle.py:33: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+backend\tests\test_data_lifecycle.py:162
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_data_lifecycle.py:162: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+backend\tests\test_error_logging_properties.py:87
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:87: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_error_logging_properties.py:88
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:88: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_error_logging_properties.py:89
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:89: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(5, "Error Logging Completeness")
+
+backend\tests\test_error_logging_properties.py:156
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:156: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_error_logging_properties.py:157
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:157: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_error_logging_properties.py:158
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:158: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(5, "Error Logging Completeness")
+
+backend\tests\test_error_logging_properties.py:194
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:194: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_error_logging_properties.py:195
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:195: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_error_logging_properties.py:196
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:196: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(5, "Error Logging Completeness")
+
+backend\tests\test_error_logging_properties.py:240
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:240: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_error_logging_properties.py:241
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:241: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_error_logging_properties.py:242
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:242: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(5, "Error Logging Completeness")
+
+backend\tests\test_error_logging_properties.py:277
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:277: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_error_logging_properties.py:278
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:278: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_error_logging_properties.py:279
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:279: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(5, "Error Logging Completeness")
+
+backend\tests\test_error_logging_properties.py:325
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:325: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_error_logging_properties.py:326
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:326: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_error_logging_properties.py:327
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_error_logging_properties.py:327: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(5, "Error Logging Completeness")
+
+backend\app\services\secure_code_analyzer.py:183
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\app\services\secure_code_analyzer.py:183: DeprecationWarning: ast.Str is deprecated and will be removed in Python 3.14; use ast.Constant instead
+    def visit_Str(self, node: ast.Str) -> None:
+
+backend\tests\test_github_integration_completeness_properties.py:103
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:103: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_github_integration_completeness_properties.py:104
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:104: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_github_integration_completeness_properties.py:105
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:105: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(2, "GitHub Integration Completeness")
+
+backend\tests\test_github_integration_completeness_properties.py:203
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:203: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_github_integration_completeness_properties.py:204
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:204: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_github_integration_completeness_properties.py:205
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:205: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(2, "GitHub Integration Completeness")
+
+backend\tests\test_github_integration_completeness_properties.py:263
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:263: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_github_integration_completeness_properties.py:264
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:264: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_github_integration_completeness_properties.py:265
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:265: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(2, "GitHub Integration Completeness")
+
+backend\tests\test_github_integration_completeness_properties.py:334
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:334: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_github_integration_completeness_properties.py:335
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:335: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_github_integration_completeness_properties.py:336
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:336: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(2, "GitHub Integration Completeness")
+
+backend\tests\test_github_integration_completeness_properties.py:425
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:425: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_github_integration_completeness_properties.py:426
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:426: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_github_integration_completeness_properties.py:427
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:427: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(2, "GitHub Integration Completeness")
+
+backend\tests\test_github_integration_completeness_properties.py:483
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:483: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_github_integration_completeness_properties.py:484
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:484: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_github_integration_completeness_properties.py:485
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:485: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(2, "GitHub Integration Completeness")
+
+backend\tests\test_github_integration_completeness_properties.py:554
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:554: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_github_integration_completeness_properties.py:555
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:555: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_github_integration_completeness_properties.py:556
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:556: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(2, "GitHub Integration Completeness")
+
+backend\tests\test_github_integration_completeness_properties.py:609
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:609: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_github_integration_completeness_properties.py:610
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:610: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_github_integration_completeness_properties.py:611
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_github_integration_completeness_properties.py:611: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(2, "GitHub Integration Completeness")
+
+backend\tests\test_llm_provider_failover_properties.py:57
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_llm_provider_failover_properties.py:57: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_llm_provider_failover_properties.py:58
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_llm_provider_failover_properties.py:58: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_llm_provider_failover_properties.py:59
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_llm_provider_failover_properties.py:59: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(4, "LLM Provider Failover")
+
+backend\tests\test_llm_provider_failover_properties.py:164
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_llm_provider_failover_properties.py:164: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_llm_provider_failover_properties.py:165
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_llm_provider_failover_properties.py:165: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_llm_provider_failover_properties.py:166
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_llm_provider_failover_properties.py:166: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(4, "LLM Provider Failover")
+
+backend\tests\test_llm_provider_failover_properties.py:234
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_llm_provider_failover_properties.py:234: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_llm_provider_failover_properties.py:235
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_llm_provider_failover_properties.py:235: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_llm_provider_failover_properties.py:236
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_llm_provider_failover_properties.py:236: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(4, "LLM Provider Failover")
+
+backend\tests\test_neo4j_fixtures.py:8
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_neo4j_fixtures.py:8: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+backend\tests\test_neo4j_fixtures.py:25
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_neo4j_fixtures.py:25: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+backend\tests\test_neo4j_fixtures.py:40
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_neo4j_fixtures.py:40: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_neo4j_fixtures.py:115
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_neo4j_fixtures.py:115: PytestUnknownMarkWarning: Unknown pytest.mark.database - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.database
+
+..\..\DT\anaconda\Lib\site-packages\testcontainers\neo4j\__init__.py:63
+  D:\DT\anaconda\Lib\site-packages\testcontainers\neo4j\__init__.py:63: DeprecationWarning: The @wait_container_is_ready decorator is deprecated and will be removed in a future version. Use structured wait strategies instead: container.waiting_for(HttpWaitStrategy(8080).for_status_code(200)) or container.waiting_for(LogMessageWaitStrategy('ready'))
+    @wait_container_is_ready()
+
+backend\tests\test_security_finding_owasp_reference_properties.py:90
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:90: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_security_finding_owasp_reference_properties.py:91
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:91: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:92
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:92: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(3, "Security Finding OWASP Reference")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:176
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:176: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_security_finding_owasp_reference_properties.py:177
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:177: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:178
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:178: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(3, "Security Finding OWASP Reference")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:249
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:249: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_security_finding_owasp_reference_properties.py:250
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:250: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:251
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:251: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(3, "Security Finding OWASP Reference")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:291
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:291: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_security_finding_owasp_reference_properties.py:292
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:292: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:293
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:293: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(3, "Security Finding OWASP Reference")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:333
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:333: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_security_finding_owasp_reference_properties.py:334
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:334: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:335
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:335: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(3, "Security Finding OWASP Reference")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:402
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:402: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_security_finding_owasp_reference_properties.py:403
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:403: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:404
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:404: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(3, "Security Finding OWASP Reference")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:456
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:456: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_security_finding_owasp_reference_properties.py:457
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:457: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:458
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:458: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(3, "Security Finding OWASP Reference")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:497
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:497: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_security_finding_owasp_reference_properties.py:498
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:498: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_security_finding_owasp_reference_properties.py:499
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_security_finding_owasp_reference_properties.py:499: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(3, "Security Finding OWASP Reference")
+
+backend\tests\test_standards_compliance_mapping_properties.py:90
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:90: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_standards_compliance_mapping_properties.py:91
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:91: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_standards_compliance_mapping_properties.py:92
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:92: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(1, "Standards Compliance Mapping")
+
+backend\tests\test_standards_compliance_mapping_properties.py:187
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:187: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_standards_compliance_mapping_properties.py:188
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:188: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_standards_compliance_mapping_properties.py:189
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:189: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(1, "Standards Compliance Mapping")
+
+backend\tests\test_standards_compliance_mapping_properties.py:231
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:231: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_standards_compliance_mapping_properties.py:232
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:232: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_standards_compliance_mapping_properties.py:233
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:233: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(1, "Standards Compliance Mapping")
+
+backend\tests\test_standards_compliance_mapping_properties.py:278
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:278: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_standards_compliance_mapping_properties.py:279
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:279: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_standards_compliance_mapping_properties.py:280
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:280: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(1, "Standards Compliance Mapping")
+
+backend\tests\test_standards_compliance_mapping_properties.py:331
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:331: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_standards_compliance_mapping_properties.py:332
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:332: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_standards_compliance_mapping_properties.py:333
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:333: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(1, "Standards Compliance Mapping")
+
+backend\tests\test_standards_compliance_mapping_properties.py:377
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:377: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_standards_compliance_mapping_properties.py:378
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:378: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_standards_compliance_mapping_properties.py:379
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:379: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(1, "Standards Compliance Mapping")
+
+backend\tests\test_standards_compliance_mapping_properties.py:424
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:424: PytestUnknownMarkWarning: Unknown pytest.mark.property_test - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property_test
+
+backend\tests\test_standards_compliance_mapping_properties.py:425
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:425: PytestUnknownMarkWarning: Unknown pytest.mark.feature - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.feature("platform-feature-completion-and-optimization")
+
+backend\tests\test_standards_compliance_mapping_properties.py:426
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_standards_compliance_mapping_properties.py:426: PytestUnknownMarkWarning: Unknown pytest.mark.property - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.property(1, "Standards Compliance Mapping")
+
+backend\tests\test_user_data_management.py:17
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_user_data_management.py:17: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+backend\tests\test_user_data_management.py:37
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_user_data_management.py:37: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+backend\tests\test_user_data_management.py:96
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_user_data_management.py:96: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+backend\tests\test_user_data_management.py:107
+  D:\Desktop\AI-Based-Quality-Check-On-Project-Code-And-Architecture\backend\tests\test_user_data_management.py:107: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.unit
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR backend\tests\test_ai_pr_reviewer.py
+ERROR backend\tests\test_database_integration.py
+ERROR backend\tests\test_database_optimization.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!
+185 warnings, 3 errors in 10.73s

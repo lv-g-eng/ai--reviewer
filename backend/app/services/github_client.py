@@ -1,20 +1,46 @@
 """
 GitHub API client wrapper
 Handles GitHub REST API interactions
+
+This module implements the GitHub API client with:
+- Authentication using GitHub App tokens
+- Methods to fetch PR files and diffs
+- Method to post review comments
+- Retry logic with exponential backoff
+- Circuit breaker pattern for resilience
+
+Requirements:
+- 1.5: Post review comments to pull requests
+- 2.2: Implement exponential backoff with maximum of 3 retry attempts
+- 2.6: Circuit breaker pattern for external service calls
+- 12.5: Circuit breaker pattern for external service calls
 """
 import hmac
 import hashlib
 from typing import Optional, Dict, Any, List
+import logging
 import httpx
 from github import Github, GithubException
 from fastapi import HTTPException, status
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+    before_sleep_log
+)
 
 from app.core.config import settings
+from app.services.llm.circuit_breaker import CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerConfig
+
+logger = logging.getLogger(__name__)
 
 
 class GitHubAPIClient:
     """
     GitHub API client for repository and PR operations
+    
+    Validates Requirements: 2.6, 12.5 (Circuit breaker pattern)
     """
     
     def __init__(self, access_token: Optional[str] = None):
@@ -27,10 +53,47 @@ class GitHubAPIClient:
         self.token = access_token or settings.GITHUB_TOKEN
         self.client = Github(self.token) if self.token else None
         self.http_client = httpx.AsyncClient()
+        
+        # Initialize circuit breaker for GitHub API
+        self.circuit_breaker = CircuitBreaker(
+            name="github_api",
+            config=CircuitBreakerConfig(
+                failure_threshold=0.5,  # 50% failure rate
+                success_threshold=2,
+                timeout=60,
+                window_size=10
+            )
+        )
+        
+        logger.info("GitHub API client initialized with circuit breaker")
     
     async def close(self):
         """Close HTTP client"""
         await self.http_client.aclose()
+    
+    def _wrap_with_circuit_breaker(self, func, *args, **kwargs):
+        """
+        Wrap a function call with circuit breaker protection
+        
+        Args:
+            func: Function to execute
+            *args: Positional arguments
+            **kwargs: Keyword arguments
+            
+        Returns:
+            Function result
+            
+        Raises:
+            CircuitBreakerOpenError: If circuit is open
+        """
+        try:
+            return self.circuit_breaker.call(func, *args, **kwargs)
+        except CircuitBreakerOpenError as e:
+            logger.error(f"GitHub API circuit breaker is OPEN: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="GitHub API is temporarily unavailable. Please try again later."
+            )
     
     def verify_webhook_signature(
         self,
@@ -61,45 +124,72 @@ class GitHubAPIClient:
         
         return hmac.compare_digest(expected_signature, signature_header)
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((GithubException, httpx.HTTPError, httpx.TimeoutException)),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def get_repository(self, repo_url: str) -> Dict[str, Any]:
         """
-        Get repository information
+        Get repository information with retry logic and circuit breaker
         
         Args:
             repo_url: GitHub repository URL
             
         Returns:
             Repository data
+            
+        Requirements:
+            - 2.2: Retry with exponential backoff (max 3 attempts)
+            - 2.6, 12.5: Circuit breaker pattern
         """
-        try:
+        def _get_repo():
             # Extract owner/repo from URL
             parts = repo_url.rstrip('/').split('/')
             owner, repo_name = parts[-2], parts[-1]
             
-            repo = self.client.get_repo(f"{owner}/{repo_name}")
-            
-            return {
-                "id": repo.id,
-                "name": repo.name,
-                "full_name": repo.full_name,
-                "description": repo.description,
-                "language": repo.language,
-                "default_branch": repo.default_branch,
-                "private": repo.private
-            }
-        except GithubException as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"GitHub API error: {e.data.get('message', str(e))}"
-            )
+            try:
+                repo = self.client.get_repo(f"{owner}/{repo_name}")
+                
+                return {
+                    "id": repo.id,
+                    "name": repo.name,
+                    "full_name": repo.full_name,
+                    "description": repo.description,
+                    "language": repo.language,
+                    "default_branch": repo.default_branch,
+                    "private": repo.private
+                }
+            except GithubException as e:
+                # Log and re-raise for retry logic
+                logger.error(f"GitHub API error fetching repository {repo_url}: {e}")
+                # Check if this is a retryable error (5xx server errors)
+                if hasattr(e, 'status') and e.status >= 500:
+                    raise  # Re-raise for retry
+                # For client errors (4xx), convert to HTTPException
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"GitHub API error: {e.data.get('message', str(e))}"
+                )
+        
+        return self._wrap_with_circuit_breaker(_get_repo)
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((GithubException, httpx.HTTPError, httpx.TimeoutException)),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def get_pull_request(
         self,
         repo_full_name: str,
         pr_number: int
     ) -> Dict[str, Any]:
         """
-        Get pull request details
+        Get pull request details with retry logic
         
         Args:
             repo_full_name: Repository full name (owner/repo)
@@ -107,6 +197,10 @@ class GitHubAPIClient:
             
         Returns:
             PR data
+            
+        Requirements:
+            - 1.5: Fetch PR data for analysis
+            - 2.2: Retry with exponential backoff (max 3 attempts)
         """
         try:
             repo = self.client.get_repo(repo_full_name)
@@ -138,18 +232,30 @@ class GitHubAPIClient:
                 "changed_files": pr.changed_files
             }
         except GithubException as e:
+            logger.error(f"GitHub API error fetching PR {repo_full_name}#{pr_number}: {e}")
+            # Retry on server errors (5xx)
+            if hasattr(e, 'status') and e.status >= 500:
+                raise
+            # Convert client errors to HTTPException
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Pull request not found: {e.data.get('message', str(e))}"
             )
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((GithubException, httpx.HTTPError, httpx.TimeoutException)),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def get_pr_files(
         self,
         repo_full_name: str,
         pr_number: int
     ) -> List[Dict[str, Any]]:
         """
-        Get list of files changed in a PR
+        Get list of files changed in a PR with retry logic
         
         Args:
             repo_full_name: Repository full name
@@ -157,6 +263,10 @@ class GitHubAPIClient:
             
         Returns:
             List of changed files with patches
+            
+        Requirements:
+            - 1.5: Fetch PR files and diffs for analysis
+            - 2.2: Retry with exponential backoff (max 3 attempts)
         """
         try:
             repo = self.client.get_repo(repo_full_name)
@@ -178,11 +288,23 @@ class GitHubAPIClient:
             
             return result
         except GithubException as e:
+            logger.error(f"GitHub API error fetching PR files {repo_full_name}#{pr_number}: {e}")
+            # Retry on server errors (5xx)
+            if hasattr(e, 'status') and e.status >= 500:
+                raise
+            # Convert client errors to HTTPException
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Could not fetch PR files: {e.data.get('message', str(e))}"
             )
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((GithubException, httpx.HTTPError, httpx.TimeoutException)),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def get_file_content(
         self,
         repo_full_name: str,
@@ -190,7 +312,7 @@ class GitHubAPIClient:
         ref: str = "main"
     ) -> str:
         """
-        Get file content from repository
+        Get file content from repository with retry logic
         
         Args:
             repo_full_name: Repository full name
@@ -199,6 +321,9 @@ class GitHubAPIClient:
             
         Returns:
             File content as string
+            
+        Requirements:
+            - 2.2: Retry with exponential backoff (max 3 attempts)
         """
         try:
             repo = self.client.get_repo(repo_full_name)
@@ -212,11 +337,23 @@ class GitHubAPIClient:
             
             return content.decoded_content.decode('utf-8')
         except GithubException as e:
+            logger.error(f"GitHub API error fetching file {file_path} from {repo_full_name}: {e}")
+            # Retry on server errors (5xx)
+            if hasattr(e, 'status') and e.status >= 500:
+                raise
+            # Convert client errors to HTTPException
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"File not found: {e.data.get('message', str(e))}"
             )
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((GithubException, httpx.HTTPError, httpx.TimeoutException)),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def post_review_comment(
         self,
         repo_full_name: str,
@@ -227,7 +364,7 @@ class GitHubAPIClient:
         line: int
     ) -> Dict[str, Any]:
         """
-        Post a review comment on a specific line
+        Post a review comment on a specific line with retry logic
         
         Args:
             repo_full_name: Repository full name
@@ -239,6 +376,10 @@ class GitHubAPIClient:
             
         Returns:
             Comment data
+            
+        Requirements:
+            - 1.5: Post review comments to pull requests
+            - 2.2: Retry with exponential backoff (max 3 attempts)
         """
         try:
             repo = self.client.get_repo(repo_full_name)
@@ -251,6 +392,8 @@ class GitHubAPIClient:
                 line=line
             )
             
+            logger.info(f"Posted review comment on {repo_full_name}#{pr_number} at {path}:{line}")
+            
             return {
                 "id": comment.id,
                 "body": comment.body,
@@ -259,11 +402,23 @@ class GitHubAPIClient:
                 "created_at": comment.created_at.isoformat()
             }
         except GithubException as e:
+            logger.error(f"GitHub API error posting comment on {repo_full_name}#{pr_number}: {e}")
+            # Retry on server errors (5xx)
+            if hasattr(e, 'status') and e.status >= 500:
+                raise
+            # Convert client errors to HTTPException
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Could not post comment: {e.data.get('message', str(e))}"
             )
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((GithubException, httpx.HTTPError, httpx.TimeoutException)),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def update_pr_status(
         self,
         repo_full_name: str,
@@ -273,7 +428,7 @@ class GitHubAPIClient:
         context: str = "ai-code-review"
     ) -> Dict[str, Any]:
         """
-        Update PR status check
+        Update PR status check with retry logic
         
         Args:
             repo_full_name: Repository full name
@@ -284,6 +439,9 @@ class GitHubAPIClient:
             
         Returns:
             Status data
+            
+        Requirements:
+            - 2.2: Retry with exponential backoff (max 3 attempts)
         """
         try:
             repo = self.client.get_repo(repo_full_name)
@@ -295,6 +453,8 @@ class GitHubAPIClient:
                 context=context
             )
             
+            logger.info(f"Updated PR status for {repo_full_name}@{commit_sha[:7]}: {state}")
+            
             return {
                 "state": status.state,
                 "description": status.description,
@@ -302,11 +462,23 @@ class GitHubAPIClient:
                 "created_at": status.created_at.isoformat()
             }
         except GithubException as e:
+            logger.error(f"GitHub API error updating status for {repo_full_name}@{commit_sha}: {e}")
+            # Retry on server errors (5xx)
+            if hasattr(e, 'status') and e.status >= 500:
+                raise
+            # Convert client errors to HTTPException
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Could not update status: {e.data.get('message', str(e))}"
             )
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((GithubException, httpx.HTTPError, httpx.TimeoutException)),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def list_repository_prs(
         self,
         repo_full_name: str,
@@ -314,7 +486,7 @@ class GitHubAPIClient:
         limit: int = 30
     ) -> List[Dict[str, Any]]:
         """
-        List pull requests in a repository
+        List pull requests in a repository with retry logic
         
         Args:
             repo_full_name: Repository full name
@@ -323,6 +495,9 @@ class GitHubAPIClient:
             
         Returns:
             List of PR summaries
+            
+        Requirements:
+            - 2.2: Retry with exponential backoff (max 3 attempts)
         """
         try:
             repo = self.client.get_repo(repo_full_name)
@@ -344,6 +519,11 @@ class GitHubAPIClient:
             
             return result
         except GithubException as e:
+            logger.error(f"GitHub API error listing PRs for {repo_full_name}: {e}")
+            # Retry on server errors (5xx)
+            if hasattr(e, 'status') and e.status >= 500:
+                raise
+            # Convert client errors to HTTPException
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Could not list PRs: {e.data.get('message', str(e))}"

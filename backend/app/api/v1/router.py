@@ -13,10 +13,14 @@ from app.api.v1.endpoints import (
     llm, 
     libraries, 
     code_review_webhook,
+    webhooks,
     rbac_auth,
     rbac_users,
     rbac_projects,
     rbac_audit,
+    audit_logs,
+    user_data,
+    metrics,
 )
 from app.api.v1 import repositories
 
@@ -26,6 +30,7 @@ api_router = APIRouter()
 api_router.include_router(health.router, prefix="/health", tags=["Health"])
 api_router.include_router(database.router, prefix="/database", tags=["Database"])
 api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+api_router.include_router(webhooks.router, prefix="/webhooks", tags=["Webhooks"])
 api_router.include_router(github.router, prefix="/github", tags=["GitHub Integration"])
 api_router.include_router(code_review_webhook.router, prefix="/code-review", tags=["Code Review"])
 api_router.include_router(pull_request.router, prefix="/analysis", tags=["PR Analysis"])
@@ -39,3 +44,12 @@ api_router.include_router(rbac_auth.router, prefix="/rbac/auth", tags=["RBAC Aut
 api_router.include_router(rbac_users.router, prefix="/rbac/users", tags=["RBAC User Management"])
 api_router.include_router(rbac_projects.router, prefix="/rbac/projects", tags=["RBAC Project Management"])
 api_router.include_router(rbac_audit.router, prefix="/rbac/audit", tags=["RBAC Audit Logs"])
+
+# Audit Logging endpoints
+api_router.include_router(audit_logs.router, prefix="/audit-logs", tags=["Audit Logs"])
+
+# User Data Management endpoints (GDPR compliance)
+api_router.include_router(user_data.router, prefix="/users", tags=["User Data Management"])
+
+# Prometheus Metrics endpoint
+api_router.include_router(metrics.router, tags=["Metrics"])

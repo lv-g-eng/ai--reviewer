@@ -26,15 +26,15 @@ export function RBACGuard({
   fallback,
 }: RBACGuardProps) {
   const router = useRouter();
-  const { user, session, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { hasRole, loading: roleLoading } = useRole();
   const { hasPermission, loading: permissionLoading } = usePermission();
 
   const loading = authLoading || roleLoading || permissionLoading;
 
   useEffect(() => {
-    // Check if session is expired
-    if (!loading && !session) {
+    // Check if user is authenticated
+    if (!loading && !user) {
       router.push('/login');
       return;
     }
@@ -52,7 +52,6 @@ export function RBACGuard({
     }
   }, [
     loading,
-    session,
     user,
     requiredRole,
     requiredPermission,
@@ -70,8 +69,8 @@ export function RBACGuard({
     );
   }
 
-  // Check if session is expired
-  if (!session) {
+  // Check if user is authenticated
+  if (!user) {
     return fallback || null;
   }
 

@@ -1,0 +1,217 @@
+# OWASP ZAP Security Scanning Configuration
+# This configuration defines automated security scanning rules for OWASP Top 10
+
+# Scan Configuration
+scan:
+  # Target application URL
+  target: "http://backend:8000"
+  
+  # Scan type: baseline, full, or api
+  type: "api"
+  
+  # Maximum scan duration in minutes
+  max_duration: 30
+  
+  # Spider configuration
+  spider:
+    enabled: true
+    max_depth: 5
+    max_children: 10
+    
+  # Ajax spider for JavaScript-heavy applications
+  ajax_spider:
+    enabled: false
+    max_duration: 5
+    
+  # Active scanning configuration
+  active_scan:
+    enabled: true
+    policy: "API-Minimal"
+    
+# API Configuration
+api:
+  # OpenAPI/Swagger specification
+  spec_url: "http://backend:8000/api/v1/openapi.json"
+  spec_format: "openapi"
+  
+  # API authentication
+  authentication:
+    type: "bearer"
+    # Token will be provided via environment variable
+    
+# Rules Configuration - OWASP Top 10 2021
+rules:
+  # A01:2021 - Broken Access Control
+  - id: 10101
+    name: "Access Control Testing"
+    enabled: true
+    threshold: "medium"
+    
+  # A02:2021 - Cryptographic Failures
+  - id: 10202
+    name: "Weak Cryptography"
+    enabled: true
+    threshold: "medium"
+    
+  # A03:2021 - Injection
+  - id: 40018
+    name: "SQL Injection"
+    enabled: true
+    threshold: "low"
+    
+  - id: 40019
+    name: "SQL Injection - PostgreSQL"
+    enabled: true
+    threshold: "low"
+    
+  - id: 40020
+    name: "SQL Injection - MySQL"
+    enabled: true
+    threshold: "low"
+    
+  - id: 40014
+    name: "Cross Site Scripting (Reflected)"
+    enabled: true
+    threshold: "low"
+    
+  - id: 40016
+    name: "Cross Site Scripting (Persistent)"
+    enabled: true
+    threshold: "low"
+    
+  - id: 40017
+    name: "Cross Site Scripting (DOM Based)"
+    enabled: true
+    threshold: "low"
+    
+  - id: 90019
+    name: "Code Injection"
+    enabled: true
+    threshold: "medium"
+    
+  # A04:2021 - Insecure Design
+  - id: 10021
+    name: "X-Content-Type-Options Header Missing"
+    enabled: true
+    threshold: "low"
+    
+  # A05:2021 - Security Misconfiguration
+  - id: 10016
+    name: "Web Browser XSS Protection Not Enabled"
+    enabled: true
+    threshold: "low"
+    
+  - id: 10017
+    name: "Cross-Domain JavaScript Source File Inclusion"
+    enabled: true
+    threshold: "low"
+    
+  - id: 10020
+    name: "X-Frame-Options Header Not Set"
+    enabled: true
+    threshold: "medium"
+    
+  - id: 10035
+    name: "Strict-Transport-Security Header Not Set"
+    enabled: true
+    threshold: "low"
+    
+  - id: 10098
+    name: "Cross-Domain Misconfiguration"
+    enabled: true
+    threshold: "medium"
+    
+  # A06:2021 - Vulnerable and Outdated Components
+  - id: 10104
+    name: "User Agent Fuzzer"
+    enabled: true
+    threshold: "medium"
+    
+  # A07:2021 - Identification and Authentication Failures
+  - id: 10105
+    name: "Weak Authentication Method"
+    enabled: true
+    threshold: "medium"
+    
+  - id: 40013
+    name: "Session Fixation"
+    enabled: true
+    threshold: "medium"
+    
+  # A08:2021 - Software and Data Integrity Failures
+  - id: 90003
+    name: "Sub Resource Integrity Attribute Missing"
+    enabled: true
+    threshold: "medium"
+    
+  # A09:2021 - Security Logging and Monitoring Failures
+  - id: 10109
+    name: "Insufficient Logging"
+    enabled: true
+    threshold: "informational"
+    
+  # A10:2021 - Server Side Request Forgery (SSRF)
+  - id: 40009
+    name: "Server Side Request Forgery"
+    enabled: true
+    threshold: "medium"
+
+# Alert Thresholds
+thresholds:
+  # Fail scan if any alerts at or above this level
+  fail_level: "high"
+  
+  # Warn if any alerts at or above this level
+  warn_level: "medium"
+  
+  # Maximum allowed alerts by risk level
+  max_alerts:
+    high: 0
+    medium: 0
+    low: 10
+    informational: 100
+
+# Reporting Configuration
+reporting:
+  # Report formats to generate
+  formats:
+    - "html"
+    - "json"
+    - "xml"
+    - "md"
+  
+  # Report output directory
+  output_dir: "/zap/reports"
+  
+  # Include request/response details
+  include_details: true
+  
+  # Include false positives
+  include_false_positives: false
+
+# Context Configuration
+context:
+  name: "AI Review API"
+  
+  # Include URLs matching these patterns
+  include_urls:
+    - "http://backend:8000/api/v1/.*"
+    
+  # Exclude URLs matching these patterns
+  exclude_urls:
+    - "http://backend:8000/api/v1/health"
+    - "http://backend:8000/api/v1/metrics"
+    - "http://backend:8000/docs"
+    - "http://backend:8000/redoc"
+    - "http://backend:8000/openapi.json"
+
+# Performance Configuration
+performance:
+  # Number of threads for scanning
+  threads: 5
+  
+  # Delay between requests (milliseconds)
+  delay: 0
+  
+  # Maximum alerts per rule
+  max_alerts_per_rule: 10

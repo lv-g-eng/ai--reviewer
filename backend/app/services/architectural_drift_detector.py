@@ -6,12 +6,14 @@ current code structure against expected architectural patterns and constraints.
 """
 
 import logging
+import re
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 from app.services.neo4j_ast_service import Neo4jASTService
 from app.services.architecture_golden_standard import GoldenStandardManager
-from app.core.logging_config import logger
+
+logger = logging.getLogger(__name__)
 
 class DriftSeverity(Enum):
     LOW = "LOW"
@@ -549,10 +551,28 @@ class ArchitecturalDriftDetector:
         return violations
 
     def _matches_pattern(self, name: str, pattern: str) -> bool:
-        """Simple pattern matching (in practice, you'd use regex)."""
-        # This is a simplified implementation
-        # In practice, you'd use proper regex matching
-        return pattern in name or name.endswith(pattern.replace("*", ""))
+        """
+        Check if name matches the given pattern using Regex.
+        
+        Supports basic glob-like wildcards (*) by converting them to regex (.*),
+        unless the pattern already looks like a regex.
+        """
+        try:
+            # If pattern looks like a regex (contains special chars other than *), usage as is
+            # Otherwise, treat * as wildcard
+            if any(char in pattern for char in r"[]()+?^$|{}"):
+                regex = pattern
+            else:
+                # Escape everything except *
+                regex = re.escape(pattern).replace(r"\*", ".*")
+                # Anchor to start and end for exact match behavior
+                regex = f"^{regex}$"
+                
+            return bool(re.match(regex, name))
+        except re.error:
+            logger.warning(f"Invalid regex pattern: {pattern}")
+            # Fallback to simple containment
+            return pattern in name
 
     def _calculate_severity_breakdown(self, violations: List[DriftViolation]) -> Dict[str, int]:
         """Calculate breakdown of violations by severity."""

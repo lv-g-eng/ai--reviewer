@@ -20,6 +20,7 @@ export interface LoginCredentials {
 export interface User {
   id: string;
   username: string;
+  email?: string;
   name?: string;
   role?: string;
   is_active?: boolean;
@@ -218,6 +219,7 @@ export async function authenticateUser(credentials: LoginCredentials): Promise<U
     return {
       id: userData.id,
       username: userData.username,
+      email: userData.username, // Use username as email for compatibility
       name: userData.username,
       role: userData.role,
       is_active: userData.is_active,

@@ -1,669 +1,1012 @@
-# 🚀 Quick Start Guide
+# 🚀 AI Code Review Platform - 操作手册
 
-**Time to Running**: 2-3 minutes
-**Prerequisites**: Docker Desktop
-
-> 💡 **注意**: 这是为Windows环境优化的Docker部署指南。删除shell脚本，改用PowerShell命令
+**完整的安装、配置和运行指南**
 
 ---
 
-## ⚡ Docker快速启动 (Windows PowerShell)
+## 📋 目录
 
-```powershell
-# 1. 检查Docker环境
-docker --version
-
-docker-compose --version
-
-# 2. 复制环境变量模板
-Copy-Item .env.template .env -Force
-
-# 3. 生成随机密码(可选)
-# .env文件已经预生成安全密码，如需重新生成：
-# echo "POSTGRES_PASSWORD=\$(openssl rand -hex 16)" > .env
-# echo "NEO4J_PASSWORD=\$(openssl rand -hex 16)" >> .env
-# echo "REDIS_PASSWORD=\$(openssl rand -hex 16)" >> .env
-# echo "JWT_SECRET=\$(openssl rand -hex 32)" >> .env
-
-# 4. 启动完整服务栈
-docker-compose up -d
-
-# 5. 等待服务启动完成
-Write-Host "⏳ 等待服务启动..."
-Start-Sleep -Seconds 30
-
-# 6. 检查服务状态
-docker-compose ps
-
-# 7. 运行健康检查
-.\setup-check.sh
-```
-
-**服务访问地址**:
-
-- 前端应用: http://localhost:3000
-- 后端API: http://localhost:8000
-- API文档: http://localhost:8000/docs
-- pgAdmin: http://localhost:5050
-- Neo4j Browser: http://localhost:7474
-
-**pgAdmin登录**:
-
-- 邮箱: admin@example.com
-- 密码: PostgreSQL密码（见.env文件）
+1. [系统要求](#系统要求)
+2. [快速启动](#快速启动)
+3. [详细安装步骤](#详细安装步骤)
+4. [环境配置](#环境配置)
+5. [数据库设置](#数据库设置)
+6. [启动服务](#启动服务)
+7. [登录系统](#登录系统)
+8. [GitHub OAuth 配置](#github-oauth-配置)
+9. [验证安装](#验证安装)
+10. [故障排查](#故障排查)
+11. [常用操作](#常用操作)
 
 ---
 
-## 📋 Docker详细部署指南
+## 系统要求
 
-### 环境要求
+### 必需软件
 
-- **Docker Desktop** (Windows/macOS) 或 **Docker Engine** (Linux)
-- 至少4GB可用内存
-- 稳定网络连接
+- **Python**: 3.11+ (推荐 3.13)
+- **Node.js**: 18.0.0+ (推荐 LTS 版本)
+- **npm**: 9.0.0+
+- **PostgreSQL**: 14+
+- **Neo4j**: 5.0+
+- **Redis**: 7.0+
 
-**检查Docker环境**:
+### 可选工具
 
-```powershell
-# 检查Docker版本
-docker --version
+- **Docker Desktop**: 用于容器化部署
+- **Git**: 版本控制
 
-# 检查Docker Compose版本
-docker-compose --version
+### 系统资源
 
-# 检查Docker是否运行
-docker info
+- 至少 4GB 可用内存
+- 至少 10GB 可用磁盘空间
+
+---
+
+## 快速启动
+
+### 方式 1: 手动启动（推荐用于开发）
+
+#### 1. 克隆项目
+
+```bash
+git clone <repository-url>
+cd AI-Based-Quality-Check-On-Project-Code-And-Architecture
 ```
 
-### 🛠️ Docker部署步骤
+#### 2. 配置环境变量
 
-#### 第1步：准备环境变量
+```bash
+# 复制环境变量模板
+cp .env.template .env
+cp frontend/.env.example frontend/.env.local
 
-.env文件已预配置了安全密码，如需要自定义：
-
-```powershell
-# 备份现有配置
-Copy-Item .env .env.backup -Force
-
-# 从模板创建新配置
-Copy-Item .env.template .env -Force
-
-# 编辑.env文件设置自定义密码
-notepad .env
+# 编辑配置文件
+# Windows: notepad .env
+# Linux/Mac: nano .env
 ```
 
-#### 第2步：启动Docker服务栈
+#### 3. 启动后端
 
-```powershell
-# 启动所有服务（支持PowerShell）
+```bash
+cd backend
+
+# 创建虚拟环境
+python -m venv venv
+
+# 激活虚拟环境
+# Windows PowerShell:
+.\venv\Scripts\Activate.ps1
+# Linux/Mac:
+source venv/bin/activate
+
+# 安装依赖
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 运行数据库迁移
+alembic upgrade head
+
+# 启动后端服务器
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### 4. 启动前端（新终端窗口）
+
+```bash
+cd frontend
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+```
+
+#### 5. 访问应用
+
+- 前端: http://localhost:3000
+- 后端 API: http://localhost:8000
+- API 文档: http://localhost:8000/docs
+
+### 方式 2: Docker 启动
+
+```bash
+# 启动所有服务
 docker-compose up -d
 
-# 或分阶段启动（推荐）
-docker-compose up -d postgres redis neo4j
-docker-compose up -d backend frontend celery-worker celery-beat
-```
-
-#### 第3步：验证服务状态
-
-```powershell
-# 检查所有服务状态
+# 查看服务状态
 docker-compose ps
 
-# 查看服务日志
-docker-compose logs
-
-# 检查特定服务日志
-docker-compose logs postgres
-docker-compose logs backend
-```
-
-#### 第4步：健康检查
-
-```powershell
-# 运行自动化健康检查
-.\setup-check.sh
-
-# 手动检查后端健康状态
-curl http://localhost:8000/health
-
-# 检查前端服务
-Start-Process http://localhost:3000
-```
-
-#### 第5步：访问应用程序
-
-- **前端**: http://localhost:3000
-- **后端API**: http://localhost:8000
-- **API文档**: http://localhost:8000/docs
-- **pgAdmin**: http://localhost:5050
-- **Neo4j Browser**: http://localhost:7474
-
-### 🔧 管理命令
-
-#### 查看服务状态
-
-```powershell
-# 查看所有容器状态
-docker-compose ps
-
-# 查看资源使用情况
-docker stats
-
-# 查看服务日志
+# 查看日志
 docker-compose logs -f
 ```
 
-#### 服务管理
+---
 
-```powershell
-# 停止所有服务
-docker-compose down
+## 详细安装步骤
 
-# 重启特定服务
-docker-compose restart backend
+### 后端安装
 
-# 重新构建并启动
-docker-compose up -d --build
+#### 步骤 1: 进入后端目录
+
+```bash
+cd backend
 ```
 
-#### 数据管理
+#### 步骤 2: 创建 Python 虚拟环境
 
-```powershell
-# 查看数据库容器
-docker exec -it ai_review_postgres psql -U postgres -d ai_code_review
-
-# 备份数据卷
-docker-compose down
-Copy-Item -Path "volumes" -Destination "backup_volumes" -Recurse
-
-docker-compose up -d
+```bash
+python -m venv venv
 ```
 
-### 🌐 服务端点详情
+#### 步骤 3: 激活虚拟环境
 
-| 服务       | 端口 | URL                        | 用途           |
-| ---------- | ---- | -------------------------- | -------------- |
-| 前端       | 3000 | http://localhost:3000      | 用户界面       |
-| 后端       | 8000 | http://localhost:8000      | REST API       |
-| API文档    | 8000 | http://localhost:8000/docs | API参考        |
-| PostgreSQL | 5432 | -                          | 主数据库       |
-| pgAdmin    | 5050 | http://localhost:5050      | 数据库管理     |
-| Neo4j      | 7474 | http://localhost:7474      | 图数据库浏览器 |
-| Redis      | 6379 | -                          | 缓存服务       |
+**Windows PowerShell:**
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+**Linux/Mac:**
+```bash
+source venv/bin/activate
+```
+
+#### 步骤 4: 升级 pip
+
+```bash
+pip install --upgrade pip
+```
+
+#### 步骤 5: 安装依赖
+
+```bash
+# 安装生产依赖
+pip install -r requirements.txt
+
+# 安装测试依赖（可选）
+pip install -r requirements-test.txt
+
+# 安装开发工具（可选）
+pip install black isort ruff mypy pytest
+```
+
+#### 步骤 6: 配置环境变量
+
+```bash
+# 复制模板
+cp .env.example .env
+
+# 编辑配置
+# Windows: notepad .env
+# Linux/Mac: nano .env
+```
+
+#### 步骤 7: 运行数据库迁移
+
+```bash
+alembic upgrade head
+```
+
+#### 步骤 8: 验证后端安装
+
+```bash
+# 运行测试
+pytest
+
+# 检查代码格式
+black --check app/
+isort --check app/
+
+# 运行 linting
+ruff check app/
+```
+
+### 前端安装
+
+#### 步骤 1: 进入前端目录
+
+```bash
+cd frontend
+```
+
+#### 步骤 2: 检查 Node.js 版本
+
+```bash
+node --version  # 应该是 18.0.0+
+npm --version   # 应该是 9.0.0+
+```
+
+#### 步骤 3: 安装依赖
+
+```bash
+npm install
+```
+
+#### 步骤 4: 配置环境变量
+
+```bash
+# 复制模板
+cp .env.example .env.local
+
+# 编辑配置
+# Windows: notepad .env.local
+# Linux/Mac: nano .env.local
+```
+
+#### 步骤 5: 验证前端安装
+
+```bash
+# 运行 linting
+npm run lint
+
+# 运行类型检查
+npm run type-check
+
+# 运行测试（可选）
+npm test
+```
 
 ---
 
-## 🔑 Docker环境变量配置
+## 环境配置
 
-### Windows PowerShell兼容的环境变量设置
+### 后端环境变量 (.env)
 
-### Docker环境变量配置 (.env)
+```bash
+# 数据库配置
+POSTGRES_DB=ai_code_review
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_secure_password
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
 
-.env文件已预配置了安全密码和Docker容器网络设置：
+# Neo4j 配置
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_neo4j_password
+NEO4J_URI=bolt://localhost:7687
+NEO4J_DATABASE=neo4j
 
-```env
-# Docker容器网络配置 - 使用服务名称而非localhost
-POSTGRES_HOST=postgres
+# Redis 配置
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# 安全密钥（使用 openssl rand -hex 32 生成）
+JWT_SECRET=your_jwt_secret_min_32_chars
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_HOURS=24
+SECRET_KEY=your_app_secret_min_32_chars
+SESSION_SECRET=your_session_secret_min_32_chars
+
+# 应用配置
+ENVIRONMENT=development
+DEBUG=true
+LOG_LEVEL=INFO
+PROJECT_NAME="AI Code Review Platform"
+API_V1_STR=/api/v1
+
+# GitHub OAuth（可选）
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_TOKEN=
+GITHUB_WEBHOOK_SECRET=
+
+# LLM API Keys（可选）
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+```
+
+### 前端环境变量 (.env.local)
+
+```bash
+# API 配置
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+
+# NextAuth 配置
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret_min_32_chars
+
+# GitHub OAuth（可选）
+NEXT_PUBLIC_GITHUB_CLIENT_ID=
+```
+
+---
+
+## 数据库设置
+
+### PostgreSQL 设置
+
+#### 1. 安装 PostgreSQL
+
+**Windows:**
+- 下载: https://www.postgresql.org/download/windows/
+- 运行安装程序，记住设置的密码
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+```
+
+**macOS:**
+```bash
+brew install postgresql
+brew services start postgresql
+```
+
+#### 2. 创建数据库
+
+```bash
+# 连接到 PostgreSQL
+psql -U postgres
+
+# 创建数据库
+CREATE DATABASE ai_code_review;
+
+# 创建用户（如果需要）
+CREATE USER your_user WITH PASSWORD 'your_password';
+
+# 授予权限
+GRANT ALL PRIVILEGES ON DATABASE ai_code_review TO your_user;
+
+# 退出
+\q
+```
+
+#### 3. 更新 .env 文件
+
+```bash
+POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=ai_code_review
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=fb57f80adf003595
+POSTGRES_PASSWORD=your_password
+```
 
-NEO4J_URI=bolt://neo4j:7687
+### Neo4j 设置
+
+#### 1. 安装 Neo4j
+
+**Windows/Mac:**
+- 下载 Neo4j Desktop: https://neo4j.com/download/
+- 创建新数据库，设置密码
+
+**Linux:**
+```bash
+# 添加 Neo4j 仓库
+wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
+echo 'deb https://debian.neo4j.com stable latest' | sudo tee /etc/apt/sources.list.d/neo4j.list
+
+# 安装
+sudo apt update
+sudo apt install neo4j
+
+# 启动服务
+sudo systemctl start neo4j
+```
+
+#### 2. 配置 Neo4j
+
+```bash
+# 访问 Neo4j Browser
+http://localhost:7474
+
+# 首次登录
+用户名: neo4j
+密码: neo4j
+# 系统会要求修改密码
+```
+
+#### 3. 更新 .env 文件
+
+```bash
+NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
-NEO4J_PASSWORD=4e06834ec994c162
+NEO4J_PASSWORD=your_new_password
+NEO4J_DATABASE=neo4j
+```
 
-REDIS_HOST=redis
+### Redis 设置
+
+#### 1. 安装 Redis
+
+**Windows:**
+- 下载: https://github.com/microsoftarchive/redis/releases
+- 或使用 WSL2 安装 Linux 版本
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt update
+sudo apt install redis-server
+sudo systemctl start redis-server
+```
+
+**macOS:**
+```bash
+brew install redis
+brew services start redis
+```
+
+#### 2. 验证 Redis
+
+```bash
+redis-cli ping
+# 应该返回: PONG
+```
+
+#### 3. 更新 .env 文件
+
+```bash
+REDIS_HOST=localhost
 REDIS_PORT=6379
-REDIS_PASSWORD=b67dc9a7b467f09d
-
-JWT_SECRET=f34f50c1350f6275ad5c2672a978d815
-
-# Docker网络设置
-BACKEND_HOST=backend
-BACKEND_PORT=8000
-FRONTEND_HOST=frontend
-FRONTEND_PORT=3000
-```
-
-### 前端配置 (.env.local)
-
-```env
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=local_dev_secret_minimum_32_characters_here
-NEXT_PUBLIC_API_URL=http://localhost:8000
-BACKEND_URL=http://localhost:8000
-```
-
-### 🛡️ Windows兼容的安全配置
-
-**Windows PowerShell中重新生成安全密码**:
-
-```powershell
-# 创建新的.env文件
-Remove-Item .env -Force
-Copy-Item .env.template .env -Force
-
-# 生成安全密码
-Write-Host "=== 生成安全密码 ==="
-Add-Content .env "POSTGRES_PASSWORD=\$(openssl rand -hex 16)"
-Add-Content .env "NEO4J_PASSWORD=\$(openssl rand -hex 16)"
-Add-Content .env "REDIS_PASSWORD=\$(openssl rand -hex 16)"
-Add-Content .env "JWT_SECRET=\$(openssl rand -hex 32)"
-
-Write-Host "✅ 安全密码已生成"
-```
-
-**如果openssl不可用，使用PowerShell内置方法**:
-
-```powershell
-# 使用PowerShell内置随机数生成器
-function Get-RandomHex {
-    param([int]$Length)
-    -join ((48..57) + (97..102) | Get-Random -Count $Length | ForEach-Object {[char]$_})
-}
-
-# 更新.env文件
-Set-Content .env "POSTGRES_PASSWORD=\$(Get-RandomHex 32)"
-Add-Content .env "NEO4J_PASSWORD=\$(Get-RandomHex 32)"
-Add-Content .env "REDIS_PASSWORD=\$(Get-RandomHex 32)"
-Add-Content .env "JWT_SECRET=\$(Get-RandomHex 64)"
-```
-
-**重要**: .env文件包含敏感信息，请确保：
-
-- ❌ 不提交到版本控制
-- ✅ 定期轮换密码
-- ✅ 使用不同环境的不同配置
-
----
-
-## ✅ 验证安装
-
-```powershell
-# 检查服务状态
-docker-compose ps
-
-# 检查后端健康状态
-Invoke-WebRequest http://localhost:8000/health
-
-# 打开API文档
-Start-Process http://localhost:8000/docs
-
-# 打开前端应用
-Start-Process http://localhost:3000
-
-# 运行自动化健康检查
-.\setup-check.sh
-```
-
-### Windows兼容的curl替代方案
-
-如果你的PowerShell没有Invoke-WebRequest，可以使用：
-
-```powershell
-# 方法1：使用浏览器测试
-Start-Process http://localhost:8000/health
-
-# 方法2：使用PowerShell 5.1+
-try {
-    Invoke-WebRequest http://localhost:8000/health
-    Write-Host "✅ 后端服务健康"
-} catch {
-    Write-Host "❌ 后端服务异常"
-}
+REDIS_PASSWORD=  # 本地开发通常为空
+REDIS_DB=0
 ```
 
 ---
 
-## ⏹️ 停止服务
+## 启动服务
 
-```powershell
-# 停止并清理所有容器
-docker-compose down
-
-# 停止并删除数据卷
-docker-compose down -v
-
-# 仅停止服务但不删除容器
-docker-compose stop
-
-# 强制停止所有服务（紧急情况）
-docker-compose down --remove-orphans
-```
-
----
-
-## 🚨 Troubleshooting
-
-### Python 3.13 Compatibility Issue
-
-**Error**: `asyncpg` fails to build with compilation errors
-
-**Solution**: Use Python 3.11 or 3.12
+### 启动后端服务器
 
 ```bash
-# Install Python 3.11 or 3.12 from python.org
-# Then create venv with correct version:
-py -3.11 -m venv backend/venv
-backend\venv\Scripts\activate
-pip install --no-cache-dir -r backend/requirements.txt
-```
-
-See [backend/INSTALL_FIX.md](backend/INSTALL_FIX.md) for detailed solutions.
-
-### Backend Won't Start
-
-```bash
-# Check port 8000 is not in use
-netstat -ano | findstr :8000  # Windows
-lsof -i :8000  # Linux/Mac
-
-# Check logs
 cd backend
-tail -f app.log
 
-# Verify database connection
-docker-compose ps postgres
+# 激活虚拟环境
+# Windows:
+.\venv\Scripts\Activate.ps1
+# Linux/Mac:
+source venv/bin/activate
+
+# 启动服务器
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Frontend Can't Connect to Backend
-
-```bash
-# Verify backend is running
-curl http://localhost:8000/health
-
-# Check environment variables
-cat frontend/.env.local
-
-# Check CORS settings in backend
+**预期输出:**
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process
+INFO:     Started server process
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
 ```
 
-### Database Connection Failed
+**访问:**
+- API: http://localhost:8000
+- 文档: http://localhost:8000/docs
+- 健康检查: http://localhost:8000/health
+
+### 启动前端服务器
 
 ```bash
-# Check services are running
-docker-compose ps
-
-# Restart services
-docker-compose restart postgres redis neo4j
-
-# Check logs
-docker-compose logs postgres
-```
-
-### Tests Failing
-
-```bash
-# Frontend
 cd frontend
-rm -rf node_modules .next
-npm install
-npm test
 
-# Backend
-cd backend
-pip install -r requirements.txt
-pytest --cache-clear
+# 启动开发服务器
+npm run dev
 ```
 
-### Clean Orphan Containers
+**预期输出:**
+```
+> frontend@0.1.0 dev
+> next dev
 
-If you see warnings about orphan containers:
+   ▲ Next.js 14.x.x
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.x.x:3000
+
+ ✓ Ready in 2.5s
+```
+
+**访问:**
+- 应用: http://localhost:3000
+- 登录: http://localhost:3000/login
+- 注册: http://localhost:3000/register
+
+---
+
+## 登录系统
+
+### 创建管理员账号
+
+首次使用需要创建管理员账号：
 
 ```bash
-docker-compose down --remove-orphans
-docker-compose up -d postgres redis neo4j
+cd backend
+
+# 激活虚拟环境
+# Windows:
+.\venv\Scripts\Activate.ps1
+# Linux/Mac:
+source venv/bin/activate
+
+# 创建默认管理员
+python scripts/create_admin_user.py
+
+# 或创建自定义管理员
+python scripts/create_admin_user.py \
+  --email your-admin@example.com \
+  --password YourSecurePass123! \
+  --name "Your Name"
 ```
 
----
+### 默认管理员凭证
 
-## 📚 Next Steps
+**Email:** `admin@example.com`  
+**密码:** `Admin123!`
 
-### For Developers
+### 登录步骤
 
-1. **Read the docs**: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
-2. **Explore the API**: http://localhost:8000/docs
-3. **Run tests**: `npm test` (frontend) or `pytest` (backend)
-4. **Check code quality**: `npm run lint`
+1. 访问 http://localhost:3000/login
+2. 输入 Email 和密码
+3. 点击 "Sign in" 按钮
+4. 登录成功后跳转到 Dashboard
 
-### For Project Managers
+### 注册新用户
 
-1. **Review architecture**: [README.md](README.md#architecture)
-2. **Check project status**: [README.md](README.md#project-status)
-3. **View documentation**: [docs/README.md](docs/README.md)
+1. 访问 http://localhost:3000/register
+2. 填写信息：
+   - Full Name（全名）
+   - Email（邮箱）
+   - Password（密码，至少8字符，包含大小写字母和数字）
+   - Confirm Password（确认密码）
+3. 勾选同意条款
+4. 点击 "Create account"
 
-### Common Tasks
+### 密码要求
 
-- **Add a feature**: See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
-- **Run tests**: See [Testing](#testing) section
-- **Deploy**: See [README.md](README.md#deployment)
-- **Troubleshoot**: See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-
----
-
-## 📞 Getting Help
-
-1. **Check documentation**: [docs/README.md](docs/README.md)
-2. **Common issues**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-3. **Quick reference**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
-4. **Create an issue**: GitHub Issues
+- 至少 8 个字符
+- 至少 1 个大写字母
+- 至少 1 个小写字母
+- 至少 1 个数字
+- 至少 1 个特殊字符 (!@#$%^&*()_+-=[]{}|;:,.<>?)
 
 ---
 
-## ⏱️ Performance Notes
+## GitHub OAuth 配置
 
-- Infrastructure starts in ~15 seconds
-- Backend starts in ~15-20 seconds
-- Frontend starts in ~10-15 seconds
-- **Total time to running**: ~45-60 seconds
+### 步骤 1: 创建 GitHub OAuth 应用
 
-**Optimization Tips**:
+1. 访问 GitHub Settings: https://github.com/settings/developers
+2. 点击 "OAuth Apps" → "New OAuth App"
+3. 填写信息:
+   - **Application name**: AI Code Review Platform
+   - **Homepage URL**: `http://localhost:3000`
+   - **Authorization callback URL**: `http://localhost:3000/api/github/callback`
+4. 点击 "Register application"
+5. 记录 **Client ID** 和生成 **Client Secret**
 
-- Use `--workers 1` for faster backend startup (increase for production)
-- Use `--log-level warning` to reduce startup overhead
-- Keep Docker Desktop running for faster container starts
+### 步骤 2: 配置后端
 
----
+编辑 `.env` 文件:
 
-## 📦 数据迁移指南
-
-### 从本地数据库迁移到 Docker
-
-#### PostgreSQL 数据迁移
-
-```powershell
-# 1. 备份本地PostgreSQL数据库
-docker exec -it ai_review_postgres pg_dump -U postgres ai_code_review > backup_postgres_$(Get-Date -Format "yyyyMMdd_HHmmss").sql
-
-# 2. 恢复数据到Docker容器
-docker exec -i ai_review_postgres psql -U postgres -d ai_code_review < backup_file.sql
-
-# 3. 验证迁移
-docker exec ai_review_postgres psql -U postgres -d ai_code_review -c "\dt"
+```bash
+GITHUB_CLIENT_ID=你的_GitHub_Client_ID
+GITHUB_CLIENT_SECRET=你的_GitHub_Client_Secret
 ```
 
-**使用 pgAdmin 迁移**:
-1. 打开 pgAdmin (http://localhost:5050)
-2. 连接本地PostgreSQL和Docker PostgreSQL
-3. 使用 "Backup/Restore" 功能导出导入
+### 步骤 3: 配置前端
 
-#### Neo4j 数据迁移
+编辑 `frontend/.env.local` 文件:
 
-```powershell
-# 1. 导出本地Neo4j数据
-docker exec -it ai_review_neo4j neo4j-admin database dump neo4j --to-path=/logs/
-
-# 2. 复制备份文件
-docker cp ai_review_neo4j:/logs/neo4j.dump ./
-
-# 3. 导入到新容器
-docker cp ./neo4j.dump ai_review_neo4j:/logs/
-docker exec -it ai_review_neo4j neo4j-admin database load neo4j --from=/logs/neo4j.dump --overwrite-destination=true
+```bash
+NEXT_PUBLIC_GITHUB_CLIENT_ID=你的_GitHub_Client_ID
 ```
 
-**使用 Neo4j Browser 导出/导入**:
-1. 访问 http://localhost:7474
-2. 使用 `:export all to file` 导出数据
-3. 在新环境中使用 `:source file` 导入
+### 步骤 4: 重启服务
+
+```bash
+# 重启后端（Ctrl+C 停止，然后重新运行）
+cd backend
+uvicorn app.main:app --reload
+
+# 重启前端（Ctrl+C 停止，然后重新运行）
+cd frontend
+npm run dev
+```
+
+### 步骤 5: 测试 GitHub 集成
+
+1. 访问 http://localhost:3000/projects
+2. 点击 "Add Project"
+3. 点击 "Connect with GitHub"
+4. 应该跳转到 GitHub 授权页面
+5. 授权后返回应用
 
 ---
 
-## ✅ 验证测试
+## 验证安装
 
-### 自动化连接测试
+### 检查后端
 
-```powershell
-# 运行Docker网络连接测试
-cd scripts
-python test_docker_connections.py
-
-# 运行数据库连接测试
-python test_db_connections.py
-```
-
-### 手动验证步骤
-
-```powershell
-# 1. 检查所有服务状态
-docker-compose ps
-
-# 2. 检查健康状态
+```bash
+# 检查健康状态
 curl http://localhost:8000/health
 
-# 3. 检查PostgreSQL
-docker exec -it ai_review_postgres psql -U postgres -d ai_code_review -c "SELECT 1;"
+# 或使用浏览器访问
+http://localhost:8000/health
 
-# 4. 检查Neo4j
-docker exec ai_review_neo4j cypher-shell -u neo4j -p "${NEO4J_PASSWORD}" "RETURN 1;"
-
-# 5. 检查Redis
-docker exec ai_review_redis redis-cli -a "${REDIS_PASSWORD}" ping
+# 预期响应:
+{"status":"healthy"}
 ```
 
-### 预期输出
+### 检查前端
 
-| 服务 | 验证命令 | 预期结果 |
-| ---- | -------- | -------- |
-| PostgreSQL | `pg_isready -U postgres` | "accepting connections" |
-| Neo4j | `cypher-shell "RETURN 1;"` | "1 row" |
-| Redis | `redis-cli ping` | "PONG" |
-| Backend | `curl /health` | `{"status":"healthy"}` |
+```bash
+# 访问前端
+http://localhost:3000
+
+# 应该看到登录页面或 Dashboard
+```
+
+### 检查数据库连接
+
+```bash
+# PostgreSQL
+psql -U postgres -d ai_code_review -c "SELECT 1;"
+
+# Neo4j
+# 访问 http://localhost:7474
+# 运行查询: RETURN 1
+
+# Redis
+redis-cli ping
+# 应该返回: PONG
+```
+
+### 运行测试
+
+```bash
+# 后端测试
+cd backend
+pytest
+
+# 前端测试
+cd frontend
+npm test
+```
 
 ---
 
-## 🔄 错误处理与重试机制
+## 故障排查
 
-### 后端自动重试配置
+### 后端无法启动
 
-后端服务已配置自动重试机制，连接数据库时：
+#### 问题: 端口 8000 被占用
 
-```python
-# backend/app/core/database.py 中的重试逻辑
-from tenacity import retry, stop_after_attempt, wait_exponential
+```bash
+# Windows: 查找占用端口的进程
+netstat -ano | findstr :8000
 
-@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=30))
-async def connect_to_database():
-    # 数据库连接逻辑
-    pass
+# Linux/Mac:
+lsof -i :8000
+
+# 停止进程或更改端口
+uvicorn app.main:app --reload --port 8001
 ```
 
-**重试策略**:
-- 最多重试 5 次
-- 指数退避: 2秒 -> 4秒 -> 8秒 -> 16秒 -> 30秒
-- 总计等待时间: 约 60 秒
+#### 问题: 数据库连接失败
 
-### Docker 服务依赖健康检查
+```bash
+# 检查 PostgreSQL 是否运行
+# Windows:
+Get-Service postgresql*
 
-```yaml
-# docker-compose.yml 中的健康检查依赖
-services:
-  backend:
-    depends_on:
-      postgres:
-        condition: service_healthy  # 等待PostgreSQL健康
-      redis:
-        condition: service_healthy  # 等待Redis健康
-      neo4j:
-        condition: service_healthy  # 等待Neo4j健康
+# Linux:
+sudo systemctl status postgresql
+
+# 检查连接字符串
+# 确保 .env 中的数据库配置正确
 ```
 
-### 常见错误处理
+#### 问题: 模块导入错误
 
-#### 1. 数据库连接超时
+```bash
+# 重新安装依赖
+pip install -r requirements.txt --force-reinstall
 
-```powershell
-# 解决: 等待服务完全启动
-Start-Sleep -Seconds 30
-
-# 重启数据库服务
-docker-compose restart postgres redis neo4j
+# 检查虚拟环境是否激活
+which python  # Linux/Mac
+where python  # Windows
 ```
 
-#### 2. 端口冲突
+### 前端无法启动
 
-```powershell
-# 检查占用端口的进程
-netstat -ano | findstr :5432  # PostgreSQL
-netstat -ano | findstr :7474   # Neo4j
-netstat -ano | findstr :6379   # Redis
+#### 问题: 端口 3000 被占用
 
-# 停止冲突进程或修改docker-compose.yml中的端口映射
+```bash
+# Windows:
+netstat -ano | findstr :3000
+
+# Linux/Mac:
+lsof -i :3000
+
+# 或更改端口
+npm run dev -- -p 3001
 ```
 
-#### 3. 内存不足
+#### 问题: 模块未找到
 
-```powershell
-# 查看容器资源使用
-docker stats
+```bash
+# 删除 node_modules 和 package-lock.json
+rm -rf node_modules package-lock.json
 
-# 减少服务资源限制 (修改docker-compose.yml)
-# 或增加Docker Desktop内存分配
+# 重新安装
+npm install
 ```
 
-#### 4. 网络连接失败
+#### 问题: 构建错误
 
-```powershell
-# 检查Docker网络
-docker network inspect ai_review_network
+```bash
+# 清理缓存
+rm -rf .next
 
-# 重建网络
-docker-compose down
-docker network prune
+# 重新构建
+npm run build
+```
+
+### 数据库问题
+
+#### PostgreSQL 连接超时
+
+```bash
+# 检查 PostgreSQL 是否运行
+sudo systemctl status postgresql
+
+# 重启 PostgreSQL
+sudo systemctl restart postgresql
+
+# 检查防火墙
+sudo ufw allow 5432/tcp
+```
+
+#### Neo4j 无法连接
+
+```bash
+# 检查 Neo4j 是否运行
+sudo systemctl status neo4j
+
+# 重启 Neo4j
+sudo systemctl restart neo4j
+
+# 检查配置
+cat /etc/neo4j/neo4j.conf
+```
+
+#### Redis 连接失败
+
+```bash
+# 检查 Redis 是否运行
+sudo systemctl status redis
+
+# 重启 Redis
+sudo systemctl restart redis
+
+# 测试连接
+redis-cli ping
+```
+
+### GitHub OAuth 问题
+
+#### 错误: "redirect_uri is not associated with this application"
+
+**解决方案:**
+1. 检查 GitHub OAuth 应用的回调 URL
+2. 必须完全匹配: `http://localhost:3000/api/github/callback`
+3. 确保没有多余的斜杠或空格
+4. 重启前端服务器
+
+#### 错误: "Configuration Error: GitHub Client ID is not configured"
+
+**解决方案:**
+1. 检查 `frontend/.env.local` 文件是否存在
+2. 确认 `NEXT_PUBLIC_GITHUB_CLIENT_ID` 已设置
+3. 重启前端服务器
+
+---
+
+## 常用操作
+
+### 停止服务
+
+```bash
+# 停止后端: 在后端终端按 Ctrl+C
+# 停止前端: 在前端终端按 Ctrl+C
+```
+
+### 重启服务
+
+```bash
+# 重启后端
+cd backend
+# 按 Ctrl+C 停止
+uvicorn app.main:app --reload
+
+# 重启前端
+cd frontend
+# 按 Ctrl+C 停止
+npm run dev
+```
+
+### 查看日志
+
+```bash
+# 后端日志在终端直接显示
+
+# 前端日志在终端直接显示
+
+# 查看数据库日志
+# PostgreSQL:
+sudo tail -f /var/log/postgresql/postgresql-14-main.log
+
+# Neo4j:
+sudo tail -f /var/log/neo4j/neo4j.log
+```
+
+### 清理缓存
+
+```bash
+# 清理前端缓存
+cd frontend
+rm -rf .next .swc
+npm run dev
+
+# 清理后端缓存
+cd backend
+find . -type d -name __pycache__ -exec rm -rf {} +
+find . -type f -name "*.pyc" -delete
+```
+
+### 更新依赖
+
+```bash
+# 更新后端依赖
+cd backend
+pip install --upgrade -r requirements.txt
+
+# 更新前端依赖
+cd frontend
+npm update
+```
+
+### 运行数据库迁移
+
+```bash
+cd backend
+
+# 查看当前版本
+alembic current
+
+# 升级到最新版本
+alembic upgrade head
+
+# 降级一个版本
+alembic downgrade -1
+
+# 创建新迁移
+alembic revision --autogenerate -m "描述"
+```
+
+### 创建新用户
+
+```bash
+# 通过脚本创建
+cd backend
+python scripts/create_admin_user.py \
+  --email user@example.com \
+  --password SecurePass123! \
+  --name "User Name"
+
+# 或通过 API
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePass123!",
+    "full_name": "User Name"
+  }'
+```
+
+### 备份数据库
+
+```bash
+# 备份 PostgreSQL
+pg_dump -U postgres ai_code_review > backup_$(date +%Y%m%d).sql
+
+# 恢复 PostgreSQL
+psql -U postgres ai_code_review < backup_20240101.sql
+
+# 备份 Neo4j
+neo4j-admin database dump neo4j --to-path=/backups/
+
+# 恢复 Neo4j
+neo4j-admin database load neo4j --from=/backups/neo4j.dump
+```
+
+---
+
+## Docker 部署（可选）
+
+### 使用 Docker Compose
+
+```bash
+# 启动所有服务
 docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+
+# 停止并删除数据
+docker-compose down -v
 ```
 
-### 监控与告警
+### Docker 服务端点
 
-```powershell
-# 查看服务日志
-docker-compose logs -f --tail=100
+| 服务 | 端口 | URL |
+|------|------|-----|
+| 前端 | 3000 | http://localhost:3000 |
+| 后端 | 8000 | http://localhost:8000 |
+| PostgreSQL | 5432 | - |
+| Neo4j | 7474 | http://localhost:7474 |
+| Redis | 6379 | - |
 
-# 查看错误日志
-docker-compose logs | Select-String "ERROR"
+---
 
-# 实时监控
-docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}"
+## 生产环境部署
+
+### 安全检查清单
+
+- [ ] 修改所有默认密码
+- [ ] 使用强密码（至少 16 字符）
+- [ ] 启用 HTTPS
+- [ ] 配置防火墙
+- [ ] 启用数据库备份
+- [ ] 配置日志轮转
+- [ ] 设置监控告警
+- [ ] 限制数据库访问
+- [ ] 启用 CORS 白名单
+- [ ] 配置 Rate Limiting
+
+### 环境变量
+
+```bash
+# 生产环境设置
+ENVIRONMENT=production
+DEBUG=false
+LOG_LEVEL=WARNING
+
+# 使用强密钥
+JWT_SECRET=$(openssl rand -hex 32)
+SECRET_KEY=$(openssl rand -hex 32)
+SESSION_SECRET=$(openssl rand -hex 32)
 ```
 
 ---
 
-## 🎯 快速故障排查清单
+## 获取帮助
 
-- [ ] Docker daemon 正在运行
-- [ ] 所有端口未被占用
-- [ ] `.env` 文件已正确配置
-- [ ] 所有服务状态为 "healthy" 或 "running"
-- [ ] 网络 `ai_review_network` 存在且正常
-- [ ] 数据卷已正确挂载
-- [ ] 防火墙允许本地连接
+### 文档
+
+- [架构文档](docs/ARCHITECTURE.md)
+- [用户指南](docs/USER_GUIDE.md)
+- [部署指南](docs/DEPLOYMENT_GUIDE.md)
+- [API 文档](http://localhost:8000/docs)
+
+### 常见问题
+
+1. 检查本文档的故障排查部分
+2. 查看后端日志
+3. 查看前端控制台
+4. 检查数据库连接
 
 ---
 
-**🎉 配置完成！现在可以开始使用 Docker 化的 AI Code Review Platform。**
-
-如有问题，请查看 [故障排查](#troubleshooting) 部分或运行:
-
-```powershell
-.\setup-check.sh
-```
+**🎉 安装完成！现在可以开始使用 AI Code Review Platform。**

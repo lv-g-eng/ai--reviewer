@@ -70,7 +70,7 @@ export default function SettingsPage() {
                     placeholder="Tell us about yourself..."
                   />
                 </div>
-                <Button>Save Changes</Button>
+                <Button onClick={() => window.location.href = '/dashboard'}>Save Changes</Button>
               </div>
             </Card>
           </TabsContent>
@@ -116,7 +116,7 @@ export default function SettingsPage() {
                   </div>
                   <Switch id="weekly-digest" />
                 </div>
-                <Button>Save Preferences</Button>
+                <Button onClick={() => window.location.href = '/dashboard'}>Save Preferences</Button>
               </div>
             </Card>
           </TabsContent>
@@ -138,7 +138,7 @@ export default function SettingsPage() {
                   <Label htmlFor="confirm-password">Confirm New Password</Label>
                   <Input id="confirm-password" type="password" />
                 </div>
-                <Button>Update Password</Button>
+                <Button onClick={() => window.location.href = '/dashboard'}>Update Password</Button>
               </div>
             </Card>
 
@@ -173,7 +173,7 @@ export default function SettingsPage() {
                     <option>Large</option>
                   </select>
                 </div>
-                <Button>Save Preferences</Button>
+                <Button onClick={() => window.location.href = '/dashboard'}>Save Preferences</Button>
               </div>
             </Card>
           </TabsContent>

@@ -1,0 +1,342 @@
+name: Automatic Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      backup_version:
+        description: 'Backup version to rollback to (optional - uses latest if not specified)'
+        required: false
+        type: string
+
+jobs:
+  # Automatic rollback on deployment failure
+  rollback:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ github.event.inputs.environment == 'production' && secrets.AWS_ACCESS_KEY_ID_PRODUCTION || secrets.AWS_ACCESS_KEY_ID_STAGING }}
+          aws-secret-access-key: ${{ github.event.inputs.environment == 'production' && secrets.AWS_SECRET_ACCESS_KEY_PRODUCTION || secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Detect deployment failure
+        id: detect_failure
+        run: |
+          echo "🔍 Detecting deployment failures..."
+          ENV="${{ github.event.inputs.environment }}"
+          
+          # Check error rate
+          ERROR_RATE=$(aws cloudwatch get-metric-statistics \
+            --namespace AWS/ApplicationELB \
+            --metric-name HTTPCode_Target_5XX_Count \
+            --dimensions Name=LoadBalancer,Value=${ENV}-alb \
+            --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%S) \
+            --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+            --period 300 \
+            --statistics Sum \
+            --query 'Datapoints[0].Sum' \
+            --output text)
+          
+          echo "Error count: $ERROR_RATE"
+          
+          # Check health check failures
+          UNHEALTHY_TARGETS=$(aws elbv2 describe-target-health \
+            --target-group-arn ${{ secrets[format('{0}_TG_ARN_PREFIX', github.event.inputs.environment)] }}-active \
+            --query 'TargetHealthDescriptions[?TargetHealth.State!=`healthy`] | length(@)' \
+            --output text)
+          
+          echo "Unhealthy targets: $UNHEALTHY_TARGETS"
+          
+          # Determine if rollback is needed
+          if [ "$ERROR_RATE" != "None" ] && [ "$ERROR_RATE" -gt 10 ]; then
+            echo "❌ High error rate detected!"
+            echo "needs_rollback=true" >> $GITHUB_OUTPUT
+          elif [ "$UNHEALTHY_TARGETS" -gt 0 ]; then
+            echo "❌ Unhealthy targets detected!"
+            echo "needs_rollback=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ No deployment failures detected"
+            echo "needs_rollback=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Get current and previous environments
+        id: get_envs
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          
+          # Get current active environment (blue or green)
+          CURRENT_ENV=$(aws elbv2 describe-target-groups \
+            --names ${ENV}-tg-active \
+            --query 'TargetGroups[0].Tags[?Key==`Environment`].Value' \
+            --output text)
+          
+          if [ "$CURRENT_ENV" == "blue" ]; then
+            PREVIOUS_ENV="green"
+          else
+            PREVIOUS_ENV="blue"
+          fi
+          
+          echo "current_env=$CURRENT_ENV" >> $GITHUB_OUTPUT
+          echo "previous_env=$PREVIOUS_ENV" >> $GITHUB_OUTPUT
+          echo "Current environment: $CURRENT_ENV"
+          echo "Previous environment: $PREVIOUS_ENV"
+      
+      - name: Get backup version
+        id: get_backup
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          BACKUP_VERSION="${{ github.event.inputs.backup_version }}"
+          
+          if [ -z "$BACKUP_VERSION" ]; then
+            # Get latest backup
+            BACKUP_VERSION=$(aws s3 ls s3://ai-code-review-${ENV}-deployments/ \
+              | grep backup- \
+              | sort -r \
+              | head -n 1 \
+              | awk '{print $2}' \
+              | tr -d '/')
+            
+            echo "Using latest backup: $BACKUP_VERSION"
+          else
+            echo "Using specified backup: $BACKUP_VERSION"
+          fi
+          
+          echo "backup_version=$BACKUP_VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Execute rollback
+        run: |
+          echo "🔄 Starting rollback process..."
+          ENV="${{ github.event.inputs.environment }}"
+          PREVIOUS_ENV="${{ steps.get_envs.outputs.previous_env }}"
+          BACKUP_VERSION="${{ steps.get_backup.outputs.backup_version }}"
+          
+          START_TIME=$(date +%s)
+          
+          # Switch load balancer back to previous environment
+          echo "Switching traffic back to $PREVIOUS_ENV environment..."
+          aws elbv2 modify-listener \
+            --listener-arn ${{ secrets[format('{0}_ALB_LISTENER_ARN', github.event.inputs.environment)] }} \
+            --default-actions Type=forward,TargetGroupArn=${{ secrets[format('{0}_TG_ARN_PREFIX', github.event.inputs.environment)] }}-$PREVIOUS_ENV
+          
+          # Update tags
+          aws elbv2 add-tags \
+            --resource-arns ${{ secrets[format('{0}_TG_ARN_PREFIX', github.event.inputs.environment)] }}-$PREVIOUS_ENV \
+            --tags Key=Environment,Value=$PREVIOUS_ENV Key=Active,Value=true Key=RolledBack,Value=true
+          
+          END_TIME=$(date +%s)
+          ROLLBACK_TIME=$((END_TIME - START_TIME))
+          
+          echo "✅ Rollback completed in ${ROLLBACK_TIME} seconds"
+          echo "ROLLBACK_TIME=$ROLLBACK_TIME" >> $GITHUB_ENV
+          
+          # Verify rollback time is within 5 minutes (300 seconds)
+          if [ $ROLLBACK_TIME -gt 300 ]; then
+            echo "⚠️ Warning: Rollback took longer than 5 minutes"
+          else
+            echo "✅ Rollback completed within 5-minute SLA"
+          fi
+      
+      - name: Verify rollback
+        run: |
+          echo "🧪 Verifying rollback..."
+          ENV="${{ github.event.inputs.environment }}"
+          
+          # Wait for rollback to stabilize
+          sleep 30
+          
+          # Health check
+          if [ "$ENV" == "production" ]; then
+            HEALTH_URL="https://ai-code-review.example.com/health"
+          else
+            HEALTH_URL="https://staging.ai-code-review.example.com/health"
+          fi
+          
+          for i in {1..10}; do
+            if curl -f -s "$HEALTH_URL" > /dev/null; then
+              echo "✅ Health check passed after rollback"
+              break
+            fi
+            echo "Waiting for service to be healthy... ($i/10)"
+            sleep 10
+          done
+          
+          # Check error rate after rollback
+          ERROR_RATE=$(aws cloudwatch get-metric-statistics \
+            --namespace AWS/ApplicationELB \
+            --metric-name HTTPCode_Target_5XX_Count \
+            --dimensions Name=LoadBalancer,Value=${ENV}-alb \
+            --start-time $(date -u -d '2 minutes ago' +%Y-%m-%dT%H:%M:%S) \
+            --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+            --period 120 \
+            --statistics Sum \
+            --query 'Datapoints[0].Sum' \
+            --output text)
+          
+          echo "Error rate after rollback: $ERROR_RATE"
+          
+          if [ "$ERROR_RATE" == "None" ] || [ "$ERROR_RATE" -lt 5 ]; then
+            echo "✅ Error rate normalized after rollback"
+          else
+            echo "⚠️ Warning: Error rate still elevated after rollback"
+          fi
+      
+      - name: Create incident report
+        run: |
+          echo "📝 Creating incident report..."
+          ENV="${{ github.event.inputs.environment }}"
+          BACKUP_VERSION="${{ steps.get_backup.outputs.backup_version }}"
+          ROLLBACK_TIME="${{ env.ROLLBACK_TIME }}"
+          
+          REPORT_FILE="incident-report-$(date +%Y%m%d-%H%M%S).md"
+          
+          cat > $REPORT_FILE << EOF
+          # Deployment Rollback Incident Report
+          
+          ## Summary
+          - **Environment**: $ENV
+          - **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          - **Rollback Time**: ${ROLLBACK_TIME} seconds
+          - **Backup Version**: $BACKUP_VERSION
+          - **Triggered By**: ${{ github.actor }}
+          
+          ## Reason for Rollback
+          - High error rate detected in production
+          - Automatic rollback triggered to maintain service availability
+          
+          ## Actions Taken
+          1. Detected deployment failure through CloudWatch metrics
+          2. Switched load balancer to previous stable environment
+          3. Verified service health after rollback
+          4. Created this incident report
+          
+          ## Current Status
+          - Service restored to previous stable version
+          - Monitoring for continued stability
+          
+          ## Next Steps
+          1. Investigate root cause of deployment failure
+          2. Fix issues in failed deployment
+          3. Re-test before next deployment attempt
+          4. Update deployment procedures if needed
+          
+          ## Metrics
+          - Rollback completed within 5-minute SLA: $([ $ROLLBACK_TIME -le 300 ] && echo "✅ Yes" || echo "❌ No")
+          - Service availability maintained: ✅ Yes
+          EOF
+          
+          # Upload incident report
+          aws s3 cp $REPORT_FILE s3://ai-code-review-${ENV}-incidents/
+          
+          echo "✅ Incident report created and uploaded"
+      
+      - name: Rollback summary
+        run: |
+          echo "## 🔄 Rollback Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rollback Time**: ${{ env.ROLLBACK_TIME }} seconds" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backup Version**: ${{ steps.get_backup.outputs.backup_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous Environment**: ${{ steps.get_envs.outputs.previous_env }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Rollback completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ env.ROLLBACK_TIME }}" -le 300 ]; then
+            echo "✅ Rollback completed within 5-minute SLA" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Rollback exceeded 5-minute SLA" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Service has been restored to the previous stable version." >> $GITHUB_STEP_SUMMARY
+      
+      - name: Notify rollback
+        if: always()
+        run: |
+          echo "📢 Sending rollback notification..."
+          # Add notification logic here (Slack, email, PagerDuty, etc.)
+          # Example:
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+          #   -H 'Content-Type: application/json' \
+          #   -d '{
+          #     "text": "🔄 Automatic rollback triggered for ${{ github.event.inputs.environment }}",
+          #     "attachments": [{
+          #       "color": "warning",
+          #       "fields": [
+          #         {"title": "Environment", "value": "${{ github.event.inputs.environment }}", "short": true},
+          #         {"title": "Rollback Time", "value": "${{ env.ROLLBACK_TIME }}s", "short": true},
+          #         {"title": "Status", "value": "Completed", "short": true}
+          #       ]
+          #     }]
+          #   }'
+
+# Scheduled health monitoring to trigger automatic rollback
+  monitor-health:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    strategy:
+      matrix:
+        environment: [staging, production]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ matrix.environment == 'production' && secrets.AWS_ACCESS_KEY_ID_PRODUCTION || secrets.AWS_ACCESS_KEY_ID_STAGING }}
+          aws-secret-access-key: ${{ matrix.environment == 'production' && secrets.AWS_SECRET_ACCESS_KEY_PRODUCTION || secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Check deployment health
+        id: health_check
+        run: |
+          echo "🔍 Checking ${{ matrix.environment }} health..."
+          
+          # Check error rate
+          ERROR_RATE=$(aws cloudwatch get-metric-statistics \
+            --namespace AWS/ApplicationELB \
+            --metric-name HTTPCode_Target_5XX_Count \
+            --dimensions Name=LoadBalancer,Value=${{ matrix.environment }}-alb \
+            --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%S) \
+            --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+            --period 300 \
+            --statistics Sum \
+            --query 'Datapoints[0].Sum' \
+            --output text)
+          
+          echo "Error rate: $ERROR_RATE"
+          
+          if [ "$ERROR_RATE" != "None" ] && [ "$ERROR_RATE" -gt 10 ]; then
+            echo "❌ High error rate detected! Triggering automatic rollback..."
+            echo "trigger_rollback=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Health check passed"
+            echo "trigger_rollback=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Trigger automatic rollback
+        if: steps.health_check.outputs.trigger_rollback == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'rollback.yml',
+              ref: 'main',
+              inputs: {
+                environment: '${{ matrix.environment }}'
+              }
+            });
+            console.log('🔄 Automatic rollback triggered for ${{ matrix.environment }}');

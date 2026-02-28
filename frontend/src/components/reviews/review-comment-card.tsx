@@ -10,7 +10,6 @@ import {
   Info,
   CheckCircle2,
   X,
-  MessageSquare,
   ChevronDown,
   ChevronUp,
   Code,
@@ -33,14 +32,12 @@ interface ReviewCommentCardProps {
   comment: ReviewComment;
   onResolve: () => void;
   onWontFix: () => void;
-  onAskAI: () => void;
 }
 
 export default function ReviewCommentCard({
   comment,
   onResolve,
   onWontFix,
-  onAskAI,
 }: ReviewCommentCardProps) {
   const [showReasoning, setShowReasoning] = useState(false);
   const [showSuggestedFix, setShowSuggestedFix] = useState(false);
@@ -207,15 +204,6 @@ export default function ReviewCommentCard({
             >
               <X className="h-4 w-4" />
               Won't Fix
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onAskAI}
-              className="flex items-center gap-2"
-            >
-              <MessageSquare className="h-4 w-4" />
-              Ask AI
             </Button>
           </div>
         )}

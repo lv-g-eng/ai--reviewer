@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { MainLayout } from '@/components/layout/main-layout'
 import { PageHeader } from '@/components/layout/page-header'
@@ -18,54 +17,35 @@ import {
   Clock,
   GitPullRequest,
   Activity,
-  ArrowLeft
+  ArrowLeft,
+  User
 } from 'lucide-react'
-
-interface ProjectDetail {
-  id: string
-  name: string
-  description: string
-  repository: string
-  status: 'active' | 'inactive' | 'archived'
-  healthScore: number
-  lastAnalysis: string
-  pendingReviews: number
-  criticalIssues: number
-  totalReviews: number
-  averageReviewTime: string
-  codeQualityScore: number
-  securityScore: number
-  maintainabilityScore: number
-}
+import { useProject, useProjectPullRequests } from '@/hooks/useProjects'
+import HealthMetrics from '@/components/projects/HealthMetrics'
 
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [project, setProject] = useState<ProjectDetail | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const projectId = params.id as string
+  
+  const { data: project, isLoading } = useProject(projectId)
+  const { data: pullRequestsData = [] } = useProjectPullRequests(projectId)
+  const pullRequests = Array.isArray(pullRequestsData) ? pullRequestsData : []
 
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setProject({
-        id: params.id as string,
-        name: 'User Authentication Service',
-        description: 'Microservice handling user authentication and authorization',
-        repository: 'github.com/company/user-auth-service',
-        status: 'active',
-        healthScore: 92,
-        lastAnalysis: '2 hours ago',
-        pendingReviews: 2,
-        criticalIssues: 0,
-        totalReviews: 45,
-        averageReviewTime: '2.5 hours',
-        codeQualityScore: 88,
-        securityScore: 95,
-        maintainabilityScore: 90,
-      })
-      setIsLoading(false)
-    }, 1000)
-  }, [params.id])
+  // Mock health metrics - these would come from analysis results in production
+  const healthMetrics = {
+    codeQuality: 88,
+    securityRating: 95,
+    architectureHealth: 90,
+    testCoverage: 75,
+  }
+
+  const overallHealth = Math.round(
+    (healthMetrics.codeQuality + 
+     healthMetrics.securityRating + 
+     healthMetrics.architectureHealth + 
+     healthMetrics.testCoverage) / 4
+  )
 
   const getHealthScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600'
@@ -78,6 +58,11 @@ export default function ProjectDetailPage() {
       <MainLayout>
         <div className="space-y-6">
           <Skeleton className="h-12 w-3/4" />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-32" />
+            ))}
+          </div>
           <Skeleton className="h-64 w-full" />
         </div>
       </MainLayout>
@@ -106,7 +91,7 @@ export default function ProjectDetailPage() {
       <div className="space-y-6">
         <PageHeader
           title={project.name}
-          description={project.description}
+          description={project.description || 'No description'}
           actions={
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => router.push('/projects')}>
@@ -125,56 +110,54 @@ export default function ProjectDetailPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Health Score</CardTitle>
+              <CardTitle className="text-sm font-medium">Overall Health</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${getHealthScoreColor(project.healthScore)}`}>
-                {project.healthScore}%
+              <div className={`text-2xl font-bold ${getHealthScoreColor(overallHealth)}`}>
+                {overallHealth}%
               </div>
               <p className="text-xs text-muted-foreground">
-                +5% from last week
+                Based on 4 metrics
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
+              <CardTitle className="text-sm font-medium">Pull Requests</CardTitle>
               <GitPullRequest className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{project.pendingReviews}</div>
+              <div className="text-2xl font-bold">{pullRequests.length}</div>
               <p className="text-xs text-muted-foreground">
-                Requires attention
+                Total analyzed
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical Issues</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${project.criticalIssues > 0 ? 'text-destructive' : ''}`}>
-                {project.criticalIssues}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {project.criticalIssues === 0 ? 'All clear' : 'Needs attention'}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
+              <CardTitle className="text-sm font-medium">Language</CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{project.totalReviews}</div>
+              <div className="text-2xl font-bold">{project.language || 'N/A'}</div>
               <p className="text-xs text-muted-foreground">
-                Avg: {project.averageReviewTime}
+                Primary language
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Owner</CardTitle>
+              <User className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm font-medium truncate">{project.owner_id}</div>
+              <p className="text-xs text-muted-foreground">
+                Project owner
               </p>
             </CardContent>
           </Card>
@@ -190,6 +173,17 @@ export default function ProjectDetailPage() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
+            {/* Health Metrics */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Architectural Health Metrics</CardTitle>
+                <CardDescription>Real-time analysis of code quality, security, and architecture</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <HealthMetrics {...healthMetrics} />
+              </CardContent>
+            </Card>
+
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -200,20 +194,27 @@ export default function ProjectDetailPage() {
                     <p className="text-sm font-medium text-muted-foreground">Repository</p>
                     <div className="flex items-center mt-1">
                       <GitBranch className="mr-2 h-4 w-4" />
-                      <p className="text-sm">{project.repository}</p>
+                      <p className="text-sm truncate">{project.github_repo_url || 'No repository'}</p>
                     </div>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Status</p>
-                    <Badge className="mt-1" variant={project.status === 'active' ? 'success' : 'secondary'}>
-                      {project.status}
+                    <Badge className="mt-1" variant="success">
+                      Active
                     </Badge>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Last Analysis</p>
+                    <p className="text-sm font-medium text-muted-foreground">Created</p>
                     <div className="flex items-center mt-1">
                       <Clock className="mr-2 h-4 w-4" />
-                      <p className="text-sm">{project.lastAnalysis}</p>
+                      <p className="text-sm">{new Date(project.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
+                    <div className="flex items-center mt-1">
+                      <Clock className="mr-2 h-4 w-4" />
+                      <p className="text-sm">{new Date(project.updated_at).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -221,51 +222,36 @@ export default function ProjectDetailPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Quality Metrics</CardTitle>
+                  <CardTitle>Recent Analysis Results</CardTitle>
+                  <CardDescription>Latest code review and analysis findings</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium">Code Quality</p>
-                      <span className={`text-sm font-bold ${getHealthScoreColor(project.codeQualityScore)}`}>
-                        {project.codeQualityScore}%
-                      </span>
+                <CardContent>
+                  {pullRequests.length > 0 ? (
+                    <div className="space-y-4">
+                      {pullRequests.slice(0, 3).map((pr: any) => (
+                        <div key={pr.id} className="flex items-start space-x-4">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <GitPullRequest className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-medium">
+                              PR #{pr.github_pr_number}: {pr.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {pr.status} • {new Date(pr.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          {pr.risk_score && (
+                            <Badge variant={pr.risk_score > 70 ? 'destructive' : pr.risk_score > 40 ? 'warning' : 'success'}>
+                              Risk: {pr.risk_score}
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${project.codeQualityScore}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium">Security</p>
-                      <span className={`text-sm font-bold ${getHealthScoreColor(project.securityScore)}`}>
-                        {project.securityScore}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${project.securityScore}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium">Maintainability</p>
-                      <span className={`text-sm font-bold ${getHealthScoreColor(project.maintainabilityScore)}`}>
-                        {project.maintainabilityScore}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${project.maintainabilityScore}%` }}
-                      />
-                    </div>
-                  </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No analysis results yet</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -277,20 +263,26 @@ export default function ProjectDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-start space-x-4">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <CheckCircle className="h-5 w-5 text-primary" />
+                  {pullRequests.length > 0 ? (
+                    pullRequests.slice(0, 5).map((pr: any) => (
+                      <div key={pr.id} className="flex items-start space-x-4">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <CheckCircle className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium">
+                            PR #{pr.github_pr_number}: {pr.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {pr.files_changed} files • +{pr.lines_added} -{pr.lines_deleted} • {new Date(pr.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge variant="success">{pr.status}</Badge>
                       </div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium">
-                          PR review completed for feature/user-login
-                        </p>
-                        <p className="text-xs text-muted-foreground">{i} hours ago</p>
-                      </div>
-                      <Badge variant="success">Passed</Badge>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No recent activity</p>
+                  )}
                 </div>
               </CardContent>
             </Card>

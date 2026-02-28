@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { RouteGuard } from '@/components/auth/RouteGuard'
 import { MainLayout } from '@/components/layout/main-layout'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -60,18 +61,19 @@ export default function DashboardPage() {
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <PageHeader
-          title="Dashboard"
-          description="Welcome back! Here's an overview of your projects and reviews."
-          actions={
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Project
-            </Button>
-          }
-        />
+    <RouteGuard>
+      <MainLayout>
+        <div className="space-y-6">
+          <PageHeader
+            title="Dashboard"
+            description="Welcome back! Here's an overview of your projects and reviews."
+            actions={
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Project
+              </Button>
+            }
+          />
 
         {/* Overview Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -166,5 +168,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </MainLayout>
+    </RouteGuard>
   )
 }

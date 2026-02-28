@@ -691,9 +691,10 @@ class Neo4jClient:
             True if connection successful, False otherwise
         """
         try:
-            result = await self.execute_query("RETURN 1 AS test")
-            record = await result.single()
-            return record and record["test"] == 1
+            async with self.session_manager.get_session() as session:
+                result = await session.run("RETURN 1 AS test")
+                record = await result.single()
+                return record and record["test"] == 1
             
         except Exception as e:
             logger.error(

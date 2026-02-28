@@ -1,7 +1,7 @@
 """
 Repository management schemas for GitHub dependency integration
 """
-from pydantic import BaseModel, Field, field_validator, HttpUrl
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum

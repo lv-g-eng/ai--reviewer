@@ -19,7 +19,11 @@ export function BackendStatusProvider({ children }: { children: React.ReactNode 
   const checkBackendHealth = useCallback(async () => {
     setIsChecking(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/health`, {
+      // Health endpoint is at root level, not under /api/v1
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+      const baseUrl = apiUrl.replace('/api/v1', '');
+      
+      const response = await fetch(`${baseUrl}/health`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

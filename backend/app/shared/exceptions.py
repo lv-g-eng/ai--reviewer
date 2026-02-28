@@ -131,3 +131,81 @@ class AuthorizationException(ServiceException):
         super().__init__(message, error_code, details)
         self.resource = resource
         self.action = action
+
+
+class NotFoundException(ServiceException):
+    """Exception for resource not found errors"""
+    
+    def __init__(
+        self,
+        message: str,
+        resource_type: str,
+        resource_id: Optional[str] = None,
+        error_code: Optional[str] = "NOT_FOUND",
+        details: Optional[Dict[str, Any]] = None
+    ):
+        super().__init__(message, error_code, details)
+        self.resource_type = resource_type
+        self.resource_id = resource_id
+
+
+class ConflictException(ServiceException):
+    """Exception for resource conflict errors (e.g., duplicate entries)"""
+    
+    def __init__(
+        self,
+        message: str,
+        resource_type: str,
+        conflict_field: Optional[str] = None,
+        error_code: Optional[str] = "CONFLICT",
+        details: Optional[Dict[str, Any]] = None
+    ):
+        super().__init__(message, error_code, details)
+        self.resource_type = resource_type
+        self.conflict_field = conflict_field
+
+
+class RateLimitException(ServiceException):
+    """Exception for rate limiting errors"""
+    
+    def __init__(
+        self,
+        message: str,
+        retry_after: Optional[int] = None,
+        error_code: Optional[str] = "RATE_LIMIT_EXCEEDED",
+        details: Optional[Dict[str, Any]] = None
+    ):
+        super().__init__(message, error_code, details)
+        self.retry_after = retry_after
+
+
+class ExternalServiceException(ServiceException):
+    """Exception for external service errors (GitHub, LLM APIs, etc.)"""
+    
+    def __init__(
+        self,
+        message: str,
+        service_name: str,
+        status_code: Optional[int] = None,
+        error_code: Optional[str] = "EXTERNAL_SERVICE_ERROR",
+        details: Optional[Dict[str, Any]] = None
+    ):
+        super().__init__(message, error_code, details)
+        self.service_name = service_name
+        self.status_code = status_code
+
+
+class TimeoutException(ServiceException):
+    """Exception for timeout errors"""
+    
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        timeout_seconds: Optional[float] = None,
+        error_code: Optional[str] = "TIMEOUT",
+        details: Optional[Dict[str, Any]] = None
+    ):
+        super().__init__(message, error_code, details)
+        self.operation = operation
+        self.timeout_seconds = timeout_seconds

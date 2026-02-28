@@ -23,17 +23,20 @@ class AuthMiddleware:
     async def authenticate_token(request: Request, credentials: HTTPAuthorizationCredentials) -> TokenPayload:
         """
         Middleware to validate JWT token from Authorization header.
+        Checks token signature, expiration, and Redis blacklist.
         
         Args:
             request: FastAPI request object
             credentials: HTTP Bearer credentials
             
         Returns:
-            TokenPayload if token is valid
+            TokenPayload if token is valid and not revoked
             
         Raises:
-            HTTPException: 401 if token is invalid or missing
+            HTTPException: 401 if token is invalid, expired, or revoked
         """
+        from app.utils.jwt import verify_token_with_revocation
+        
         if not credentials:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -43,15 +46,18 @@ class AuthMiddleware:
         
         token = credentials.credentials
         
-        # Validate token
-        payload = AuthService.validate_token(token)
+        # Validate token and check if it's been revoked
+        payload_dict = await verify_token_with_revocation(token, token_type="access")
         
-        if not payload:
+        if not payload_dict:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication token",
+                detail="Invalid or revoked authentication token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        
+        # Convert dict to TokenPayload
+        payload = TokenPayload.from_dict(payload_dict)
         
         # Store user info in request state for downstream handlers
         request.state.user = payload
@@ -184,7 +190,7 @@ def require_role(role: Role):
     ) -> TokenPayload:
         return await checker(request, credentials)
     
-    return Depends(_require_role)
+    return _require_role
 
 
 def require_permission(permission: Permission):
@@ -198,7 +204,7 @@ def require_permission(permission: Permission):
     ) -> TokenPayload:
         return await checker(request, credentials)
     
-    return Depends(_require_permission)
+    return _require_permission
 
 
 def require_project_access(permission: Permission):
@@ -212,4 +218,4 @@ def require_project_access(permission: Permission):
     ) -> TokenPayload:
         return await checker(request, credentials)
     
-    return Depends(_require_project_access)
+    return _require_project_access

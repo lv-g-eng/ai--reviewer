@@ -214,6 +214,12 @@ export const LazyFlowDiagram: React.FC<LazyFlowDiagramProps> = ({
 };
 */
 
+// Placeholder exports until components are implemented
+export const LazyAnalytics: React.FC<any> = () => <div>Analytics component not yet implemented</div>;
+export const LazyCodeEditor: React.FC<any> = () => <div>Code editor component not yet implemented</div>;
+export const ComponentPreloader: React.FC<any> = () => null;
+
+/*
 interface LazyAnalyticsProps {
   data: any[];
   chartType?: 'line' | 'bar' | 'pie' | 'area';
@@ -297,6 +303,7 @@ export const ComponentPreloader: React.FC<ComponentPreloaderProps> = ({
   
   return null; // This component doesn't render anything
 };
+*/
 
 // Route-based preloader
 export const RoutePreloader: React.FC<{ route: string }> = ({ route }) => {

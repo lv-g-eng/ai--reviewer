@@ -24,7 +24,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.MODIFY_REVIEW,
     Permission.MODIFY_CONFIG,
   ],
-  [Role.PROGRAMMER]: [
+  [Role.DEVELOPER]: [
     Permission.VIEW_PROJECTS,
     Permission.CREATE_PROJECT,
     Permission.MODIFY_PROJECT,
@@ -32,8 +32,20 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.CREATE_REVIEW,
     Permission.MODIFY_REVIEW,
   ],
-  [Role.VISITOR]: [
+  [Role.REVIEWER]: [
     Permission.VIEW_PROJECTS,
+    Permission.VIEW_REVIEWS,
+    Permission.CREATE_REVIEW,
+    Permission.MODIFY_REVIEW,
+  ],
+  [Role.COMPLIANCE_OFFICER]: [
+    Permission.VIEW_PROJECTS,
+    Permission.VIEW_REVIEWS,
+    Permission.MODIFY_CONFIG,
+  ],
+  [Role.MANAGER]: [
+    Permission.VIEW_PROJECTS,
+    Permission.VIEW_USERS,
     Permission.VIEW_REVIEWS,
   ],
 };

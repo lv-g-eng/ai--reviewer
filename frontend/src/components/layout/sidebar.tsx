@@ -22,7 +22,6 @@ const navigation = [
   { name: 'Architecture', href: '/architecture', icon: Network },
   { name: 'Analysis Queue', href: '/queue', icon: Activity },
   { name: 'Metrics', href: '/metrics', icon: TrendingUp },
-  { name: 'Search', href: '/search', icon: Search },
 ]
 
 interface SidebarProps {

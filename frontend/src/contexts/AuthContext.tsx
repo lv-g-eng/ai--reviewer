@@ -21,7 +21,7 @@ type AuthContextType = {
   login: (email: string, password: string, returnUrl?: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshToken: () => Promise<void>;
+  refreshToken: () => Promise<boolean>;
   isAuthenticated: boolean;
 };
 

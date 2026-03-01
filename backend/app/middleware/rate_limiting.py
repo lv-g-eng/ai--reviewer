@@ -108,6 +108,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if request.url.path in ["/health", "/health/ready", "/health/live"]:
             return await call_next(request)
         
+        # Skip rate limiting for OPTIONS requests (CORS preflight)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+        
         try:
             response = await call_next(request)
             return response

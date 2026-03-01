@@ -53,18 +53,6 @@ describe('Navbar', () => {
       expect(screen.getByText('Code Review Platform')).toBeInTheDocument();
     });
 
-    it('should render search input', () => {
-      mockUseSession.mockReturnValue({
-        data: null,
-        status: 'unauthenticated',
-      } as any);
-
-      render(<Navbar />);
-
-      const searchInput = screen.getByPlaceholderText('Search projects, PRs, issues...');
-      expect(searchInput).toBeInTheDocument();
-    });
-
     it('should render theme toggle', () => {
       mockUseSession.mockReturnValue({
         data: null,
@@ -166,58 +154,6 @@ describe('Navbar', () => {
         fireEvent.click(userButton);
         expect(screen.getByText('User')).toBeInTheDocument();
       }
-    });
-  });
-
-  describe('Search Functionality', () => {
-    it('should handle search form submission', () => {
-      mockUseSession.mockReturnValue({
-        data: null,
-        status: 'unauthenticated',
-      } as any);
-
-      render(<Navbar />);
-
-      const searchInput = screen.getByPlaceholderText('Search projects, PRs, issues...');
-      const form = searchInput.closest('form');
-
-      fireEvent.change(searchInput, { target: { value: 'test query' } });
-      fireEvent.submit(form!);
-
-      expect(window.location.href).toBe('/search?q=test%20query');
-    });
-
-    it('should not navigate when search is empty', () => {
-      mockUseSession.mockReturnValue({
-        data: null,
-        status: 'unauthenticated',
-      } as any);
-
-      render(<Navbar />);
-
-      const searchInput = screen.getByPlaceholderText('Search projects, PRs, issues...');
-      const form = searchInput.closest('form');
-
-      fireEvent.submit(form!);
-
-      expect(window.location.href).toBe('');
-    });
-
-    it('should encode special characters in search query', () => {
-      mockUseSession.mockReturnValue({
-        data: null,
-        status: 'unauthenticated',
-      } as any);
-
-      render(<Navbar />);
-
-      const searchInput = screen.getByPlaceholderText('Search projects, PRs, issues...');
-      const form = searchInput.closest('form');
-
-      fireEvent.change(searchInput, { target: { value: 'test & query' } });
-      fireEvent.submit(form!);
-
-      expect(window.location.href).toBe('/search?q=test%20%26%20query');
     });
   });
 

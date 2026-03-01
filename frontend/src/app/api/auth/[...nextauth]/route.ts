@@ -14,7 +14,7 @@ if (!envValidation.valid && process.env.NODE_ENV === 'development') {
   console.warn('[NextAuth] Environment configuration issues:', envValidation.errors);
 }
 
-const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -83,14 +83,23 @@ const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id as string;
-        session.user.email = token.email as string;
-        session.user.name = token.name as string;
-        session.user.role = token.role as string;
-        session.user.accessToken = token.accessToken as string;
-        session.user.refreshToken = token.refreshToken as string;
+      // Ensure session and session.user exist before assigning properties
+      if (!session || !token) {
+        return session;
       }
+      
+      // Initialize user object if it doesn't exist
+      if (!session.user) {
+        session.user = {} as any;
+      }
+      
+      session.user.id = token.id as string;
+      session.user.email = token.email as string;
+      session.user.name = token.name as string;
+      session.user.role = token.role as string;
+      session.user.accessToken = token.accessToken as string;
+      session.user.refreshToken = token.refreshToken as string;
+      
       return session;
     },
   },

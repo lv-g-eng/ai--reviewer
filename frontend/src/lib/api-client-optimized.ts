@@ -48,7 +48,8 @@ class OptimizedAPIClient {
 
   constructor(config: APIClientConfig = {}) {
     this.config = {
-      baseURL: config.baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+      // Use Next.js API routes for httpOnly cookie authentication
+      baseURL: config.baseURL || '/api',
       timeout: config.timeout || 30000,
       retries: config.retries || 3,
       cacheTTL: config.cacheTTL || 5 * 60 * 1000, // 5 minutes
@@ -61,8 +62,8 @@ class OptimizedAPIClient {
       timeout: this.config.timeout,
       headers: {
         'Content-Type': 'application/json',
-        ...(this.config.enableCompression && { 'Accept-Encoding': 'gzip, deflate, br' }),
       },
+      withCredentials: true, // Include cookies in requests
     });
 
     this.setupInterceptors();
@@ -74,12 +75,7 @@ class OptimizedAPIClient {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
-        // Add auth token
-        const token = this.getAuthToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-
+        // No need to add auth token - httpOnly cookies are sent automatically
         // Add correlation ID for tracing
         config.headers['X-Correlation-ID'] = this.generateCorrelationId();
 
@@ -192,11 +188,6 @@ class OptimizedAPIClient {
     if (duration > 2000) {
       console.warn(`Slow API request: ${metric.method} ${metric.url} took ${duration}ms`);
     }
-  }
-
-  private getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
   }
 
   private generateCorrelationId(): string {
@@ -374,8 +365,9 @@ class OptimizedAPIClient {
 }
 
 // Create and export optimized API client instance
+// Uses Next.js API routes (/api) for httpOnly cookie authentication
 export const apiClient = new OptimizedAPIClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  // Don't set baseURL - let it default to '/api' for Next.js API routes
   timeout: 30000,
   retries: 3,
   cacheTTL: 5 * 60 * 1000, // 5 minutes

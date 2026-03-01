@@ -33,6 +33,14 @@ async def get_current_user(
     Raises:
         HTTPException: If token is invalid or user not found
     """
+    # Handle case where credentials might be None (shouldn't happen with HTTPBearer)
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     token = credentials.credentials
     
     # Verify token

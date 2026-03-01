@@ -40,7 +40,7 @@ export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
-      return apiClient.get<Project[]>('/api/v1/rbac/projects');
+      return apiClient.get<Project[]>('/rbac/projects');
     },
   });
 }
@@ -52,7 +52,7 @@ export function useProject(projectId: string) {
   return useQuery({
     queryKey: ['projects', projectId],
     queryFn: async () => {
-      return apiClient.get<Project>(`/api/v1/rbac/projects/${projectId}`);
+      return apiClient.get<Project>(`/rbac/projects/${projectId}`);
     },
     enabled: !!projectId,
   });
@@ -97,7 +97,7 @@ export function useCreateProject() {
 
   return useMutation({
     mutationFn: async (data: Partial<Project>) => {
-      return apiClient.post<Project>('/api/v1/rbac/projects', data);
+      return apiClient.post<Project>('/rbac/projects', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -113,7 +113,7 @@ export function useDeleteProject() {
 
   return useMutation({
     mutationFn: async (projectId: string) => {
-      await apiClient.delete(`/api/v1/rbac/projects/${projectId}`);
+      await apiClient.delete(`/rbac/projects/${projectId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });

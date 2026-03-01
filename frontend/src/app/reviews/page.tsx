@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Filter, GitPullRequest, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Search, GitPullRequest, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
 interface Review {
   id: string;
@@ -72,6 +72,7 @@ export default function ReviewsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [repositoryFilter, setRepositoryFilter] = useState<string>('all');
 
   useEffect(() => {
     // Simulate API call
@@ -79,24 +80,25 @@ export default function ReviewsPage() {
       setReviews(mockReviews);
       setIsLoading(false);
     }, 1000);
-
     return () => clearTimeout(timer);
   }, []);
 
-  const filteredReviews = reviews.filter((review) => {
-    const matchesSearch =
+  // Get unique repositories for filter
+  const repositories = Array.from(new Set(reviews.map(r => r.repository)));
+
+  const filteredReviews = reviews.filter(review => {
+    const matchesSearch = 
       review.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       review.repository.toLowerCase().includes(searchQuery.toLowerCase()) ||
       review.author.toLowerCase().includes(searchQuery.toLowerCase());
-
     const matchesStatus = statusFilter === 'all' || review.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
+    const matchesRepository = repositoryFilter === 'all' || review.repository === repositoryFilter;
+    return matchesSearch && matchesStatus && matchesRepository;
   });
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-green-600';
-    if (score >= 75) return 'text-yellow-600';
+    if (score >= 70) return 'text-yellow-600';
     return 'text-red-600';
   };
 
@@ -104,121 +106,143 @@ export default function ReviewsPage() {
     <MainLayout>
       <div className="space-y-6">
         <PageHeader
-          title="Code Reviews"
-          description="View and manage all code reviews across your projects"
+          title="Pull Requests"
+          description="Review and manage code reviews"
         />
 
-        {/* Filters */}
+        {/* Search and Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search reviews..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by title, repository, or author..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={repositoryFilter} onValueChange={setRepositoryFilter}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Filter by repository" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Repositories</SelectItem>
+                    {repositories.map(repo => (
+                      <SelectItem key={repo} value={repo}>{repo}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
+              {(searchQuery || statusFilter !== 'all' || repositoryFilter !== 'all') && (
+                <div className="text-sm text-muted-foreground">
+                  Showing {filteredReviews.length} of {reviews.length} pull requests
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
         {/* Reviews List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <>
-              {[1, 2, 3].map((i) => (
-                <Card key={i}>
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-2/3" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </>
-          ) : filteredReviews.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <GitPullRequest className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No reviews found</h3>
-                <p className="text-muted-foreground">
-                  {searchQuery || statusFilter !== 'all'
-                    ? 'Try adjusting your filters'
-                    : 'No code reviews available yet'}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredReviews.map((review) => {
+        {isLoading ? (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        ) : filteredReviews.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <GitPullRequest className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No pull requests found</h3>
+              <p className="text-sm text-muted-foreground">
+                {searchQuery || statusFilter !== 'all' || repositoryFilter !== 'all'
+                  ? 'Try adjusting your search or filters'
+                  : 'No pull requests available'}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {filteredReviews.map((review) => {
               const StatusIcon = statusConfig[review.status].icon;
               return (
                 <Card
                   key={review.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className="hover:shadow-lg transition-shadow cursor-pointer"
                   onClick={() => router.push(`/reviews/${review.id}`)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div className="space-y-1 flex-1">
-                        <CardTitle className="text-xl">{review.title}</CardTitle>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <GitPullRequest className="h-5 w-5 text-muted-foreground" />
+                          <CardTitle className="text-lg">{review.title}</CardTitle>
+                        </div>
                         <CardDescription>
-                          {review.repository} • by {review.author}
+                          <div className="flex flex-wrap items-center gap-2 text-sm">
+                            <span className="font-medium">{review.repository}</span>
+                            <span>•</span>
+                            <span>by {review.author}</span>
+                            <span>•</span>
+                            <time dateTime={review.createdAt}>
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </time>
+                          </div>
                         </CardDescription>
                       </div>
-                      <Badge variant={statusConfig[review.status].variant}>
-                        <StatusIcon className="h-3 w-3 mr-1" />
+                      <Badge variant={statusConfig[review.status].variant} className="flex items-center gap-1">
+                        <StatusIcon className="h-3 w-3" />
                         {statusConfig[review.status].label}
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-wrap gap-6">
+                    <div className="flex gap-6 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Quality Score:</span>
-                        <span className={`text-sm font-semibold ${getScoreColor(review.qualityScore)}`}>
+                        <span className="text-muted-foreground">Quality:</span>
+                        <span className={`font-semibold ${getScoreColor(review.qualityScore)}`}>
                           {review.qualityScore}%
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Security Score:</span>
-                        <span className={`text-sm font-semibold ${getScoreColor(review.securityScore)}`}>
+                        <span className="text-muted-foreground">Security:</span>
+                        <span className={`font-semibold ${getScoreColor(review.securityScore)}`}>
                           {review.securityScore}%
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          Updated {new Date(review.updatedAt).toLocaleDateString()}
-                        </span>
+                      <div className="flex items-center gap-2 ml-auto text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>Updated {new Date(review.updatedAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
     </MainLayout>
   );

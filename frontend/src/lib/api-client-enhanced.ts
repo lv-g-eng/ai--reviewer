@@ -66,7 +66,6 @@ class EnhancedAPIClient {
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
-        'Accept-Encoding': 'gzip, deflate, br',
       },
     });
 

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { MainLayout } from '@/components/layout/main-layout'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,14 +29,58 @@ import {
 } from 'lucide-react'
 import { useProjects } from '@/hooks/useProjects'
 import { AddProjectModal } from '@/components/projects/add-project-modal'
+import { useToast } from '@/hooks/use-toast'
 
-export default function ProjectsPage() {
+function ProjectsPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { toast } = useToast()
   const { data: projects = [], isLoading } = useProjects()
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchTerm, setSearchTerm] = useState('')
   const [sortBy, setSortBy] = useState('name')
   const [showCreateModal, setShowCreateModal] = useState(false)
+
+  // Handle GitHub connection success/error from URL params
+  useEffect(() => {
+    const githubConnected = searchParams.get('github_connected')
+    const error = searchParams.get('error')
+    const errorDescription = searchParams.get('error_description')
+    const errorDetail = searchParams.get('error_detail')
+
+    if (githubConnected === 'true') {
+      console.log('[Projects Page] GitHub connected successfully')
+      toast({
+        title: 'GitHub Connected',
+        description: 'Your GitHub account has been connected successfully',
+      })
+      // Reopen the modal to continue adding project
+      setShowCreateModal(true)
+    } else if (error) {
+      console.error('[Projects Page] GitHub connection error:', error)
+      console.error('[Projects Page] Error detail:', errorDetail || errorDescription)
+      
+      // Show detailed error message
+      const errorMsg = errorDetail || errorDescription || 'Failed to connect GitHub account'
+      
+      toast({
+        variant: 'destructive',
+        title: 'GitHub Connection Failed',
+        description: errorMsg,
+        duration: 10000, // Show for 10 seconds
+      })
+    }
+
+    // Clean up URL params
+    if (githubConnected || error) {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('github_connected')
+      url.searchParams.delete('error')
+      url.searchParams.delete('error_description')
+      url.searchParams.delete('error_detail')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [searchParams, toast])
 
   const getHealthScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600'
@@ -249,5 +293,13 @@ export default function ProjectsPage() {
         )}
       </div>
     </MainLayout>
+  )
+}
+
+export default function ProjectsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProjectsPageContent />
+    </Suspense>
   )
 }

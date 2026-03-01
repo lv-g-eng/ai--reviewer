@@ -702,17 +702,22 @@ async def connect_github(
         import httpx
         from app.core.config import settings
         
-        logger.info(f"Connecting GitHub for user {current_user.email}")
+        logger.info(f"=== GitHub Connect Request ===")
+        logger.info(f"User: {current_user.email}")
+        logger.info(f"Code length: {len(request.code)}")
+        logger.info(f"Client ID configured: {bool(settings.GITHUB_CLIENT_ID)}")
+        logger.info(f"Client Secret configured: {bool(settings.GITHUB_CLIENT_SECRET)}")
         
         if not settings.GITHUB_CLIENT_ID or not settings.GITHUB_CLIENT_SECRET:
             logger.error("GitHub OAuth credentials not configured")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="GitHub OAuth is not configured on the server"
+                detail="GitHub OAuth is not configured on the server. Please contact administrator."
             )
         
         # Exchange code for access token
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            logger.info("Exchanging code for GitHub access token...")
             response = await client.post(
                 "https://github.com/login/oauth/access_token",
                 headers={"Accept": "application/json"},
@@ -724,23 +729,39 @@ async def connect_github(
             )
             
             logger.info(f"GitHub token exchange response status: {response.status_code}")
+            logger.info(f"Response body: {response.text[:200]}")
             
             if response.status_code != 200:
+                logger.error(f"GitHub token exchange failed: {response.text}")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Failed to exchange code for token"
+                    detail=f"Failed to exchange code for token. GitHub returned status {response.status_code}"
                 )
             
             token_data = response.json()
+            
+            # Check for error in response
+            if "error" in token_data:
+                error_msg = token_data.get("error_description", token_data.get("error"))
+                logger.error(f"GitHub returned error: {error_msg}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"GitHub OAuth error: {error_msg}"
+                )
+            
             access_token = token_data.get("access_token")
             
             if not access_token:
+                logger.error(f"No access token in response: {token_data}")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="No access token received"
+                    detail="No access token received from GitHub. The authorization code may have expired."
                 )
             
+            logger.info("Successfully received GitHub access token")
+            
             # Get GitHub user info
+            logger.info("Fetching GitHub user info...")
             user_response = await client.get(
                 "https://api.github.com/user",
                 headers={
@@ -749,29 +770,52 @@ async def connect_github(
                 }
             )
             
+            logger.info(f"GitHub user info response status: {user_response.status_code}")
+            
             if user_response.status_code != 200:
+                logger.error(f"Failed to get GitHub user info: {user_response.text}")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Failed to get GitHub user info"
+                    detail=f"Failed to get GitHub user info. Status: {user_response.status_code}"
                 )
             
             github_user = user_response.json()
+            github_username = github_user.get("login")
+            
+            logger.info(f"Successfully retrieved GitHub user: {github_username}")
             
             # Store GitHub token in user record
             current_user.github_token = access_token
-            current_user.github_username = github_user.get("login")
+            current_user.github_username = github_username
             await db.commit()
+            
+            logger.info(f"GitHub account connected successfully for user {current_user.email}")
             
             return {
                 "message": "GitHub account connected successfully",
-                "username": github_user.get("login")
+                "username": github_username
             }
             
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except httpx.TimeoutException as e:
+        logger.error(f"Timeout connecting to GitHub: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="Timeout connecting to GitHub. Please try again."
+        )
+    except httpx.RequestError as e:
+        logger.error(f"Network error connecting to GitHub: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Network error connecting to GitHub: {str(e)}"
+        )
     except Exception as e:
-        logger.error(f"Error connecting GitHub: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error connecting GitHub: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to connect GitHub account"
+            detail=f"Unexpected error: {str(e)}"
         )
 
 

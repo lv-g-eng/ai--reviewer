@@ -12,7 +12,6 @@ import {
   Settings,
   Users,
   TrendingUp,
-  Search,
 } from 'lucide-react'
 
 const navigation = [

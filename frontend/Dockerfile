@@ -30,8 +30,18 @@ RUN npm ci --legacy-peer-deps
 # Copy source code
 COPY . .
 
+# Build arguments for Next.js public environment variables
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_BACKEND_URL
+ARG NEXT_PUBLIC_GITHUB_CLIENT_ID
+
+# Set environment variables for build
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL} \
+    NEXT_PUBLIC_GITHUB_CLIENT_ID=${NEXT_PUBLIC_GITHUB_CLIENT_ID}
+
 # Build Next.js application
-ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Stage 3: Runtime (minimal production image)

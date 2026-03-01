@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
-import { Bell, Search, User, LogOut, Settings } from 'lucide-react'
+import { Bell, User, LogOut, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -33,31 +33,8 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Search */}
-        <div className="flex flex-1 items-center justify-center px-6">
-          <div className="w-full max-w-lg">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                const query = formData.get('search') as string;
-                if (query) {
-                  window.location.href = `/search?q=${encodeURIComponent(query)}`;
-                }
-              }}
-            >
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="search"
-                  name="search"
-                  placeholder="Search projects, PRs, issues..."
-                  className="w-full rounded-md border border-input bg-background px-9 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-              </div>
-            </form>
-          </div>
-        </div>
+        {/* Spacer */}
+        <div className="flex-1" />
 
         {/* Right side */}
         <div className="flex items-center space-x-4">

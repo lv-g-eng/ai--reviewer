@@ -13,7 +13,6 @@ import {
   GitPullRequest,
   AlertTriangle,
   TrendingUp,
-  Plus,
   Eye,
   Network
 } from 'lucide-react'
@@ -67,12 +66,6 @@ export default function DashboardPage() {
           <PageHeader
             title="Dashboard"
             description="Welcome back! Here's an overview of your projects and reviews."
-            actions={
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Project
-              </Button>
-            }
           />
 
         {/* Overview Cards */}

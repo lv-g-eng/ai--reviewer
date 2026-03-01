@@ -102,15 +102,20 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://127.0.0.1:8000",
     ]
+    
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS_ORIGINS from environment variable if provided"""
+        if isinstance(v, str):
+            # Split comma-separated string into list
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
+    
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
     CORS_ALLOW_HEADERS: List[str] = [
-        "Accept",
-        "Accept-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "X-CSRF-Token",
+        "*",  # Allow all headers for development
     ]
     CORS_EXPOSE_HEADERS: List[str] = [
         "X-RateLimit-Limit",

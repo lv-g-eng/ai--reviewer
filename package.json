@@ -5,16 +5,12 @@
   "private": true,
   "workspaces": [],
   "scripts": {
-    "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces",
-    "test:integration": "jest tests/integration --testTimeout=60000",
-    "test:property": "npm run test:property --workspaces",
-    "lint": "npm run lint --workspaces",
-    "format": "npm run format --workspaces",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "docker:ps": "docker-compose ps"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

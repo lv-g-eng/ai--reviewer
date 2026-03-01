@@ -1,0 +1,27 @@
+# Docker Compose override for development environment
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+version: '3.8'
+
+services:
+  backend:
+    # Override the CMD to enable hot reload in development
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+    volumes:
+      # Mount code as read-write for development
+      - ./backend/app:/app/app
+      - ./backend/logs:/app/logs
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+
+  frontend:
+    # Override for development mode
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+    volumes:
+      # Mount source code for hot reload
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next

@@ -238,10 +238,22 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+        NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
+        NEXT_PUBLIC_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
     container_name: ai_review_frontend
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      # Server-side API routes use this to connect to backend (Docker network)
+      BACKEND_URL: http://backend:8000
+      # Client-side (browser) uses this to connect to backend (localhost)
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
+      NEXT_PUBLIC_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      # NextAuth configuration
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${SESSION_SECRET}
     ports:
       - "3000:3000"
     depends_on:

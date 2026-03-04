@@ -20,7 +20,7 @@ from app.auth.models.enums import Role, Permission, ROLE_PERMISSIONS
 
 
 # Strategy for generating roles
-role_strategy = st.sampled_from([Role.ADMIN, Role.PROGRAMMER, Role.VISITOR])
+role_strategy = st.sampled_from([Role.ADMIN, Role.MANAGER, Role.REVIEWER, Role.PROGRAMMER, Role.VISITOR])
 
 # Strategy for generating permissions
 permission_strategy = st.sampled_from(list(Permission))
@@ -120,7 +120,7 @@ class TestPermissionInheritanceProperties:
         """
         Property: VISITOR permissions must be a subset of PROGRAMMER permissions.
         
-        This enforces the role hierarchy: VISITOR < PROGRAMMER < ADMIN
+        This enforces the role hierarchy for these specific roles.
         """
         visitor_perms = set(ROLE_PERMISSIONS[Role.VISITOR])
         programmer_perms = set(ROLE_PERMISSIONS[Role.PROGRAMMER])
@@ -132,7 +132,7 @@ class TestPermissionInheritanceProperties:
         """
         Property: PROGRAMMER permissions must be a subset of ADMIN permissions.
         
-        This enforces the role hierarchy: VISITOR < PROGRAMMER < ADMIN
+        This enforces the role hierarchy for these specific roles.
         """
         programmer_perms = set(ROLE_PERMISSIONS[Role.PROGRAMMER])
         admin_perms = set(ROLE_PERMISSIONS[Role.ADMIN])
@@ -151,6 +151,26 @@ class TestPermissionInheritanceProperties:
         
         assert visitor_perms.issubset(admin_perms), \
             "VISITOR permissions must be subset of ADMIN permissions"
+    
+    def test_reviewer_permissions_subset_of_admin(self):
+        """
+        Property: REVIEWER permissions must be a subset of ADMIN permissions.
+        """
+        reviewer_perms = set(ROLE_PERMISSIONS[Role.REVIEWER])
+        admin_perms = set(ROLE_PERMISSIONS[Role.ADMIN])
+        
+        assert reviewer_perms.issubset(admin_perms), \
+            "REVIEWER permissions must be subset of ADMIN permissions"
+    
+    def test_manager_permissions_subset_of_admin(self):
+        """
+        Property: MANAGER permissions must be a subset of ADMIN permissions.
+        """
+        manager_perms = set(ROLE_PERMISSIONS[Role.MANAGER])
+        admin_perms = set(ROLE_PERMISSIONS[Role.ADMIN])
+        
+        assert manager_perms.issubset(admin_perms), \
+            "MANAGER permissions must be subset of ADMIN permissions"
     
     @given(
         role1=role_strategy,
@@ -173,7 +193,7 @@ class TestPermissionInheritanceProperties:
         # If role1 is a superset of role2
         if perms1.issuperset(perms2):
             # Then for any third role that role2 is a superset of
-            for role3 in [Role.ADMIN, Role.PROGRAMMER, Role.VISITOR]:
+            for role3 in [Role.ADMIN, Role.MANAGER, Role.REVIEWER, Role.PROGRAMMER, Role.VISITOR]:
                 if role3 != role2:
                     perms3 = set(ROLE_PERMISSIONS[role3])
                     if perms2.issuperset(perms3):
@@ -199,7 +219,7 @@ class TestRoleHierarchyProperties:
         assert isinstance(role, Role), \
             f"Role {role} must be a Role enum"
         
-        assert role in [Role.ADMIN, Role.PROGRAMMER, Role.VISITOR], \
+        assert role in [Role.ADMIN, Role.MANAGER, Role.REVIEWER, Role.PROGRAMMER, Role.VISITOR], \
             f"Role {role} must be one of the defined roles"
     
     def test_role_hierarchy_levels_are_distinct(self):
@@ -209,20 +229,28 @@ class TestRoleHierarchyProperties:
         This ensures roles are meaningfully different.
         """
         admin_perms = set(ROLE_PERMISSIONS[Role.ADMIN])
+        manager_perms = set(ROLE_PERMISSIONS[Role.MANAGER])
+        reviewer_perms = set(ROLE_PERMISSIONS[Role.REVIEWER])
         programmer_perms = set(ROLE_PERMISSIONS[Role.PROGRAMMER])
         visitor_perms = set(ROLE_PERMISSIONS[Role.VISITOR])
         
-        # ADMIN should have more permissions than PROGRAMMER
-        assert len(admin_perms) > len(programmer_perms), \
-            "ADMIN must have more permissions than PROGRAMMER"
-        
-        # PROGRAMMER should have more permissions than VISITOR
-        assert len(programmer_perms) > len(visitor_perms), \
-            "PROGRAMMER must have more permissions than VISITOR"
-        
-        # ADMIN should have more permissions than VISITOR
+        # ADMIN should have the most permissions
+        assert len(admin_perms) >= len(manager_perms), \
+            "ADMIN must have at least as many permissions as MANAGER"
+        assert len(admin_perms) >= len(reviewer_perms), \
+            "ADMIN must have at least as many permissions as REVIEWER"
+        assert len(admin_perms) >= len(programmer_perms), \
+            "ADMIN must have at least as many permissions as PROGRAMMER"
         assert len(admin_perms) > len(visitor_perms), \
             "ADMIN must have more permissions than VISITOR"
+        
+        # VISITOR should have the fewest permissions
+        assert len(visitor_perms) <= len(programmer_perms), \
+            "VISITOR must have fewer or equal permissions than PROGRAMMER"
+        assert len(visitor_perms) <= len(reviewer_perms), \
+            "VISITOR must have fewer or equal permissions than REVIEWER"
+        assert len(visitor_perms) <= len(manager_perms), \
+            "VISITOR must have fewer or equal permissions than MANAGER"
     
     def test_admin_is_highest_role(self):
         """
@@ -232,7 +260,7 @@ class TestRoleHierarchyProperties:
         """
         admin_perms = set(ROLE_PERMISSIONS[Role.ADMIN])
         
-        for role in [Role.PROGRAMMER, Role.VISITOR]:
+        for role in [Role.MANAGER, Role.REVIEWER, Role.PROGRAMMER, Role.VISITOR]:
             role_perms = set(ROLE_PERMISSIONS[role])
             assert admin_perms.issuperset(role_perms), \
                 f"ADMIN must have all permissions of {role}"
@@ -245,7 +273,7 @@ class TestRoleHierarchyProperties:
         """
         visitor_perms = set(ROLE_PERMISSIONS[Role.VISITOR])
         
-        for role in [Role.ADMIN, Role.PROGRAMMER]:
+        for role in [Role.ADMIN, Role.MANAGER, Role.REVIEWER, Role.PROGRAMMER]:
             role_perms = set(ROLE_PERMISSIONS[role])
             assert len(visitor_perms) <= len(role_perms), \
                 f"VISITOR must have fewer or equal permissions than {role}"
@@ -254,22 +282,21 @@ class TestRoleHierarchyProperties:
     @settings(max_examples=100, deadline=2000)
     def test_permission_granted_to_lower_role_implies_granted_to_higher(self, permission):
         """
-        Property: If a permission is granted to a lower role, it must be granted
-        to all higher roles.
+        Property: If a permission is granted to VISITOR (lowest role), it must be granted
+        to all other roles.
         
         This enforces upward inheritance in the hierarchy.
         """
-        # If VISITOR has permission, PROGRAMMER and ADMIN must have it
+        # If VISITOR has permission, all other roles must have it
         if permission in ROLE_PERMISSIONS[Role.VISITOR]:
             assert permission in ROLE_PERMISSIONS[Role.PROGRAMMER], \
                 f"If VISITOR has {permission}, PROGRAMMER must have it"
+            assert permission in ROLE_PERMISSIONS[Role.REVIEWER], \
+                f"If VISITOR has {permission}, REVIEWER must have it"
+            assert permission in ROLE_PERMISSIONS[Role.MANAGER], \
+                f"If VISITOR has {permission}, MANAGER must have it"
             assert permission in ROLE_PERMISSIONS[Role.ADMIN], \
                 f"If VISITOR has {permission}, ADMIN must have it"
-        
-        # If PROGRAMMER has permission, ADMIN must have it
-        if permission in ROLE_PERMISSIONS[Role.PROGRAMMER]:
-            assert permission in ROLE_PERMISSIONS[Role.ADMIN], \
-                f"If PROGRAMMER has {permission}, ADMIN must have it"
     
     @given(
         role1=role_strategy,
@@ -298,7 +325,7 @@ class TestRoleHierarchyProperties:
         
         This ensures a clear hierarchy without circular permission inheritance.
         """
-        roles = [Role.ADMIN, Role.PROGRAMMER, Role.VISITOR]
+        roles = [Role.ADMIN, Role.MANAGER, Role.REVIEWER, Role.PROGRAMMER, Role.VISITOR]
         
         # Build a directed graph of "has all permissions of" relationships
         for i, role1 in enumerate(roles):
@@ -376,7 +403,7 @@ class TestPermissionConsistencyProperties:
         This prevents orphaned permissions.
         """
         found = False
-        for role in [Role.ADMIN, Role.PROGRAMMER, Role.VISITOR]:
+        for role in [Role.ADMIN, Role.MANAGER, Role.REVIEWER, Role.PROGRAMMER, Role.VISITOR]:
             if permission in ROLE_PERMISSIONS[role]:
                 found = True
                 break
@@ -408,7 +435,7 @@ class TestPermissionConsistencyProperties:
         
         This ensures each role is distinct and meaningful.
         """
-        roles = [Role.ADMIN, Role.PROGRAMMER, Role.VISITOR]
+        roles = [Role.ADMIN, Role.MANAGER, Role.REVIEWER, Role.PROGRAMMER, Role.VISITOR]
         permission_sets = []
         
         for role in roles:

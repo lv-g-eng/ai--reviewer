@@ -13,6 +13,7 @@ from app.core.config import settings
 from .base import BaseLLMProvider, LLMProviderType
 from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
+from .openrouter_provider import OpenRouterProvider
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,8 @@ class LLMProviderFactory:
                 return cls._create_openai_provider(model, api_key, **kwargs)
             elif provider_type == LLMProviderType.ANTHROPIC:
                 return cls._create_anthropic_provider(model, api_key, **kwargs)
+            elif provider_type == LLMProviderType.OPENROUTER:
+                return cls._create_openrouter_provider(model, api_key, **kwargs)
             else:
                 raise ValueError(f"Unsupported provider type: {provider_type}")
                 
@@ -119,6 +122,32 @@ class LLMProviderFactory:
             model=model,
             api_key=api_key,
             timeout=kwargs.get("timeout", 30)
+        )
+    
+    @classmethod
+    def _create_openrouter_provider(
+        cls,
+        model: Optional[str] = None,
+        api_key: Optional[str] = None,
+        **kwargs
+    ) -> OpenRouterProvider:
+        """Create OpenRouter provider instance"""
+        model = model or settings.DEFAULT_LLM_MODEL
+        api_key = api_key or settings.OPENROUTER_API_KEY
+        
+        if not api_key:
+            raise ValueError("OpenRouter API key not configured")
+        
+        logger.info(
+            f"Creating OpenRouter provider with model: {model}",
+            extra={"provider": "openrouter", "model": model}
+        )
+        
+        return OpenRouterProvider(
+            model=model,
+            api_key=api_key,
+            base_url=settings.OPENROUTER_BASE_URL,
+            timeout=kwargs.get("timeout", 60)
         )
     
     @classmethod
@@ -185,4 +214,45 @@ def get_llm_provider(
         >>> request = LLMRequest(prompt="Hello, world!")
         >>> response = await provider.generate(request)
     """
+    return LLMProviderFactory.get_provider(provider_type, model)
+
+
+def get_default_llm_provider(model: Optional[str] = None) -> BaseLLMProvider:
+    """
+    获取默认配置的 LLM 提供者
+    
+    根据环境变量 DEFAULT_LLM_PROVIDER 自动选择提供者：
+    - openrouter: 使用 OpenRouter (支持多个模型)
+    - openai: 使用 OpenAI
+    - anthropic: 使用 Anthropic
+    
+    Args:
+        model: 可选的模型标识符，如果未提供则使用 DEFAULT_LLM_MODEL
+        
+    Returns:
+        配置好的 LLM 提供者实例
+        
+    Example:
+        >>> # 使用默认配置
+        >>> provider = get_default_llm_provider()
+        >>> 
+        >>> # 指定模型
+        >>> provider = get_default_llm_provider("anthropic/claude-3.5-sonnet")
+    """
+    provider_name = settings.DEFAULT_LLM_PROVIDER.lower()
+    model = model or settings.DEFAULT_LLM_MODEL
+    
+    provider_map = {
+        "openrouter": LLMProviderType.OPENROUTER,
+        "openai": LLMProviderType.OPENAI,
+        "anthropic": LLMProviderType.ANTHROPIC
+    }
+    
+    provider_type = provider_map.get(provider_name, LLMProviderType.OPENROUTER)
+    
+    logger.info(
+        f"Using default LLM provider: {provider_name} with model: {model}",
+        extra={"provider": provider_name, "model": model}
+    )
+    
     return LLMProviderFactory.get_provider(provider_type, model)

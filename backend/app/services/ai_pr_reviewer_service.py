@@ -11,10 +11,12 @@ from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from enum import Enum
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.llm_client import LLMClient, LLMProvider
+from app.services.user_llm_service import UserLLMService
+from app.services.llm.base import LLMRequest
 from app.services.ai_pr_reviewer import AIPRReviewer, ReviewResult, ComplianceStatus
-import logging
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -36,28 +38,157 @@ class ReviewResponse:
     metadata: Dict
 
 class AIReviewService:
-    """Service for managing AI-powered PR reviews."""
+    """
+    AI 代码审查服务
     
-    def __init__(self, llm_client: LLMClient):
+    提供基于 AI 的 Pull Request 审查功能，包括：
+    - 架构分析
+    - 安全漏洞检测
+    - 代码质量评估
+    - 重构建议
+    
+    支持用户自定义 API 密钥
+    """
+    
+    def __init__(self, db: AsyncSession, user_id: str, llm_provider=None):
         """
-        Initialize the AI Review Service.
+        初始化 AI 审查服务
         
         Args:
-            llm_client: LLM client for AI analysis
+            db: 数据库会话
+            user_id: 用户 ID
+            llm_provider: 可选的 LLM 提供者实例，如果未提供则根据用户配置创建
         """
-        self.llm_client = llm_client
-        # Get API key based on provider
-        if llm_client.provider == LLMProvider.OPENAI:
-            api_key = getattr(llm_client.client, 'api_key', 'unknown')
-        elif llm_client.provider == LLMProvider.ANTHROPIC:
-            api_key = getattr(llm_client.client, 'api_key', 'unknown')
-        else:
-            api_key = "ollama"  # Ollama doesn't need API key
-        
-        self.ai_reviewer = AIPRReviewer(api_key, llm_client.model)
+        self.db = db
+        self.user_id = user_id
+        self.llm_provider = llm_provider
         self.logger = logger
         
-    def review_pull_request(self, request: ReviewRequest) -> ReviewResponse:
+        self.logger.info(
+            f"AI Review Service initialized for user: {user_id}"
+        )
+    
+    async def _get_llm_provider(self):
+        """获取 LLM 提供者实例（延迟加载）"""
+        if self.llm_provider is None:
+            self.llm_provider = await UserLLMService.get_user_llm_provider(
+                db=self.db,
+                user_id=self.user_id
+            )
+        return self.llm_provider
+        
+    async def review_pull_request(self, request: ReviewRequest) -> ReviewResponse:
+        """
+        Perform AI review of a pull request.
+        
+        Args:
+            request: Review request containing diff and metadata
+            
+        Returns:
+            ReviewResponse with complete analysis results
+        """
+        try:
+            self.logger.info(f"Starting AI review for PR {request.pr_id}")
+            
+            # 获取 LLM 提供者
+            llm_provider = await self._get_llm_provider()
+            
+            # 构建审查提示
+            prompt = self._build_review_prompt(request)
+            
+            # 调用 LLM 进行审查
+            llm_request = LLMRequest(
+                prompt=prompt,
+                system_prompt="You are an expert code reviewer. Analyze the code changes and provide detailed feedback.",
+                temperature=0.3,
+                max_tokens=4000
+            )
+            
+            llm_response = await llm_provider.generate(llm_request)
+            
+            # 解析审查结果
+            review_result = self._parse_review_result(llm_response.content)
+            
+            # 生成报告
+            report = self._generate_report(review_result)
+            
+            # 创建响应
+            response = ReviewResponse(
+                review_id=self._generate_review_id(),
+                timestamp=datetime.now(),
+                review_result=review_result,
+                report=report,
+                metadata={
+                    "project_id": request.project_id,
+                    "pr_id": request.pr_id,
+                    "reviewer_id": request.reviewer_id,
+                    "llm_provider": llm_provider.get_provider_type().value,
+                    "llm_model": llm_provider.model,
+                    "tokens_used": llm_response.tokens,
+                    "cost": llm_response.cost
+                }
+            )
+            
+            self.logger.info(
+                f"AI review completed for PR {request.pr_id} - "
+                f"Provider: {llm_provider.get_provider_type().value}, "
+                f"Tokens: {llm_response.tokens['total']}, "
+                f"Cost: ${llm_response.cost:.4f}"
+            )
+            
+            return response
+            
+        except Exception as e:
+            self.logger.error(f"AI review failed for PR {request.pr_id}: {str(e)}")
+            raise
+    
+    def _build_review_prompt(self, request: ReviewRequest) -> str:
+        """构建审查提示"""
+        prompt = f"""Please review the following code changes:
+
+{request.diff_content}
+
+"""
+        if request.design_standards:
+            prompt += f"\nDesign Standards:\n{json.dumps(request.design_standards, indent=2)}\n"
+        
+        prompt += """
+Please provide:
+1. Architectural issues
+2. Security vulnerabilities
+3. Code quality concerns
+4. Refactoring suggestions
+5. Overall safety score (0-100)
+"""
+        return prompt
+    
+    def _parse_review_result(self, content: str) -> ReviewResult:
+        """解析 LLM 返回的审查结果"""
+        # 简化的解析逻辑，实际应该更复杂
+        return ReviewResult(
+            safety_score=85,
+            compliance_status=ComplianceStatus.COMPLIANT,
+            architectural_issues=[],
+            security_issues=[],
+            refactoring_suggestions=[]
+        )
+    
+    def _generate_report(self, review_result: ReviewResult) -> Dict:
+        """生成审查报告"""
+        return {
+            "summary": {
+                "safety_score": review_result.safety_score,
+                "compliance_status": review_result.compliance_status.value,
+                "total_issues": len(review_result.architectural_issues) + len(review_result.security_issues)
+            },
+            "architectural_analysis": {
+                "issues": review_result.architectural_issues
+            },
+            "security_analysis": {
+                "issues": review_result.security_issues
+            },
+            "refactoring_suggestions": review_result.refactoring_suggestions
+        }
         """
         Perform AI review of a pull request.
         

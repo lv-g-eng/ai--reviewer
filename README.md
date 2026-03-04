@@ -52,8 +52,20 @@ npm run dev
 - API 文档: http://localhost:8000/docs
 
 ### 默认凭据
-- 用户名: admin@example.com
-- 密码: admin123
+
+系统提供5种角色的测试账号，所有账号的默认密码都是：`Admin123!`
+
+| 角色 | 用户名 | 权限说明 |
+|------|--------|----------|
+| ADMIN | admin | 完全系统控制权限 |
+| MANAGER | manager | 项目监督和ROI管理 |
+| REVIEWER | reviewer | 代码审查和分析报告 |
+| PROGRAMMER | programmer | 创建和管理自己的项目 |
+| VISITOR | visitor | 只读访问权限 |
+
+⚠️ **安全提示：** 生产环境中请立即修改这些默认密码！
+
+详细的角色权限说明请参考：[RBAC角色文档](docs/RBAC_ROLES.md)
 
 ## 主要功能
 
@@ -63,6 +75,7 @@ npm run dev
 - ✅ 安全漏洞扫描
 - ✅ 实时协作
 - ✅ GitHub 集成
+- ✅ 5级角色权限控制 (RBAC)
 
 ## 文档
 
@@ -70,6 +83,8 @@ npm run dev
 - [用户指南](docs/USER_GUIDE.md)
 - [部署指南](docs/DEPLOYMENT_GUIDE.md)
 - [API 文档](docs/api/API_DOCUMENTATION.md)
+- [RBAC角色说明](docs/RBAC_ROLES.md)
+- [RBAC迁移指南](docs/RBAC_MIGRATION_GUIDE.md)
 
 ## 技术栈
 

@@ -10,7 +10,7 @@ export interface User {
 }
 
 export interface Role {
-  name: 'administrator' | 'programmer' | 'visitor';
+  name: 'ADMIN' | 'MANAGER' | 'REVIEWER' | 'PROGRAMMER' | 'VISITOR';
   permissions: Permission[];
 }
 

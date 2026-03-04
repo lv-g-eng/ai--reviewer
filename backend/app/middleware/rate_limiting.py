@@ -5,7 +5,7 @@ This module implements rate limiting middleware using Redis for distributed
 rate limiting across multiple instances.
 
 Requirements:
-- 8.6: Implement rate limiting of 100 requests per minute per user
+- 8.3: Implement rate limiting on all API endpoints: 100 requests per minute, 5000 requests per hour
 """
 from fastapi import Request, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -54,10 +54,14 @@ def get_user_identifier(request: Request) -> str:
 
 
 # Initialize rate limiter with Redis backend
+# Apply both per-minute and per-hour limits
 limiter = Limiter(
     key_func=get_user_identifier,
     storage_uri=settings.redis_url,
-    default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"],
+    default_limits=[
+        f"{settings.RATE_LIMIT_PER_MINUTE}/minute",
+        f"{settings.RATE_LIMIT_PER_HOUR}/hour"
+    ],
     headers_enabled=True,  # Add rate limit headers to responses
 )
 
@@ -70,13 +74,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     Returns 429 Too Many Requests when rate limit is exceeded.
     
     Requirements:
-        - 8.6: Implement rate limiting of 100 requests per minute per user
+        - 8.3: Implement rate limiting on all API endpoints: 100 requests per minute, 5000 requests per hour
     """
     
     def __init__(
         self,
         app,
-        rate_limit: str = "100/minute",
+        rate_limit_per_minute: int = 100,
+        rate_limit_per_hour: int = 5000,
         redis_url: Optional[str] = None,
     ):
         """
@@ -84,14 +89,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         
         Args:
             app: FastAPI application
-            rate_limit: Rate limit string (e.g., "100/minute", "1000/hour")
+            rate_limit_per_minute: Rate limit per minute (default: 100)
+            rate_limit_per_hour: Rate limit per hour (default: 5000)
             redis_url: Redis connection URL for distributed rate limiting
         """
         super().__init__(app)
-        self.rate_limit = rate_limit
+        self.rate_limit_per_minute = rate_limit_per_minute
+        self.rate_limit_per_hour = rate_limit_per_hour
         self.redis_url = redis_url or settings.redis_url
         
-        logger.info(f"Rate limiting initialized: {rate_limit} per user")
+        logger.info(
+            f"Rate limiting initialized: {rate_limit_per_minute}/minute, "
+            f"{rate_limit_per_hour}/hour per user"
+        )
     
     async def dispatch(self, request: Request, call_next: Callable):
         """
@@ -128,19 +138,31 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 }
             )
             
+            # Determine which limit was exceeded and calculate retry_after
+            retry_after = 60  # Default to 1 minute
+            limit_type = "minute"
+            
+            # Check if it's the hourly limit that was exceeded
+            if hasattr(e, "retry_after"):
+                retry_after = int(e.retry_after)
+                if retry_after > 300:  # More than 5 minutes suggests hourly limit
+                    limit_type = "hour"
+            
             # Return 429 Too Many Requests
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={
                     "error": "rate_limit_exceeded",
-                    "message": "Too many requests. Please try again later.",
-                    "retry_after": e.retry_after if hasattr(e, "retry_after") else 60,
+                    "message": f"Too many requests. Rate limit: {self.rate_limit_per_minute} requests per minute, {self.rate_limit_per_hour} requests per hour. Please try again later.",
+                    "retry_after": retry_after,
+                    "limit_type": limit_type,
                 },
                 headers={
-                    "Retry-After": str(e.retry_after if hasattr(e, "retry_after") else 60),
-                    "X-RateLimit-Limit": str(settings.RATE_LIMIT_PER_MINUTE),
+                    "Retry-After": str(retry_after),
+                    "X-RateLimit-Limit-Minute": str(self.rate_limit_per_minute),
+                    "X-RateLimit-Limit-Hour": str(self.rate_limit_per_hour),
                     "X-RateLimit-Remaining": "0",
-                    "X-RateLimit-Reset": str(int(time.time()) + 60),
+                    "X-RateLimit-Reset": str(int(time.time()) + retry_after),
                 }
             )
 
@@ -209,7 +231,8 @@ def configure_rate_limiting(app):
     app.add_middleware(SlowAPIMiddleware)
     
     logger.info(
-        f"Rate limiting configured: {settings.RATE_LIMIT_PER_MINUTE} requests/minute per user"
+        f"Rate limiting configured: {settings.RATE_LIMIT_PER_MINUTE} requests/minute, "
+        f"{settings.RATE_LIMIT_PER_HOUR} requests/hour per user"
     )
 
 

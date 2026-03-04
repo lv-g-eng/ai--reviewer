@@ -124,7 +124,9 @@ export function AddProjectModal({ open, onClose }: AddProjectModalProps) {
       }
     } catch (error) {
       console.error('[Check GitHub] Failed to check GitHub connection:', error)
+      // Don't block the UI, just show the GitHub connection step
       setStep('github')
+      setGithubConnected(false)
     }
   }
 
@@ -212,10 +214,12 @@ export function AddProjectModal({ open, onClose }: AddProjectModalProps) {
 
   const onSubmit = async (data: ProjectFormData) => {
     try {
+      console.log('[AddProjectModal] Submitting project:', data);
+      
+      // Only send name and description to match backend schema
       await createProject.mutateAsync({
         name: data.name,
         description: data.description || null,
-        github_repo_url: data.github_repo_url,
       })
       
       toast({
@@ -228,10 +232,12 @@ export function AddProjectModal({ open, onClose }: AddProjectModalProps) {
       setSelectedRepo(null)
       onClose()
     } catch (error: any) {
+      console.error('[AddProjectModal] Error creating project:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'An error occurred';
       toast({
         variant: 'destructive',
         title: 'Creation Failed',
-        description: error.response?.data?.detail || 'An error occurred',
+        description: errorMessage,
       })
     }
   }

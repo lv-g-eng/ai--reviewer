@@ -67,6 +67,20 @@ These metrics are automatically collected by the middleware for all HTTP request
   - Total database operations
   - Labels: `database`, `operation`, `status`
 
+### Application Metrics
+
+- **`app_info`** (Info)
+  - Application information including version and environment
+  - Labels: `version`, `environment`
+
+- **`health_check_duration_seconds`** (Histogram)
+  - Duration of health checks in seconds
+  - Labels: `check_type` (health, readiness, liveness, dependency)
+
+- **`dependency_status`** (Gauge)
+  - Status of each dependency (1=healthy, 0=unhealthy)
+  - Labels: `dependency_name` (PostgreSQL, Neo4j, Redis, Celery, LLM)
+
 ### Code Analysis Metrics
 
 - **`code_analysis_duration_seconds`** (Histogram)
@@ -258,6 +272,32 @@ async def analyze_repository(repo_url: str):
     return result
 ```
 
+### Recording Application Metrics
+
+Application metrics are automatically recorded by the health service:
+
+```python
+from app.core.prometheus_metrics import (
+    set_app_info,
+    record_health_check,
+    set_dependency_status
+)
+
+# Set application info (called once at startup)
+set_app_info(version='1.0.0', environment='production')
+
+# Record health check duration (automatically done by health service)
+async def check_health():
+    start_time = time.time()
+    # ... perform health checks ...
+    duration = time.time() - start_time
+    record_health_check('health', duration)
+
+# Set dependency status (automatically done by health service)
+set_dependency_status('PostgreSQL', is_healthy=True)
+set_dependency_status('Neo4j', is_healthy=False)
+```
+
 ## Prometheus Configuration
 
 ### Scrape Configuration
@@ -326,6 +366,22 @@ cache_hit_ratio
 rate(cache_operations_total[5m])
 ```
 
+#### Health and Dependencies
+
+```promql
+# Dependency health status (1=healthy, 0=unhealthy)
+dependency_status
+
+# Health check duration
+histogram_quantile(0.95, rate(health_check_duration_seconds_bucket[5m]))
+
+# Number of unhealthy dependencies
+count(dependency_status == 0)
+
+# Application info
+app_info
+```
+
 ### Alerting Rules
 
 Example alerting rules (`alerts.yml`):
@@ -363,6 +419,26 @@ groups:
         annotations:
           summary: "LLM circuit breaker is open"
           description: "Circuit breaker for {{ $labels.provider }} is open"
+      
+      # Dependency unhealthy
+      - alert: DependencyUnhealthy
+        expr: dependency_status == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Dependency is unhealthy"
+          description: "{{ $labels.dependency_name }} is unhealthy"
+      
+      # Slow health checks
+      - alert: SlowHealthCheck
+        expr: histogram_quantile(0.95, rate(health_check_duration_seconds_bucket[5m])) > 5.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Health checks are slow"
+          description: "P95 health check duration is {{ $value }}s for {{ $labels.check_type }}"
 ```
 
 ## Grafana Dashboards
@@ -391,7 +467,13 @@ groups:
    - Operations per second
    - Hit/miss breakdown
 
-5. **Task Queue**
+5. **Health and Dependencies**
+   - Dependency status by name
+   - Health check duration
+   - Number of unhealthy dependencies
+   - Application version and environment
+
+6. **Task Queue**
    - Tasks per minute
    - Average task duration
    - Queue length

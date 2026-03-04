@@ -93,17 +93,26 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    console.log('[DELETE] Project ID:', id);
+    
     const cookieStore = await cookies();
     const accessToken = cookieStore.get('access_token')?.value;
+    
+    console.log('[DELETE] Access token exists:', !!accessToken);
+    console.log('[DELETE] Backend URL:', BACKEND_URL);
 
     if (!accessToken) {
+      console.error('[DELETE] No access token found in cookies');
       return NextResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/rbac/projects/${id}`, {
+    const backendUrl = `${BACKEND_URL}/api/v1/rbac/projects/${id}`;
+    console.log('[DELETE] Calling backend:', backendUrl);
+
+    const response = await fetch(backendUrl, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -111,16 +120,38 @@ export async function DELETE(
       },
     });
 
+    console.log('[DELETE] Backend response status:', response.status);
+
     if (!response.ok) {
-      const error = await response.json();
+      const errorText = await response.text();
+      console.error('[DELETE] Backend error response:', errorText);
+      
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch {
+        error = { detail: errorText || 'Unknown error' };
+      }
+      
       return NextResponse.json(error, { status: response.status });
     }
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting project:', error);
+    const responseText = await response.text();
+    console.log('[DELETE] Backend success response:', responseText);
+    
+    let data;
+    try {
+      data = responseText ? JSON.parse(responseText) : { success: true };
+    } catch {
+      data = { success: true };
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error('[DELETE] Error deleting project:', error);
+    console.error('[DELETE] Error stack:', error.stack);
     return NextResponse.json(
-      { detail: 'Internal server error' },
+      { detail: `Internal server error: ${error.message}` },
       { status: 500 }
     );
   }

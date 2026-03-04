@@ -35,7 +35,7 @@ class AuditService:
     """Service for handling audit logging operations."""
     
     @staticmethod
-    def log_action(
+    async def log_action(
         db: DBSession,
         user_id: str,
         username: str,
@@ -81,14 +81,14 @@ class AuditService:
             )
             
             db.add(log_entry)
-            db.commit()
-            db.refresh(log_entry)
+            await db.commit()
+            await db.refresh(log_entry)
             
             return log_entry
             
         except Exception as e:
             # Graceful degradation - log error but don't fail the operation
-            db.rollback()
+            await db.rollback()
             print(f"Failed to create audit log: {e}")
             raise
     

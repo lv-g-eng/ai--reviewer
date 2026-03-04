@@ -25,6 +25,7 @@ from app.utils.jwt import create_access_token, create_refresh_token, verify_toke
 from app.api.dependencies import get_current_user
 from app.services.redis_cache_service import get_cache_service
 from app.utils.error_sanitizer import get_generic_auth_error, get_generic_password_error
+from app.services.audit_service import AuditService
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +127,17 @@ async def login(
     # Don't reveal whether email exists or password is wrong
     if not user or not verify_password(credentials.password, user.password_hash):
         logger.warning(f"Failed login attempt for email: {credentials.email} from IP: {client_ip}")
+        
+        # Log authentication failure to audit log (Requirement 8.8)
+        await AuditService.log_auth_failure(
+            db=db,
+            email=credentials.email,
+            ip_address=client_ip,
+            user_agent=request.headers.get("User-Agent"),
+            failure_reason="Invalid credentials",
+            user_id=user.id if user else None
+        )
+        
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=get_generic_auth_error(),  # Generic: "Incorrect email or password"
@@ -135,6 +147,17 @@ async def login(
     if not user.is_active:
         # This is a different error - user exists but account is inactive
         logger.warning(f"Login attempt for inactive account: {credentials.email}")
+        
+        # Log authentication failure to audit log (Requirement 8.8)
+        await AuditService.log_auth_failure(
+            db=db,
+            email=credentials.email,
+            ip_address=client_ip,
+            user_agent=request.headers.get("User-Agent"),
+            failure_reason="Account inactive",
+            user_id=user.id
+        )
+        
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive"
@@ -186,6 +209,7 @@ async def logout(
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
     token_data: TokenRefresh,
+    request: Request,
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
@@ -196,14 +220,28 @@ async def refresh_token(
     - Generates new token pair on refresh (Requirement 5.2)
     - Invalidates old refresh token (rotation) (Requirement 5.2)
     - Stores new refresh token metadata in Redis (Requirement 5.5)
+    - Logs refresh failures to audit log (Requirement 8.8)
     
     Token rotation ensures that each refresh token can only be used once,
     preventing token replay attacks and limiting the impact of token theft.
     """
+    # Get client IP for audit logging
+    client_ip = request.client.host if request.client else "0.0.0.0"
+    user_agent = request.headers.get("User-Agent")
+    
     # Verify refresh token signature and type
     payload = verify_token(token_data.refresh_token, token_type="refresh")
     
     if not payload:
+        # Log token refresh failure (Requirement 8.8)
+        await AuditService.log_token_refresh_failure(
+            db=db,
+            user_id=None,
+            ip_address=client_ip,
+            user_agent=user_agent,
+            failure_reason="Invalid or expired refresh token"
+        )
+        
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
@@ -216,6 +254,18 @@ async def refresh_token(
         from app.utils.jwt import is_token_revoked
         if await is_token_revoked(old_jti):
             logger.warning(f"Attempted reuse of revoked refresh token: {old_jti}")
+            
+            # Log token refresh failure (Requirement 8.8)
+            user_id_str = payload.get("sub")
+            user_id = uuid.UUID(user_id_str) if user_id_str else None
+            await AuditService.log_token_refresh_failure(
+                db=db,
+                user_id=user_id,
+                ip_address=client_ip,
+                user_agent=user_agent,
+                failure_reason="Refresh token has been revoked"
+            )
+            
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Refresh token has been revoked",
@@ -230,6 +280,16 @@ async def refresh_token(
     user = result.scalar_one_or_none()
     
     if not user or not user.is_active:
+        # Log token refresh failure (Requirement 8.8)
+        user_id_uuid = uuid.UUID(user_id) if user_id else None
+        await AuditService.log_token_refresh_failure(
+            db=db,
+            user_id=user_id_uuid,
+            ip_address=client_ip,
+            user_agent=user_agent,
+            failure_reason="User not found or inactive"
+        )
+        
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or inactive"

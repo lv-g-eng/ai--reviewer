@@ -53,6 +53,9 @@ class AuditEventType:
     ADMIN_PROJECT_DELETE = "admin.project.delete"
     ADMIN_CONFIG_CHANGE = "admin.config.change"
     ADMIN_SYSTEM_SETTING = "admin.system.setting"
+    
+    # Feature flag events
+    FEATURE_FLAG_CHANGE = "admin.feature_flag.change"
 
 
 class AuditLogEntry(Base):

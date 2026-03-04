@@ -199,8 +199,9 @@ class OptimizedAPIClient {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
       sessionStorage.removeItem('auth_token');
-      // Redirect to login or emit auth error event
-      window.dispatchEvent(new CustomEvent('auth:expired'));
+      // Redirect to login page
+      console.warn('[API Client] Authentication expired, redirecting to login...');
+      window.location.href = '/auth/signin';
     }
   }
 
@@ -261,12 +262,24 @@ class OptimizedAPIClient {
   }
 
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.delete<T>(url, config);
-    
-    // Invalidate related cache entries
-    this.invalidateCache(url);
-    
-    return response.data;
+    try {
+      const response = await this.client.delete<T>(url, config);
+      
+      // Invalidate related cache entries
+      this.invalidateCache(url);
+      
+      return response.data;
+    } catch (error: any) {
+      // Log detailed error information
+      console.error('[API Client] DELETE request failed:', {
+        url,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      throw error;
+    }
   }
 
   private invalidateCache(url: string): void {

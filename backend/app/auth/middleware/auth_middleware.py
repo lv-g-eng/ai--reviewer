@@ -112,7 +112,7 @@ class AuthMiddleware:
             payload = await AuthMiddleware.authenticate_token(request, credentials)
             
             # Check if user has the required permission
-            has_perm = RBACService.has_permission(db, payload.user_id, required_permission)
+            has_perm = await RBACService.has_permission(db, payload.user_id, required_permission)
             
             if not has_perm:
                 raise HTTPException(
@@ -138,7 +138,7 @@ class AuthMiddleware:
         async def project_access_checker(
             request: Request, 
             credentials: HTTPAuthorizationCredentials,
-            db: AsyncSession = Depends(get_db)
+            db: AsyncSession
         ) -> TokenPayload:
             # First authenticate the token
             payload = await AuthMiddleware.authenticate_token(request, credentials)
@@ -153,7 +153,7 @@ class AuthMiddleware:
                 )
             
             # Check if user can access the project
-            can_access = RBACService.can_access_project(
+            can_access = await RBACService.can_access_project(
                 db, 
                 payload.user_id, 
                 project_id, 
@@ -195,14 +195,25 @@ def require_role(role: Role):
 
 def require_permission(permission: Permission):
     """Dependency to require specific permission."""
-    checker = AuthMiddleware.check_permission(permission)
     
     async def _require_permission(
         request: Request, 
         credentials: HTTPAuthorizationCredentials = Depends(security),
         db: AsyncSession = Depends(get_db)
     ) -> TokenPayload:
-        return await checker(request, credentials)
+        # First authenticate the token
+        payload = await AuthMiddleware.authenticate_token(request, credentials)
+        
+        # Check if user has the required permission
+        has_perm = await RBACService.has_permission(db, payload.user_id, permission)
+        
+        if not has_perm:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to perform this action"
+            )
+        
+        return payload
     
     return _require_permission
 
@@ -216,6 +227,6 @@ def require_project_access(permission: Permission):
         credentials: HTTPAuthorizationCredentials = Depends(security),
         db: AsyncSession = Depends(get_db)
     ) -> TokenPayload:
-        return await checker(request, credentials)
+        return await checker(request, credentials, db)
     
     return _require_project_access

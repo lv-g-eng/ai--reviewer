@@ -16,13 +16,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call backend login endpoint
-    const response = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
+    // Call backend login endpoint (backend expects 'username' field, not 'email')
+    const response = await fetch(`${BACKEND_URL}/api/v1/rbac/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username: email, password }),
     });
 
     if (!response.ok) {
@@ -31,26 +31,24 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    const { access_token, refresh_token } = data;
+    const { token } = data;
+
+    if (!token) {
+      return NextResponse.json(
+        { detail: 'No token received from server' },
+        { status: 500 }
+      );
+    }
 
     // Store tokens in httpOnly cookies
     const cookieStore = await cookies();
     
-    // Access token cookie (24 hours)
-    cookieStore.set('access_token', access_token, {
+    // Access token cookie (8 hours - extended from 1 hour)
+    cookieStore.set('access_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60, // 24 hours
-      path: '/',
-    });
-
-    // Refresh token cookie (7 days)
-    cookieStore.set('refresh_token', refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 60 * 60 * 8, // 8 hours
       path: '/',
     });
 

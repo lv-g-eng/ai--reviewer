@@ -33,6 +33,28 @@ export interface PullRequest {
   analyzed_at: string | null;
 }
 
+export interface ProjectMetrics {
+  code_quality: number;
+  security_rating: number;
+  architecture_health: number;
+  test_coverage: number;
+  overall_health: number;
+}
+
+export interface ProjectAnalytics {
+  project_id: string;
+  metrics: ProjectMetrics;
+  total_prs: number;
+  reviewed_prs: number;
+  total_issues: number;
+  critical_issues: number;
+  high_issues: number;
+  medium_issues: number;
+  low_issues: number;
+  architecture_violations: number;
+  recent_reviews: any[];
+}
+
 /**
  * Fetch all projects
  */
@@ -68,6 +90,19 @@ export function useProjectPullRequests(projectId: string, state: string = 'all')
       return apiClient.get(`/github/projects/${projectId}/pulls`, {
         params: { state },
       });
+    },
+    enabled: !!projectId,
+  });
+}
+
+/**
+ * Fetch project analytics (AI 审查数据)
+ */
+export function useProjectAnalytics(projectId: string) {
+  return useQuery({
+    queryKey: ['projects', projectId, 'analytics'],
+    queryFn: async () => {
+      return apiClient.get<ProjectAnalytics>(`/projects/${projectId}/analytics`);
     },
     enabled: !!projectId,
   });
@@ -119,4 +154,90 @@ export function useDeleteProject() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
+}
+
+/**
+ * Fetch project branches for architecture visualization
+ */
+export function useProjectBranches(projectId: string) {
+  return useQuery({
+    queryKey: ['architecture', projectId, 'branches'],
+    queryFn: async () => {
+      return apiClient.get<BranchInfo[]>(`/architecture/${projectId}/branches`);
+    },
+    enabled: !!projectId,
+  });
+}
+
+/**
+ * Fetch branch architecture data
+ */
+export function useBranchArchitecture(projectId: string, branchId: string) {
+  return useQuery({
+    queryKey: ['architecture', projectId, 'branches', branchId],
+    queryFn: async () => {
+      return apiClient.get<BranchArchitecture>(`/architecture/${projectId}/branches/${branchId}/architecture`);
+    },
+    enabled: !!(projectId && branchId),
+  });
+}
+
+/**
+ * Trigger code review for a PR
+ */
+export function useTriggerCodeReview() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { pr_id: string; force?: boolean }) => {
+      return apiClient.post('/code-review/trigger', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
+
+export interface BranchInfo {
+  id: string;
+  name: string;
+  last_commit: string;
+  last_commit_date: string;
+  author: string;
+  components_count: number;
+  complexity: number;
+  health_status: 'healthy' | 'warning' | 'critical';
+  circular_dependencies: number;
+}
+
+export interface GraphNode {
+  id: string;
+  label: string;
+  type: string;
+  health: 'healthy' | 'warning' | 'critical';
+  complexity: number;
+  position: { x: number; y: number };
+}
+
+export interface GraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: string;
+  is_circular?: boolean;
+}
+
+export interface BranchArchitecture {
+  branch_info: BranchInfo;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  statistics: {
+    total_components: number;
+    total_dependencies: number;
+    circular_dependencies: number;
+    avg_complexity: number;
+    violations_count: number;
+    critical_violations: number;
+    high_violations: number;
+  };
 }

@@ -329,6 +329,47 @@ class TestSetupLogging:
         # Test ERROR level
         setup_logging(level="ERROR", enable_json=True)
         assert logging.getLogger().level == logging.ERROR
+    
+    def test_setup_logging_with_file_rotation(self):
+        """
+        Test logging setup includes file rotation handler.
+        
+        Validates Requirement 7.6: Configure log rotation (retain 30 days)
+        """
+        import tempfile
+        import os
+        from logging.handlers import TimedRotatingFileHandler
+        
+        # Use temporary directory for test logs
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch.dict(os.environ, {'LOG_DIR': temp_dir}):
+                # Setup logging
+                setup_logging(level="INFO", enable_json=True, service_name="test-service")
+                
+                # Get root logger
+                root_logger = logging.getLogger()
+                
+                # Find TimedRotatingFileHandler
+                rotating_handler = None
+                for handler in root_logger.handlers:
+                    if isinstance(handler, TimedRotatingFileHandler):
+                        rotating_handler = handler
+                        break
+                
+                # Verify rotating handler exists
+                assert rotating_handler is not None, "TimedRotatingFileHandler not found"
+                
+                # Verify rotation configuration (Requirement 7.6)
+                assert rotating_handler.when == 'MIDNIGHT', "Should rotate at midnight"
+                assert rotating_handler.interval == 1, "Should rotate every 1 day"
+                assert rotating_handler.backupCount == 30, "Should keep 30 days of logs"
+                assert rotating_handler.utc is True, "Should use UTC for rotation"
+                assert rotating_handler.suffix == "%Y-%m-%d", "Should use date suffix"
+                
+                # Verify log file is created in correct location
+                expected_log_path = os.path.join(temp_dir, 'app.log')
+                assert rotating_handler.baseFilename.endswith('app.log'), \
+                    f"Log file should be app.log, got {rotating_handler.baseFilename}"
 
 
 class TestLogException:

@@ -6,9 +6,9 @@ from enum import Enum
 
 class Role(str, Enum):
     """User roles in the system."""
-    ADMIN = "ADMIN"
-    PROGRAMMER = "PROGRAMMER"
-    VISITOR = "VISITOR"
+    ADMIN = "admin"
+    PROGRAMMER = "developer"
+    VISITOR = "reviewer"
 
 
 class Permission(str, Enum):

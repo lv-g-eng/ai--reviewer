@@ -3,6 +3,7 @@ RBAC service for role and permission management.
 """
 from typing import Optional
 from sqlalchemy.orm import Session as DBSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User, Project, ProjectAccess, Role, Permission, ROLE_PERMISSIONS
 
@@ -11,32 +12,52 @@ class RBACService:
     """Service for handling role-based access control operations."""
     
     @staticmethod
-    def has_permission(db: DBSession, user_id: str, permission: Permission) -> bool:
+    async def has_permission(db: AsyncSession, user_id: str, permission: Permission) -> bool:
         """
         Check if a user has a specific permission based on their role.
         
         Args:
-            db: Database session
+            db: Async database session
             user_id: User's unique identifier
             permission: Permission to check
             
         Returns:
             True if user has the permission, False otherwise
         """
+        from sqlalchemy import select
+        from uuid import UUID
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
         try:
-            # Get user from database
-            user = db.query(User).filter(User.id == user_id).first()
+            # Convert user_id to UUID if it's a string
+            user_uuid = UUID(user_id) if isinstance(user_id, str) else user_id
+            logger.info(f"Checking permission {permission} for user {user_uuid}")
             
-            if not user or not user.is_active:
+            # Async query
+            result = await db.execute(select(User).filter(User.id == user_uuid))
+            user = result.scalar_one_or_none()
+            
+            if not user:
+                logger.warning(f"User {user_uuid} not found")
+                return False
+                
+            if not user.is_active:
+                logger.warning(f"User {user_uuid} is not active")
                 return False
             
             # Get permissions for user's role
             role_permissions = RBACService.get_role_permissions(user.role)
+            logger.info(f"User {user_uuid} has role {user.role} with permissions: {role_permissions}")
             
             # Check if permission is in the role's permissions
-            return permission in role_permissions
+            has_perm = permission in role_permissions
+            logger.info(f"User {user_uuid} has permission {permission}: {has_perm}")
+            return has_perm
             
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error checking permission: {e}", exc_info=True)
             return False
     
     @staticmethod
@@ -54,7 +75,7 @@ class RBACService:
 
     
     @staticmethod
-    def can_access_project(db: DBSession, user_id: str, project_id: str, permission: Permission) -> bool:
+    async def can_access_project(db: DBSession, user_id: str, project_id: str, permission: Permission) -> bool:
         """
         Check if a user can access a specific project with a given permission.
         
@@ -64,16 +85,19 @@ class RBACService:
         
         Args:
             db: Database session
-            user_id: User's unique identifier
-            project_id: Project's unique identifier
+            user_id: User's unique identifier (string)
+            project_id: Project's unique identifier (string)
             permission: Permission being requested
             
         Returns:
             True if user can access the project, False otherwise
         """
+        from sqlalchemy import select
+        
         try:
-            # Get user from database
-            user = db.query(User).filter(User.id == user_id).first()
+            # Get user from database (IDs are stored as strings)
+            result = await db.execute(select(User).filter(User.id == user_id))
+            user = result.scalar_one_or_none()
             
             if not user or not user.is_active:
                 return False
@@ -83,7 +107,8 @@ class RBACService:
                 return True
             
             # Get project from database
-            project = db.query(Project).filter(Project.id == project_id).first()
+            result = await db.execute(select(Project).filter(Project.id == project_id))
+            project = result.scalar_one_or_none()
             
             if not project:
                 return False
@@ -95,10 +120,13 @@ class RBACService:
             # For non-owners, check if they have an explicit access grant
             # Access grants only allow VIEW_PROJECT permission
             if permission == Permission.VIEW_PROJECT:
-                access_grant = db.query(ProjectAccess).filter(
-                    ProjectAccess.project_id == project_id,
-                    ProjectAccess.user_id == user_id
-                ).first()
+                result = await db.execute(
+                    select(ProjectAccess).filter(
+                        ProjectAccess.project_id == project_id,
+                        ProjectAccess.user_id == user_id
+                    )
+                )
+                access_grant = result.scalar_one_or_none()
                 
                 if access_grant:
                     return True
@@ -106,7 +134,9 @@ class RBACService:
             # No access
             return False
             
-        except Exception:
+        except Exception as e:
+            # Log error but don't expose details
+            print(f"Error in can_access_project: {type(e).__name__}: {str(e)}")
             return False
     
     @staticmethod

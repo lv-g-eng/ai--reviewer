@@ -3,26 +3,32 @@
  */
 
 export enum Role {
-  ADMIN = 'admin',
-  DEVELOPER = 'developer',
-  REVIEWER = 'reviewer',
-  COMPLIANCE_OFFICER = 'compliance_officer',
-  MANAGER = 'manager',
+  ADMIN = 'ADMIN',           // Full system control
+  MANAGER = 'MANAGER',       // Project oversight & ROI
+  REVIEWER = 'REVIEWER',     // Read/Write analysis
+  PROGRAMMER = 'PROGRAMMER', // CRUD own branch
+  VISITOR = 'VISITOR',       // Read-only grants
 }
 
 export enum Permission {
-  VIEW_PROJECTS = 'VIEW_PROJECTS',
-  CREATE_PROJECT = 'CREATE_PROJECT',
-  MODIFY_PROJECT = 'MODIFY_PROJECT',
-  DELETE_PROJECT = 'DELETE_PROJECT',
-  VIEW_USERS = 'VIEW_USERS',
+  // User Management
   CREATE_USER = 'CREATE_USER',
-  MODIFY_USER = 'MODIFY_USER',
   DELETE_USER = 'DELETE_USER',
-  VIEW_REVIEWS = 'VIEW_REVIEWS',
-  CREATE_REVIEW = 'CREATE_REVIEW',
-  MODIFY_REVIEW = 'MODIFY_REVIEW',
+  UPDATE_USER = 'UPDATE_USER',
+  VIEW_USER = 'VIEW_USER',
+  
+  // Project Management
+  CREATE_PROJECT = 'CREATE_PROJECT',
+  DELETE_PROJECT = 'DELETE_PROJECT',
+  UPDATE_PROJECT = 'UPDATE_PROJECT',
+  VIEW_PROJECT = 'VIEW_PROJECT',
+  
+  // Configuration
   MODIFY_CONFIG = 'MODIFY_CONFIG',
+  VIEW_CONFIG = 'VIEW_CONFIG',
+  
+  // Reports
+  EXPORT_REPORT = 'EXPORT_REPORT',
 }
 
 export interface RBACUser {
@@ -31,3 +37,4 @@ export interface RBACUser {
   role: Role;
   permissions?: Permission[];
 }
+

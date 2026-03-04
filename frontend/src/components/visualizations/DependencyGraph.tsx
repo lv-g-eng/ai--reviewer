@@ -83,8 +83,8 @@ export default function DependencyGraph({ nodes: graphNodes, edges: graphEdges, 
                 id: node.id,
                 type: 'custom',
                 position: {
-                    x: Math.random() * 500,
-                    y: Math.random() * 500,
+                    x: (index * 137) % 500,
+                    y: (index * 211) % 500,
                 },
                 data: {
                     label: node.name,

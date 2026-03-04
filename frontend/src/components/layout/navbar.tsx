@@ -20,6 +20,26 @@ export function Navbar() {
   const { data: session } = useSession()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
 
+  const handleLogout = async () => {
+    try {
+      // Call our logout API to clear httpOnly cookies
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      
+      // Also sign out from NextAuth
+      await signOut({ redirect: false })
+      
+      // Redirect to login page
+      window.location.href = '/auth/signin'
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Force redirect even on error
+      window.location.href = '/auth/signin'
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -84,7 +104,7 @@ export function Navbar() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut()}>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
               </DropdownMenuItem>

@@ -7,11 +7,13 @@
  * - Frontend bundle analysis
  * - Real-time system metrics
  * - Performance recommendations
+ * 
+ * Requirements: 1.4, 1.5, 2.7, 4.1, 4.2, 4.6, 10.2, 10.8
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
@@ -32,33 +34,18 @@ import {
   TrendingUp, 
   AlertTriangle, 
   BarChart3,
-  Cpu
+  Cpu,
+  RefreshCw,
+  Lock
 } from 'lucide-react';
+import { apiClientEnhanced } from '@/lib/api-client-enhanced';
+import { validatePerformanceDashboardData, type PerformanceDashboardData } from '@/lib/validations/api-schemas';
+import { ErrorHandler } from '@/lib/error-handler';
+import { featureFlagsService } from '@/lib/feature-flags';
 
-interface PerformanceMetrics {
-  api: {
-    responseTime: number;
-    cacheHitRate: number;
-    errorRate: number;
-    requestsPerSecond: number;
-  };
-  database: {
-    connectionCount: number;
-    queryTime: number;
-    cacheHitRate: number;
-  };
-  frontend: {
-    bundleSize: number;
-    loadTime: number;
-    cacheHitRate: number;
-    renderTime: number;
-  };
-  system: {
-    cpuUsage: number;
-    memoryUsage: number;
-    diskUsage: number;
-    networkLatency: number;
-  };
+interface PerformanceDashboardProps {
+  projectId: string;
+  autoRefreshInterval?: number; // in milliseconds, default 30000 (30 seconds)
 }
 
 const COLORS = {
@@ -69,84 +56,136 @@ const COLORS = {
   info: '#6366f1'
 };
 
-const PerformanceDashboard: React.FC = () => {
-  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [autoRefresh, setAutoRefresh] = useState(true);
-
-  // Mock data for demonstration
-  const mockMetrics: PerformanceMetrics = {
-    api: {
-      responseTime: 150,
-      cacheHitRate: 0.75,
-      errorRate: 2.1,
-      requestsPerSecond: 45.2
-    },
-    database: {
-      connectionCount: 25,
-      queryTime: 85,
-      cacheHitRate: 0.68
-    },
-    frontend: {
-      bundleSize: 1.2,
-      loadTime: 2800,
-      cacheHitRate: 0.82,
-      renderTime: 16.7
-    },
-    system: {
-      cpuUsage: 45.3,
-      memoryUsage: 62.1,
-      diskUsage: 78.5,
-      networkLatency: 150
-    }
-  };
-
-  // Mock performance data for charts
-  const performanceData = Array.from({ length: 20 }, (_, i) => ({
-    timestamp: Date.now() - (19 - i) * 60000,
-    duration: 120 + Math.random() * 100,
-    requests: 40 + Math.random() * 20
-  }));
-
-  // Fetch performance metrics
-  const fetchMetrics = async () => {
-    try {
-      setLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setMetrics(mockMetrics);
-    } catch (error) {
-      console.error('Failed to fetch performance metrics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Auto-refresh effect
-  useEffect(() => {
-    fetchMetrics();
+/**
+ * Fetch performance metrics from production API
+ */
+async function fetchPerformanceMetrics(projectId: string): Promise<PerformanceDashboardData> {
+  try {
+    const response = await apiClientEnhanced.get<PerformanceDashboardData>(
+      `/projects/${projectId}/metrics`
+    );
     
-    if (autoRefresh) {
-      const interval = setInterval(fetchMetrics, 30000);
-      return () => clearInterval(interval);
+    // Validate response data
+    const validatedData = validatePerformanceDashboardData(response.data);
+    return validatedData;
+  } catch (error) {
+    const errorInfo = ErrorHandler.handleError(error);
+    ErrorHandler.logError(errorInfo);
+    
+    // Report to backend in production
+    if (process.env.NODE_ENV === 'production') {
+      await ErrorHandler.reportToBackend(errorInfo);
     }
-  }, [autoRefresh]);
+    
+    throw error;
+  }
+}
 
+const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ 
+  projectId,
+  autoRefreshInterval = 30000 
+}) => {
+  // Check feature flag status - Validates Requirements: 10.2, 10.8
+  const isFeatureEnabled = featureFlagsService.isEnabled('performance-dashboard-production');
+  
+  // Fetch performance metrics using TanStack Query
+  const {
+    data: metricsData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching
+  } = useQuery({
+    queryKey: ['performance-metrics', projectId],
+    queryFn: () => fetchPerformanceMetrics(projectId),
+    enabled: isFeatureEnabled,
+    refetchInterval: autoRefreshInterval,
+    staleTime: 10000, // Consider data stale after 10 seconds
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+
+  // Feature flag disabled - show placeholder (Validates Requirements: 10.8)
+  if (!isFeatureEnabled) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-gray-200">
+          <CardContent className="p-12">
+            <div className="text-center max-w-md mx-auto">
+              <Lock className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Feature Not Available</h3>
+              <p className="text-gray-600 mb-4">
+                The Performance Dashboard is currently disabled. This feature is being progressively rolled out.
+              </p>
+              <p className="text-sm text-gray-500">
+                Please contact your administrator if you need access to this feature.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Transform API data for chart display
+  const performanceData = React.useMemo(() => {
+    if (!metricsData?.metrics.response_time) return [];
+    
+    return metricsData.metrics.response_time.map((metric, index) => ({
+      timestamp: new Date(metric.timestamp).getTime(),
+      duration: metric.value,
+      requests: metricsData.metrics.throughput[index]?.value || 0
+    }));
+  }, [metricsData]);
+
+  // Calculate derived metrics from API data
+  const derivedMetrics = React.useMemo(() => {
+    if (!metricsData) return null;
+    
+    const latestMetrics = {
+      response_time: metricsData.metrics.response_time[metricsData.metrics.response_time.length - 1]?.value || 0,
+      error_rate: metricsData.metrics.error_rate[metricsData.metrics.error_rate.length - 1]?.value || 0,
+      cpu_usage: metricsData.metrics.cpu_usage[metricsData.metrics.cpu_usage.length - 1]?.value || 0,
+      memory_usage: metricsData.metrics.memory_usage[metricsData.metrics.memory_usage.length - 1]?.value || 0,
+    };
+    
+    return {
+      api: {
+        responseTime: latestMetrics.response_time,
+        errorRate: latestMetrics.error_rate,
+        requestsPerSecond: metricsData.aggregations.total_requests / 7, // Average per day over 7 days
+      },
+      system: {
+        cpuUsage: latestMetrics.cpu_usage,
+        memoryUsage: latestMetrics.memory_usage,
+      }
+    };
+  }, [metricsData]);
+  
   // Performance score calculation
   const performanceScore = React.useMemo(() => {
-    if (!metrics) return 0;
+    if (!metricsData || !derivedMetrics) return 0;
     
     let score = 100;
     
-    if (metrics.api.responseTime > 200) score -= 15;
-    if (metrics.api.cacheHitRate < 0.5) score -= 10;
-    if (metrics.api.errorRate > 5) score -= 20;
-    if (metrics.database.queryTime > 100) score -= 15;
-    if (metrics.system.cpuUsage > 80) score -= 20;
-    if (metrics.system.memoryUsage > 85) score -= 15;
+    // Penalize based on response time
+    if (metricsData.aggregations.avg_response_time > 200) score -= 15;
+    if (metricsData.aggregations.p95_response_time > 500) score -= 10;
+    
+    // Penalize based on error rate
+    if (derivedMetrics.api.errorRate > 5) score -= 20;
+    else if (derivedMetrics.api.errorRate > 2) score -= 10;
+    
+    // Penalize based on system resources
+    if (derivedMetrics.system.cpuUsage > 80) score -= 20;
+    else if (derivedMetrics.system.cpuUsage > 60) score -= 10;
+    
+    if (derivedMetrics.system.memoryUsage > 85) score -= 15;
+    else if (derivedMetrics.system.memoryUsage > 70) score -= 5;
     
     return Math.max(0, score);
-  }, [metrics]);
+  }, [metricsData, derivedMetrics]);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return COLORS.success;
@@ -161,10 +200,82 @@ const PerformanceDashboard: React.FC = () => {
     return 'Poor';
   };
 
-  if (loading && !metrics) {
+  // Handle error state
+  if (isError) {
+    const errorInfo = ErrorHandler.handleError(error);
+    
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Performance Dashboard</h1>
+            <p className="text-gray-600 mt-1">Monitor and optimize system performance</p>
+          </div>
+        </div>
+        
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center text-red-800">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              Error Loading Performance Metrics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-700 mb-4">
+              {ErrorHandler.getUserMessage(errorInfo)}
+            </p>
+            {ErrorHandler.shouldRetry(errorInfo) && (
+              <Button onClick={() => refetch()} variant="outline" className="border-red-300">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Performance Dashboard</h1>
+            <p className="text-gray-600 mt-1">Monitor and optimize system performance</p>
+          </div>
+        </div>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center justify-center h-64 space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <p className="text-gray-600">Loading performance metrics...</p>
+              <Progress value={33} className="w-64" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!metricsData || !derivedMetrics) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardHeader>
+            <CardTitle className="flex items-center text-yellow-800">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              No Data Available
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-yellow-700">
+              No performance metrics data available for this project.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -179,16 +290,21 @@ const PerformanceDashboard: React.FC = () => {
         </div>
         <div className="flex items-center space-x-4">
           <Button
-            variant={autoRefresh ? "default" : "outline"}
-            onClick={() => setAutoRefresh(!autoRefresh)}
+            onClick={() => refetch()}
             size="sm"
+            disabled={isRefetching}
           >
-            <Activity className="w-4 h-4 mr-2" />
-            Auto Refresh
-          </Button>
-          <Button onClick={fetchMetrics} size="sm" disabled={loading}>
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Refresh
+            {isRefetching ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Refresh
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -244,7 +360,7 @@ const PerformanceDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {metrics?.api.responseTime.toFixed(0)}ms
+                  {derivedMetrics.api.responseTime.toFixed(0)}ms
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Target: &lt;200ms
@@ -254,30 +370,30 @@ const PerformanceDashboard: React.FC = () => {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Cache Hit Rate</CardTitle>
+                <CardTitle className="text-sm font-medium">P95 Response Time</CardTitle>
                 <Zap className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {((metrics?.api.cacheHitRate || 0) * 100).toFixed(1)}%
+                  {metricsData.aggregations.p95_response_time.toFixed(0)}ms
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Target: &gt;50%
+                  Target: &lt;500ms
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Database Queries</CardTitle>
-                <Database className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Error Rate</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {metrics?.database.queryTime.toFixed(0)}ms
+                  {derivedMetrics.api.errorRate.toFixed(1)}%
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Avg query time
+                  Target: &lt;5%
                 </p>
               </CardContent>
             </Card>
@@ -289,7 +405,7 @@ const PerformanceDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {metrics?.system.cpuUsage.toFixed(1)}%
+                  {derivedMetrics.system.cpuUsage.toFixed(1)}%
                 </div>
                 <p className="text-xs text-muted-foreground">
                   CPU usage
@@ -334,13 +450,13 @@ const PerformanceDashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Request Volume</CardTitle>
+                <CardTitle className="text-sm">Average Response Time</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {metrics?.api.requestsPerSecond.toFixed(1)}
+                  {metricsData.aggregations.avg_response_time.toFixed(1)}ms
                 </div>
-                <p className="text-sm text-gray-600">requests/second</p>
+                <p className="text-sm text-gray-600">avg response time</p>
               </CardContent>
             </Card>
 
@@ -350,7 +466,7 @@ const PerformanceDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-red-600">
-                  {metrics?.api.errorRate.toFixed(1)}%
+                  {derivedMetrics.api.errorRate.toFixed(1)}%
                 </div>
                 <p className="text-sm text-gray-600">4xx/5xx errors</p>
               </CardContent>
@@ -358,13 +474,13 @@ const PerformanceDashboard: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Cache Performance</CardTitle>
+                <CardTitle className="text-sm">Total Requests</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {((metrics?.api.cacheHitRate || 0) * 100).toFixed(1)}%
+                  {metricsData.aggregations.total_requests}
                 </div>
-                <p className="text-sm text-gray-600">hit rate</p>
+                <p className="text-sm text-gray-600">in time range</p>
               </CardContent>
             </Card>
           </div>
@@ -375,41 +491,37 @@ const PerformanceDashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Connection Pool</CardTitle>
+                <CardTitle className="text-sm">P95 Response Time</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {metrics?.database.connectionCount}
+                  {metricsData.aggregations.p95_response_time.toFixed(0)}ms
                 </div>
-                <p className="text-sm text-gray-600">active connections</p>
-                <Progress 
-                  value={(metrics?.database.connectionCount || 0)} 
-                  className="mt-2"
-                />
+                <p className="text-sm text-gray-600">95th percentile</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Query Performance</CardTitle>
+                <CardTitle className="text-sm">P99 Response Time</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {metrics?.database.queryTime.toFixed(0)}ms
+                  {metricsData.aggregations.p99_response_time.toFixed(0)}ms
                 </div>
-                <p className="text-sm text-gray-600">avg query time</p>
+                <p className="text-sm text-gray-600">99th percentile</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Cache Hit Rate</CardTitle>
+                <CardTitle className="text-sm">Total Errors</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {((metrics?.database.cacheHitRate || 0) * 100).toFixed(1)}%
+                  {metricsData.aggregations.total_errors}
                 </div>
-                <p className="text-sm text-gray-600">query cache hits</p>
+                <p className="text-sm text-gray-600">error count</p>
               </CardContent>
             </Card>
           </div>
@@ -417,16 +529,16 @@ const PerformanceDashboard: React.FC = () => {
 
         {/* System Tab */}
         <TabsContent value="system" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">CPU Usage</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {metrics?.system.cpuUsage.toFixed(1)}%
+                  {derivedMetrics.system.cpuUsage.toFixed(1)}%
                 </div>
-                <Progress value={metrics?.system.cpuUsage} className="mt-2" />
+                <Progress value={derivedMetrics.system.cpuUsage} className="mt-2" />
               </CardContent>
             </Card>
 
@@ -436,33 +548,9 @@ const PerformanceDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {metrics?.system.memoryUsage.toFixed(1)}%
+                  {derivedMetrics.system.memoryUsage.toFixed(1)}%
                 </div>
-                <Progress value={metrics?.system.memoryUsage} className="mt-2" />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Disk Usage</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {metrics?.system.diskUsage.toFixed(1)}%
-                </div>
-                <Progress value={metrics?.system.diskUsage} className="mt-2" />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Network Latency</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {metrics?.system.networkLatency.toFixed(0)}ms
-                </div>
-                <p className="text-xs text-gray-600">avg latency</p>
+                <Progress value={derivedMetrics.system.memoryUsage} className="mt-2" />
               </CardContent>
             </Card>
           </div>

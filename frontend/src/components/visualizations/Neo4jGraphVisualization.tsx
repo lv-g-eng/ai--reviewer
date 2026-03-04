@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,9 +21,15 @@ import {
   Download,
   Upload,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Loader2,
+  Lock
 } from 'lucide-react';
 import ForceGraph2D from 'react-force-graph-2d';
+import { apiClientEnhanced } from '@/lib/api-client-enhanced';
+import { validateArchitectureAnalysis, type ArchitectureAnalysis } from '@/lib/validations/api-schemas';
+import { ErrorHandler } from '@/lib/error-handler';
+import { featureFlagsService } from '@/lib/feature-flags';
 
 interface Node {
   id: string;
@@ -50,11 +57,93 @@ interface Neo4jGraphVisualizationProps {
   className?: string;
 }
 
+/**
+ * Fetch Neo4j architecture graph data from API
+ * Validates Requirements: 1.4, 1.5, 2.7
+ */
+async function fetchNeo4jGraphData(analysisId: string): Promise<ArchitectureAnalysis> {
+  try {
+    const response = await apiClientEnhanced.get<ArchitectureAnalysis>(
+      `/architecture/${analysisId}/neo4j`
+    );
+    
+    // Validate response data
+    const validatedData = validateArchitectureAnalysis(response.data);
+    return validatedData;
+  } catch (error) {
+    // Handle and transform error
+    const errorInfo = ErrorHandler.handleError(error);
+    ErrorHandler.logError(errorInfo);
+    throw error;
+  }
+}
+
+/**
+ * Transform API data to Neo4j graph component format
+ * Validates Requirements: 4.1, 4.2
+ */
+function transformNeo4jGraphData(data: ArchitectureAnalysis): { nodes: Node[]; links: Link[] } {
+  // Transform nodes from API format to component format
+  const nodes: Node[] = data.nodes.map(node => {
+    const complexity = node.complexity || 5;
+    const isDrift = node.health === 'drift' || node.health === 'unhealthy';
+    
+    return {
+      id: node.id,
+      name: node.label,
+      type: node.type as Node['type'],
+      size: 50, // Default size
+      complexity,
+      coupling: node.metrics?.coupling,
+      isDrift,
+      layer: node.properties?.layer as string | undefined,
+      group: node.type,
+      cluster: node.properties?.cluster as number | undefined,
+    };
+  });
+
+  // Transform edges from API format to component format
+  const links: Link[] = data.edges.map(edge => ({
+    source: edge.source,
+    target: edge.target,
+    type: edge.type as Link['type'],
+    weight: edge.is_circular ? 2 : 1,
+    isDrift: edge.is_circular || edge.type === 'violates',
+  }));
+
+  return { nodes, links };
+}
+
 export default function Neo4jGraphVisualization({ analysisId, className }: Neo4jGraphVisualizationProps) {
+  // Check feature flag status - Validates Requirements: 10.2, 10.8
+  const isFeatureEnabled = featureFlagsService.isEnabled('neo4j-graph-production');
+  
+  // Use TanStack Query for data fetching with caching and retry logic
+  // Validates Requirements: 1.4, 1.5, 4.8
+  const {
+    data: architectureData,
+    isLoading,
+    error: queryError,
+    refetch,
+  } = useQuery({
+    queryKey: ['neo4jGraph', analysisId],
+    queryFn: () => fetchNeo4jGraphData(analysisId!),
+    enabled: !!analysisId && isFeatureEnabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+
+  // Transform API data to component format
+  const { nodes: apiNodes, links: apiLinks } = useMemo(() => {
+    if (!architectureData) {
+      return { nodes: [], links: [] };
+    }
+    return transformNeo4jGraphData(architectureData);
+  }, [architectureData]);
+
   const [nodes, setNodes] = useState<Node[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     showFiles: true,
     showClasses: true,
@@ -80,266 +169,15 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
   
   const graphRef = useRef<HTMLDivElement>(null);
 
+  // Update local state when API data changes
   useEffect(() => {
-    if (analysisId) {
-      loadGraphData();
+    if (apiNodes.length > 0) {
+      setNodes(apiNodes);
+      setLinks(apiLinks);
+      setGraphData({ nodes: apiNodes, links: apiLinks });
+      calculateGraphStats(apiNodes, apiLinks);
     }
-  }, [analysisId]);
-
-  const loadGraphData = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // In a real implementation, this would fetch from the backend
-      // For now, we'll generate sample data with realistic architecture
-      const sampleData = generateSampleNeo4jGraphData();
-      setGraphData(sampleData);
-      setNodes(sampleData.nodes);
-      setLinks(sampleData.links);
-      
-      // Calculate graph statistics
-      calculateGraphStats(sampleData.nodes, sampleData.links);
-    } catch (err) {
-      setError('Failed to load architecture graph data');
-      console.error('Error loading graph data:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const generateSampleNeo4jGraphData = () => {
-    // Generate sample architecture graph data with realistic patterns
-    const nodes: Node[] = [];
-    const links: Link[] = [];
-    
-    // Sample layers and modules for a typical web application
-    const layers = ['Controller', 'Service', 'Repository', 'Database', 'Domain'];
-    const modules = ['User', 'Auth', 'Product', 'Order', 'Payment', 'Notification'];
-    
-    // Create layer nodes
-    layers.forEach((layer, index) => {
-      nodes.push({
-        id: `layer-${layer}`,
-        name: layer,
-        type: 'layer',
-        size: 100,
-        layer: layer,
-        group: 'layers',
-        cluster: index
-      });
-    });
-
-    // Create module nodes with realistic architecture
-    modules.forEach((module, index) => {
-      const layer = layers[index % layers.length];
-      nodes.push({
-        id: `module-${module}`,
-        name: module,
-        type: 'module',
-        size: 80,
-        layer: layer,
-        group: 'modules',
-        cluster: index + 5
-      });
-      
-      // Link module to layer
-      links.push({
-        source: `module-${module}`,
-        target: `layer-${layer}`,
-        type: 'dependency',
-        weight: 1
-      });
-    });
-
-    // Create realistic file structure
-    const fileStructure = [
-      // Controller layer files
-      { path: 'controllers/user.py', layer: 'Controller', module: 'User', type: 'file' },
-      { path: 'controllers/auth.py', layer: 'Controller', module: 'Auth', type: 'file' },
-      { path: 'controllers/product.py', layer: 'Controller', module: 'Product', type: 'file' },
-      { path: 'controllers/order.py', layer: 'Controller', module: 'Order', type: 'file' },
-      
-      // Service layer files
-      { path: 'services/user_service.py', layer: 'Service', module: 'User', type: 'file' },
-      { path: 'services/auth_service.py', layer: 'Service', module: 'Auth', type: 'file' },
-      { path: 'services/product_service.py', layer: 'Service', module: 'Product', type: 'file' },
-      { path: 'services/order_service.py', layer: 'Service', module: 'Order', type: 'file' },
-      
-      // Repository layer files
-      { path: 'repositories/user_repo.py', layer: 'Repository', module: 'User', type: 'file' },
-      { path: 'repositories/product_repo.py', layer: 'Repository', module: 'Product', type: 'file' },
-      { path: 'repositories/order_repo.py', layer: 'Repository', module: 'Order', type: 'file' },
-      
-      // Domain models
-      { path: 'models/user.py', layer: 'Domain', module: 'User', type: 'file' },
-      { path: 'models/product.py', layer: 'Domain', module: 'Product', type: 'file' },
-      { path: 'models/order.py', layer: 'Domain', module: 'Order', type: 'file' },
-      { path: 'models/payment.py', layer: 'Domain', module: 'Payment', type: 'file' }
-    ];
-
-    fileStructure.forEach((file, index) => {
-      const complexity = Math.floor(Math.random() * 15) + 1;
-      const isDrift = Math.random() > 0.85; // 15% chance of drift
-      
-      nodes.push({
-        id: `file-${file.path}`,
-        name: file.path.split('/').pop() || file.path,
-        type: 'file',
-        size: 40,
-        complexity: complexity,
-        isDrift: isDrift,
-        layer: file.layer,
-        group: 'files',
-        cluster: layers.indexOf(file.layer) + 10
-      });
-      
-      // Link file to module
-      links.push({
-        source: `file-${file.path}`,
-        target: `module-${file.module}`,
-        type: 'dependency',
-        weight: 1
-      });
-      
-      // Link file to layer
-      links.push({
-        source: `file-${file.path}`,
-        target: `layer-${file.layer}`,
-        type: 'dependency',
-        weight: 0.5
-      });
-    });
-
-    // Create class nodes with realistic names
-    const classes = [
-      // Controllers
-      { name: 'UserController', layer: 'Controller', module: 'User', complexity: 8 },
-      { name: 'AuthController', layer: 'Controller', module: 'Auth', complexity: 6 },
-      { name: 'ProductController', layer: 'Controller', module: 'Product', complexity: 7 },
-      { name: 'OrderController', layer: 'Controller', module: 'Order', complexity: 9 },
-      
-      // Services
-      { name: 'UserService', layer: 'Service', module: 'User', complexity: 12 },
-      { name: 'AuthService', layer: 'Service', module: 'Auth', complexity: 10 },
-      { name: 'ProductService', layer: 'Service', module: 'Product', complexity: 11 },
-      { name: 'OrderService', layer: 'Service', module: 'Order', complexity: 14 },
-      
-      // Repositories
-      { name: 'UserRepository', layer: 'Repository', module: 'User', complexity: 6 },
-      { name: 'ProductRepository', layer: 'Repository', module: 'Product', complexity: 7 },
-      { name: 'OrderRepository', layer: 'Repository', module: 'Order', complexity: 8 },
-      
-      // Models
-      { name: 'User', layer: 'Domain', module: 'User', complexity: 4 },
-      { name: 'Product', layer: 'Domain', module: 'Product', complexity: 5 },
-      { name: 'Order', layer: 'Domain', module: 'Order', complexity: 6 },
-      { name: 'Payment', layer: 'Domain', module: 'Payment', complexity: 5 }
-    ];
-
-    classes.forEach((cls, index) => {
-      const file = fileStructure.find(f => f.module === cls.module && f.layer === cls.layer);
-      const isDrift = Math.random() > 0.9; // 10% chance of drift
-      
-      nodes.push({
-        id: `class-${cls.name}`,
-        name: cls.name,
-        type: 'class',
-        size: 60,
-        complexity: cls.complexity,
-        isDrift: isDrift,
-        layer: cls.layer,
-        group: 'classes',
-        cluster: layers.indexOf(cls.layer) + 15
-      });
-      
-      // Link class to file
-      if (file) {
-        links.push({
-          source: `class-${cls.name}`,
-          target: `file-${file.path}`,
-          type: 'containment',
-          weight: 2
-        });
-      }
-    });
-
-    // Create function nodes
-    const functions = [
-      // Controller methods
-      { name: 'get_user', layer: 'Controller', module: 'User', complexity: 3 },
-      { name: 'create_user', layer: 'Controller', module: 'User', complexity: 4 },
-      { name: 'login', layer: 'Controller', module: 'Auth', complexity: 5 },
-      { name: 'get_product', layer: 'Controller', module: 'Product', complexity: 3 },
-      { name: 'create_order', layer: 'Controller', module: 'Order', complexity: 6 },
-      
-      // Service methods
-      { name: 'validate_user', layer: 'Service', module: 'User', complexity: 4 },
-      { name: 'hash_password', layer: 'Service', module: 'Auth', complexity: 3 },
-      { name: 'calculate_total', layer: 'Service', module: 'Order', complexity: 5 },
-      { name: 'send_notification', layer: 'Service', module: 'Notification', complexity: 4 },
-      
-      // Repository methods
-      { name: 'find_by_id', layer: 'Repository', module: 'User', complexity: 2 },
-      { name: 'save', layer: 'Repository', module: 'User', complexity: 3 },
-      { name: 'find_all', layer: 'Repository', module: 'Product', complexity: 2 }
-    ];
-
-    functions.forEach((func, index) => {
-      const cls = classes.find(c => c.module === func.module && c.layer === func.layer);
-      
-      nodes.push({
-        id: `function-${func.name}`,
-        name: func.name,
-        type: 'function',
-        size: 20,
-        complexity: func.complexity,
-        layer: func.layer,
-        group: 'functions',
-        cluster: layers.indexOf(func.layer) + 20
-      });
-      
-      // Link function to class
-      if (cls) {
-        links.push({
-          source: `function-${func.name}`,
-          target: `class-${cls.name}`,
-          type: 'containment',
-          weight: 3
-        });
-      }
-    });
-
-    // Add realistic cross-layer dependencies (drift)
-    const driftLinks = [
-      // Controller -> Repository (should go through Service)
-      { source: 'class-UserController', target: 'class-UserRepository', type: 'violates', isDrift: true },
-      { source: 'class-ProductController', target: 'class-ProductRepository', type: 'violates', isDrift: true },
-      
-      // Service -> Database (should go through Repository)
-      { source: 'class-UserService', target: 'layer-Database', type: 'violates', isDrift: true },
-      
-      // Repository -> Service (circular dependency)
-      { source: 'class-UserRepository', target: 'class-UserService', type: 'violates', isDrift: true },
-      
-      // Controller -> Domain (should go through Service)
-      { source: 'class-OrderController', target: 'class-Order', type: 'violates', isDrift: true }
-    ];
-
-    driftLinks.forEach(link => {
-      if (nodes.find(n => n.id === link.source) && nodes.find(n => n.id === link.target)) {
-        links.push({
-          source: link.source,
-          target: link.target,
-          type: link.type as Link['type'],
-          weight: 2,
-          isDrift: link.isDrift
-        });
-      }
-    });
-
-    return { nodes, links };
-  };
+  }, [apiNodes, apiLinks]);
 
   const calculateGraphStats = (nodes: Node[], links: Link[]) => {
     // Calculate clustering coefficient
@@ -592,7 +430,7 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
           calculateGraphStats(data.nodes, data.links);
         }
       } catch (err) {
-        setError('Failed to parse imported graph data');
+        console.error('Failed to parse imported graph data:', err);
       }
     };
     reader.readAsText(file);
@@ -618,6 +456,18 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
     return { level: 'LOW', color: '#10b981' };
   };
 
+  // Handle retry for failed requests
+  const handleRetry = () => {
+    refetch();
+  };
+
+  // Get error message
+  const errorMessage = useMemo(() => {
+    if (!queryError) return null;
+    const errorInfo = ErrorHandler.handleError(queryError);
+    return errorInfo.userMessage;
+  }, [queryError]);
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -627,11 +477,11 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
             <CardTitle>Neo4j Architecture Graph Visualization</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={loadGraphData}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={handleRetry} disabled={isLoading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button variant="outline" size="sm" onClick={exportGraphData}>
+            <Button variant="outline" size="sm" onClick={exportGraphData} disabled={isLoading || !graphData}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -643,6 +493,7 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
                 accept=".json"
                 onChange={importGraphData}
                 className="hidden"
+                disabled={isLoading}
               />
             </label>
           </div>
@@ -650,6 +501,22 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
       </CardHeader>
       
       <CardContent>
+        {/* Feature Flag Disabled Placeholder - Validates Requirements: 10.8 */}
+        {!isFeatureEnabled ? (
+          <div className="w-full h-[600px] border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-center">
+            <div className="text-center max-w-md px-4">
+              <Lock className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Feature Not Available</h3>
+              <p className="text-gray-600 mb-4">
+                The Neo4j Graph visualization is currently disabled. This feature is being progressively rolled out.
+              </p>
+              <p className="text-sm text-gray-500">
+                Please contact your administrator if you need access to this feature.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Graph Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <div className="bg-gray-50 p-4 rounded-lg">
@@ -949,17 +816,36 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
           className="w-full h-[600px] border border-gray-200 rounded-lg bg-white relative"
         >
           {isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                <p className="mt-2 text-sm text-gray-600">Loading Neo4j graph...</p>
+                <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+                <p className="text-lg font-medium text-gray-900">Loading Neo4j graph...</p>
+                <p className="text-sm text-gray-600 mt-2">Fetching architecture data from server</p>
               </div>
             </div>
-          ) : error ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-red-600">
-                <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
-                <p>{error}</p>
+          ) : queryError ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-white">
+              <div className="text-center max-w-md px-4">
+                <AlertTriangle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Graph Data</h3>
+                <p className="text-sm text-gray-600 mb-4">{errorMessage}</p>
+                <div className="flex justify-center space-x-3">
+                  <Button onClick={handleRetry} variant="default">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry
+                  </Button>
+                  <Button onClick={() => window.location.reload()} variant="outline">
+                    Reload Page
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : filteredNodes.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-white">
+              <div className="text-center">
+                <Database className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">No graph data available</p>
+                <p className="text-sm text-gray-500 mt-2">Try adjusting your filters or refresh the data</p>
               </div>
             </div>
           ) : (
@@ -1055,6 +941,8 @@ export default function Neo4jGraphVisualization({ analysisId, className }: Neo4j
               );
             })()}
           </div>
+        )}
+          </>
         )}
       </CardContent>
     </Card>

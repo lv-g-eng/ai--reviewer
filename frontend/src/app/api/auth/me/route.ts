@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Call backend to get current user
-    const response = await fetch(`${BACKEND_URL}/api/v1/auth/me`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/rbac/auth/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

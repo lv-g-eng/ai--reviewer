@@ -11,8 +11,9 @@ Provides:
 - Exception logging with context
 - Sensitive data masking
 - 30-day log retention in CloudWatch (Requirement 7.10)
+- Local file log rotation with 30-day retention (Requirement 7.6)
 
-Validates Requirements: 7.1, 7.2, 7.10, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
+Validates Requirements: 7.1, 7.2, 7.6, 7.10, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
 """
 import logging
 import sys
@@ -21,6 +22,7 @@ import os
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from contextvars import ContextVar
+from logging.handlers import TimedRotatingFileHandler
 from pythonjsonlogger.json import JsonFormatter
 
 from app.core.error_reporter import ErrorReporter
@@ -118,6 +120,11 @@ def setup_logging(
     Configures logging to output structured JSON logs suitable for aggregation
     in centralized logging systems (CloudWatch, ELK stack).
     
+    Local file logging uses TimedRotatingFileHandler with:
+    - Daily rotation at midnight (UTC)
+    - 30-day retention (Requirement 7.6)
+    - Automatic cleanup of old log files
+    
     Args:
         level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         enable_json: Whether to use JSON formatting (Requirement 7.1)
@@ -125,7 +132,7 @@ def setup_logging(
         enable_cloudwatch: Whether to enable CloudWatch Logs (Requirement 7.2)
         cloudwatch_config: CloudWatch configuration (uses defaults if None)
         
-    Validates Requirements: 7.1, 7.2, 7.10, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
+    Validates Requirements: 7.1, 7.2, 7.6, 7.10, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
     """
     log_level = getattr(logging, level.upper())
     
@@ -148,10 +155,24 @@ def setup_logging(
     console_handler.setLevel(log_level)
     console_handler.setFormatter(formatter)
     
-    # File handler (optional, for local development)
-    file_handler = logging.FileHandler('app.log')
+    # File handler with rotation (Requirement 7.6)
+    # Rotates daily and keeps 30 days of logs
+    log_dir = os.getenv('LOG_DIR', 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+    log_file_path = os.path.join(log_dir, 'app.log')
+    
+    file_handler = TimedRotatingFileHandler(
+        filename=log_file_path,
+        when='midnight',  # Rotate at midnight
+        interval=1,  # Rotate every 1 day
+        backupCount=30,  # Keep 30 days of logs (Requirement 7.6)
+        encoding='utf-8',
+        utc=True  # Use UTC for rotation timing
+    )
     file_handler.setLevel(log_level)
     file_handler.setFormatter(formatter)
+    # Set suffix for rotated files (e.g., app.log.2024-01-15)
+    file_handler.suffix = "%Y-%m-%d"
     
     # Root logger
     root_logger = logging.getLogger()
@@ -190,7 +211,10 @@ def setup_logging(
             'log_level': level,
             'json_enabled': enable_json,
             'service_name': service_name,
-            'cloudwatch_enabled': cloudwatch_handler is not None
+            'cloudwatch_enabled': cloudwatch_handler is not None,
+            'log_file': log_file_path,
+            'log_rotation': 'daily',
+            'log_retention_days': 30
         }
     )
     

@@ -83,6 +83,12 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = Field(default=None, description="Anthropic Claude API key")
     OLLAMA_BASE_URL: Optional[str] = Field(default=None, description="Ollama local LLM base URL")
     
+    # OpenRouter Configuration (支持多模型访问)
+    OPENROUTER_API_KEY: Optional[str] = Field(default=None, description="OpenRouter API key")
+    OPENROUTER_BASE_URL: str = Field(default="https://openrouter.ai/api/v1", description="OpenRouter base URL")
+    DEFAULT_LLM_PROVIDER: str = Field(default="openai", description="Default LLM provider (openai, anthropic, openrouter)")
+    DEFAULT_LLM_MODEL: str = Field(default="gpt-4-turbo-preview", description="Default LLM model")
+    
     # Local LLM Configuration
     MODELS_DIR: str = "models"
     LLM_ENABLED: bool = True
@@ -94,7 +100,9 @@ class Settings(BaseSettings):
     # NON-SECRETS (safe to expose)
     # ========================================
 
-    # CORS Configuration (Requirement 8.8)
+    # CORS Configuration (Requirement 8.5)
+    # In production, restrict to specific approved domains only
+    # Use CORS_ALLOWED_ORIGINS environment variable to override defaults
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:8000", 
@@ -106,16 +114,31 @@ class Settings(BaseSettings):
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, v):
-        """Parse CORS_ORIGINS from environment variable if provided"""
+        """
+        Parse CORS_ALLOWED_ORIGINS from environment variable if provided.
+        
+        Supports comma-separated list of origins.
+        Example: CORS_ALLOWED_ORIGINS=https://app.example.com,https://www.example.com
+        
+        Validates Requirement 8.5
+        """
         if isinstance(v, str):
             # Split comma-separated string into list
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
+            origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+            return origins
         return v
     
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
     CORS_ALLOW_HEADERS: List[str] = [
-        "*",  # Allow all headers for development
+        "Content-Type",
+        "Authorization",
+        "Accept",
+        "Origin",
+        "User-Agent",
+        "DNT",
+        "Cache-Control",
+        "X-Requested-With",
     ]
     CORS_EXPOSE_HEADERS: List[str] = [
         "X-RateLimit-Limit",
@@ -125,8 +148,14 @@ class Settings(BaseSettings):
     ]
     CORS_MAX_AGE: int = 600  # 10 minutes
 
-    # Rate Limiting (Requirement 8.6)
+    # Rate Limiting (Requirement 8.3)
     RATE_LIMIT_PER_MINUTE: int = 100  # 100 requests per minute per user
+    RATE_LIMIT_PER_HOUR: int = 5000  # 5000 requests per hour per user
+
+    # Security Headers (Requirement 8.5)
+    ENABLE_HSTS: bool = Field(default=False, description="Enable HTTP Strict Transport Security")
+    HSTS_MAX_AGE: int = Field(default=31536000, description="HSTS max-age in seconds (default: 1 year)")
+    ENABLE_CSP: bool = Field(default=True, description="Enable Content Security Policy")
 
     # Password Security
     BCRYPT_ROUNDS: int = 12
@@ -416,6 +445,10 @@ class Settings(BaseSettings):
     def is_ollama_enabled(self) -> bool:
         """Check if Ollama local LLM is enabled (Requirement 1.4)"""
         return bool(self.OLLAMA_BASE_URL)
+    
+    def is_openrouter_enabled(self) -> bool:
+        """Check if OpenRouter integration is enabled"""
+        return bool(self.OPENROUTER_API_KEY)
 
     def is_ssl_enabled(self) -> bool:
         """Check if SSL/TLS is enabled (Requirement 8.5)"""

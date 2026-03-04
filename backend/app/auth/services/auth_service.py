@@ -35,23 +35,33 @@ class TokenPayload:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JWT encoding."""
         return {
-            "user_id": self.user_id,
+            "sub": self.user_id,  # Standard JWT claim for subject (user_id)
+            "user_id": self.user_id,  # Keep for backward compatibility
             "username": self.username,
             "role": self.role,
             "iat": self.iat,
             "exp": self.exp,
-            "jti": self.jti
+            "jti": self.jti,
+            "type": "access"  # Token type for validation
         }
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'TokenPayload':
         """Create TokenPayload from dictionary."""
+        # Support both "user_id" and "sub" fields for backward compatibility
+        user_id = data.get("user_id") or data.get("sub")
+        if not user_id:
+            raise KeyError("Token payload must contain either 'user_id' or 'sub' field")
+        
+        # Support both "username" and "email" fields
+        username = data.get("username") or data.get("email", "")
+        
         return cls(
-            user_id=data["user_id"],
-            username=data["username"],
+            user_id=user_id,
+            username=username,
             role=data["role"],
-            iat=data["iat"],
-            exp=data["exp"],
+            iat=data.get("iat", 0),
+            exp=data.get("exp", 0),
             jti=data.get("jti")  # Optional for backward compatibility
         )
 
@@ -108,6 +118,8 @@ class AuthService:
         Returns:
             JWT token as a string
         """
+        from app.core.config import settings as app_settings
+        
         now = datetime.now(timezone.utc)
         iat = int(now.timestamp())
         exp = int((now + timedelta(minutes=auth_settings.jwt_access_token_expire_minutes)).timestamp())
@@ -120,10 +132,11 @@ class AuthService:
             exp=exp
         )
         
+        # Use the main app JWT secret for consistency with token validation
         token = jwt.encode(
             payload.to_dict(),
-            auth_settings.jwt_secret_key,
-            algorithm=auth_settings.jwt_algorithm
+            app_settings.JWT_SECRET,
+            algorithm=app_settings.JWT_ALGORITHM
         )
         
         return token
@@ -204,14 +217,14 @@ class AuthService:
         return None
     
     @staticmethod
-    def login(db: DBSession, username: str, password: str, ip_address: str = "0.0.0.0", 
+    async def login(db: DBSession, username: str, password: str, ip_address: str = "0.0.0.0", 
               device_info: Optional[str] = None) -> AuthResult:
         """
         Authenticate a user and create a session.
         
         Args:
             db: Database session
-            username: User's username
+            username: User's username (email)
             password: User's password
             ip_address: IP address of the client
             device_info: Optional device information
@@ -219,9 +232,12 @@ class AuthService:
         Returns:
             AuthResult with success status, token, and user info or error message
         """
+        from sqlalchemy import select
+        
         try:
-            # Find user by username
-            user = db.query(User).filter(User.username == username).first()
+            # Find user by email (username parameter contains email)
+            result = await db.execute(select(User).filter(User.email == username))
+            user = result.scalar_one_or_none()
             
             # Generic error message to prevent username enumeration
             generic_error = "Invalid username or password"
@@ -238,33 +254,17 @@ class AuthService:
                 return AuthResult(success=False, error=generic_error)
             
             # Generate JWT token
-            token = AuthService.generate_token(user.id, user.username, user.role)
-            
-            # Create session record
-            now = datetime.now(timezone.utc)
-            expires_at = now + timedelta(minutes=auth_settings.session_expire_minutes)
-            
-            session = SessionModel(
-                id=str(uuid.uuid4()),
-                user_id=user.id,
-                token=token,
-                issued_at=now,
-                expires_at=expires_at,
-                is_valid=True,
-                device_info=device_info,
-                ip_address=ip_address
-            )
-            db.add(session)
+            token = AuthService.generate_token(user.id, user.email, user.role)
             
             # Update last login timestamp
-            user.last_login = now
+            user.last_login = now = datetime.now(timezone.utc)
             
-            db.commit()
+            await db.commit()
             
             # Return success with token and user info
             user_info = {
                 "id": user.id,
-                "username": user.username,
+                "email": user.email,
                 "role": user.role.value,
                 "created_at": user.created_at.isoformat(),
                 "last_login": user.last_login.isoformat() if user.last_login else None
@@ -273,7 +273,7 @@ class AuthService:
             return AuthResult(success=True, token=token, user=user_info)
             
         except Exception as e:
-            db.rollback()
+            await db.rollback()
             return AuthResult(success=False, error=f"An error occurred: {str(e)}")
     
     @staticmethod

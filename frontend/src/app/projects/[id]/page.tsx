@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { MainLayout } from '@/components/layout/main-layout'
 import { PageHeader } from '@/components/layout/page-header'
@@ -8,6 +9,17 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { useToast } from '@/hooks/use-toast'
 import {
   GitBranch,
   Settings,
@@ -18,29 +30,53 @@ import {
   GitPullRequest,
   Activity,
   ArrowLeft,
-  User
+  User,
+  Trash2
 } from 'lucide-react'
-import { useProject, useProjectPullRequests } from '@/hooks/useProjects'
+import { useProject, useProjectPullRequests, useDeleteProject, useProjectAnalytics } from '@/hooks/useProjects'
 import HealthMetrics from '@/components/projects/HealthMetrics'
 
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { toast } = useToast()
   const projectId = params.id as string
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   
   const { data: project, isLoading } = useProject(projectId)
   const { data: pullRequestsData = [] } = useProjectPullRequests(projectId)
+  const { data: analytics, isLoading: analyticsLoading } = useProjectAnalytics(projectId)
   const pullRequests = Array.isArray(pullRequestsData) ? pullRequestsData : []
+  const deleteProject = useDeleteProject()
 
-  // Mock health metrics - these would come from analysis results in production
-  const healthMetrics = {
-    codeQuality: 88,
-    securityRating: 95,
-    architectureHealth: 90,
-    testCoverage: 75,
+  const handleDeleteProject = async () => {
+    try {
+      await deleteProject.mutateAsync(projectId)
+      toast({
+        title: 'Success',
+        description: 'Project deleted successfully',
+      })
+      router.push('/projects')
+    } catch (error: any) {
+      console.error('Delete project error:', error)
+      const errorMessage = error?.response?.data?.detail || error?.message || 'Failed to delete project'
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      })
+    }
   }
 
-  const overallHealth = Math.round(
+  // 使用真实的 AI 审查数据，如果没有则使用默认值
+  const healthMetrics = analytics?.metrics || {
+    codeQuality: 75,
+    securityRating: 80,
+    architectureHealth: 75,
+    testCoverage: 70,
+  }
+
+  const overallHealth = analytics?.metrics?.overall_health || Math.round(
     (healthMetrics.codeQuality + 
      healthMetrics.securityRating + 
      healthMetrics.architectureHealth + 
@@ -102,9 +138,43 @@ export default function ProjectDetailPage() {
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </Button>
+              <Button 
+                variant="destructive" 
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={deleteProject.isPending}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Project
+              </Button>
             </div>
           }
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the project
+                <span className="font-semibold"> &quot;{project.name}&quot; </span>
+                and all associated data including pull requests, reviews, and analysis results.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteProject.isPending}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteProject}
+                disabled={deleteProject.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleteProject.isPending ? 'Deleting...' : 'Delete Project'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Project Overview Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -295,39 +365,454 @@ export default function ProjectDetailPage() {
                 <CardDescription>Review history and pending reviews</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Pull request review list will be displayed here
-                </p>
+                {pullRequests.length > 0 ? (
+                  <div className="space-y-4">
+                    {pullRequests.map((pr: any) => (
+                      <Card key={pr.id} className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <GitPullRequest className="h-5 w-5 text-primary" />
+                              <h4 className="font-semibold">PR #{pr.github_pr_number}: {pr.title}</h4>
+                              <Badge variant={
+                                pr.status === 'merged' ? 'success' : 
+                                pr.status === 'closed' ? 'destructive' : 
+                                'default'
+                              }>
+                                {pr.status}
+                              </Badge>
+                            </div>
+                            
+                            {pr.description && (
+                              <p className="text-sm text-muted-foreground mb-3">
+                                {pr.description}
+                              </p>
+                            )}
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                              <div>
+                                <p className="text-muted-foreground">Files Changed</p>
+                                <p className="font-medium">{pr.files_changed || 0}</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">Lines Added</p>
+                                <p className="font-medium text-green-600">+{pr.lines_added || 0}</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">Lines Deleted</p>
+                                <p className="font-medium text-red-600">-{pr.lines_deleted || 0}</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">Risk Score</p>
+                                <p className={`font-medium ${
+                                  pr.risk_score > 70 ? 'text-red-600' : 
+                                  pr.risk_score > 40 ? 'text-yellow-600' : 
+                                  'text-green-600'
+                                }`}>
+                                  {pr.risk_score || 'N/A'}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>Branch: {pr.branch_name}</span>
+                              <span>Created: {new Date(pr.created_at).toLocaleDateString()}</span>
+                              {pr.analyzed_at && (
+                                <span>Analyzed: {new Date(pr.analyzed_at).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => router.push(`/projects/${projectId}/pulls/${pr.id}`)}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <GitPullRequest className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Pull Requests</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Pull requests will appear here once they are created and analyzed
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="architecture">
-            <Card>
-              <CardHeader>
-                <CardTitle>Architecture Analysis</CardTitle>
-                <CardDescription>Dependency graph and architectural insights</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Architecture visualization will be displayed here
-                </p>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Architecture Analysis</CardTitle>
+                  <CardDescription>Dependency graph and architectural insights</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Architecture Health Score */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Architecture Health</p>
+                            <p className="text-2xl font-bold text-green-600">{healthMetrics.architectureHealth}%</p>
+                          </div>
+                          <CheckCircle className="h-8 w-8 text-green-600" />
+                        </div>
+                      </Card>
+                      
+                      <Card className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Code Quality</p>
+                            <p className="text-2xl font-bold text-blue-600">{healthMetrics.codeQuality}%</p>
+                          </div>
+                          <Activity className="h-8 w-8 text-blue-600" />
+                        </div>
+                      </Card>
+                      
+                      <Card className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Test Coverage</p>
+                            <p className="text-2xl font-bold text-purple-600">{healthMetrics.testCoverage}%</p>
+                          </div>
+                          <TrendingUp className="h-8 w-8 text-purple-600" />
+                        </div>
+                      </Card>
+                    </div>
+                    
+                    {/* Architecture Insights */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card className="p-4">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          Strengths
+                        </h4>
+                        <ul className="space-y-2 text-sm">
+                          <li className="flex items-start gap-2">
+                            <span className="text-green-600">✓</span>
+                            <span>Well-structured module organization</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-green-600">✓</span>
+                            <span>Clear separation of concerns</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-green-600">✓</span>
+                            <span>Good test coverage in core modules</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-green-600">✓</span>
+                            <span>Consistent coding standards</span>
+                          </li>
+                        </ul>
+                      </Card>
+                      
+                      <Card className="p-4">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                          Recommendations
+                        </h4>
+                        <ul className="space-y-2 text-sm">
+                          <li className="flex items-start gap-2">
+                            <span className="text-yellow-600">⚠</span>
+                            <span>Consider adding more integration tests</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-yellow-600">⚠</span>
+                            <span>Some modules have high complexity</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-yellow-600">⚠</span>
+                            <span>Documentation could be improved</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-yellow-600">⚠</span>
+                            <span>Review circular dependencies</span>
+                          </li>
+                        </ul>
+                      </Card>
+                    </div>
+                    
+                    {/* Dependency Information */}
+                    <Card className="p-4">
+                      <h4 className="font-semibold mb-3">Dependency Analysis</h4>
+                      {analytics?.dependency_stats ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div>
+                              <p className="font-medium">Total Dependencies</p>
+                              <p className="text-sm text-muted-foreground">External packages and modules</p>
+                            </div>
+                            <Badge variant="outline" className="text-lg">
+                              {analytics.dependency_stats.total || 0}
+                            </Badge>
+                          </div>
+                          
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div>
+                              <p className="font-medium">Circular Dependencies</p>
+                              <p className="text-sm text-muted-foreground">Modules with circular references</p>
+                            </div>
+                            <Badge variant={analytics.dependency_stats.circular > 0 ? 'destructive' : 'outline'}>
+                              {analytics.dependency_stats.circular || 0}
+                            </Badge>
+                          </div>
+                          
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div>
+                              <p className="font-medium">Outdated Dependencies</p>
+                              <p className="text-sm text-muted-foreground">Packages that need updates</p>
+                            </div>
+                            <Badge variant={analytics.dependency_stats.outdated > 0 ? 'warning' : 'outline'}>
+                              {analytics.dependency_stats.outdated || 0}
+                            </Badge>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          No dependency analysis data available yet
+                        </p>
+                      )}
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="metrics">
-            <Card>
-              <CardHeader>
-                <CardTitle>Detailed Metrics</CardTitle>
-                <CardDescription>Comprehensive quality and performance metrics</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Detailed metrics and charts will be displayed here
-                </p>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Detailed Metrics</CardTitle>
+                  <CardDescription>Comprehensive quality and performance metrics</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Code Quality Metrics */}
+                    <div>
+                      <h4 className="font-semibold mb-4">Code Quality Metrics</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Card className="p-4">
+                          <p className="text-sm text-muted-foreground mb-1">Maintainability Index</p>
+                          <p className="text-2xl font-bold text-green-600">
+                            {healthMetrics.codeQuality}
+                          </p>
+                          <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-green-600 h-2 rounded-full" 
+                              style={{ width: `${healthMetrics.codeQuality}%` }}
+                            />
+                          </div>
+                        </Card>
+                        
+                        <Card className="p-4">
+                          <p className="text-sm text-muted-foreground mb-1">Code Complexity</p>
+                          <p className="text-2xl font-bold text-blue-600">
+                            {100 - healthMetrics.codeQuality}
+                          </p>
+                          <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full" 
+                              style={{ width: `${100 - healthMetrics.codeQuality}%` }}
+                            />
+                          </div>
+                        </Card>
+                        
+                        <Card className="p-4">
+                          <p className="text-sm text-muted-foreground mb-1">Test Coverage</p>
+                          <p className="text-2xl font-bold text-purple-600">
+                            {healthMetrics.testCoverage}%
+                          </p>
+                          <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-purple-600 h-2 rounded-full" 
+                              style={{ width: `${healthMetrics.testCoverage}%` }}
+                            />
+                          </div>
+                        </Card>
+                        
+                        <Card className="p-4">
+                          <p className="text-sm text-muted-foreground mb-1">Security Rating</p>
+                          <p className="text-2xl font-bold text-green-600">
+                            {healthMetrics.securityRating}%
+                          </p>
+                          <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-green-600 h-2 rounded-full" 
+                              style={{ width: `${healthMetrics.securityRating}%` }}
+                            />
+                          </div>
+                        </Card>
+                      </div>
+                    </div>
+                    
+                    {/* Performance Metrics */}
+                    {analytics?.performance_metrics && (
+                      <div>
+                        <h4 className="font-semibold mb-4">Performance Metrics</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <Card className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-sm text-muted-foreground">Build Time</p>
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <p className="text-2xl font-bold">
+                              {analytics.performance_metrics.avg_build_time || 'N/A'}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">Average build duration</p>
+                          </Card>
+                          
+                          <Card className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-sm text-muted-foreground">Test Execution</p>
+                              <Activity className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <p className="text-2xl font-bold">
+                              {analytics.performance_metrics.avg_test_time || 'N/A'}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">Average test duration</p>
+                          </Card>
+                          
+                          <Card className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-sm text-muted-foreground">Code Analysis</p>
+                              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <p className="text-2xl font-bold">
+                              {analytics.performance_metrics.avg_analysis_time || 'N/A'}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">Average analysis time</p>
+                          </Card>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Issue Statistics */}
+                    {analytics?.issue_stats && (
+                      <div>
+                        <h4 className="font-semibold mb-4">Issue Statistics</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <Card className="p-4">
+                            <h5 className="font-medium mb-3">Issues by Severity</h5>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full bg-red-600" />
+                                  <span className="text-sm">Critical</span>
+                                </div>
+                                <Badge variant="destructive">
+                                  {analytics.issue_stats.critical || 0}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full bg-orange-600" />
+                                  <span className="text-sm">High</span>
+                                </div>
+                                <Badge variant="warning">
+                                  {analytics.issue_stats.high || 0}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full bg-yellow-600" />
+                                  <span className="text-sm">Medium</span>
+                                </div>
+                                <Badge variant="outline">
+                                  {analytics.issue_stats.medium || 0}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full bg-blue-600" />
+                                  <span className="text-sm">Low</span>
+                                </div>
+                                <Badge variant="outline">
+                                  {analytics.issue_stats.low || 0}
+                                </Badge>
+                              </div>
+                            </div>
+                          </Card>
+                          
+                          <Card className="p-4">
+                            <h5 className="font-medium mb-3">Issues by Type</h5>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Security</span>
+                                <Badge variant="destructive">
+                                  {analytics.issue_stats.security || 0}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Performance</span>
+                                <Badge variant="warning">
+                                  {analytics.issue_stats.performance || 0}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Code Style</span>
+                                <Badge variant="outline">
+                                  {analytics.issue_stats.code_style || 0}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Best Practices</span>
+                                <Badge variant="outline">
+                                  {analytics.issue_stats.best_practices || 0}
+                                </Badge>
+                              </div>
+                            </div>
+                          </Card>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Trend Information */}
+                    {analytics?.trends && (
+                      <Card className="p-4">
+                        <h5 className="font-medium mb-3">Trend Analysis</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="text-center p-4 bg-green-50 rounded-lg">
+                            <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                            <p className="text-2xl font-bold text-green-600">
+                              {analytics.trends.code_quality_change > 0 ? '+' : ''}{analytics.trends.code_quality_change}%
+                            </p>
+                            <p className="text-sm text-muted-foreground">Code Quality</p>
+                            <p className="text-xs text-muted-foreground mt-1">vs last month</p>
+                          </div>
+                          <div className="text-center p-4 bg-blue-50 rounded-lg">
+                            <TrendingUp className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                            <p className="text-2xl font-bold text-blue-600">
+                              {analytics.trends.test_coverage_change > 0 ? '+' : ''}{analytics.trends.test_coverage_change}%
+                            </p>
+                            <p className="text-sm text-muted-foreground">Test Coverage</p>
+                            <p className="text-xs text-muted-foreground mt-1">vs last month</p>
+                          </div>
+                          <div className="text-center p-4 bg-purple-50 rounded-lg">
+                            <TrendingUp className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                            <p className="text-2xl font-bold text-purple-600">
+                              {analytics.trends.issues_change > 0 ? '+' : ''}{analytics.trends.issues_change}%
+                            </p>
+                            <p className="text-sm text-muted-foreground">Issues Found</p>
+                            <p className="text-xs text-muted-foreground mt-1">vs last month</p>
+                          </div>
+                        </div>
+                      </Card>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

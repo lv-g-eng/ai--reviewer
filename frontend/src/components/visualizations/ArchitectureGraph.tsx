@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,13 @@ import {
   AlertTriangle,
   Eye,
   Download,
-  Upload
+  Loader2,
+  Lock
 } from 'lucide-react';
-// import ForceGraph2D from 'react-force-graph-2d';
+import { apiClientEnhanced } from '@/lib/api-client-enhanced';
+import { validateArchitectureAnalysis, type ArchitectureAnalysis } from '@/lib/validations/api-schemas';
+import { ErrorHandler } from '@/lib/error-handler';
+import { featureFlagsService } from '@/lib/feature-flags';
 
 interface Node {
   id: string;
@@ -27,6 +32,7 @@ interface Node {
   isDrift?: boolean;
   layer?: string;
   group?: string;
+  position?: { x: number; y: number };
 }
 
 interface Link {
@@ -37,15 +43,89 @@ interface Link {
 }
 
 interface ArchitectureGraphProps {
-  analysisId?: string;
+  analysisId: string;
   className?: string;
 }
 
+/**
+ * Fetch architecture analysis data from API
+ * Validates Requirements: 1.4, 1.5, 2.7
+ */
+async function fetchArchitectureData(analysisId: string): Promise<ArchitectureAnalysis> {
+  try {
+    const response = await apiClientEnhanced.get<ArchitectureAnalysis>(
+      `/architecture/${analysisId}`
+    );
+    
+    // Validate response data
+    const validatedData = validateArchitectureAnalysis(response.data);
+    return validatedData;
+  } catch (error) {
+    // Handle and transform error
+    const errorInfo = ErrorHandler.handleError(error);
+    ErrorHandler.logError(errorInfo);
+    throw error;
+  }
+}
+
+/**
+ * Transform API data to component format
+ * Validates Requirements: 4.1, 4.2
+ */
+function transformArchitectureData(data: ArchitectureAnalysis): { nodes: Node[]; links: Link[] } {
+  // Transform nodes from API format to component format
+  const nodes: Node[] = data.nodes.map(node => ({
+    id: node.id,
+    name: node.label,
+    type: node.type as Node['type'],
+    size: 50, // Default size
+    complexity: node.complexity,
+    isDrift: node.health === 'drift' || node.health === 'unhealthy',
+    layer: node.properties?.layer as string | undefined,
+    group: node.type,
+    position: node.position as { x: number; y: number } | undefined,
+  }));
+
+  // Transform edges from API format to component format
+  const links: Link[] = data.edges.map(edge => ({
+    source: edge.source,
+    target: edge.target,
+    type: edge.type as Link['type'],
+    weight: edge.is_circular ? 2 : 1,
+  }));
+
+  return { nodes, links };
+}
+
 export default function ArchitectureGraph({ analysisId, className }: ArchitectureGraphProps) {
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [links, setLinks] = useState<Link[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Check feature flag status
+  // Validates Requirements: 10.2, 10.8
+  const isFeatureEnabled = featureFlagsService.isEnabled('architecture-graph-production');
+  
+  // Use TanStack Query for data fetching with caching and retry logic
+  // Validates Requirements: 1.4, 1.5, 4.8
+  const {
+    data: architectureData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['architecture', analysisId],
+    queryFn: () => fetchArchitectureData(analysisId),
+    enabled: !!analysisId && isFeatureEnabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+
+  // Transform API data to component format
+  const { nodes, links } = useMemo(() => {
+    if (!architectureData) {
+      return { nodes: [], links: [] };
+    }
+    return transformArchitectureData(architectureData);
+  }, [architectureData]);
+
   const [filters, setFilters] = useState({
     showFiles: true,
     showClasses: true,
@@ -59,284 +139,8 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
   const [viewMode, setViewMode] = useState<'all' | 'drift' | 'complexity' | 'layers'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [, setGraphData] = useState<any>(null);
   
   const graphRef = useRef<HTMLDivElement>(null);
-
-  /**
-   * Memoized node types for React Flow
-   * Prevents unnecessary re-renders and warnings
-   * 
-   * Validates Requirements: 4.1, 4.3, 5.1
-   */
-  const nodeTypes = useMemo(() => ({
-    default: {
-      id: 'default-node',
-      component: 'div',
-      description: 'Default node type',
-    },
-    layer: {
-      id: 'layer-node',
-      component: 'div',
-      description: 'Layer node type',
-    },
-    module: {
-      id: 'module-node',
-      component: 'div',
-      description: 'Module node type',
-    },
-    file: {
-      id: 'file-node',
-      component: 'div',
-      description: 'File node type',
-    },
-    class: {
-      id: 'class-node',
-      component: 'div',
-      description: 'Class node type',
-    },
-    function: {
-      id: 'function-node',
-      component: 'div',
-      description: 'Function node type',
-    },
-  }), []);
-
-  /**
-   * Memoized edge types for React Flow
-   * Prevents unnecessary re-renders and warnings
-   * 
-   * Validates Requirements: 4.2, 4.3
-   */
-  const edgeTypes = useMemo(() => ({
-    default: {
-      id: 'default-edge',
-      component: 'line',
-      description: 'Default edge type',
-    },
-    import: {
-      id: 'import-edge',
-      component: 'line',
-      description: 'Import edge type',
-    },
-    inheritance: {
-      id: 'inheritance-edge',
-      component: 'line',
-      description: 'Inheritance edge type',
-    },
-    dependency: {
-      id: 'dependency-edge',
-      component: 'line',
-      description: 'Dependency edge type',
-    },
-    call: {
-      id: 'call-edge',
-      component: 'line',
-      description: 'Call edge type',
-    },
-    containment: {
-      id: 'containment-edge',
-      component: 'line',
-      description: 'Containment edge type',
-    },
-  }), []);
-
-  useEffect(() => {
-    if (analysisId) {
-      loadGraphData();
-    }
-  }, [analysisId]);
-
-  const loadGraphData = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // In a real implementation, this would fetch from the backend
-      // For now, we'll generate sample data
-      const sampleData = generateSampleGraphData();
-      setGraphData(sampleData);
-      setNodes(sampleData.nodes);
-      setLinks(sampleData.links);
-    } catch (err) {
-      setError('Failed to load architecture graph data');
-      console.error('Error loading graph data:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const generateSampleGraphData = () => {
-    // Generate sample architecture graph data
-    const nodes: Node[] = [];
-    const links: Link[] = [];
-    
-    // Sample layers and modules
-    const layers = ['UI', 'Service', 'Business', 'Data'];
-    const modules = ['User', 'Auth', 'Product', 'Order', 'Payment'];
-    
-    // Create layer nodes
-    layers.forEach((layer) => {
-      nodes.push({
-        id: `layer-${layer}`,
-        name: layer,
-        type: 'layer',
-        size: 100,
-        layer: layer,
-        group: 'layers'
-      });
-    });
-
-    // Create module nodes
-    modules.forEach((module, index) => {
-      const layer = layers[index % layers.length];
-      nodes.push({
-        id: `module-${module}`,
-        name: module,
-        type: 'module',
-        size: 80,
-        layer: layer,
-        group: 'modules'
-      });
-      
-      // Link module to layer
-      links.push({
-        source: `module-${module}`,
-        target: `layer-${layer}`,
-        type: 'dependency',
-        weight: 1
-      });
-    });
-
-    // Create file nodes with realistic names
-    const files = [
-      'components/App.tsx', 'components/Header.tsx', 'components/Footer.tsx',
-      'services/api.ts', 'services/auth.ts', 'services/user.ts',
-      'utils/helpers.ts', 'utils/validation.ts', 'utils/format.ts',
-      'models/User.ts', 'models/Product.ts', 'models/Order.ts',
-      'controllers/user.py', 'controllers/product.py', 'controllers/order.py',
-      'database/models.py', 'database/queries.py', 'database/connection.py'
-    ];
-
-    files.forEach((file, index) => {
-      const module = modules[index % modules.length];
-      const layer = layers[index % layers.length];
-      const complexity = Math.floor(Math.random() * 15) + 1;
-      const isDrift = Math.random() > 0.7; // 30% chance of drift
-      
-      nodes.push({
-        id: `file-${file}`,
-        name: file.split('/').pop() || file,
-        type: 'file',
-        size: 40,
-        complexity: complexity,
-        isDrift: isDrift,
-        layer: layer,
-        group: 'files'
-      });
-      
-      // Link file to module
-      links.push({
-        source: `file-${file}`,
-        target: `module-${module}`,
-        type: 'dependency',
-        weight: 1
-      });
-      
-      // Link file to layer
-      links.push({
-        source: `file-${file}`,
-        target: `layer-${layer}`,
-        type: 'dependency',
-        weight: 0.5
-      });
-    });
-
-    // Create class nodes with realistic names
-    const classes = [
-      'App', 'Header', 'Footer', 'ApiService', 'AuthService', 'UserService',
-      'User', 'Product', 'Order', 'Validator', 'Formatter', 'Database',
-      'UserController', 'ProductController', 'OrderController',
-      'UserModel', 'ProductModel', 'OrderModel'
-    ];
-
-    classes.forEach((className, index) => {
-      const file = files[index % files.length];
-      const complexity = Math.floor(Math.random() * 20) + 1;
-      const isDrift = Math.random() > 0.8; // 20% chance of drift
-      
-      nodes.push({
-        id: `class-${className}`,
-        name: className,
-        type: 'class',
-        size: 60,
-        complexity: complexity,
-        isDrift: isDrift,
-        layer: nodes.find(n => n.id === `file-${file}`)?.layer || 'Unknown',
-        group: 'classes'
-      });
-      
-      // Link class to file
-      links.push({
-        source: `class-${className}`,
-        target: `file-${file}`,
-        type: 'containment',
-        weight: 2
-      });
-    });
-
-    // Create function nodes with realistic names
-    const functions = [
-      'render', 'handleClick', 'fetchData', 'validateInput', 'formatDate',
-      'saveToDB', 'getUser', 'createOrder', 'calculateTotal', 'sendEmail',
-      'authenticate', 'authorize', 'encryptPassword', 'decryptPassword'
-    ];
-
-    functions.forEach((funcName, index) => {
-      const className = classes[index % classes.length];
-      const complexity = Math.floor(Math.random() * 10) + 1;
-      
-      nodes.push({
-        id: `function-${funcName}`,
-        name: funcName,
-        type: 'function',
-        size: 20,
-        complexity: complexity,
-        layer: nodes.find(n => n.id === `class-${className}`)?.layer || 'Unknown',
-        group: 'functions'
-      });
-      
-      // Link function to class
-      links.push({
-        source: `function-${funcName}`,
-        target: `class-${className}`,
-        type: 'containment',
-        weight: 3
-      });
-    });
-
-    // Add realistic cross-layer dependencies (drift)
-    const driftLinks = [
-      { source: 'file-components/Header.tsx', target: 'file-database/connection.py', type: 'import' },
-      { source: 'class-App', target: 'file-services/database.py', type: 'dependency' },
-      { source: 'function-render', target: 'class-Database', type: 'call' },
-      { source: 'class-UserService', target: 'file-database/models.py', type: 'import' },
-      { source: 'function-authenticate', target: 'file-database/queries.py', type: 'call' }
-    ];
-
-    driftLinks.forEach(link => {
-      if (nodes.find(n => n.id === link.source) && nodes.find(n => n.id === link.target)) {
-        links.push({
-          source: link.source,
-          target: link.target,
-          type: link.type as Link['type'],
-          weight: 2
-        });
-      }
-    });
-
-    return { nodes, links };
-  };
 
   const filteredNodes = nodes.filter(node => {
     // Filter by type
@@ -442,26 +246,6 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
     URL.revokeObjectURL(url);
   };
 
-  const importGraphData = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-        if (data.nodes && data.links) {
-          setGraphData(data);
-          setNodes(data.nodes);
-          setLinks(data.links);
-        }
-      } catch (err) {
-        setError('Failed to parse imported graph data');
-      }
-    };
-    reader.readAsText(file);
-  };
-
   const resetView = () => {
     // Placeholder for reset view functionality
     console.log('Reset view');
@@ -481,29 +265,35 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
             <CardTitle>Architecture Graph Visualization</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={loadGraphData}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
             <Button variant="outline" size="sm" onClick={exportGraphData}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <Upload className="h-4 w-4" />
-              <span className="text-sm">Import</span>
-              <Input
-                type="file"
-                accept=".json"
-                onChange={importGraphData}
-                className="hidden"
-              />
-            </label>
           </div>
         </div>
       </CardHeader>
       
       <CardContent>
+        {/* Feature Flag Disabled Placeholder - Validates Requirements: 10.8 */}
+        {!isFeatureEnabled ? (
+          <div className="w-full h-[600px] border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-center">
+            <div className="text-center max-w-md px-4">
+              <Lock className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Feature Not Available</h3>
+              <p className="text-gray-600 mb-4">
+                The Architecture Graph visualization is currently disabled. This feature is being progressively rolled out.
+              </p>
+              <p className="text-sm text-gray-500">
+                Please contact your administrator if you need access to this feature.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Controls */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           {/* Search */}
@@ -726,17 +516,25 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
           className="w-full h-[600px] border border-gray-200 rounded-lg bg-white relative"
         >
           {isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                <p className="mt-2 text-sm text-gray-600">Loading architecture graph...</p>
+                <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+                <p className="text-lg font-medium text-gray-700">Loading architecture graph...</p>
+                <p className="mt-2 text-sm text-gray-500">Fetching data from server</p>
               </div>
             </div>
           ) : error ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-red-600">
-                <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
-                <p>{error}</p>
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+              <div className="text-center max-w-md px-4">
+                <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-600" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Architecture Graph</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {ErrorHandler.getUserMessage(ErrorHandler.handleError(error))}
+                </p>
+                <Button onClick={() => refetch()} variant="default">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
               </div>
             </div>
           ) : (
@@ -750,11 +548,18 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
                   
                   if (!sourceNode || !targetNode) return null;
 
-                  // Simple positioning for demo
-                  const x1 = Math.random() * 700 + 50;
-                  const y1 = Math.random() * 500 + 50;
-                  const x2 = Math.random() * 700 + 50;
-                  const y2 = Math.random() * 500 + 50;
+                  // Use position from API data if available, otherwise use deterministic layout
+                  const sourceIdx = filteredNodes.findIndex(n => n.id === link.source);
+                  const targetIdx = filteredNodes.findIndex(n => n.id === link.target);
+                  
+                  // Get positions from API data or calculate deterministic positions
+                  const sourcePos = nodes.find(n => n.id === link.source)?.position;
+                  const targetPos = nodes.find(n => n.id === link.target)?.position;
+                  
+                  const x1 = sourcePos?.x ?? ((sourceIdx * 137) % 700) + 50;
+                  const y1 = sourcePos?.y ?? ((sourceIdx * 211) % 500) + 50;
+                  const x2 = targetPos?.x ?? ((targetIdx * 137) % 700) + 50;
+                  const y2 = targetPos?.y ?? ((targetIdx * 211) % 500) + 50;
 
                   return (
                     <line
@@ -771,10 +576,13 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
                 })}
 
                 {/* Nodes */}
-                {filteredNodes.map((node) => {
-                  // Simple positioning for demo
-                  const x = Math.random() * 700 + 50;
-                  const y = Math.random() * 500 + 50;
+                {filteredNodes.map((node, nodeIndex) => {
+                  // Use position from API data if available, otherwise use deterministic layout
+                  const apiNode = nodes.find(n => n.id === node.id);
+                  const nodePos = apiNode?.position;
+                  
+                  const x = nodePos?.x ?? ((nodeIndex * 137) % 700) + 50;
+                  const y = nodePos?.y ?? ((nodeIndex * 211) % 500) + 50;
 
                   return (
                     <g key={node.id} transform={`translate(${x}, ${y})`}>
@@ -917,6 +725,8 @@ export default function ArchitectureGraph({ analysisId, className }: Architectur
               );
             })()}
           </div>
+        )}
+          </>
         )}
       </CardContent>
     </Card>

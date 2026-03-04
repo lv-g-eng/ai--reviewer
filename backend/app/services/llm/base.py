@@ -15,6 +15,7 @@ class LLMProviderType(str, Enum):
     """Supported LLM provider types"""
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
+    OPENROUTER = "openrouter"
 
 
 @dataclass

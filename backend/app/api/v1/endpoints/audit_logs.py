@@ -6,19 +6,23 @@ This module provides REST API endpoints for querying and exporting audit logs.
 Validates Requirements: 15.6, 15.7
 """
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 import uuid
 import io
+import logging
 
 from app.database.postgresql import get_db
 from app.services.audit_logging_service import AuditLoggingService
 from app.api.dependencies import get_current_user
 
 router = APIRouter(tags=["audit-logs"])
+
+# Logger instance
+logger = logging.getLogger(__name__)
 
 
 # ========================================
@@ -421,3 +425,152 @@ async def get_audit_log_statistics(
             "end": end_date.isoformat() if end_date else None,
         }
     }
+
+
+# ========================================
+# Feature Flag Audit Endpoint
+# ========================================
+
+class FeatureFlagChangeLog(BaseModel):
+    """Request model for feature flag change logging"""
+    flag_name: str = Field(..., description="Name of the feature flag")
+    old_value: bool = Field(..., description="Previous value of the flag")
+    new_value: bool = Field(..., description="New value of the flag")
+    user_id: Optional[str] = Field(None, description="User who made the change")
+    timestamp: Optional[datetime] = Field(None, description="Timestamp of the change")
+    metadata: Optional[dict] = Field(None, description="Additional metadata")
+
+
+class FeatureFlagAuditResponse(BaseModel):
+    """Response model for feature flag audit logging"""
+    success: bool = Field(..., description="Whether the log was recorded successfully")
+    log_id: str = Field(..., description="ID of the created audit log entry")
+    message: str = Field(..., description="Status message")
+
+
+@router.post(
+    "/feature-flags",
+    response_model=FeatureFlagAuditResponse,
+    summary="Log feature flag state change",
+    description="Log feature flag state changes for audit purposes. Records timestamp, user, flag name, old value, and new value.",
+    status_code=200,
+)
+async def log_feature_flag_change(
+    change_log: FeatureFlagChangeLog,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Log feature flag state change for audit purposes.
+
+    Validates Requirement: 10.6
+
+    This endpoint logs all feature flag state changes including:
+    - Timestamp of the change
+    - User identifier who made the change
+    - Flag name
+    - Old value (previous state)
+    - New value (new state)
+    - Additional metadata
+
+    The logs are stored in the audit log system and can be queried
+    using the audit log query endpoints.
+
+    Args:
+        change_log: Feature flag change information
+        db: Database session
+        current_user: Authenticated user making the request
+
+    Returns:
+        FeatureFlagAuditResponse with success status and log ID
+    """
+    try:
+        # Use the provided user_id or fall back to current_user
+        user_id = change_log.user_id or current_user.get("id")
+        user_email = current_user.get("email", "unknown")
+
+        # Use provided timestamp or current time
+        timestamp = change_log.timestamp or datetime.now(timezone.utc)
+
+        # Create audit logging service
+        from app.services.audit_logging_service import AuditLoggingService, AuditEventType
+        audit_service = AuditLoggingService(db)
+
+        # Prepare metadata
+        metadata = change_log.metadata or {}
+        metadata.update({
+            "flag_name": change_log.flag_name,
+            "old_value": change_log.old_value,
+            "new_value": change_log.new_value,
+            "changed_at": timestamp.isoformat(),
+        })
+
+        # Log the feature flag change
+        log_id = await audit_service.log_event(
+            event_type=AuditEventType.FEATURE_FLAG_CHANGE,
+            event_category="admin",
+            severity="info",
+            user_id=uuid.UUID(user_id) if user_id else None,
+            user_email=user_email,
+            action="update_feature_flag",
+            description=f"Feature flag '{change_log.flag_name}' changed from {change_log.old_value} to {change_log.new_value}",
+            resource_type="feature_flag",
+            resource_id=change_log.flag_name,
+            resource_name=change_log.flag_name,
+            success=True,
+            previous_state={"enabled": change_log.old_value},
+            new_state={"enabled": change_log.new_value},
+            changes={"enabled": {"from": change_log.old_value, "to": change_log.new_value}},
+            metadata=metadata,
+        )
+
+        # Also log to structured logging system
+        logger.info(
+            "Feature flag state changed",
+            extra={
+                "event_type": "feature_flag_change",
+                "flag_name": change_log.flag_name,
+                "old_value": change_log.old_value,
+                "new_value": change_log.new_value,
+                "user_id": user_id,
+                "user_email": user_email,
+                "timestamp": timestamp.isoformat(),
+                "log_id": str(log_id),
+            }
+        )
+
+        return FeatureFlagAuditResponse(
+            success=True,
+            log_id=str(log_id),
+            message=f"Feature flag change logged successfully"
+        )
+
+    except ValueError as e:
+        # Handle invalid UUID or other validation errors
+        logger.error(
+            "Invalid feature flag change log data",
+            extra={
+                "error": str(e),
+                "flag_name": change_log.flag_name,
+            }
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid data: {str(e)}"
+        )
+    except Exception as e:
+        # Handle unexpected errors
+        logger.error(
+            "Failed to log feature flag change",
+            extra={
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "flag_name": change_log.flag_name,
+            },
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to log feature flag change"
+        )
+

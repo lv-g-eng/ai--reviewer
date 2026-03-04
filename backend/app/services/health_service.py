@@ -8,6 +8,7 @@ Validates Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6
 """
 
 import logging
+import time
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from typing import Dict, Optional
@@ -15,6 +16,10 @@ from enum import Enum
 
 from app.core.config import settings
 from app.database.connection_manager import get_connection_manager
+from app.core.prometheus_metrics import (
+    record_health_check,
+    set_dependency_status
+)
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +132,7 @@ class HealthService:
         Validates Requirements: 12.1, 12.2, 12.3, 12.4, 4.1, 4.4, 4.5
         """
         logger.info("Checking application health...")
+        start_time = time.time()
         
         # Check database connections (includes response times)
         db_status = await self.connection_manager.verify_all()
@@ -144,6 +150,9 @@ class HealthService:
                 error=status.error  # Error message included when dependency fails
             )
             
+            # Record dependency status metric
+            set_dependency_status(service_name, status.is_connected)
+            
             if status.is_connected:
                 any_connected = True
             elif status.is_critical:
@@ -160,6 +169,7 @@ class HealthService:
                 is_available=celery_available,
                 error=None if celery_available else "Celery broker unavailable"
             )
+            set_dependency_status("Celery", celery_available)
         
         # Check LLM service if enabled
         if settings.LLM_ENABLED:
@@ -169,6 +179,7 @@ class HealthService:
                 is_available=llm_available,
                 error=None if llm_available else "LLM service unavailable"
             )
+            set_dependency_status("LLM", llm_available)
         
         # Determine overall health status
         if all_critical_connected and any_connected:
@@ -186,6 +197,10 @@ class HealthService:
             databases=databases,
             services=services,
         )
+        
+        # Record health check duration
+        duration = time.time() - start_time
+        record_health_check('health', duration)
         
         logger.info(f"Health check: {health_status.value}")
         return response
@@ -205,6 +220,7 @@ class HealthService:
         Validates Requirements: 12.5, 4.2
         """
         logger.info("Checking readiness...")
+        start_time = time.time()
         
         # Check PostgreSQL connection
         postgres_status = await self.connection_manager.verify_postgres()
@@ -217,6 +233,11 @@ class HealthService:
                 timestamp=datetime.now(timezone.utc).isoformat(),
             )
             logger.warning(f"Not ready: PostgreSQL not connected - {error_msg}")
+            
+            # Record readiness check duration
+            duration = time.time() - start_time
+            record_health_check('readiness', duration)
+            
             return response
         
         # Check migrations (if available)
@@ -232,6 +253,11 @@ class HealthService:
                     timestamp=datetime.now(timezone.utc).isoformat(),
                 )
                 logger.warning(f"Not ready: {migration_status.pending_count} pending migrations")
+                
+                # Record readiness check duration
+                duration = time.time() - start_time
+                record_health_check('readiness', duration)
+                
                 return response
         except Exception as e:
             logger.warning(f"Could not check migration status: {e}")
@@ -242,6 +268,11 @@ class HealthService:
             reason="All required dependencies ready",
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
+        
+        # Record readiness check duration
+        duration = time.time() - start_time
+        record_health_check('readiness', duration)
+        
         logger.info("Ready")
         return response
     
@@ -258,13 +289,76 @@ class HealthService:
         Validates Requirements: 12.6, 4.3
         """
         logger.info("Checking liveness...")
+        start_time = time.time()
         
         response = LivenessCheckResponse(
             alive=True,
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
+        
+        # Record liveness check duration
+        duration = time.time() - start_time
+        record_health_check('liveness', duration)
+        
         logger.info("Alive")
         return response
+    
+    async def check_postgres(self) -> DatabaseHealth:
+        """
+        Check PostgreSQL database health.
+        
+        Returns:
+            DatabaseHealth with PostgreSQL connection status and response time
+            
+        Validates Requirements: 2.6, 7.5
+        """
+        logger.info("Checking PostgreSQL health...")
+        status = await self.connection_manager.verify_postgres()
+        
+        return DatabaseHealth(
+            name="PostgreSQL",
+            is_connected=status.is_connected,
+            response_time_ms=status.response_time_ms,
+            error=status.error
+        )
+    
+    async def check_neo4j(self) -> DatabaseHealth:
+        """
+        Check Neo4j database health.
+        
+        Returns:
+            DatabaseHealth with Neo4j connection status and response time
+            
+        Validates Requirements: 2.6, 7.5
+        """
+        logger.info("Checking Neo4j health...")
+        status = await self.connection_manager.verify_neo4j()
+        
+        return DatabaseHealth(
+            name="Neo4j",
+            is_connected=status.is_connected,
+            response_time_ms=status.response_time_ms,
+            error=status.error
+        )
+    
+    async def check_redis(self) -> DatabaseHealth:
+        """
+        Check Redis database health.
+        
+        Returns:
+            DatabaseHealth with Redis connection status and response time
+            
+        Validates Requirements: 2.6, 7.5
+        """
+        logger.info("Checking Redis health...")
+        status = await self.connection_manager.verify_redis()
+        
+        return DatabaseHealth(
+            name="Redis",
+            is_connected=status.is_connected,
+            response_time_ms=status.response_time_ms,
+            error=status.error
+        )
     
     async def check_dependency(self, name: str) -> DatabaseHealth:
         """
@@ -282,60 +376,62 @@ class HealthService:
         Validates Requirements: 4.1, 4.4, 4.5
         """
         logger.info(f"Checking dependency: {name}")
+        start_time = time.time()
+        
+        result = None
         
         # Check database dependencies
-        if name in ["PostgreSQL", "Neo4j", "Redis"]:
-            if name == "PostgreSQL":
-                status = await self.connection_manager.verify_postgres()
-            elif name == "Neo4j":
-                status = await self.connection_manager.verify_neo4j()
-            elif name == "Redis":
-                status = await self.connection_manager.verify_redis()
-            
-            return DatabaseHealth(
-                name=name,
-                is_connected=status.is_connected,
-                response_time_ms=status.response_time_ms,
-                error=status.error
-            )
+        if name == "PostgreSQL":
+            result = await self.check_postgres()
+        elif name == "Neo4j":
+            result = await self.check_neo4j()
+        elif name == "Redis":
+            result = await self.check_redis()
         
         # Check service dependencies
         elif name == "Celery":
             if not settings.is_celery_enabled():
-                return DatabaseHealth(
+                result = DatabaseHealth(
                     name=name,
                     is_connected=False,
                     response_time_ms=0.0,
                     error="Celery is not enabled"
                 )
-            
-            celery_available = await self._check_celery_health()
-            return DatabaseHealth(
-                name=name,
-                is_connected=celery_available,
-                response_time_ms=0.0,
-                error=None if celery_available else "Celery broker unavailable"
-            )
+            else:
+                celery_available = await self._check_celery_health()
+                result = DatabaseHealth(
+                    name=name,
+                    is_connected=celery_available,
+                    response_time_ms=0.0,
+                    error=None if celery_available else "Celery broker unavailable"
+                )
         
         elif name == "LLM":
             if not settings.LLM_ENABLED:
-                return DatabaseHealth(
+                result = DatabaseHealth(
                     name=name,
                     is_connected=False,
                     response_time_ms=0.0,
                     error="LLM service is not enabled"
                 )
-            
-            llm_available = await self._check_llm_health()
-            return DatabaseHealth(
-                name=name,
-                is_connected=llm_available,
-                response_time_ms=0.0,
-                error=None if llm_available else "LLM service unavailable"
-            )
+            else:
+                llm_available = await self._check_llm_health()
+                result = DatabaseHealth(
+                    name=name,
+                    is_connected=llm_available,
+                    response_time_ms=0.0,
+                    error=None if llm_available else "LLM service unavailable"
+                )
         
         else:
             raise ValueError(f"Unknown dependency: {name}")
+        
+        # Record dependency check duration and status
+        duration = time.time() - start_time
+        record_health_check('dependency', duration)
+        set_dependency_status(name, result.is_connected)
+        
+        return result
     
     async def _check_celery_health(self) -> bool:
         """

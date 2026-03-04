@@ -212,6 +212,30 @@ github_api_rate_limit_remaining = Gauge(
     registry=REGISTRY
 )
 
+# Application Metrics - Application info and health
+from prometheus_client import Info
+
+app_info = Info(
+    'app',
+    'Application information',
+    registry=REGISTRY
+)
+
+health_check_duration_seconds = Histogram(
+    'health_check_duration_seconds',
+    'Duration of health checks in seconds',
+    ['check_type'],
+    registry=REGISTRY,
+    buckets=(0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0)
+)
+
+dependency_status = Gauge(
+    'dependency_status',
+    'Status of each dependency (1=healthy, 0=unhealthy)',
+    ['dependency_name'],
+    registry=REGISTRY
+)
+
 
 def get_metrics() -> bytes:
     """
@@ -467,3 +491,43 @@ def record_github_api_request(operation: str, status: str = 'success'):
         operation=operation,
         status=status
     ).inc()
+
+
+def set_app_info(version: str, environment: str):
+    """
+    Set application information metric.
+    
+    Args:
+        version: Application version
+        environment: Environment name (production, staging, development)
+    """
+    app_info.info({
+        'version': version,
+        'environment': environment
+    })
+
+
+def record_health_check(check_type: str, duration: float):
+    """
+    Record health check duration.
+    
+    Args:
+        check_type: Type of health check (health, readiness, liveness, dependency)
+        duration: Duration in seconds
+    """
+    health_check_duration_seconds.labels(
+        check_type=check_type
+    ).observe(duration)
+
+
+def set_dependency_status(dependency_name: str, is_healthy: bool):
+    """
+    Set dependency health status.
+    
+    Args:
+        dependency_name: Name of the dependency (PostgreSQL, Neo4j, Redis, etc.)
+        is_healthy: True if healthy, False if unhealthy
+    """
+    dependency_status.labels(
+        dependency_name=dependency_name
+    ).set(1 if is_healthy else 0)

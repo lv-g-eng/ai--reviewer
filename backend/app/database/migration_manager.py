@@ -7,6 +7,10 @@ from typing import List, Optional
 from pathlib import Path
 import subprocess
 import sys
+from datetime import datetime
+import json
+import shutil
+import os
 
 from alembic.config import Config
 from alembic.script import ScriptDirectory
@@ -67,6 +71,10 @@ class MigrationManager:
         self.alembic_config = Config(str(self.alembic_ini_path))
         self.alembic_config.set_main_option('sqlalchemy.url', settings.sync_postgres_url)
         self.encoding_validator = EncodingValidator()
+        
+        # Backup directory
+        self.backup_dir = Path(__file__).parent.parent.parent / "backups"
+        self.backup_dir.mkdir(exist_ok=True)
         
     async def check_pending_migrations(self) -> List[str]:
         """
@@ -535,6 +543,223 @@ class MigrationManager:
                 fixed_content=None,
                 errors=[f"Error handling non-UTF-8 characters: {e}"]
             )
+    
+    async def rollback_migration(self, revision: str) -> bool:
+        """
+        Rollback database to a specific migration revision
+        
+        Args:
+            revision: Target revision to rollback to (e.g., "abc123" or "-1" for previous)
+            
+        Returns:
+            True if rollback was successful, False otherwise
+        """
+        try:
+            logger.info(f"Rolling back database to revision: {revision}")
+            
+            # Create backup before rollback
+            backup_id = await self.create_backup()
+            if not backup_id:
+                logger.error("Failed to create backup before rollback, aborting")
+                return False
+            
+            logger.info(f"Created backup {backup_id} before rollback")
+            
+            # Run alembic downgrade
+            result = subprocess.run(
+                [sys.executable, "-m", "alembic", "downgrade", revision],
+                cwd=str(self.alembic_ini_path.parent.parent),
+                capture_output=True,
+                text=True,
+                timeout=300
+            )
+            
+            if result.returncode != 0:
+                logger.error(f"Rollback failed: {result.stderr}")
+                logger.info(f"Backup {backup_id} is available for manual restoration")
+                return False
+            
+            logger.info(f"Successfully rolled back to revision {revision}")
+            logger.debug(f"Rollback output: {result.stdout}")
+            return True
+            
+        except subprocess.TimeoutExpired:
+            logger.error("Rollback timeout (exceeded 300 seconds)")
+            return False
+        except Exception as e:
+            logger.error(f"Error during rollback: {e}")
+            return False
+    
+    async def create_backup(self) -> Optional[str]:
+        """
+        Create a backup of the PostgreSQL database
+        
+        Returns:
+            Backup ID (timestamp-based) if successful, None otherwise
+        """
+        try:
+            # Generate backup ID based on timestamp
+            backup_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_path = self.backup_dir / f"postgres_backup_{backup_id}.sql"
+            
+            logger.info(f"Creating database backup: {backup_id}")
+            
+            # Use pg_dump to create backup
+            env = os.environ.copy()
+            env['PGPASSWORD'] = settings.POSTGRES_PASSWORD
+            
+            result = subprocess.run(
+                [
+                    "pg_dump",
+                    "-h", settings.POSTGRES_HOST,
+                    "-p", str(settings.POSTGRES_PORT),
+                    "-U", settings.POSTGRES_USER,
+                    "-d", settings.POSTGRES_DB,
+                    "-F", "c",  # Custom format (compressed)
+                    "-f", str(backup_path)
+                ],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=600
+            )
+            
+            if result.returncode != 0:
+                logger.error(f"Backup failed: {result.stderr}")
+                return None
+            
+            # Create metadata file
+            metadata = {
+                "backup_id": backup_id,
+                "timestamp": datetime.now().isoformat(),
+                "database": settings.POSTGRES_DB,
+                "host": settings.POSTGRES_HOST,
+                "backup_file": str(backup_path),
+                "size_bytes": backup_path.stat().st_size if backup_path.exists() else 0
+            }
+            
+            metadata_path = self.backup_dir / f"postgres_backup_{backup_id}.json"
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            
+            logger.info(f"Backup created successfully: {backup_id} ({metadata['size_bytes']} bytes)")
+            return backup_id
+            
+        except subprocess.TimeoutExpired:
+            logger.error("Backup timeout (exceeded 600 seconds)")
+            return None
+        except Exception as e:
+            logger.error(f"Error creating backup: {e}")
+            return None
+    
+    async def restore_backup(self, backup_id: str) -> bool:
+        """
+        Restore database from a backup
+        
+        Args:
+            backup_id: Backup ID to restore from
+            
+        Returns:
+            True if restoration was successful, False otherwise
+        """
+        try:
+            backup_path = self.backup_dir / f"postgres_backup_{backup_id}.sql"
+            metadata_path = self.backup_dir / f"postgres_backup_{backup_id}.json"
+            
+            if not backup_path.exists():
+                logger.error(f"Backup file not found: {backup_path}")
+                return False
+            
+            logger.info(f"Restoring database from backup: {backup_id}")
+            
+            # Load metadata
+            if metadata_path.exists():
+                with open(metadata_path, 'r') as f:
+                    metadata = json.load(f)
+                logger.info(f"Backup metadata: {metadata}")
+            
+            # Use pg_restore to restore backup
+            env = os.environ.copy()
+            env['PGPASSWORD'] = settings.POSTGRES_PASSWORD
+            
+            # First, drop and recreate the database (requires superuser or database owner)
+            # Note: This is a destructive operation
+            logger.warning(f"Dropping and recreating database: {settings.POSTGRES_DB}")
+            
+            # Connect to postgres database to drop/create target database
+            drop_result = subprocess.run(
+                [
+                    "psql",
+                    "-h", settings.POSTGRES_HOST,
+                    "-p", str(settings.POSTGRES_PORT),
+                    "-U", settings.POSTGRES_USER,
+                    "-d", "postgres",
+                    "-c", f"DROP DATABASE IF EXISTS {settings.POSTGRES_DB};"
+                ],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            
+            if drop_result.returncode != 0:
+                logger.error(f"Failed to drop database: {drop_result.stderr}")
+                return False
+            
+            create_result = subprocess.run(
+                [
+                    "psql",
+                    "-h", settings.POSTGRES_HOST,
+                    "-p", str(settings.POSTGRES_PORT),
+                    "-U", settings.POSTGRES_USER,
+                    "-d", "postgres",
+                    "-c", f"CREATE DATABASE {settings.POSTGRES_DB};"
+                ],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            
+            if create_result.returncode != 0:
+                logger.error(f"Failed to create database: {create_result.stderr}")
+                return False
+            
+            # Restore the backup
+            result = subprocess.run(
+                [
+                    "pg_restore",
+                    "-h", settings.POSTGRES_HOST,
+                    "-p", str(settings.POSTGRES_PORT),
+                    "-U", settings.POSTGRES_USER,
+                    "-d", settings.POSTGRES_DB,
+                    "-F", "c",  # Custom format
+                    str(backup_path)
+                ],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=600
+            )
+            
+            if result.returncode != 0:
+                # pg_restore may return non-zero even on success due to warnings
+                # Check if there are actual errors
+                if "error" in result.stderr.lower():
+                    logger.error(f"Restore failed: {result.stderr}")
+                    return False
+                else:
+                    logger.warning(f"Restore completed with warnings: {result.stderr}")
+            
+            logger.info(f"Database restored successfully from backup: {backup_id}")
+            return True
+            
+        except subprocess.TimeoutExpired:
+            logger.error("Restore timeout (exceeded 600 seconds)")
+            return False
+        except Exception as e:
+            logger.error(f"Error restoring backup: {e}")
+            return False
 
 
 # Global migration manager instance

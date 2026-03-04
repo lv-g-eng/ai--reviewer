@@ -15,6 +15,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Card } from '@/components/ui/card';
+import type { GraphNode, GraphEdge } from '@/hooks/useProjects';
 
 // Custom node component
 function CustomNode({ data }: { data: any }) {
@@ -54,23 +55,6 @@ const nodeTypes: NodeTypes = {
   custom: CustomNode,
 };
 
-export interface GraphNode {
-  id: string;
-  label: string;
-  type: string;
-  health: 'healthy' | 'warning' | 'critical';
-  complexity?: number;
-  position: { x: number; y: number };
-}
-
-export interface GraphEdge {
-  id: string;
-  source: string;
-  target: string;
-  type?: string;
-  isCircular?: boolean;
-}
-
 interface ArchitectureGraphProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -104,13 +88,13 @@ export default function ArchitectureGraph({
       source: edge.source,
       target: edge.target,
       type: edge.type || 'default',
-      animated: edge.isCircular && highlightCircularDeps,
+      animated: edge.is_circular && highlightCircularDeps,
       style: {
         stroke:
-          edge.isCircular && highlightCircularDeps ? '#ef4444' : '#94a3b8',
-        strokeWidth: edge.isCircular && highlightCircularDeps ? 3 : 2,
+          edge.is_circular && highlightCircularDeps ? '#ef4444' : '#94a3b8',
+        strokeWidth: edge.is_circular && highlightCircularDeps ? 3 : 2,
       },
-      label: edge.isCircular && highlightCircularDeps ? 'Circular' : undefined,
+      label: edge.is_circular && highlightCircularDeps ? 'Circular' : undefined,
       labelStyle: {
         fill: '#ef4444',
         fontWeight: 700,

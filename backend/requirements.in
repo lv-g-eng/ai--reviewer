@@ -5,7 +5,7 @@
 # Core framework
 fastapi
 uvicorn[standard]
-python-multipart
+python-multipart==0.0.18  # Security: CVE-2024-53981
 pydantic
 pydantic-settings
 python-dotenv
@@ -20,9 +20,9 @@ SQLAlchemy
 alembic
 
 # Security / Auth
-python-jose[cryptography]
+python-jose[cryptography]==3.5.0  # Security: PYSEC-2024-232, PYSEC-2024-233
 passlib[bcrypt]
-cryptography
+cryptography==46.0.5  # Security: CVE-2024-12797
 bcrypt
 PyJWT
 bleach
@@ -33,6 +33,7 @@ flower
 
 # HTTP Clients
 httpx
+requests==2.32.4  # Security: CVE-2024-47081
 
 # External APIs & AI
 PyGithub
@@ -62,3 +63,5 @@ opentelemetry-exporter-otlp-proto-grpc
 opentelemetry-instrumentation-httpx
 opentelemetry-instrumentation-redis
 opentelemetry-instrumentation-sqlalchemy
+
+

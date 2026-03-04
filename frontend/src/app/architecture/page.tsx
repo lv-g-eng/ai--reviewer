@@ -1,119 +1,92 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import MainLayout from '@/components/layout/main-layout';
-import ArchitectureGraph, {
-  GraphNode,
-  GraphEdge,
-} from '@/components/architecture/architecture-graph';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Network,
-  Layers,
+  GitBranch,
   AlertCircle,
   CheckCircle2,
-  Info,
+  Clock,
   Code,
-  FileCode,
+  TrendingUp,
+  Activity,
 } from 'lucide-react';
+import { useProjectBranches } from '@/hooks/useProjects';
+import type { BranchInfo } from '@/hooks/useProjects';
 
 export default function ArchitecturePage() {
-  const [isLoading] = useState(false);
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-  const [selectedProject, setSelectedProject] = useState('project-1');
-  const [layoutAlgorithm, setLayoutAlgorithm] = useState('force-directed');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get('project') || '';
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock data - replace with actual API call
-  const mockNodes: GraphNode[] = [
-    {
-      id: '1',
-      label: 'UserController',
-      type: 'Controller',
-      health: 'healthy',
-      complexity: 5,
-      position: { x: 250, y: 50 },
-    },
-    {
-      id: '2',
-      label: 'AuthService',
-      type: 'Service',
-      health: 'warning',
-      complexity: 12,
-      position: { x: 100, y: 200 },
-    },
-    {
-      id: '3',
-      label: 'UserService',
-      type: 'Service',
-      health: 'healthy',
-      complexity: 8,
-      position: { x: 400, y: 200 },
-    },
-    {
-      id: '4',
-      label: 'UserRepository',
-      type: 'Repository',
-      health: 'critical',
-      complexity: 15,
-      position: { x: 100, y: 350 },
-    },
-    {
-      id: '5',
-      label: 'Database',
-      type: 'Data Store',
-      health: 'healthy',
-      complexity: 3,
-      position: { x: 250, y: 500 },
-    },
-    {
-      id: '6',
-      label: 'EmailService',
-      type: 'Service',
-      health: 'healthy',
-      complexity: 6,
-      position: { x: 400, y: 350 },
-    },
-  ];
+  const { data: branches = [], isLoading } = useProjectBranches(projectId);
 
-  const mockEdges: GraphEdge[] = [
-    { id: 'e1-2', source: '1', target: '2', type: 'default' },
-    { id: 'e1-3', source: '1', target: '3', type: 'default' },
-    { id: 'e2-4', source: '2', target: '4', type: 'default' },
-    { id: 'e3-4', source: '3', target: '4', type: 'default' },
-    { id: 'e4-5', source: '4', target: '5', type: 'default' },
-    { id: 'e3-6', source: '3', target: '6', type: 'default' },
-    // Circular dependency example
-    { id: 'e4-2', source: '4', target: '2', type: 'default', isCircular: true },
-  ];
+  const filteredBranches = branches.filter((branch: BranchInfo) =>
+    branch.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const getHealthIcon = (health: string) => {
     switch (health) {
       case 'healthy':
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
       case 'warning':
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+        return <AlertCircle className="h-5 w-5 text-yellow-500" />;
       case 'critical':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-5 w-5 text-red-500" />;
       default:
-        return <Info className="h-4 w-4 text-gray-500" />;
+        return <AlertCircle className="h-5 w-5 text-gray-500" />;
     }
   };
+
+  const getHealthBadgeVariant = (health: string) => {
+    switch (health) {
+      case 'healthy':
+        return 'success' as const;
+      case 'warning':
+        return 'warning' as const;
+      case 'critical':
+        return 'destructive' as const;
+      default:
+        return 'default' as const;
+    }
+  };
+
+  if (!projectId) {
+    return (
+      <MainLayout>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Project Selected</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Please select a project to view its architecture
+            </p>
+            <Button onClick={() => router.push('/projects')}>
+              Go to Projects
+            </Button>
+          </CardContent>
+        </Card>
+      </MainLayout>
+    );
+  }
 
   if (isLoading) {
     return (
       <MainLayout>
         <div className="space-y-6">
           <Skeleton className="h-32 w-full" />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-32" />
+            ))}
+          </div>
           <Skeleton className="h-96 w-full" />
         </div>
       </MainLayout>
@@ -131,258 +104,175 @@ export default function ArchitecturePage() {
               Architecture Visualization
             </h1>
             <p className="text-muted-foreground mt-1">
-              Interactive visualization of your project's architecture
+              View and analyze architecture for different branches
             </p>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Control Panel */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card className="p-4">
-              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                <Layers className="h-4 w-4" />
-                Controls
-              </h3>
+        {/* Statistics Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Branches</CardTitle>
+              <GitBranch className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{branches.length}</div>
+              <p className="text-xs text-muted-foreground">Analyzed branches</p>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-4">
-                {/* Project Selector */}
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Project
-                  </label>
-                  <Select
-                    value={selectedProject}
-                    onValueChange={setSelectedProject}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="project-1">
-                        AI Code Review Platform
-                      </SelectItem>
-                      <SelectItem value="project-2">E-commerce API</SelectItem>
-                      <SelectItem value="project-3">
-                        Analytics Dashboard
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Layout Algorithm */}
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Layout Algorithm
-                  </label>
-                  <Select
-                    value={layoutAlgorithm}
-                    onValueChange={setLayoutAlgorithm}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="force-directed">
-                        Force Directed
-                      </SelectItem>
-                      <SelectItem value="hierarchical">Hierarchical</SelectItem>
-                      <SelectItem value="circular">Circular</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* View Options */}
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Node Size By
-                  </label>
-                  <Select defaultValue="complexity">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="complexity">Complexity</SelectItem>
-                      <SelectItem value="loc">Lines of Code</SelectItem>
-                      <SelectItem value="dependencies">Dependencies</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Filter Options */}
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Filter by Layer
-                  </label>
-                  <Select defaultValue="all">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Layers</SelectItem>
-                      <SelectItem value="presentation">Presentation</SelectItem>
-                      <SelectItem value="business">Business Logic</SelectItem>
-                      <SelectItem value="data">Data Access</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Health Filter */}
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Filter by Health
-                  </label>
-                  <Select defaultValue="all">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="healthy">Healthy</SelectItem>
-                      <SelectItem value="warning">Warning</SelectItem>
-                      <SelectItem value="critical">Critical</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Healthy Branches</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {branches.filter((b: BranchInfo) => b.health_status === 'healthy').length}
               </div>
-            </Card>
+              <p className="text-xs text-muted-foreground">No critical issues</p>
+            </CardContent>
+          </Card>
 
-            {/* Legend */}
-            <Card className="p-4">
-              <h3 className="text-sm font-semibold mb-4">Legend</h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded border-2 border-green-500 bg-green-50 dark:bg-green-950/30" />
-                  <span>Healthy</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded border-2 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30" />
-                  <span>Warning</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded border-2 border-red-500 bg-red-50 dark:bg-red-950/30" />
-                  <span>Critical</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-0.5 bg-red-500" />
-                  <span>Circular Dependency</span>
-                </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Complexity</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {branches.length > 0
+                  ? Math.round(
+                      branches.reduce((sum: number, b: BranchInfo) => sum + b.complexity, 0) /
+                        branches.length
+                    )
+                  : 0}
               </div>
-            </Card>
-          </div>
+              <p className="text-xs text-muted-foreground">Across all branches</p>
+            </CardContent>
+          </Card>
 
-          {/* Graph Canvas */}
-          <div className="lg:col-span-2">
-            <ArchitectureGraph
-              nodes={mockNodes}
-              edges={mockEdges}
-              onNodeClick={setSelectedNode}
-              highlightCircularDeps={true}
-            />
-          </div>
-
-          {/* Details Panel */}
-          <div className="lg:col-span-1 space-y-6">
-            {selectedNode ? (
-              <>
-                <Card className="p-4">
-                  <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                    <Code className="h-4 w-4" />
-                    Component Details
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="text-xs text-muted-foreground mb-1">
-                        Name
-                      </div>
-                      <div className="font-medium">{selectedNode.label}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-muted-foreground mb-1">
-                        Type
-                      </div>
-                      <Badge variant="outline">{selectedNode.type}</Badge>
-                    </div>
-                    <div>
-                      <div className="text-xs text-muted-foreground mb-1">
-                        Health Status
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getHealthIcon(selectedNode.health)}
-                        <span className="capitalize">{selectedNode.health}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-muted-foreground mb-1">
-                        Complexity
-                      </div>
-                      <div className="font-medium">{selectedNode.complexity}</div>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-4">
-                  <h3 className="text-sm font-semibold mb-4">Dependencies</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="text-xs text-muted-foreground mb-2">
-                        Incoming (3)
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex items-center gap-2">
-                          <FileCode className="h-3 w-3" />
-                          <span>UserController</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <FileCode className="h-3 w-3" />
-                          <span>AuthController</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-muted-foreground mb-2">
-                        Outgoing (2)
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex items-center gap-2">
-                          <FileCode className="h-3 w-3" />
-                          <span>UserRepository</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <FileCode className="h-3 w-3" />
-                          <span>EmailService</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-4">
-                  <h3 className="text-sm font-semibold mb-4">Recent Changes</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="text-muted-foreground">
-                      Last modified: 2 days ago
-                    </div>
-                    <div className="text-muted-foreground">
-                      Modified by: john.doe
-                    </div>
-                    <Button variant="outline" size="sm" className="w-full mt-2">
-                      View History
-                    </Button>
-                  </div>
-                </Card>
-              </>
-            ) : (
-              <Card className="p-6">
-                <p className="text-sm text-muted-foreground text-center">
-                  Click on a node to view details
-                </p>
-              </Card>
-            )}
-          </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Circular Dependencies</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                {branches.reduce((sum: number, b: BranchInfo) => sum + b.circular_dependencies, 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">Total detected</p>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Search Bar */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Branches</CardTitle>
+            <CardDescription>
+              Click on a branch to view its architecture visualization
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Search branches..."
+                className="w-full px-4 py-2 border rounded-md"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Branches List */}
+            {filteredBranches.length > 0 ? (
+              <div className="space-y-4">
+                {filteredBranches.map((branch: BranchInfo) => (
+                  <Card key={branch.id} className="p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <GitBranch className="h-5 w-5 text-primary" />
+                          <h4 className="font-semibold text-lg">{branch.name}</h4>
+                          <Badge variant={getHealthBadgeVariant(branch.health_status)}>
+                            {branch.health_status}
+                          </Badge>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {branch.last_commit}
+                        </p>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">Components</p>
+                            <p className="font-medium">{branch.components_count}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Complexity</p>
+                            <p className="font-medium">{branch.complexity}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Circular Deps</p>
+                            <p
+                              className={`font-medium ${
+                                branch.circular_dependencies > 0
+                                  ? 'text-red-600'
+                                  : 'text-green-600'
+                              }`}
+                            >
+                              {branch.circular_dependencies}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Health</p>
+                            <div className="flex items-center gap-1">
+                              {getHealthIcon(branch.health_status)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(branch.last_commit_date).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Code className="h-3 w-3" />
+                            {branch.author}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/architecture/${branch.id}?project=${projectId}`)}
+                      >
+                        View Architecture
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <GitBranch className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Branches Found</h3>
+                <p className="text-sm text-muted-foreground">
+                  {searchTerm
+                    ? 'Try adjusting your search term'
+                    : 'Branches will appear here once they are analyzed'}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </MainLayout>
   );
 }
+
+

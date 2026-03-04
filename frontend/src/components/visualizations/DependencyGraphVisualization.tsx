@@ -10,11 +10,14 @@
  * - Real-time WebSocket updates
  * - Virtualization for large graphs (>1000 nodes)
  * - Level-of-detail rendering
+ * - Production API integration with TanStack Query
+ * - Data validation with Zod schemas
  * 
- * Requirements: 1.7, 1.8, 3.7, 3.8, 3.9
+ * Requirements: 1.4, 1.5, 1.7, 1.8, 2.7, 3.7, 3.8, 3.9, 4.1, 4.2, 10.2, 10.8
  */
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,7 +27,6 @@ import {
   ZoomIn, 
   ZoomOut, 
   RefreshCw, 
-  Filter, 
   Layers, 
   AlertTriangle,
   CheckCircle,
@@ -32,17 +34,23 @@ import {
   EyeOff,
   Download,
   Maximize2,
-  Info
+  Info,
+  Lock
 } from 'lucide-react';
 import ForceGraph2D from 'react-force-graph-2d';
+import { apiClientEnhanced as apiClient } from '@/lib/api-client-enhanced';
+import { 
+  validateDependencyGraph, 
+  type DependencyGraph,
+  type DependencyGraphNode as ApiNode
+} from '@/lib/validations/api-schemas';
+import { ErrorHandler } from '@/lib/error-handler';
+import { featureFlagsService } from '@/lib/feature-flags';
 
-// Types
-interface GraphNode {
-  id: string;
-  name: string;
+// Types - Extended from API types for visualization
+interface GraphNode extends Omit<ApiNode, 'type'> {
   type: 'file' | 'class' | 'function' | 'module';
   size: number;
-  complexity?: number;
   inCycle?: boolean;
   cycleSeverity?: 'low' | 'medium' | 'high';
   cycleDetails?: string[];
@@ -51,12 +59,15 @@ interface GraphNode {
 }
 
 interface GraphLink {
+  id: string;
   source: string | GraphNode;
   target: string | GraphNode;
   type: 'depends' | 'calls' | 'implements';
   weight: number;
   inCycle?: boolean;
   cycleSeverity?: 'low' | 'medium' | 'high';
+  is_circular?: boolean;
+  properties?: Record<string, unknown>;
 }
 
 interface CircularDependency {
@@ -67,23 +78,121 @@ interface CircularDependency {
 }
 
 interface DependencyGraphVisualizationProps {
-  projectId?: string;
-  analysisId?: string;
+  projectId: string;
+  branchId?: string;
   className?: string;
   websocketUrl?: string;
 }
 
 export default function DependencyGraphVisualization({
   projectId,
-  analysisId,
+  branchId,
   className,
   websocketUrl
 }: DependencyGraphVisualizationProps) {
+  // Check feature flag status - Validates Requirements: 10.2, 10.8
+  const isFeatureEnabled = featureFlagsService.isEnabled('dependency-graph-production');
+  
+  // Fetch dependency graph data using TanStack Query
+  const {
+    data: graphData,
+    isLoading,
+    error: queryError,
+    refetch
+  } = useQuery<DependencyGraph>({
+    queryKey: ['dependencyGraph', projectId, branchId],
+    queryFn: async () => {
+      try {
+        const endpoint = branchId 
+          ? `/api/v1/dependencies/${projectId}?branch_id=${branchId}`
+          : `/api/v1/dependencies/${projectId}`;
+        
+        const response = await apiClient.get(endpoint);
+        
+        // Validate response data
+        const validatedData = validateDependencyGraph(response.data);
+        return validatedData;
+      } catch (err) {
+        const errorInfo = ErrorHandler.handleError(err);
+        ErrorHandler.logError(errorInfo);
+        throw new Error(errorInfo.userMessage);
+      }
+    },
+    enabled: !!projectId && isFeatureEnabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+
+  // Transform API data to visualization format
+  const { nodes, links, circularDeps } = useMemo(() => {
+    if (!graphData) {
+      return { nodes: [], links: [], circularDeps: [] };
+    }
+
+    // Transform nodes
+    const transformedNodes: GraphNode[] = graphData.nodes.map(node => ({
+      ...node,
+      type: node.type as 'file' | 'class' | 'function' | 'module',
+      size: node.lines_of_code || 20,
+    }));
+
+    // Transform edges
+    const transformedLinks: GraphLink[] = graphData.edges.map(edge => ({
+      ...edge,
+      source: edge.source,
+      target: edge.target,
+      type: edge.type === 'import' ? 'depends' : edge.type === 'call' ? 'calls' : 'implements',
+      weight: edge.weight || 1,
+      inCycle: edge.is_circular,
+    }));
+
+    // Transform circular dependencies
+    const transformedCircularDeps: CircularDependency[] = (graphData.circular_dependency_chains || []).map((chain, index) => {
+      const severity = chain.length > 5 ? 'high' : chain.length > 3 ? 'medium' : 'low';
+      return {
+        id: `cycle-${index}`,
+        nodes: chain,
+        severity,
+        description: `Circular dependency with ${chain.length} nodes`,
+      };
+    });
+
+    // Mark nodes and links in cycles
+    transformedCircularDeps.forEach(cycle => {
+      cycle.nodes.forEach(nodeId => {
+        const node = transformedNodes.find(n => n.id === nodeId);
+        if (node) {
+          node.inCycle = true;
+          node.cycleSeverity = cycle.severity;
+          node.cycleDetails = cycle.nodes;
+        }
+      });
+
+      for (let i = 0; i < cycle.nodes.length; i++) {
+        const source = cycle.nodes[i];
+        const target = cycle.nodes[(i + 1) % cycle.nodes.length];
+        
+        const link = transformedLinks.find(l => 
+          (l.source === source && l.target === target) ||
+          (l.source === target && l.target === source)
+        );
+        
+        if (link) {
+          link.inCycle = true;
+          link.cycleSeverity = cycle.severity;
+        }
+      }
+    });
+
+    return { 
+      nodes: transformedNodes, 
+      links: transformedLinks, 
+      circularDeps: transformedCircularDeps 
+    };
+  }, [graphData]);
+
   // State
-  const [nodes, setNodes] = useState<GraphNode[]>([]);
-  const [links, setLinks] = useState<GraphLink[]>([]);
-  const [circularDeps, setCircularDeps] = useState<CircularDependency[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
@@ -97,6 +206,24 @@ export default function DependencyGraphVisualization({
   const graphRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Set render mode based on graph size
+  useEffect(() => {
+    if (nodes.length > 1000) {
+      setRenderMode('lod');
+    } else {
+      setRenderMode('full');
+    }
+  }, [nodes.length]);
+
+  // Handle query errors
+  useEffect(() => {
+    if (queryError) {
+      setError(queryError.message);
+    } else {
+      setError(null);
+    }
+  }, [queryError]);
 
   // WebSocket connection for real-time updates
   useEffect(() => {
@@ -152,179 +279,11 @@ export default function DependencyGraphVisualization({
 
   // Handle WebSocket messages for real-time updates
   const handleWebSocketMessage = useCallback((data: any) => {
-    if (data.type === 'analysis_progress') {
-      // Update graph incrementally as analysis progresses
-      if (data.nodes) {
-        setNodes(prev => {
-          const newNodes = [...prev];
-          data.nodes.forEach((node: GraphNode) => {
-            const existingIndex = newNodes.findIndex(n => n.id === node.id);
-            if (existingIndex >= 0) {
-              newNodes[existingIndex] = { ...newNodes[existingIndex], ...node };
-            } else {
-              newNodes.push(node);
-            }
-          });
-          return newNodes;
-        });
-      }
-      
-      if (data.links) {
-        setLinks(prev => {
-          const newLinks = [...prev];
-          data.links.forEach((link: GraphLink) => {
-            const existingIndex = newLinks.findIndex(
-              l => l.source === link.source && l.target === link.target
-            );
-            if (existingIndex >= 0) {
-              newLinks[existingIndex] = { ...newLinks[existingIndex], ...link };
-            } else {
-              newLinks.push(link);
-            }
-          });
-          return newLinks;
-        });
-      }
-
-      if (data.circularDependencies) {
-        setCircularDeps(data.circularDependencies);
-      }
-    } else if (data.type === 'analysis_complete') {
-      // Final update when analysis is complete
-      if (data.graph) {
-        setNodes(data.graph.nodes || []);
-        setLinks(data.graph.links || []);
-        setCircularDeps(data.graph.circularDependencies || []);
-      }
+    if (data.type === 'analysis_progress' || data.type === 'analysis_complete') {
+      // Refetch data when analysis updates
+      refetch();
     }
-  }, []);
-
-  // Load initial graph data
-  useEffect(() => {
-    if (analysisId || projectId) {
-      loadGraphData();
-    }
-  }, [analysisId, projectId]);
-
-  const loadGraphData = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // In production, this would fetch from the backend API
-      // For now, generate sample data
-      const sampleData = generateSampleGraphData();
-      setNodes(sampleData.nodes);
-      setLinks(sampleData.links);
-      setCircularDeps(sampleData.circularDependencies);
-      
-      // Determine render mode based on graph size
-      if (sampleData.nodes.length > 1000) {
-        setRenderMode('lod');
-      }
-    } catch (err) {
-      setError('Failed to load graph data');
-      console.error('Error loading graph data:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Generate sample graph data with circular dependencies
-  const generateSampleGraphData = () => {
-    const nodes: GraphNode[] = [];
-    const links: GraphLink[] = [];
-    const circularDependencies: CircularDependency[] = [];
-
-    // Create sample nodes
-    const modules = ['UserModule', 'AuthModule', 'ProductModule', 'OrderModule', 'PaymentModule'];
-    const files = ['controller', 'service', 'repository', 'model', 'validator'];
-    
-    modules.forEach((module, moduleIndex) => {
-      files.forEach((file, fileIndex) => {
-        const nodeId = `${module}-${file}`;
-        nodes.push({
-          id: nodeId,
-          name: `${module}/${file}`,
-          type: 'file',
-          size: Math.random() * 50 + 20,
-          complexity: Math.floor(Math.random() * 20) + 1
-        });
-      });
-    });
-
-    // Create dependencies
-    nodes.forEach((node, index) => {
-      // Add 2-4 random dependencies
-      const numDeps = Math.floor(Math.random() * 3) + 2;
-      for (let i = 0; i < numDeps; i++) {
-        const targetIndex = (index + i + 1) % nodes.length;
-        if (targetIndex !== index) {
-          links.push({
-            source: node.id,
-            target: nodes[targetIndex].id,
-            type: 'depends',
-            weight: Math.random() * 3 + 1
-          });
-        }
-      }
-    });
-
-    // Create circular dependencies
-    const cycle1 = ['UserModule-service', 'AuthModule-service', 'UserModule-controller'];
-    const cycle2 = ['ProductModule-repository', 'OrderModule-service', 'ProductModule-service'];
-    const cycle3 = ['PaymentModule-controller', 'OrderModule-controller', 'PaymentModule-service', 'OrderModule-service'];
-
-    [
-      { nodes: cycle1, severity: 'low' as const, description: 'User-Auth circular dependency' },
-      { nodes: cycle2, severity: 'medium' as const, description: 'Product-Order circular dependency' },
-      { nodes: cycle3, severity: 'high' as const, description: 'Payment-Order circular dependency chain' }
-    ].forEach((cycle, index) => {
-      circularDependencies.push({
-        id: `cycle-${index}`,
-        nodes: cycle.nodes,
-        severity: cycle.severity,
-        description: cycle.description
-      });
-
-      // Mark nodes in cycle
-      cycle.nodes.forEach(nodeId => {
-        const node = nodes.find(n => n.id === nodeId);
-        if (node) {
-          node.inCycle = true;
-          node.cycleSeverity = cycle.severity;
-          node.cycleDetails = cycle.nodes;
-        }
-      });
-
-      // Mark links in cycle
-      for (let i = 0; i < cycle.nodes.length; i++) {
-        const source = cycle.nodes[i];
-        const target = cycle.nodes[(i + 1) % cycle.nodes.length];
-        
-        // Find or create link
-        let link = links.find(l => 
-          (l.source === source && l.target === target) ||
-          (l.source === target && l.target === source)
-        );
-        
-        if (!link) {
-          link = {
-            source,
-            target,
-            type: 'depends',
-            weight: 2
-          };
-          links.push(link);
-        }
-        
-        link.inCycle = true;
-        link.cycleSeverity = cycle.severity;
-      }
-    });
-
-    return { nodes, links, circularDependencies };
-  };
+  }, [refetch]);
 
   // Filter nodes based on search
   const filteredData = useMemo(() => {
@@ -432,6 +391,12 @@ export default function DependencyGraphVisualization({
     }
   }, [selectedNode, circularDeps]);
 
+  // Retry handler
+  const handleRetry = useCallback(() => {
+    setError(null);
+    refetch();
+  }, [refetch]);
+
   // Export graph data
   const handleExport = useCallback(() => {
     const dataStr = JSON.stringify({ nodes, links, circularDependencies: circularDeps }, null, 2);
@@ -462,7 +427,7 @@ export default function DependencyGraphVisualization({
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={loadGraphData} 
+              onClick={() => refetch()} 
               disabled={isLoading}
               aria-label={isLoading ? 'Refreshing graph data' : 'Refresh graph data'}
             >
@@ -483,6 +448,22 @@ export default function DependencyGraphVisualization({
       </CardHeader>
       
       <CardContent>
+        {/* Feature Flag Disabled Placeholder - Validates Requirements: 10.8 */}
+        {!isFeatureEnabled ? (
+          <div className="w-full h-[600px] border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-center">
+            <div className="text-center max-w-md px-4">
+              <Lock className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Feature Not Available</h3>
+              <p className="text-gray-600 mb-4">
+                The Dependency Graph visualization is currently disabled. This feature is being progressively rolled out.
+              </p>
+              <p className="text-sm text-gray-500">
+                Please contact your administrator if you need access to this feature.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4" role="region" aria-label="Graph statistics">
           <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
@@ -637,9 +618,17 @@ export default function DependencyGraphVisualization({
             </div>
           ) : error ? (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-red-600">
-                <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
-                <p>{error}</p>
+              <div className="text-center">
+                <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-red-600" />
+                <p className="text-red-600 mb-4">{error}</p>
+                <Button 
+                  variant="outline" 
+                  onClick={handleRetry}
+                  aria-label="Retry loading graph data"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
+                  Retry
+                </Button>
               </div>
             </div>
           ) : (
@@ -768,6 +757,8 @@ export default function DependencyGraphVisualization({
               );
             })()}
           </div>
+        )}
+          </>
         )}
       </CardContent>
     </Card>

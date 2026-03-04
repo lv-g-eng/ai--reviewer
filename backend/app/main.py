@@ -375,7 +375,9 @@ if settings.is_tracing_enabled():
     if tracing_config:
         tracing_config.instrument_fastapi(app)
 
-# CORS middleware (Requirement 8.8)
+# CORS middleware (Requirement 8.5)
+# Configure CORS to restrict allowed origins based on environment
+# In production, only allow requests from authorized domains
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -386,13 +388,28 @@ app.add_middleware(
     max_age=settings.CORS_MAX_AGE,
 )
 
-# Rate limiting middleware (Requirement 8.6)
+# Security headers middleware (Requirement 8.5)
+# Add security response headers to protect against common vulnerabilities
+from app.middleware.security_headers import configure_security_headers
+configure_security_headers(
+    app,
+    enable_hsts=settings.ENABLE_HSTS,
+    hsts_max_age=settings.HSTS_MAX_AGE,
+    enable_csp=settings.ENABLE_CSP,
+    environment=settings.ENVIRONMENT,
+)
+
+# Rate limiting middleware (Requirement 8.3)
 from app.middleware.rate_limiting import configure_rate_limiting
 configure_rate_limiting(app)
 
 # Prometheus metrics middleware (Requirement 7.3)
 from app.middleware.prometheus_middleware import configure_prometheus_middleware
 configure_prometheus_middleware(app)
+
+# Initialize application info metric
+from app.core.prometheus_metrics import set_app_info
+set_app_info(version=settings.VERSION, environment=settings.ENVIRONMENT)
 
 # Compression middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)

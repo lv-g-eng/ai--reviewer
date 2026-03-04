@@ -141,18 +141,19 @@ async def check_project_access(
     Raises:
         HTTPException: If user doesn't have access to the project
     """
-    from app.models import Project, ProjectMember
+    from app.models import Project, ProjectAccess
     from sqlalchemy import select
     
     # Admins have access to all projects
     if user.role == UserRole.admin:
         return True
         
-    # Check if user is a member of the project
+    # Check if user has explicit access to the project
     result = await db.execute(
-        select(ProjectMember)
-        .where(ProjectMember.project_id == project_id)
-        .where(ProjectMember.user_id == user.id)
+        select(ProjectAccess)
+        .where(ProjectAccess.project_id == project_id)
+        .where(ProjectAccess.user_id == user.id)
+        .where(ProjectAccess.revoked_at.is_(None))
     )
     if result.scalars().first() is not None:
         return True

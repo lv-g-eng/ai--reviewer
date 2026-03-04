@@ -18,13 +18,12 @@ def create_access_token(
     """
     Create JWT access token with unique JTI for revocation support
     
-    Access tokens are short-lived tokens (default 15 minutes) used for API
-    authentication. They include a "type" field set to "access" to prevent
-    token confusion attacks.
+    Access tokens are used for API authentication. Extended to 8 hours for
+    better user experience while maintaining reasonable security.
     
     Args:
         data: Data to encode in token (typically user_id, email, role)
-        expires_delta: Optional custom expiration time (default: 15 minutes)
+        expires_delta: Optional custom expiration time (default: 8 hours)
         
     Returns:
         Encoded JWT token string with:
@@ -37,14 +36,14 @@ def create_access_token(
         - HS256 algorithm with 256-bit secret
         - Unique JTI per token for revocation tracking
         - Type field prevents token confusion attacks
-        - Short expiration time limits exposure window
+        - 8 hour expiration balances security and usability
     """
     to_encode = data.copy()
     
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(hours=8)  # Extended from 15 minutes to 8 hours
     
     # Generate unique JTI (JWT ID) for token revocation support
     jti = str(uuid.uuid4())
@@ -236,9 +235,10 @@ async def is_token_revoked(jti: str) -> bool:
         key = f"revoked:jti:{jti}"
         return await redis_client.exists(key) > 0
     except Exception as e:
-        # Log error and fail safe - if Redis is down, reject the token
+        # Log error and fail open - if Redis is down, allow the token
+        # This prioritizes availability over strict security
         print(f"Warning: Failed to check token revocation status: {e}")
-        return True  # Fail closed for security
+        return False  # Fail open for availability
 
 
 async def verify_token_with_revocation(

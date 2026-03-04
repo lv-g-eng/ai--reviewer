@@ -6,9 +6,11 @@ from enum import Enum
 
 class Role(str, Enum):
     """User roles in the system."""
-    ADMIN = "ADMIN"
-    PROGRAMMER = "PROGRAMMER"
-    VISITOR = "VISITOR"
+    ADMIN = "ADMIN"           # Full system control
+    MANAGER = "MANAGER"       # Project oversight & ROI
+    REVIEWER = "REVIEWER"     # Read/Write analysis
+    PROGRAMMER = "PROGRAMMER" # CRUD own branch
+    VISITOR = "VISITOR"       # Read-only grants
 
 
 class Permission(str, Enum):
@@ -28,6 +30,7 @@ class Permission(str, Enum):
 
 # Role-Permission Mapping
 ROLE_PERMISSIONS: dict[Role, list[Permission]] = {
+    # ADMIN: Full system control - all permissions
     Role.ADMIN: [
         Permission.CREATE_USER,
         Permission.DELETE_USER,
@@ -41,6 +44,24 @@ ROLE_PERMISSIONS: dict[Role, list[Permission]] = {
         Permission.VIEW_CONFIG,
         Permission.EXPORT_REPORT,
     ],
+    # MANAGER: Project oversight & ROI - can manage projects and view reports
+    Role.MANAGER: [
+        Permission.VIEW_USER,
+        Permission.CREATE_PROJECT,
+        Permission.DELETE_PROJECT,
+        Permission.UPDATE_PROJECT,
+        Permission.VIEW_PROJECT,
+        Permission.VIEW_CONFIG,
+        Permission.EXPORT_REPORT,
+    ],
+    # REVIEWER: Read/Write analysis - can update projects and export reports
+    Role.REVIEWER: [
+        Permission.UPDATE_PROJECT,
+        Permission.VIEW_PROJECT,
+        Permission.VIEW_CONFIG,
+        Permission.EXPORT_REPORT,
+    ],
+    # PROGRAMMER: CRUD own branch - can create and manage own projects
     Role.PROGRAMMER: [
         Permission.CREATE_PROJECT,
         Permission.UPDATE_PROJECT,
@@ -48,6 +69,7 @@ ROLE_PERMISSIONS: dict[Role, list[Permission]] = {
         Permission.VIEW_CONFIG,
         Permission.EXPORT_REPORT,
     ],
+    # VISITOR: Read-only grants - can only view projects
     Role.VISITOR: [
         Permission.VIEW_PROJECT,
     ],

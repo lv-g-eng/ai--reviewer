@@ -6,6 +6,9 @@ This script verifies that:
 2. Both per-minute and per-hour limits are configured
 3. The middleware is properly structured
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import sys
 import os
@@ -15,34 +18,34 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def verify_config():
     """Verify rate limiting configuration"""
-    print("=" * 60)
-    print("Verifying Rate Limiting Configuration")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("Verifying Rate Limiting Configuration")
+    logger.info("=" * 60)
     
     try:
         from app.core.config import settings
         
-        print(f"\n✓ Config loaded successfully")
-        print(f"  - RATE_LIMIT_PER_MINUTE: {settings.RATE_LIMIT_PER_MINUTE}")
-        print(f"  - RATE_LIMIT_PER_HOUR: {settings.RATE_LIMIT_PER_HOUR}")
+        logger.info("\n✓ Config loaded successfully")
+        logger.info("  - RATE_LIMIT_PER_MINUTE: {settings.RATE_LIMIT_PER_MINUTE}")
+        logger.info("  - RATE_LIMIT_PER_HOUR: {settings.RATE_LIMIT_PER_HOUR}")
         
         # Verify values match requirements
         assert hasattr(settings, 'RATE_LIMIT_PER_MINUTE'), "RATE_LIMIT_PER_MINUTE not found"
         assert hasattr(settings, 'RATE_LIMIT_PER_HOUR'), "RATE_LIMIT_PER_HOUR not found"
         
-        print(f"\n✓ Both rate limit settings are present")
+        logger.info("\n✓ Both rate limit settings are present")
         
         return True
     except Exception as e:
-        print(f"\n✗ Config verification failed: {e}")
+        logger.info("\n✗ Config verification failed: {e}")
         return False
 
 
 def verify_middleware():
     """Verify rate limiting middleware"""
-    print("\n" + "=" * 60)
-    print("Verifying Rate Limiting Middleware")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("Verifying Rate Limiting Middleware")
+    logger.info("=" * 60)
     
     try:
         from app.middleware.rate_limiting import (
@@ -52,19 +55,19 @@ def verify_middleware():
             get_user_identifier
         )
         
-        print(f"\n✓ Middleware imports successful")
-        print(f"  - RateLimitMiddleware: {RateLimitMiddleware}")
-        print(f"  - limiter: {limiter}")
-        print(f"  - configure_rate_limiting: {configure_rate_limiting}")
-        print(f"  - get_user_identifier: {get_user_identifier}")
+        logger.info("\n✓ Middleware imports successful")
+        logger.info("  - RateLimitMiddleware: {RateLimitMiddleware}")
+        logger.info("  - limiter: {limiter}")
+        logger.info("  - configure_rate_limiting: {configure_rate_limiting}")
+        logger.info("  - get_user_identifier: {get_user_identifier}")
         
         # Verify limiter has default limits configured
         if hasattr(limiter, '_default_limits'):
-            print(f"\n✓ Limiter default limits: {limiter._default_limits}")
+            logger.info("\n✓ Limiter default limits: {limiter._default_limits}")
         
         return True
     except Exception as e:
-        print(f"\n✗ Middleware verification failed: {e}")
+        logger.info("\n✗ Middleware verification failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -72,42 +75,42 @@ def verify_middleware():
 
 def verify_429_response_structure():
     """Verify 429 response structure"""
-    print("\n" + "=" * 60)
-    print("Verifying 429 Response Structure")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("Verifying 429 Response Structure")
+    logger.info("=" * 60)
     
     try:
         # Check that the middleware returns proper 429 response
-        print(f"\n✓ Expected 429 response structure:")
-        print(f"  - Status Code: 429 (Too Many Requests)")
-        print(f"  - Headers:")
-        print(f"    * Retry-After")
-        print(f"    * X-RateLimit-Limit-Minute")
-        print(f"    * X-RateLimit-Limit-Hour")
-        print(f"    * X-RateLimit-Remaining")
-        print(f"    * X-RateLimit-Reset")
-        print(f"  - Body:")
-        print(f"    * error: 'rate_limit_exceeded'")
-        print(f"    * message: descriptive message")
-        print(f"    * retry_after: seconds to wait")
-        print(f"    * limit_type: 'minute' or 'hour'")
+        logger.info("\n✓ Expected 429 response structure:")
+        logger.info("  - Status Code: 429 (Too Many Requests)")
+        logger.info("  - Headers:")
+        logger.info("    * Retry-After")
+        logger.info("    * X-RateLimit-Limit-Minute")
+        logger.info("    * X-RateLimit-Limit-Hour")
+        logger.info("    * X-RateLimit-Remaining")
+        logger.info("    * X-RateLimit-Reset")
+        logger.info("  - Body:")
+        logger.info("    * error: 'rate_limit_exceeded'")
+        logger.info("    * message: descriptive message")
+        logger.info("    * retry_after: seconds to wait")
+        logger.info("    * limit_type: 'minute' or 'hour'")
         
         return True
     except Exception as e:
-        print(f"\n✗ Response structure verification failed: {e}")
+        logger.info("\n✗ Response structure verification failed: {e}")
         return False
 
 
 def main():
     """Run all verifications"""
-    print("\n" + "=" * 60)
-    print("RATE LIMITING IMPLEMENTATION VERIFICATION")
-    print("=" * 60)
-    print("\nRequirement 8.3: Implement rate limiting on all API endpoints")
-    print("  - 100 requests per minute")
-    print("  - 5000 requests per hour")
-    print("  - Return 429 error when exceeded")
-    print("  - Include appropriate headers")
+    logger.info("\n" + "=" * 60)
+    logger.info("RATE LIMITING IMPLEMENTATION VERIFICATION")
+    logger.info("=" * 60)
+    logger.info("\nRequirement 8.3: Implement rate limiting on all API endpoints")
+    logger.info("  - 100 requests per minute")
+    logger.info("  - 5000 requests per hour")
+    logger.info("  - Return 429 error when exceeded")
+    logger.info("  - Include appropriate headers")
     
     results = []
     
@@ -117,34 +120,34 @@ def main():
     results.append(("429 Response", verify_429_response_structure()))
     
     # Summary
-    print("\n" + "=" * 60)
-    print("VERIFICATION SUMMARY")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("VERIFICATION SUMMARY")
+    logger.info("=" * 60)
     
     all_passed = True
     for name, passed in results:
         status = "✓ PASS" if passed else "✗ FAIL"
-        print(f"{status}: {name}")
+        logger.info("{status}: {name}")
         if not passed:
             all_passed = False
     
-    print("\n" + "=" * 60)
+    logger.info("\n" + "=" * 60)
     if all_passed:
-        print("✓ ALL VERIFICATIONS PASSED")
-        print("=" * 60)
-        print("\nRate limiting implementation is complete and correct!")
-        print("\nKey features implemented:")
-        print("  1. ✓ 100 requests per minute limit")
-        print("  2. ✓ 5000 requests per hour limit")
-        print("  3. ✓ Redis-based distributed rate limiting")
-        print("  4. ✓ Per-user/IP tracking")
-        print("  5. ✓ 429 error response with proper headers")
-        print("  6. ✓ Health endpoints excluded from rate limiting")
-        print("  7. ✓ Configurable via environment variables")
+        logger.info("✓ ALL VERIFICATIONS PASSED")
+        logger.info("=" * 60)
+        logger.info("\nRate limiting implementation is complete and correct!")
+        logger.info("\nKey features implemented:")
+        logger.info("  1. ✓ 100 requests per minute limit")
+        logger.info("  2. ✓ 5000 requests per hour limit")
+        logger.info("  3. ✓ Redis-based distributed rate limiting")
+        logger.info("  4. ✓ Per-user/IP tracking")
+        logger.info("  5. ✓ 429 error response with proper headers")
+        logger.info("  6. ✓ Health endpoints excluded from rate limiting")
+        logger.info("  7. ✓ Configurable via environment variables")
         return 0
     else:
-        print("✗ SOME VERIFICATIONS FAILED")
-        print("=" * 60)
+        logger.info("✗ SOME VERIFICATIONS FAILED")
+        logger.info("=" * 60)
         return 1
 
 

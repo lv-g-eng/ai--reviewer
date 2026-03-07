@@ -16,6 +16,7 @@ class LLMProviderType(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     OPENROUTER = "openrouter"
+    LMSTUDIO = "lmstudio"
 
 
 @dataclass

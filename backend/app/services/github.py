@@ -1,6 +1,9 @@
 """
 GitHub API service for interacting with GitHub's API
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import Optional, Dict, Any, List
 import aiohttp
 from urllib.parse import urljoin
@@ -55,10 +58,10 @@ class GitHubService:
                         return await response.text()
                     else:
                         error = await response.text()
-                        print(f"Error getting PR diff: {response.status} - {error}")
+                        logger.info("Error getting PR diff: {response.status} - {error}")
                         return None
         except Exception as e:
-            print(f"Exception when fetching PR diff: {str(e)}")
+            logger.info("Exception when fetching PR diff: {str(e)}")
             return None
     
     async def get_pull_request_files(
@@ -87,10 +90,10 @@ class GitHubService:
                         return await response.json()
                     else:
                         error = await response.text()
-                        print(f"Error getting PR files: {response.status} - {error}")
+                        logger.info("Error getting PR files: {response.status} - {error}")
                         return []
         except Exception as e:
-            print(f"Exception when fetching PR files: {str(e)}")
+            logger.info("Exception when fetching PR files: {str(e)}")
             return []
     
     async def get_repository_content(
@@ -127,8 +130,8 @@ class GitHubService:
                         return await response.json()
                     else:
                         error = await response.text()
-                        print(f"Error getting repository content: {response.status} - {error}")
+                        logger.info("Error getting repository content: {response.status} - {error}")
                         return None
         except Exception as e:
-            print(f"Exception when fetching repository content: {str(e)}")
+            logger.info("Exception when fetching repository content: {str(e)}")
             return None

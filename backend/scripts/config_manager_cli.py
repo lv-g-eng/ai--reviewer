@@ -76,25 +76,25 @@ class ConfigManagerCLI:
             True if successful
         """
         try:
-            print(f"Loading configuration for environment: {environment}")
+            logger.info("Loading configuration for environment: {environment}")
             
             config = initialize_configuration(environment, enable_hot_reload)
             
-            print(f"✅ Configuration loaded successfully")
-            print(f"   - Total entries: {len(config)}")
-            print(f"   - Environment: {environment}")
-            print(f"   - Hot reload: {'enabled' if enable_hot_reload else 'disabled'}")
+            logger.info("✅ Configuration loaded successfully")
+            logger.info("   - Total entries: {len(config)}")
+            logger.info("   - Environment: {environment}")
+            logger.info("   - Hot reload: {'enabled' if enable_hot_reload else 'disabled'}")
             
             # Show summary
             summary = self.config_manager.get_configuration_summary()
-            print(f"   - Sources: {summary['sources']}")
-            print(f"   - Conflicts resolved: {summary['conflicts_resolved']}")
-            print(f"   - Secret keys: {summary['secret_keys']}")
+            logger.info("   - Sources: {summary['sources']}")
+            logger.info("   - Conflicts resolved: {summary['conflicts_resolved']}")
+            logger.info("   - Secret keys: {summary['secret_keys']}")
             
             return True
             
         except Exception as e:
-            print(f"❌ Failed to load configuration: {e}")
+            logger.info("❌ Failed to load configuration: {e}")
             logger.error(f"Configuration loading failed: {e}")
             return False
     
@@ -106,30 +106,30 @@ class ConfigManagerCLI:
             True if validation passes
         """
         try:
-            print("Validating configuration...")
+            logger.info("Validating configuration...")
             
             if not self.config_manager:
-                print("❌ Configuration not loaded. Run 'load' command first.")
+                logger.info("❌ Configuration not loaded. Run 'load' command first.")
                 return False
             
             # Get validation summary
             summary = self.config_manager.get_configuration_summary()
             
-            print(f"✅ Configuration validation completed")
-            print(f"   - Total entries: {summary['total_entries']}")
-            print(f"   - Conflicts resolved: {summary['conflicts_resolved']}")
-            print(f"   - Secret keys: {summary['secret_keys']}")
+            logger.info("✅ Configuration validation completed")
+            logger.info("   - Total entries: {summary['total_entries']}")
+            logger.info("   - Conflicts resolved: {summary['conflicts_resolved']}")
+            logger.info("   - Secret keys: {summary['secret_keys']}")
             
             # Show conflicts if any
             if self.config_manager.conflicts:
-                print(f"\n📋 Resolved conflicts ({len(self.config_manager.conflicts)}):")
+                logger.info("\n📋 Resolved conflicts ({len(self.config_manager.conflicts)}):")
                 for conflict in self.config_manager.conflicts:
-                    print(f"   - {conflict.key}: {conflict.resolution_reason}")
+                    logger.info("   - {conflict.key}: {conflict.resolution_reason}")
             
             return True
             
         except Exception as e:
-            print(f"❌ Configuration validation failed: {e}")
+            logger.info("❌ Configuration validation failed: {e}")
             logger.error(f"Configuration validation failed: {e}")
             return False
     
@@ -146,34 +146,34 @@ class ConfigManagerCLI:
             True if successful
         """
         try:
-            print(f"Generating configuration for service: {service_name}")
+            logger.info("Generating configuration for service: {service_name}")
             
             if not self.config_manager:
-                print("❌ Configuration not loaded. Run 'load' command first.")
+                logger.info("❌ Configuration not loaded. Run 'load' command first.")
                 return False
             
             # Generate service configuration
             service_config = generate_service_configuration(service_name, include_deps)
             
-            print(f"✅ Service configuration generated")
-            print(f"   - Service: {service_config.service_name}")
-            print(f"   - Configuration keys: {len(service_config.config)}")
-            print(f"   - Dependencies: {service_config.dependencies}")
-            print(f"   - Required keys: {len(service_config.required_keys)}")
-            print(f"   - Optional keys: {len(service_config.optional_keys)}")
+            logger.info("✅ Service configuration generated")
+            logger.info("   - Service: {service_config.service_name}")
+            logger.info("   - Configuration keys: {len(service_config.config)}")
+            logger.info("   - Dependencies: {service_config.dependencies}")
+            logger.info("   - Required keys: {len(service_config.required_keys)}")
+            logger.info("   - Optional keys: {len(service_config.optional_keys)}")
             
             # Export in requested format
             config_content = export_service_configuration(service_name, format)
             
-            print(f"\n📄 Configuration ({format.upper()} format):")
-            print("-" * 50)
-            print(config_content)
-            print("-" * 50)
+            logger.info("\n📄 Configuration ({format.upper()} format):")
+            logger.info("-" * 50)
+            logger.info(config_content)
+            logger.info("-" * 50)
             
             return True
             
         except Exception as e:
-            print(f"❌ Failed to generate service configuration: {e}")
+            logger.info("❌ Failed to generate service configuration: {e}")
             logger.error(f"Service configuration generation failed: {e}")
             return False
     
@@ -190,10 +190,10 @@ class ConfigManagerCLI:
             True if successful
         """
         try:
-            print(f"Exporting {service_name} configuration to: {output_file}")
+            logger.info("Exporting {service_name} configuration to: {output_file}")
             
             if not self.config_manager:
-                print("❌ Configuration not loaded. Run 'load' command first.")
+                logger.info("❌ Configuration not loaded. Run 'load' command first.")
                 return False
             
             output_path = Path(output_file)
@@ -201,16 +201,16 @@ class ConfigManagerCLI:
             # Export configuration
             config_content = export_service_configuration(service_name, format, output_path)
             
-            print(f"✅ Configuration exported successfully")
-            print(f"   - Service: {service_name}")
-            print(f"   - Format: {format}")
-            print(f"   - Output file: {output_path.absolute()}")
-            print(f"   - File size: {output_path.stat().st_size} bytes")
+            logger.info("✅ Configuration exported successfully")
+            logger.info("   - Service: {service_name}")
+            logger.info("   - Format: {format}")
+            logger.info("   - Output file: {output_path.absolute()}")
+            logger.info("   - File size: {output_path.stat().st_size} bytes")
             
             return True
             
         except Exception as e:
-            print(f"❌ Failed to export service configuration: {e}")
+            logger.info("❌ Failed to export service configuration: {e}")
             logger.error(f"Service configuration export failed: {e}")
             return False
     
@@ -222,45 +222,45 @@ class ConfigManagerCLI:
             True if successful
         """
         try:
-            print("Configuration System Status")
-            print("=" * 50)
+            logger.info("Configuration System Status")
+            logger.info("=" * 50)
             
             if not self.config_manager:
-                print("❌ Configuration not loaded")
+                logger.info("❌ Configuration not loaded")
                 return False
             
             # Configuration manager status
             summary = self.config_manager.get_configuration_summary()
-            print(f"Configuration Manager:")
-            print(f"   - Total entries: {summary['total_entries']}")
-            print(f"   - Conflicts resolved: {summary['conflicts_resolved']}")
-            print(f"   - Hot reloading: {'enabled' if summary['hot_reloading_enabled'] else 'disabled'}")
-            print(f"   - Secret keys: {summary['secret_keys']}")
+            logger.info("Configuration Manager:")
+            logger.info("   - Total entries: {summary['total_entries']}")
+            logger.info("   - Conflicts resolved: {summary['conflicts_resolved']}")
+            logger.info("   - Hot reloading: {'enabled' if summary['hot_reloading_enabled'] else 'disabled'}")
+            logger.info("   - Secret keys: {summary['secret_keys']}")
             
             # Sources breakdown
-            print(f"\nConfiguration Sources:")
+            logger.info("\nConfiguration Sources:")
             for source, count in summary['sources'].items():
-                print(f"   - {source}: {count} entries")
+                logger.info("   - {source}: {count} entries")
             
             # Service generator status
             if self.service_generator:
                 all_status = self.service_generator.get_all_service_status()
-                print(f"\nRegistered Services ({len(all_status)}):")
+                logger.info("\nRegistered Services ({len(all_status)}):")
                 
                 for service_name, status in all_status.items():
                     active_indicator = "🟢" if status['is_active'] else "🔴"
-                    print(f"   {active_indicator} {service_name} ({status['type']})")
-                    print(f"      - Dependencies: {len(status['dependencies'])}")
-                    print(f"      - Required keys: {len(status['required_keys'])}")
-                    print(f"      - Optional keys: {len(status['optional_keys'])}")
+                    logger.info("   {active_indicator} {service_name} ({status['type']})")
+                    logger.info("      - Dependencies: {len(status['dependencies'])}")
+                    logger.info("      - Required keys: {len(status['required_keys'])}")
+                    logger.info("      - Optional keys: {len(status['optional_keys'])}")
                     if status['last_update']:
                         last_update = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(status['last_update']))
-                        print(f"      - Last update: {last_update}")
+                        logger.info("      - Last update: {last_update}")
             
             return True
             
         except Exception as e:
-            print(f"❌ Failed to show status: {e}")
+            logger.info("❌ Failed to show status: {e}")
             logger.error(f"Status display failed: {e}")
             return False
     
@@ -276,23 +276,23 @@ class ConfigManagerCLI:
         """
         try:
             if not self.config_manager:
-                print("❌ Configuration not loaded. Run 'load' command first.")
+                logger.info("❌ Configuration not loaded. Run 'load' command first.")
                 return False
             
             if enable:
-                print("Enabling configuration hot reloading...")
+                logger.info("Enabling configuration hot reloading...")
                 self.config_manager.enable_hot_reloading()
-                print("✅ Hot reloading enabled")
-                print("   Configuration files will be monitored for changes")
+                logger.info("✅ Hot reloading enabled")
+                logger.info("   Configuration files will be monitored for changes")
             else:
-                print("Disabling configuration hot reloading...")
+                logger.info("Disabling configuration hot reloading...")
                 self.config_manager.disable_hot_reloading()
-                print("✅ Hot reloading disabled")
+                logger.info("✅ Hot reloading disabled")
             
             return True
             
         except Exception as e:
-            print(f"❌ Failed to manage hot reload: {e}")
+            logger.info("❌ Failed to manage hot reload: {e}")
             logger.error(f"Hot reload management failed: {e}")
             return False
     
@@ -304,41 +304,41 @@ class ConfigManagerCLI:
             True if successful
         """
         try:
-            print("Registered Services")
-            print("=" * 50)
+            logger.info("Registered Services")
+            logger.info("=" * 50)
             
             if not self.service_generator:
-                print("❌ Service generator not initialized")
+                logger.info("❌ Service generator not initialized")
                 return False
             
             all_status = self.service_generator.get_all_service_status()
             
             if not all_status:
-                print("No services registered")
+                logger.info("No services registered")
                 return True
             
             for service_name, status in all_status.items():
                 active_indicator = "🟢" if status['is_active'] else "🔴"
-                print(f"\n{active_indicator} {service_name}")
-                print(f"   Type: {status['type']}")
-                print(f"   Dependencies: {', '.join(status['dependencies']) if status['dependencies'] else 'None'}")
-                print(f"   Required keys: {len(status['required_keys'])}")
-                print(f"   Optional keys: {len(status['optional_keys'])}")
+                logger.info("\n{active_indicator} {service_name}")
+                logger.info("   Type: {status['type']}")
+                logger.info("   Dependencies: {', '.join(status['dependencies']) if status['dependencies'] else 'None'}")
+                logger.info("   Required keys: {len(status['required_keys'])}")
+                logger.info("   Optional keys: {len(status['optional_keys'])}")
                 
                 if status['config_file_path']:
-                    print(f"   Config file: {status['config_file_path']}")
+                    logger.info("   Config file: {status['config_file_path']}")
                 
                 if status['health_check_url']:
-                    print(f"   Health check: {status['health_check_url']}")
+                    logger.info("   Health check: {status['health_check_url']}")
                 
                 if status['last_update']:
                     last_update = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(status['last_update']))
-                    print(f"   Last update: {last_update}")
+                    logger.info("   Last update: {last_update}")
             
             return True
             
         except Exception as e:
-            print(f"❌ Failed to list services: {e}")
+            logger.info("❌ Failed to list services: {e}")
             logger.error(f"Service listing failed: {e}")
             return False
     
@@ -354,23 +354,23 @@ class ConfigManagerCLI:
             True if successful
         """
         try:
-            print(f"Updating configuration: {key}")
+            logger.info("Updating configuration: {key}")
             
             if not self.config_manager:
-                print("❌ Configuration not loaded. Run 'load' command first.")
+                logger.info("❌ Configuration not loaded. Run 'load' command first.")
                 return False
             
             # Update configuration
             self.config_manager.update_configuration({key: value})
             
-            print(f"✅ Configuration updated successfully")
-            print(f"   - Key: {key}")
-            print(f"   - Value: {'***' if 'SECRET' in key or 'PASSWORD' in key else value}")
+            logger.info("✅ Configuration updated successfully")
+            logger.info("   - Key: {key}")
+            logger.info("   - Value: {'***' if 'SECRET' in key or 'PASSWORD' in key else value}")
             
             return True
             
         except Exception as e:
-            print(f"❌ Failed to update configuration: {e}")
+            logger.info("❌ Failed to update configuration: {e}")
             logger.error(f"Configuration update failed: {e}")
             return False
 
@@ -538,11 +538,11 @@ def main():
             success = False
     
     except KeyboardInterrupt:
-        print("\n⚠️  Operation cancelled by user")
+        logger.info("\n⚠️  Operation cancelled by user")
         success = False
     
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        logger.info("❌ Unexpected error: {e}")
         logger.error(f"Unexpected error: {e}")
         success = False
     

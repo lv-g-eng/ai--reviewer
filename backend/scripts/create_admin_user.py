@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 Create default admin user for the AI Code Review Platform.
@@ -33,13 +36,13 @@ async def create_admin_user(
         password: Admin password (must meet strength requirements)
         full_name: Admin full name
     """
-    print("=" * 60)
-    print("AI Code Review Platform - Admin User Creation")
-    print("=" * 60)
-    print()
+    logger.info("=" * 60)
+    logger.info("AI Code Review Platform - Admin User Creation")
+    logger.info("=" * 60)
+    logger.info()
     
     # Initialize database
-    print("Initializing database connection...")
+    logger.info("Initializing database connection...")
     await init_db()
     
     async for db in get_db():
@@ -50,16 +53,16 @@ async def create_admin_user(
             existing_user = result.scalar_one_or_none()
             
             if existing_user:
-                print(f"❌ Admin user with email '{email}' already exists!")
-                print(f"   User ID: {existing_user.id}")
-                print(f"   Role: {existing_user.role.value}")
-                print(f"   Created: {existing_user.created_at}")
-                print()
-                print("If you need to reset the password, use the password reset feature.")
+                logger.info("❌ Admin user with email '{email}' already exists!")
+                logger.info("   User ID: {existing_user.id}")
+                logger.info("   Role: {existing_user.role.value}")
+                logger.info("   Created: {existing_user.created_at}")
+                logger.info()
+                logger.info("If you need to reset the password, use the password reset feature.")
                 return False
             
             # Hash password
-            print(f"Creating admin user: {email}")
+            logger.info("Creating admin user: {email}")
             password_hash = hash_password(password)
             
             # Create admin user
@@ -76,31 +79,31 @@ async def create_admin_user(
             await db.commit()
             await db.refresh(admin_user)
             
-            print()
-            print("✅ Admin user created successfully!")
-            print()
-            print("=" * 60)
-            print("LOGIN CREDENTIALS")
-            print("=" * 60)
-            print(f"Email:    {email}")
-            print(f"Password: {password}")
-            print(f"Role:     {admin_user.role.value}")
-            print(f"User ID:  {admin_user.id}")
-            print("=" * 60)
-            print()
-            print("⚠️  IMPORTANT SECURITY NOTICE:")
-            print("   1. Change this password immediately after first login")
-            print("   2. Do not share these credentials")
-            print("   3. Enable MFA if available")
-            print("   4. This password should only be used in development")
-            print()
-            print("Login at: http://localhost:3000/login")
-            print()
+            logger.info()
+            logger.info("✅ Admin user created successfully!")
+            logger.info()
+            logger.info("=" * 60)
+            logger.info("LOGIN CREDENTIALS")
+            logger.info("=" * 60)
+            logger.info("Email:    {email}")
+            logger.info("Password: {password}")
+            logger.info("Role:     {admin_user.role.value}")
+            logger.info("User ID:  {admin_user.id}")
+            logger.info("=" * 60)
+            logger.info()
+            logger.info("⚠️  IMPORTANT SECURITY NOTICE:")
+            logger.info("   1. Change this password immediately after first login")
+            logger.info("   2. Do not share these credentials")
+            logger.info("   3. Enable MFA if available")
+            logger.info("   4. This password should only be used in development")
+            logger.info()
+            logger.info("Login at: http://localhost:3000/login")
+            logger.info()
             
             return True
             
         except Exception as e:
-            print(f"❌ Error creating admin user: {e}")
+            logger.info("❌ Error creating admin user: {e}")
             await db.rollback()
             return False
 

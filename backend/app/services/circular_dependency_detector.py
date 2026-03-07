@@ -5,6 +5,9 @@ This module analyzes Python source code using the Abstract Syntax Tree (AST) lib
 to detect circular dependencies between modules. It builds a dependency graph from
 import statements and identifies cycles that indicate architectural problems.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import ast
 import os
 from typing import Dict, List, Set, Tuple, Optional, Any
@@ -131,9 +134,9 @@ class CircularDependencyDetector:
             self.processed_files.add(file_path)
 
         except (SyntaxError, UnicodeDecodeError) as e:
-            print(f"Warning: Could not parse {file_path}: {e}")
+            logger.info("Warning: Could not parse {file_path}: {e}")
         except Exception as e:
-            print(f"Error analyzing {file_path}: {e}")
+            logger.info("Error analyzing {file_path}: {e}")
 
     def _extract_imports(self, tree: ast.AST, file_path: str) -> List[ModuleDependency]:
         """
@@ -290,7 +293,7 @@ class CircularDependencyDetector:
                     cycles.append(cycle_obj)
 
         except Exception as e:
-            print(f"Error detecting cycles: {e}")
+            logger.info("Error detecting cycles: {e}")
 
         # Sort by severity and cycle length
         cycles.sort(key=lambda x: (self._severity_score(x.severity), x.cycle_length))
@@ -443,12 +446,12 @@ try:
 
             # Store results in database or cache
             # For now, just print them (in production, save to DB)
-            print(f"Circular Dependency Analysis Results for {project_id}:")
-            print(f"Files analyzed: {results['files_analyzed']}")
-            print(f"Cycles found: {results['cycles_found']}")
+            logger.info("Circular Dependency Analysis Results for {project_id}:")
+            logger.info("Files analyzed: {results['files_analyzed']}")
+            logger.info("Cycles found: {results['cycles_found']}")
 
             for cycle in results['circular_dependencies']:
-                print(f"Cycle ({cycle.severity}): {' -> '.join(cycle.cycle)}")
+                logger.info("Cycle ({cycle.severity}): {' -> '.join(cycle.cycle)}")
 
             # Generate Cypher queries for Neo4j visualization
             if results['circular_dependencies']:
@@ -456,10 +459,10 @@ try:
                     results['circular_dependencies'],
                     project_id
                 )
-                print(f"Generated {len(cypher_queries)} Cypher queries for Neo4j")
+                logger.info("Generated {len(cypher_queries)} Cypher queries for Neo4j")
 
         except Exception as e:
-            print(f"Error in circular dependency analysis for {project_id}: {e}")
+            logger.info("Error in circular dependency analysis for {project_id}: {e}")
 
 except ImportError:
     # Running in standalone mode, FastAPI not available
@@ -475,38 +478,38 @@ def main():
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     results = detector.analyze_project(project_root)
 
-    print("=== Circular Dependency Analysis Results ===")
-    print(f"Project root: {results['project_root']}")
-    print(f"Files analyzed: {results['files_analyzed']}")
-    print(f"Total modules: {results['total_modules']}")
-    print(f"Total dependencies: {results['total_dependencies']}")
-    print(f"Circular dependencies found: {results['cycles_found']}")
+    logger.info("=== Circular Dependency Analysis Results ===")
+    logger.info("Project root: {results['project_root']}")
+    logger.info("Files analyzed: {results['files_analyzed']}")
+    logger.info("Total modules: {results['total_modules']}")
+    logger.info("Total dependencies: {results['total_dependencies']}")
+    logger.info("Circular dependencies found: {results['cycles_found']}")
 
     if results['circular_dependencies']:
-        print("\n=== Detected Cycles ===")
+        logger.info("\n=== Detected Cycles ===")
         for i, cycle in enumerate(results['circular_dependencies'], 1):
-            print(f"{i}. [{cycle.severity.upper()}] {' -> '.join(cycle.cycle)}")
-            print(f"   Length: {cycle.cycle_length}")
-            print(f"   Description: {cycle.description}")
-            print()
+            logger.info("{i}. [{cycle.severity.upper()}] {' -> '.join(cycle.cycle)}")
+            logger.info("   Length: {cycle.cycle_length}")
+            logger.info("   Description: {cycle.description}")
+            logger.info()
 
-        print("=== Cypher Queries for Neo4j ===")
+        logger.info("=== Cypher Queries for Neo4j ===")
         cypher_queries = detector.get_cypher_queries_for_cycles(
             results['circular_dependencies'],
             "test-project"
         )
         for i, query in enumerate(cypher_queries[:5], 1):  # Show first 5 queries
-            print(f"{i}. {query.strip()}")
+            logger.info("{i}. {query.strip()}")
         if len(cypher_queries) > 5:
-            print(f"... and {len(cypher_queries) - 5} more queries")
+            logger.info("... and {len(cypher_queries) - 5} more queries")
     else:
-        print("✅ No circular dependencies detected!")
+        logger.info("✅ No circular dependencies detected!")
 
-    print("\n=== Statistics ===")
+    logger.info("\n=== Statistics ===")
     stats = results['statistics']
-    print(f"Severity distribution: {stats['cycle_severity_distribution']}")
-    print(f"Average cycle length: {stats['average_cycle_length']:.1f}")
-    print(f"Maximum cycle length: {stats['max_cycle_length']}")
+    logger.info("Severity distribution: {stats['cycle_severity_distribution']}")
+    logger.info("Average cycle length: {stats['average_cycle_length']:.1f}")
+    logger.info("Maximum cycle length: {stats['max_cycle_length']}")
 
 
 if __name__ == "__main__":

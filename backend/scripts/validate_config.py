@@ -119,7 +119,7 @@ def print_validation_report(result: ValidationResult, json_output: bool = False)
             "error_count": len(result.errors),
             "warning_count": len(result.warnings),
         }
-        print(json.dumps(report, indent=2))
+        logger.info(str(json.dumps(report, indent=2)))
     else:
         # Output human-readable format
         validator = ConfigValidator()
@@ -128,11 +128,11 @@ def print_validation_report(result: ValidationResult, json_output: bool = False)
         
         # Handle Unicode encoding issues on Windows
         try:
-            print(report_text)
+            logger.info(report_text)
         except UnicodeEncodeError:
             # Replace emoji characters with ASCII equivalents
             report_text = report_text.replace('✅', '[PASS]').replace('❌', '[FAIL]')
-            print(report_text)
+            logger.info(report_text)
 
 
 def parse_arguments() -> argparse.Namespace:

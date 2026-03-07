@@ -6,6 +6,9 @@ in the Neo4j graph database. It provides batch operations for performance optimi
 
 Implements Requirement 1.3: Update Graph_Database with new dependencies
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import List, Dict, Optional, Any, Tuple
 import asyncio
 from datetime import datetime
@@ -171,25 +174,32 @@ class GraphBuilderService:
                     RETURN count(*) as count
                     """
                     
-                    try:
-                        query_result = await session.run(
-                            query,
-                            batch=batch_data,
-                            timestamp=datetime.utcnow().isoformat()
-                        )
-                    except Exception:
-                        # Fallback if APOC is not available
-                        query_result = await session.run(
-                            fallback_query,
-                            batch=batch_data,
-                            timestamp=datetime.utcnow().isoformat()
-                        )
-                    
-                    record = await query_result.single()
-                    if record:
-                        # Approximate: assume half created, half updated
-                        total_result.nodes_created += len(batch) // 2
-                        total_result.nodes_updated += len(batch) - (len(batch) // 2)
+                    async with session.begin_transaction() as tx:
+                        try:
+                            try:
+                                query_result = await tx.run(
+                                    query,
+                                    batch=batch_data,
+                                    timestamp=datetime.utcnow().isoformat()
+                                )
+                            except Exception:
+                                # Fallback if APOC is not available
+                                query_result = await tx.run(
+                                    fallback_query,
+                                    batch=batch_data,
+                                    timestamp=datetime.utcnow().isoformat()
+                                )
+                            
+                            record = await query_result.single()
+                            await tx.commit()
+                            
+                            if record:
+                                # Approximate: assume half created, half updated
+                                total_result.nodes_created += len(batch) // 2
+                                total_result.nodes_updated += len(batch) - (len(batch) // 2)
+                        except Exception as e:
+                            await tx.rollback()
+                            raise e
             
             except Exception as e:
                 total_result.errors.append(f"Error in batch {i//self.batch_size}: {str(e)}")
@@ -326,15 +336,22 @@ class GraphBuilderService:
                     RETURN count(*) as count
                     """
                     
-                    try:
-                        query_result = await session.run(query, batch=batch_data)
-                    except Exception:
-                        # Fallback if APOC is not available
-                        query_result = await session.run(fallback_query, batch=batch_data)
-                    
-                    record = await query_result.single()
-                    if record:
-                        total_result.relationships_created += record["count"]
+                    async with session.begin_transaction() as tx:
+                        try:
+                            try:
+                                query_result = await tx.run(query, batch=batch_data)
+                            except Exception:
+                                # Fallback if APOC is not available
+                                query_result = await tx.run(fallback_query, batch=batch_data)
+                            
+                            record = await query_result.single()
+                            if record:
+                                total_result.relationships_created += record["count"]
+                            
+                            await tx.commit()
+                        except Exception as e:
+                            await tx.rollback()
+                            raise e
             
             except Exception as e:
                 total_result.errors.append(f"Error in relationship batch {i//self.batch_size}: {str(e)}")
@@ -532,7 +549,7 @@ class GraphBuilderService:
                     })
         
         except Exception as e:
-            print(f"Error getting dependencies for {entity_name}: {str(e)}")
+            logger.info("Error getting dependencies for {entity_name}: {str(e)}")
         
         return dependencies
     

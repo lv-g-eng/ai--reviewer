@@ -23,9 +23,9 @@ from app.core.logging_config import (
 
 def verify_json_logging():
     """Verify JSON logging format"""
-    print("=" * 70)
-    print("  Verifying JSON Structured Logging Format")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("  Verifying JSON Structured Logging Format")
+    logger.info("=" * 70)
     
     # Setup formatter
     formatter = CustomJsonFormatter(service_name="test-service")
@@ -51,22 +51,22 @@ def verify_json_logging():
     # Get log output
     log_output = log_buffer.getvalue().strip()
     
-    print("\nLog Output:")
-    print("-" * 70)
-    print(log_output)
-    print("-" * 70)
+    logger.info("\nLog Output:")
+    logger.info("-" * 70)
+    logger.info(log_output)
+    logger.info("-" * 70)
     
     # Parse JSON
     try:
         log_data = json.loads(log_output)
-        print("\n✅ Log output is valid JSON")
+        logger.info("\n✅ Log output is valid JSON")
     except json.JSONDecodeError as e:
-        print(f"\n❌ Log output is not valid JSON: {e}")
+        logger.info("\n❌ Log output is not valid JSON: {e}")
         return False
     
     # Verify required fields
-    print("\nVerifying Required Fields:")
-    print("-" * 70)
+    logger.info("\nVerifying Required Fields:")
+    logger.info("-" * 70)
     
     required_fields = {
         'timestamp': 'Timestamp',
@@ -83,14 +83,14 @@ def verify_json_logging():
     for field, description in required_fields.items():
         if field in log_data:
             value = log_data[field]
-            print(f"  ✅ {description:20} ({field}): {value}")
+            logger.info("  ✅ {description:20} ({field}): {value}")
         else:
-            print(f"  ❌ {description:20} ({field}): MISSING")
+            logger.info("  ❌ {description:20} ({field}): MISSING")
             all_present = False
     
     # Verify values
-    print("\nVerifying Field Values:")
-    print("-" * 70)
+    logger.info("\nVerifying Field Values:")
+    logger.info("-" * 70)
     
     checks = [
         (log_data.get('level') == 'INFO', "Log level is INFO"),
@@ -105,37 +105,37 @@ def verify_json_logging():
     all_correct = True
     for check, description in checks:
         if check:
-            print(f"  ✅ {description}")
+            logger.info("  ✅ {description}")
         else:
-            print(f"  ❌ {description}")
+            logger.info("  ❌ {description}")
             all_correct = False
     
     # Cleanup
     clear_request_context()
     logger.removeHandler(handler)
     
-    print("\n" + "=" * 70)
+    logger.info("\n" + "=" * 70)
     if all_present and all_correct:
-        print("✅ JSON STRUCTURED LOGGING VERIFICATION PASSED")
-        print("\nStructured logging is correctly configured with:")
-        print("  - JSON format output")
-        print("  - All required fields (timestamp, level, message, etc.)")
-        print("  - Request context tracking (request_id, user_id, correlation_id)")
-        print("  - Extra field support")
-        print("\nRequirement 7.1 validated: Structured JSON logging")
-        print("=" * 70)
+        logger.info("✅ JSON STRUCTURED LOGGING VERIFICATION PASSED")
+        logger.info("\nStructured logging is correctly configured with:")
+        logger.info("  - JSON format output")
+        logger.info("  - All required fields (timestamp, level, message, etc.)")
+        logger.info("  - Request context tracking (request_id, user_id, correlation_id)")
+        logger.info("  - Extra field support")
+        logger.info("\nRequirement 7.1 validated: Structured JSON logging")
+        logger.info("=" * 70)
         return True
     else:
-        print("❌ JSON STRUCTURED LOGGING VERIFICATION FAILED")
-        print("=" * 70)
+        logger.info("❌ JSON STRUCTURED LOGGING VERIFICATION FAILED")
+        logger.info("=" * 70)
         return False
 
 
 def verify_log_rotation():
     """Verify log rotation configuration"""
-    print("\n" + "=" * 70)
-    print("  Verifying Log Rotation Configuration")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("  Verifying Log Rotation Configuration")
+    logger.info("=" * 70)
     
     from logging.handlers import TimedRotatingFileHandler
     from app.core.logging_config import setup_logging
@@ -151,21 +151,21 @@ def verify_log_rotation():
     ]
     
     if not rotating_handlers:
-        print("\n❌ No TimedRotatingFileHandler found")
+        logger.info("\n❌ No TimedRotatingFileHandler found")
         return False
     
     handler = rotating_handlers[0]
     
-    print("\nLog Rotation Configuration:")
-    print("-" * 70)
-    print(f"  File: {handler.baseFilename}")
-    print(f"  Rotation: {handler.when}")
-    print(f"  Interval: {handler.interval} seconds")
-    print(f"  Backup Count: {handler.backupCount} days")
-    print(f"  Suffix: {handler.suffix}")
+    logger.info("\nLog Rotation Configuration:")
+    logger.info("-" * 70)
+    logger.info("  File: {handler.baseFilename}")
+    logger.info("  Rotation: {handler.when}")
+    logger.info("  Interval: {handler.interval} seconds")
+    logger.info("  Backup Count: {handler.backupCount} days")
+    logger.info("  Suffix: {handler.suffix}")
     
-    print("\nVerifying Configuration:")
-    print("-" * 70)
+    logger.info("\nVerifying Configuration:")
+    logger.info("-" * 70)
     
     checks = [
         (handler.when == 'MIDNIGHT', "Rotation at midnight"),
@@ -177,24 +177,24 @@ def verify_log_rotation():
     all_correct = True
     for check, description in checks:
         if check:
-            print(f"  ✅ {description}")
+            logger.info("  ✅ {description}")
         else:
-            print(f"  ❌ {description}")
+            logger.info("  ❌ {description}")
             all_correct = False
     
-    print("\n" + "=" * 70)
+    logger.info("\n" + "=" * 70)
     if all_correct:
-        print("✅ LOG ROTATION VERIFICATION PASSED")
-        print("\nLog rotation is correctly configured:")
-        print("  - Daily rotation at midnight")
-        print("  - 30-day retention period")
-        print("  - Date-based file naming")
-        print("\nRequirement 7.6 validated: 30-day log retention")
-        print("=" * 70)
+        logger.info("✅ LOG ROTATION VERIFICATION PASSED")
+        logger.info("\nLog rotation is correctly configured:")
+        logger.info("  - Daily rotation at midnight")
+        logger.info("  - 30-day retention period")
+        logger.info("  - Date-based file naming")
+        logger.info("\nRequirement 7.6 validated: 30-day log retention")
+        logger.info("=" * 70)
         return True
     else:
-        print("❌ LOG ROTATION VERIFICATION FAILED")
-        print("=" * 70)
+        logger.info("❌ LOG ROTATION VERIFICATION FAILED")
+        logger.info("=" * 70)
         return False
 
 
@@ -209,17 +209,17 @@ def main():
     results.append(verify_log_rotation())
     
     # Summary
-    print("\n" + "=" * 70)
-    print("  VERIFICATION SUMMARY")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("  VERIFICATION SUMMARY")
+    logger.info("=" * 70)
     
     if all(results):
-        print("\n✅ ALL LOGGING VERIFICATIONS PASSED")
-        print("\nStructured logging implementation is complete and correct.")
+        logger.info("\n✅ ALL LOGGING VERIFICATIONS PASSED")
+        logger.info("\nStructured logging implementation is complete and correct.")
         return 0
     else:
-        print("\n❌ SOME LOGGING VERIFICATIONS FAILED")
-        print("\nPlease review the failed checks above.")
+        logger.info("\n❌ SOME LOGGING VERIFICATIONS FAILED")
+        logger.info("\nPlease review the failed checks above.")
         return 1
 
 

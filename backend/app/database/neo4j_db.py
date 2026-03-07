@@ -1,6 +1,9 @@
 """
 Neo4j graph database connection and query management with CI/CD resilience
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import asyncio
 import os
 from neo4j import AsyncGraphDatabase, AsyncDriver
@@ -20,6 +23,25 @@ def is_ci_environment() -> bool:
 
 # Global driver instance
 neo4j_driver: Optional[AsyncDriver] = None
+
+
+class Neo4jDB:
+    """
+    Wrapper class for Neo4j database connection.
+    Used by services that expect a class-based interface.
+    """
+    def __init__(self, driver: Optional[AsyncDriver] = None):
+        self.driver = driver
+
+    def get_session(self, **kwargs):
+        """
+        Get a Neo4j session.
+        Note: This is a placeholder for services using the sync interface.
+        """
+        if self.driver:
+            return self.driver.session(**kwargs)
+        raise RuntimeError("Neo4j driver not initialized in Neo4jDB wrapper")
+
 
 # Connection retry configuration
 MAX_RETRIES = int(os.environ.get('NEO4J_MAX_RETRIES', '3'))
@@ -58,7 +80,7 @@ async def init_neo4j():
             neo4j_driver = None
 
     try:
-        print(f"🔌 Connecting to Neo4j at {settings.NEO4J_URI}")
+        logger.info("🔌 Connecting to Neo4j at {settings.NEO4J_URI}")
 
         # Create driver with optimized settings for CI/CD
         neo4j_driver = AsyncGraphDatabase.driver(
@@ -77,37 +99,37 @@ async def init_neo4j():
             timeout=10
         )
 
-        print("✅ Neo4j initialized successfully")
+        logger.info("✅ Neo4j initialized successfully")
 
         # Create indexes in background (don't block startup)
         asyncio.create_task(create_indexes())
 
     except ServiceUnavailable as e:
         error_msg = f"Neo4j service unavailable: {e}"
-        print(f"❌ {error_msg}")
+        logger.info("❌ {error_msg}")
         if is_ci_environment():
-            print("💡 CI Environment: Ensure Neo4j container is running and healthy")
-            print(f"   Check: docker ps | grep neo4j")
+            logger.info("💡 CI Environment: Ensure Neo4j container is running and healthy")
+            logger.info("   Check: docker ps | grep neo4j")
         raise RuntimeError(error_msg) from e
 
     except AuthError as e:
         error_msg = f"Neo4j authentication failed: {e}"
-        print(f"❌ {error_msg}")
+        logger.info("❌ {error_msg}")
         if is_ci_environment():
-            print("💡 CI Environment: Check NEO4J_USER and NEO4J_PASSWORD secrets")
+            logger.info("💡 CI Environment: Check NEO4J_USER and NEO4J_PASSWORD secrets")
         raise RuntimeError(error_msg) from e
 
     except Exception as e:
         error_msg = f"Failed to initialize Neo4j: {e}"
-        print(f"❌ {error_msg}")
+        logger.info("❌ {error_msg}")
 
         # Provide helpful context for common issues
         if "Connection refused" in str(e):
-            print("💡 Connection refused: Ensure Neo4j is running on the specified URI")
+            logger.info("💡 Connection refused: Ensure Neo4j is running on the specified URI")
         elif "timeout" in str(e).lower():
-            print("💡 Timeout: Check network connectivity and Neo4j server load")
+            logger.info("💡 Timeout: Check network connectivity and Neo4j server load")
         elif "database" in str(e).lower():
-            print("💡 Database error: Verify NEO4J_DATABASE setting")
+            logger.info("💡 Database error: Verify NEO4J_DATABASE setting")
 
         raise RuntimeError(error_msg) from e
 
@@ -118,7 +140,7 @@ async def close_neo4j():
     if neo4j_driver:
         await neo4j_driver.close()
         neo4j_driver = None
-        print("✅ Neo4j connections closed")
+        logger.info("✅ Neo4j connections closed")
 
 
 async def test_neo4j_connection():
@@ -129,10 +151,10 @@ async def test_neo4j_connection():
             result = await session.run("RETURN 1 AS num")
             record = await result.single()
             assert record["num"] == 1
-        print("✅ Neo4j connection successful")
+        logger.info("✅ Neo4j connection successful")
         return True
     except Exception as e:
-        print(f"❌ Neo4j connection failed: {e}")
+        logger.info("❌ Neo4j connection failed: {e}")
         return False
 
 
@@ -153,4 +175,4 @@ async def create_indexes():
         await session.run(
             "CREATE INDEX IF NOT EXISTS FOR (n:Module) ON (n.path)"
         )
-    print("✅ Neo4j indexes created")
+    logger.info("✅ Neo4j indexes created")

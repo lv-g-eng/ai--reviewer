@@ -9,6 +9,9 @@ This script verifies that all required health check components are implemented:
 Task: 2.1 Implement health check service
 Requirements: 2.6, 7.5
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import ast
 import sys
@@ -17,11 +20,11 @@ from pathlib import Path
 
 def verify_health_service():
     """Verify health service implementation"""
-    print("Verifying health service implementation...")
+    logger.info("Verifying health service implementation...")
     
     health_service_path = Path("app/services/health_service.py")
     if not health_service_path.exists():
-        print("❌ Health service file not found")
+        logger.info("❌ Health service file not found")
         return False
     
     with open(health_service_path, 'r', encoding='utf-8') as f:
@@ -38,7 +41,7 @@ def verify_health_service():
             break
     
     if not health_service_class:
-        print("❌ HealthService class not found")
+        logger.info("❌ HealthService class not found")
         return False
     
     # Check for required methods
@@ -59,26 +62,26 @@ def verify_health_service():
     missing_methods = []
     for method in required_methods:
         if method in found_methods:
-            print(f"✅ Method {method}() found")
+            logger.info("✅ Method {method}() found")
         else:
-            print(f"❌ Method {method}() not found")
+            logger.info("❌ Method {method}() not found")
             missing_methods.append(method)
     
     if missing_methods:
-        print(f"\n❌ Missing methods: {', '.join(missing_methods)}")
+        logger.info("\n❌ Missing methods: {', '.join(missing_methods)}")
         return False
     
-    print("\n✅ All required methods found in HealthService")
+    logger.info("\n✅ All required methods found in HealthService")
     return True
 
 
 def verify_health_endpoints():
     """Verify health endpoints implementation"""
-    print("\nVerifying health endpoints...")
+    logger.info("\nVerifying health endpoints...")
     
     health_endpoints_path = Path("app/api/v1/endpoints/health.py")
     if not health_endpoints_path.exists():
-        print("❌ Health endpoints file not found")
+        logger.info("❌ Health endpoints file not found")
         return False
     
     with open(health_endpoints_path, 'r', encoding='utf-8') as f:
@@ -94,45 +97,45 @@ def verify_health_endpoints():
     missing_endpoints = []
     for func_name, path in required_endpoints:
         if func_name in content:
-            print(f"✅ Endpoint {func_name} ({path}) found")
+            logger.info("✅ Endpoint {func_name} ({path}) found")
         else:
-            print(f"❌ Endpoint {func_name} ({path}) not found")
+            logger.info("❌ Endpoint {func_name} ({path}) not found")
             missing_endpoints.append(func_name)
     
     if missing_endpoints:
-        print(f"\n❌ Missing endpoints: {', '.join(missing_endpoints)}")
+        logger.info("\n❌ Missing endpoints: {', '.join(missing_endpoints)}")
         return False
     
-    print("\n✅ All required endpoints found")
+    logger.info("\n✅ All required endpoints found")
     return True
 
 
 def verify_router_registration():
     """Verify health router is registered"""
-    print("\nVerifying router registration...")
+    logger.info("\nVerifying router registration...")
     
     router_path = Path("app/api/v1/router.py")
     if not router_path.exists():
-        print("❌ Router file not found")
+        logger.info("❌ Router file not found")
         return False
     
     with open(router_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
     if "health.router" in content and 'prefix="/health"' in content:
-        print("✅ Health router registered with prefix /health")
+        logger.info("✅ Health router registered with prefix /health")
         return True
     else:
-        print("❌ Health router not properly registered")
+        logger.info("❌ Health router not properly registered")
         return False
 
 
 def main():
     """Main verification function"""
-    print("=" * 60)
-    print("Health Check Service Implementation Verification")
-    print("=" * 60)
-    print()
+    logger.info("=" * 60)
+    logger.info("Health Check Service Implementation Verification")
+    logger.info("=" * 60)
+    logger.info()
     
     results = []
     
@@ -145,22 +148,22 @@ def main():
     # Verify router registration
     results.append(verify_router_registration())
     
-    print("\n" + "=" * 60)
+    logger.info("\n" + "=" * 60)
     if all(results):
-        print("✅ ALL VERIFICATIONS PASSED")
-        print("\nImplemented components:")
-        print("  1. HealthService with check_postgres(), check_neo4j(), check_redis()")
-        print("  2. HealthService with get_health_status(), get_readiness_status(), get_liveness_status()")
-        print("  3. API endpoints:")
-        print("     - GET /api/v1/health - Overall health status")
-        print("     - GET /api/v1/health/ready - Readiness probe")
-        print("     - GET /api/v1/health/live - Liveness probe")
-        print("\nRequirements validated: 2.6, 7.5")
-        print("=" * 60)
+        logger.info("✅ ALL VERIFICATIONS PASSED")
+        logger.info("\nImplemented components:")
+        logger.info("  1. HealthService with check_postgres(), check_neo4j(), check_redis()")
+        logger.info("  2. HealthService with get_health_status(), get_readiness_status(), get_liveness_status()")
+        logger.info("  3. API endpoints:")
+        logger.info("     - GET /api/v1/health - Overall health status")
+        logger.info("     - GET /api/v1/health/ready - Readiness probe")
+        logger.info("     - GET /api/v1/health/live - Liveness probe")
+        logger.info("\nRequirements validated: 2.6, 7.5")
+        logger.info("=" * 60)
         return 0
     else:
-        print("❌ SOME VERIFICATIONS FAILED")
-        print("=" * 60)
+        logger.info("❌ SOME VERIFICATIONS FAILED")
+        logger.info("=" * 60)
         return 1
 
 

@@ -7,6 +7,9 @@ Requirements:
 - 10.2: Complete analysis within 12 seconds for <10K LOC
 - 10.3: Complete analysis within 60 seconds for 10K-50K LOC
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 import time
 import tempfile
@@ -109,7 +112,7 @@ class Class_{i}:
                 f"(Requirement 1.2)"
             )
             
-            print(f"✓ Single file parsed in {parse_time:.3f}s (< 2s requirement)")
+            logger.info("✓ Single file parsed in {parse_time:.3f}s (< 2s requirement)")
         finally:
             os.unlink(temp_path)
     
@@ -141,7 +144,7 @@ class Class_{i}:
                 total_loc += len(code.split('\n'))
         
         try:
-            print(f"Testing with {num_files} files, ~{total_loc} LOC")
+            logger.info("Testing with {num_files} files, ~{total_loc} LOC")
             
             # Analyze all files
             start_time = time.time()
@@ -158,13 +161,13 @@ class Class_{i}:
                 f"for {total_loc} LOC (Requirement 10.2)"
             )
             
-            print(f"✓ Small repository ({total_loc} LOC) analyzed in {analysis_time:.3f}s (< 12s requirement)")
+            logger.info("✓ Small repository ({total_loc} LOC) analyzed in {analysis_time:.3f}s (< 12s requirement)")
             
             # Print performance stats
             stats = extractor.get_performance_stats()
-            print(f"  - Files parsed: {stats.get('total_files_parsed', 0)}")
-            print(f"  - Avg parse time: {stats.get('avg_parse_time', 0):.3f}s")
-            print(f"  - Cache stats: {stats.get('cache_stats', {})}")
+            logger.info("  - Files parsed: {stats.get('total_files_parsed', 0)}")
+            logger.info("  - Avg parse time: {stats.get('avg_parse_time', 0):.3f}s")
+            logger.info("  - Cache stats: {stats.get('cache_stats', {})}")
         finally:
             for temp_file in temp_files:
                 os.unlink(temp_file)
@@ -196,7 +199,7 @@ class Class_{i}:
                 total_loc += len(code.split('\n'))
         
         try:
-            print(f"Testing with {num_files} files, ~{total_loc} LOC")
+            logger.info("Testing with {num_files} files, ~{total_loc} LOC")
             
             # Analyze all files
             start_time = time.time()
@@ -213,13 +216,13 @@ class Class_{i}:
                 f"for {total_loc} LOC (Requirement 10.3)"
             )
             
-            print(f"✓ Medium repository ({total_loc} LOC) analyzed in {analysis_time:.3f}s (< 60s requirement)")
+            logger.info("✓ Medium repository ({total_loc} LOC) analyzed in {analysis_time:.3f}s (< 60s requirement)")
             
             # Print performance stats
             stats = extractor.get_performance_stats()
-            print(f"  - Files parsed: {stats.get('total_files_parsed', 0)}")
-            print(f"  - Avg parse time: {stats.get('avg_parse_time', 0):.3f}s")
-            print(f"  - Cache stats: {stats.get('cache_stats', {})}")
+            logger.info("  - Files parsed: {stats.get('total_files_parsed', 0)}")
+            logger.info("  - Avg parse time: {stats.get('avg_parse_time', 0):.3f}s")
+            logger.info("  - Cache stats: {stats.get('cache_stats', {})}")
         finally:
             for temp_file in temp_files:
                 os.unlink(temp_file)
@@ -254,13 +257,13 @@ class Class_{i}:
                 assert parsed_file is not None
                 assert len(parsed_file.errors) == 0
             
-            print(f"✓ Parallel parsing of 10 files completed in {time_parallel:.3f}s")
+            logger.info("✓ Parallel parsing of 10 files completed in {time_parallel:.3f}s")
             
             # Get performance stats
             stats = parser_parallel.get_performance_stats()
-            print(f"  - Total files: {stats['total_files_parsed']}")
-            print(f"  - Avg parse time: {stats['avg_parse_time']:.3f}s")
-            print(f"  - Max workers: {stats['max_workers']}")
+            logger.info("  - Total files: {stats['total_files_parsed']}")
+            logger.info("  - Avg parse time: {stats['avg_parse_time']:.3f}s")
+            logger.info("  - Max workers: {stats['max_workers']}")
         finally:
             for temp_file in temp_files:
                 os.unlink(temp_file)
@@ -299,11 +302,11 @@ class Class_{i}:
         assert stats["hits"] >= 1
         assert stats["hit_rate"] > 0
         
-        print(f"✓ Cache performance benefit verified:")
-        print(f"  - First parse (miss): {total_first:.3f}s")
-        print(f"  - Second parse (hit): {total_second:.3f}s")
-        print(f"  - Speedup: {total_first / total_second:.2f}x")
-        print(f"  - Cache hit rate: {stats['hit_rate']:.2%}")
+        logger.info("✓ Cache performance benefit verified:")
+        logger.info("  - First parse (miss): {total_first:.3f}s")
+        logger.info("  - Second parse (hit): {total_second:.3f}s")
+        logger.info("  - Speedup: {total_first / total_second:.2f}x")
+        logger.info("  - Cache hit rate: {stats['hit_rate']:.2%}")
     
     def test_batch_processing_performance(self):
         """Test batch processing for large file sets"""
@@ -331,8 +334,8 @@ class Class_{i}:
                 parsed_file, _ = results[file_path]
                 assert parsed_file is not None
             
-            print(f"✓ Batch processing of 30 files completed in {batch_time:.3f}s")
-            print(f"  - Avg time per file: {batch_time / 30:.3f}s")
+            logger.info("✓ Batch processing of 30 files completed in {batch_time:.3f}s")
+            logger.info("  - Avg time per file: {batch_time / 30:.3f}s")
         finally:
             for temp_file in temp_files:
                 os.unlink(temp_file)
@@ -363,9 +366,9 @@ class TestParserScalability:
             assert parse_time < 2.0, f"File with {size} LOC took {parse_time:.3f}s (> 2s)"
             
             results.append((size, parse_time))
-            print(f"  - {size} LOC: {parse_time:.3f}s")
+            logger.info("  - {size} LOC: {parse_time:.3f}s")
         
-        print("✓ Parser scales linearly with file size")
+        logger.info("✓ Parser scales linearly with file size")
     
     def test_increasing_file_counts(self):
         """Test parser performance with increasing file counts"""
@@ -397,12 +400,12 @@ class TestParserScalability:
                 assert len(result["parsed_files"]) == count
                 
                 results.append((count, analysis_time))
-                print(f"  - {count} files: {analysis_time:.3f}s ({analysis_time/count:.3f}s per file)")
+                logger.info("  - {count} files: {analysis_time:.3f}s ({analysis_time/count:.3f}s per file)")
             finally:
                 for temp_file in temp_files:
                     os.unlink(temp_file)
         
-        print("✓ Parser scales efficiently with file count")
+        logger.info("✓ Parser scales efficiently with file count")
 
 
 if __name__ == '__main__':

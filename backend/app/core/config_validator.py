@@ -410,7 +410,7 @@ def validate_required_env_vars(required_vars: List[str]) -> Dict[str, bool]:
         ])
         
         if not all(missing.values()):
-            print("Missing required environment variables")
+            logger.info("Missing required environment variables")
     """
     results = {}
     for var in required_vars:

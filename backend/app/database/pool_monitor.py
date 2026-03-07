@@ -6,6 +6,9 @@ and performance of the SQLAlchemy connection pool.
 
 Requirements: 10.6 - Connection pooling for PostgreSQL with pool size of 20 connections
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import Dict, Any
 from sqlalchemy.pool import Pool
 
@@ -98,12 +101,12 @@ async def log_pool_status(engine):
     """
     pool = engine.pool
     status = get_pool_status(pool)
-    print(format_pool_status(status))
+    logger.info(str(format_pool_status(status)))
     
     health = check_pool_health(pool)
     if not health['healthy']:
-        print("\n⚠️  Pool Health Warnings:")
+        logger.info("\n⚠️  Pool Health Warnings:")
         for warning in health['warnings']:
-            print(f"  - {warning}")
+            logger.info("  - {warning}")
     else:
-        print("\n✅ Pool is healthy")
+        logger.info("\n✅ Pool is healthy")

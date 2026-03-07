@@ -246,16 +246,13 @@ async def github_webhook(
     body = await request.body()
     payload = await request.json()
     
-    # Check for replay protection
+    # Check for replay protection and concurrent duplicates using atomic SET NX
     if x_github_delivery:
         cache = await get_cache_service()
-        delivery_key = f"webhook:delivery:{x_github_delivery}"
         
-        if await cache.cache_exists(delivery_key):
+        is_new = await cache.mark_webhook_processed(x_github_delivery)
+        if not is_new:
             return {"message": "Webhook already processed"}
-        
-        # Store delivery ID for 24 hours
-        await cache.cache_set(delivery_key, "processed", expiration=86400)
     
     # Get project from repository URL
     repo_full_name = payload.get('repository', {}).get('full_name')

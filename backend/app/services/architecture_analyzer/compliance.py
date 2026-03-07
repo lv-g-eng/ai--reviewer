@@ -16,6 +16,9 @@ ISO/IEC 25010 Quality Characteristics:
 
 Implements Requirements 1.9 and 15.8
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass, asdict
@@ -244,7 +247,7 @@ class ComplianceVerifier:
                     })
         
         except Exception as e:
-            print(f"Error getting project nodes: {str(e)}")
+            logger.info("Error getting project nodes: {str(e)}")
         
         return nodes
     
@@ -286,7 +289,7 @@ class ComplianceVerifier:
                     })
         
         except Exception as e:
-            print(f"Error getting project relationships: {str(e)}")
+            logger.info("Error getting project relationships: {str(e)}")
         
         return relationships
 

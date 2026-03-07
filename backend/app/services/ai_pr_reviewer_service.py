@@ -50,23 +50,6 @@ class AIReviewService:
     支持用户自定义 API 密钥
     """
     
-    def __init__(self, db: AsyncSession, user_id: str, llm_provider=None):
-        """
-        初始化 AI 审查服务
-        
-        Args:
-            db: 数据库会话
-            user_id: 用户 ID
-            llm_provider: 可选的 LLM 提供者实例，如果未提供则根据用户配置创建
-        """
-        self.db = db
-        self.user_id = user_id
-        self.llm_provider = llm_provider
-        self.logger = logger
-        
-        self.logger.info(
-            f"AI Review Service initialized for user: {user_id}"
-        )
     
     async def _get_llm_provider(self):
         """获取 LLM 提供者实例（延迟加载）"""
@@ -165,12 +148,21 @@ Please provide:
     def _parse_review_result(self, content: str) -> ReviewResult:
         """解析 LLM 返回的审查结果"""
         # 简化的解析逻辑，实际应该更复杂
+        # Placeholder values for demonstration
+        safety_score = 85
+        compliance_status = ComplianceStatus.COMPLIANT
+        architecture_violations = []
+        security_concerns = []
+        best_practices = []
+        code_quality_issues = []
+
         return ReviewResult(
-            safety_score=85,
-            compliance_status=ComplianceStatus.COMPLIANT,
-            architectural_issues=[],
-            security_issues=[],
-            refactoring_suggestions=[]
+            safety_score=safety_score,
+            compliance_status=compliance_status,
+            architectural_issues=architecture_violations,
+            security_issues=security_concerns,
+            refactoring_suggestions=best_practices,
+            code_quality_issues=code_quality_issues
         )
     
     def _generate_report(self, review_result: ReviewResult) -> Dict:
@@ -189,52 +181,27 @@ Please provide:
             },
             "refactoring_suggestions": review_result.refactoring_suggestions
         }
+
+    def __init__(self, db: AsyncSession, user_id: str, llm_provider=None, ai_reviewer=None):
         """
-        Perform AI review of a pull request.
+        初始化 AI 审查服务
         
         Args:
-            request: Review request containing diff and metadata
-            
-        Returns:
-            ReviewResponse with complete analysis results
+            db: 数据库会话
+            user_id: 用户 ID
+            llm_provider: 可选的 LLM 提供者实例
+            ai_reviewer: 可选的 AIPRReviewer 实例
         """
-        try:
-            self.logger.info(f"Starting AI review for PR {request.pr_id}")
-            
-            # Perform AI analysis
-            # Note: Using analyze_pr with design_standards converted to string
-            design_standards_str = json.dumps(request.design_standards) if request.design_standards else "No specific standards provided"
-            review_result = self.ai_reviewer.analyze_pr(
-                request.diff_content, 
-                design_standards_str
-            )
-            
-            # Generate comprehensive report
-            report_markdown = self.ai_reviewer.generate_markdown_report(review_result)
-            
-            # Create response
-            response = ReviewResponse(
-                review_id=self._generate_review_id(),
-                timestamp=datetime.now(),
-                review_result=review_result,
-                report=report,
-                metadata={
-                    "project_id": request.project_id,
-                    "pr_id": request.pr_id,
-                    "reviewer_id": request.reviewer_id,
-                    "llm_provider": self.llm_client.provider.value,
-                    "llm_model": self.llm_client.model,
-                    "usage_stats": self.llm_client.get_usage_stats()
-                }
-            )
-            
-            self.logger.info(f"AI review completed for PR {request.pr_id} - Score: {review_result.safety_score}")
-            
-            return response
-            
-        except Exception as e:
-            self.logger.error(f"AI review failed for PR {request.pr_id}: {str(e)}")
-            raise
+        self.db = db
+        self.user_id = user_id
+        self.llm_provider = llm_provider
+        self.ai_reviewer = ai_reviewer or AIPRReviewer()
+        self.logger = logger
+        
+        self.logger.info(
+            f"AI Review Service initialized for user: {user_id}"
+        )
+
 
     def _generate_review_id(self) -> str:
         """Generate unique review ID."""
@@ -255,7 +222,7 @@ Please provide:
         
         for request in requests:
             try:
-                response = self.review_pull_request(request)
+                response = await self.review_pull_request(request)
                 responses.append(response)
             except Exception as e:
                 self.logger.error(f"Batch review failed for PR {request.pr_id}: {str(e)}")
@@ -280,7 +247,7 @@ Please provide:
         total_reviews = len(responses)
         compliant_reviews = sum(1 for r in responses if r.review_result.compliance_status == ComplianceStatus.COMPLIANT)
         warning_reviews = sum(1 for r in responses if r.review_result.compliance_status == ComplianceStatus.WARNING)
-        non_compliant_reviews = sum(1 for r in responses if r.review_result.compliance_status == ComplianceStatus.NON_COMPLIANT)
+        non_compliant_reviews = sum(1 for r in responses if r.review_result.compliance_status == ComplianceStatus.VIOLATION)
         
         avg_safety_score = sum(r.review_result.safety_score for r in responses) / total_reviews
         total_issues = sum(r.report["summary"]["total_issues"] for r in responses)
@@ -350,7 +317,7 @@ Please provide:
 
     def _generate_compliance_recommendations(self, responses: List[ReviewResponse]) -> List[str]:
         """Generate compliance-specific recommendations."""
-        non_compliant_count = sum(1 for r in responses if r.review_result.compliance_status == ComplianceStatus.NON_COMPLIANT)
+        non_compliant_count = sum(1 for r in responses if r.review_result.compliance_status == ComplianceStatus.VIOLATION)
         if non_compliant_count > len(responses) * 0.3:  # More than 30% non-compliant
             return ["Consider mandatory code review training for the team"]
         return []
@@ -553,24 +520,24 @@ if __name__ == "__main__":
             response = await review_service.review_pull_request(request)
             
             # Print results
-            print("Review completed successfully!")
-            print(f"Review ID: {response.review_id}")
-            print(f"Safety Score: {response.review_result.safety_score}")
-            print(f"Compliance Status: {response.review_result.compliance_status}")
-            print(f"Total Issues: {response.report['summary']['total_issues']}")
+            logger.info("Review completed successfully!")
+            logger.info("Review ID: {response.review_id}")
+            logger.info("Safety Score: {response.review_result.safety_score}")
+            logger.info("Compliance Status: {response.review_result.compliance_status}")
+            logger.info("Total Issues: {response.report['summary']['total_issues']}")
             
             # Export report
             json_report = review_service.export_review_report(response, "json")
             markdown_report = review_service.export_review_report(response, "markdown")
             
-            print("\nJSON Report:")
-            print(json_report[:500] + "..." if len(json_report) > 500 else json_report)
+            logger.info("\nJSON Report:")
+            logger.info(str((json_report[:500] + "...") if len(json_report) > 500 else json_report))
             
-            print("\nMarkdown Report:")
-            print(markdown_report[:500] + "..." if len(markdown_report) > 500 else markdown_report)
+            logger.info("\nMarkdown Report:")
+            logger.info(str((markdown_report[:500] + "...") if len(markdown_report) > 500 else markdown_report))
             
         except Exception as e:
-            print(f"Error during review: {e}")
+            logger.info("Error during review: {e}")
     
     # Run example
     asyncio.run(main())

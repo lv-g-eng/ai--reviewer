@@ -2,6 +2,7 @@
 Celery tasks for async processing
 """
 import json
+import logging
 from datetime import datetime, timezone
 from celery import Task
 from sqlalchemy import select
@@ -15,6 +16,8 @@ from app.services.github_client import get_github_client
 from app.services.parsers.factory import ParserFactory
 from app.services.neo4j_ast_service import Neo4jASTService
 from app.database.neo4j_db import get_neo4j_driver
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseTask(Task):
@@ -111,7 +114,7 @@ def analyze_pull_request(self, pr_id: str, project_id: str):
                                 # Insert into Neo4j
                                 await neo4j_service.insert_ast_nodes(parsed, project_id)
                         except Exception as e:
-                            print(f"Error parsing {file_data['filename']}: {e}")
+                            logger.error("Error parsing %s: %s", file_data.get('filename', 'unknown'), str(e), exc_info=True)
                 
                 # Run AI analysis
                 ai_engine = AIReasoningEngine()
@@ -250,10 +253,3 @@ def generate_project_documentation(project_id: str):
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(_generate())
 
-
-# Task monitoring
-@celery_app.task(bind=True)
-def debug_task(self):
-    """Debug task for testing"""
-    print(f'Request: {self.request!r}')
-    return {'status': 'ok'}

@@ -3,6 +3,9 @@ Tests for OpenTelemetry distributed tracing integration.
 
 Validates Requirement 18.1: Distributed tracing using OpenTelemetry
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from opentelemetry import trace
@@ -390,7 +393,7 @@ class TestTracingExample:
         service = LLMService()
         
         review = await service.generate_review(
-            code="def hello(): print('world')",
+            code="def hello(): logger.info('world')",
             context="Simple function",
         )
         

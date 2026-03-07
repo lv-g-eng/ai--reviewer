@@ -136,7 +136,7 @@ class RBACService:
             
         except Exception as e:
             # Log error but don't expose details
-            print(f"Error in can_access_project: {type(e).__name__}: {str(e)}")
+            logger.info("Error in can_access_project: {type(e).__name__}: {str(e)}")
             return False
     
     @staticmethod

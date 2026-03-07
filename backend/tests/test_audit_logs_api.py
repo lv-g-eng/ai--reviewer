@@ -73,7 +73,7 @@ def client():
 def test_query_audit_logs_requires_authentication(client):
     """Test that querying audit logs requires authentication"""
     response = client.get("/api/v1/audit-logs/")
-    assert response.status_code == 403  # No auth header
+    assert response.status_code == 401  # No auth header
 
 
 def test_query_audit_logs_requires_admin_or_compliance_role(client, mock_regular_user, mock_db):

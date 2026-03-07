@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 OWASP ZAP Security Scanner Runner
@@ -115,7 +118,7 @@ class ZAPScanner:
     
     def run_baseline_scan(self, target: str, output_dir: str) -> int:
         """Run ZAP baseline scan"""
-        print(f"Running ZAP baseline scan against {target}...")
+        logger.info("Running ZAP baseline scan against {target}...")
         
         # Create output directory
         Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -144,23 +147,23 @@ class ZAPScanner:
                 timeout=self.config['scan'].get('max_duration', 30) * 60
             )
             
-            print(result.stdout)
+            logger.info(str(result.stdout))
             if result.stderr:
-                print(result.stderr, file=sys.stderr)
+                logger.info(str(result.stderr, file=sys.stderr))
             
             return result.returncode
             
         except subprocess.TimeoutExpired:
-            print("ERROR: Scan timed out", file=sys.stderr)
+            logger.info("ERROR: Scan timed out", file=sys.stderr)
             return 1
         except Exception as e:
-            print(f"ERROR: Scan failed: {e}", file=sys.stderr)
+            logger.info(str(f"ERROR: Scan failed: {e}", file=sys.stderr))
             return 1
     
     def run_api_scan(self, target: str, api_spec: str, output_dir: str) -> int:
         """Run ZAP API scan with OpenAPI specification"""
-        print(f"Running ZAP API scan against {target}...")
-        print(f"Using API spec: {api_spec}")
+        logger.info("Running ZAP API scan against {target}...")
+        logger.info("Using API spec: {api_spec}")
         
         # Create output directory
         Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -189,23 +192,23 @@ class ZAPScanner:
                 timeout=self.config['scan'].get('max_duration', 30) * 60
             )
             
-            print(result.stdout)
+            logger.info(str(result.stdout))
             if result.stderr:
-                print(result.stderr, file=sys.stderr)
+                logger.info(str(result.stderr, file=sys.stderr))
             
             return result.returncode
             
         except subprocess.TimeoutExpired:
-            print("ERROR: Scan timed out", file=sys.stderr)
+            logger.info("ERROR: Scan timed out", file=sys.stderr)
             return 1
         except Exception as e:
-            print(f"ERROR: Scan failed: {e}", file=sys.stderr)
+            logger.info(str(f"ERROR: Scan failed: {e}", file=sys.stderr))
             return 1
     
     def run_full_scan(self, target: str, output_dir: str) -> int:
         """Run ZAP full scan (active + passive)"""
-        print(f"Running ZAP full scan against {target}...")
-        print("WARNING: Full scan may take significant time and generate load")
+        logger.info("Running ZAP full scan against {target}...")
+        logger.info("WARNING: Full scan may take significant time and generate load")
         
         # Create output directory
         Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -233,17 +236,17 @@ class ZAPScanner:
                 timeout=self.config['scan'].get('max_duration', 30) * 60
             )
             
-            print(result.stdout)
+            logger.info(str(result.stdout))
             if result.stderr:
-                print(result.stderr, file=sys.stderr)
+                logger.info(str(result.stderr, file=sys.stderr))
             
             return result.returncode
             
         except subprocess.TimeoutExpired:
-            print("ERROR: Scan timed out", file=sys.stderr)
+            logger.info("ERROR: Scan timed out", file=sys.stderr)
             return 1
         except Exception as e:
-            print(f"ERROR: Scan failed: {e}", file=sys.stderr)
+            logger.info(str(f"ERROR: Scan failed: {e}", file=sys.stderr))
             return 1
     
     def parse_results(self, json_report_path: str) -> Dict:
@@ -280,7 +283,7 @@ class ZAPScanner:
             }
             
         except Exception as e:
-            print(f"ERROR: Failed to parse results: {e}", file=sys.stderr)
+            logger.info(str(f"ERROR: Failed to parse results: {e}", file=sys.stderr))
             return None
     
     def check_compliance(self, results: Dict) -> bool:
@@ -295,17 +298,17 @@ class ZAPScanner:
         
         # Check high severity
         if summary.get('high', 0) > max_alerts.get('high', 0):
-            print(f"FAIL: {summary['high']} high severity issues found "
+            logger.info(f"FAIL: {summary['high']} high severity issues found "
                   f"(max allowed: {max_alerts.get('high', 0)})")
             return False
         
         # Check medium severity
         if summary.get('medium', 0) > max_alerts.get('medium', 0):
-            print(f"FAIL: {summary['medium']} medium severity issues found "
+            logger.info(f"FAIL: {summary['medium']} medium severity issues found "
                   f"(max allowed: {max_alerts.get('medium', 0)})")
             return False
         
-        print("PASS: Security scan meets compliance thresholds")
+        logger.info("PASS: Security scan meets compliance thresholds")
         return True
     
     def generate_summary_report(self, results: Dict, output_path: str):
@@ -364,7 +367,7 @@ class ZAPScanner:
                     f.write(f"- **Description:** {alert.get('desc', 'N/A')}\n")
                     f.write(f"- **Solution:** {alert.get('solution', 'N/A')}\n\n")
         
-        print(f"Summary report generated: {output_path}")
+        logger.info("Summary report generated: {output_path}")
     
     def run(self, target: Optional[str] = None, scan_type: Optional[str] = None) -> int:
         """Run security scan"""
@@ -373,22 +376,22 @@ class ZAPScanner:
         scan_type = scan_type or self.config['scan']['type']
         output_dir = self.config['reporting']['output_dir']
         
-        print("=" * 60)
-        print("OWASP ZAP Security Scanner")
-        print("=" * 60)
-        print(f"Target: {target}")
-        print(f"Scan Type: {scan_type}")
-        print(f"Output Directory: {output_dir}")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("OWASP ZAP Security Scanner")
+        logger.info("=" * 60)
+        logger.info("Target: {target}")
+        logger.info("Scan Type: {scan_type}")
+        logger.info("Output Directory: {output_dir}")
+        logger.info("=" * 60)
         
         # Pre-flight checks
         if not self.check_docker():
-            print("ERROR: Docker is not available", file=sys.stderr)
+            logger.info("ERROR: Docker is not available", file=sys.stderr)
             return 1
         
         if not self.check_target_availability(target):
-            print(f"WARNING: Target {target} may not be accessible")
-            print("Continuing anyway...")
+            logger.info("WARNING: Target {target} may not be accessible")
+            logger.info("Continuing anyway...")
         
         # Run appropriate scan
         if scan_type == 'baseline':
@@ -402,7 +405,7 @@ class ZAPScanner:
             exit_code = self.run_full_scan(target, output_dir)
             json_report = os.path.join(output_dir, 'full_report.json')
         else:
-            print(f"ERROR: Unknown scan type: {scan_type}", file=sys.stderr)
+            logger.info(str(f"ERROR: Unknown scan type: {scan_type}", file=sys.stderr))
             return 1
         
         # Parse and analyze results

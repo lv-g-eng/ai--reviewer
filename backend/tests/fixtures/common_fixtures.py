@@ -6,7 +6,7 @@ This module provides reusable fixtures following the DRY principle.
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 import httpx
-from app.services.llm.circuit_breaker import AsyncCircuitBreaker
+from app.services.llm.circuit_breaker import CircuitBreaker
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def mock_circuit_breaker():
     async def mock_call(func, *args, **kwargs):
         return await func(*args, **kwargs)
     
-    breaker = AsyncMock(spec=AsyncCircuitBreaker)
+    breaker = AsyncMock(spec=CircuitBreaker)
     breaker.call = AsyncMock(side_effect=mock_call)
     return breaker
 

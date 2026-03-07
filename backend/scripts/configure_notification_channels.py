@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 CloudWatch Notification Channels Configuration Script
@@ -44,8 +47,8 @@ try:
     import boto3
     from botocore.exceptions import ClientError, NoCredentialsError
 except ImportError:
-    print("❌ Error: boto3 is not installed")
-    print("Install it with: pip install boto3")
+    logger.info("❌ Error: boto3 is not installed")
+    logger.info("Install it with: pip install boto3")
     sys.exit(1)
 
 
@@ -64,8 +67,8 @@ class NotificationChannelManager:
             self.sns_client = boto3.client("sns", region_name=region)
             self.cloudwatch_client = boto3.client("cloudwatch", region_name=region)
         except NoCredentialsError:
-            print("❌ Error: AWS credentials not configured")
-            print("Configure credentials with: aws configure")
+            logger.info("❌ Error: AWS credentials not configured")
+            logger.info("Configure credentials with: aws configure")
             sys.exit(1)
 
     def setup_email_subscription(
@@ -82,19 +85,17 @@ class NotificationChannelManager:
             Dictionary with subscription details
         """
         try:
-            print(f"📧 Setting up email subscription for: {email}")
+            logger.info("📧 Setting up email subscription for: {email}")
 
             # Check if subscription already exists
             existing = self._get_subscription_by_endpoint(topic_arn, email)
             if existing:
-                print(f"ℹ️  Email subscription already exists")
-                print(f"   Subscription ARN: {existing['SubscriptionArn']}")
+                logger.info("ℹ️  Email subscription already exists")
+                logger.info("   Subscription ARN: {existing['SubscriptionArn']}")
                 if existing["SubscriptionArn"] == "PendingConfirmation":
-                    print(
-                        "⚠️  Subscription pending confirmation - check email inbox"
-                    )
+                    logger.info("⚠️  Subscription pending confirmation - check email inbox")
                 else:
-                    print("✅ Subscription confirmed and active")
+                    logger.info("✅ Subscription confirmed and active")
                 return existing
 
             # Create new subscription
@@ -104,17 +105,17 @@ class NotificationChannelManager:
 
             subscription_arn = response["SubscriptionArn"]
 
-            print(f"✅ Email subscription created successfully")
-            print(f"   Subscription ARN: {subscription_arn}")
-            print(f"   Status: Pending confirmation")
-            print()
-            print("📬 IMPORTANT: Check your email inbox!")
-            print(f"   1. Look for email from: AWS Notifications")
-            print(f"   2. Subject: AWS Notification - Subscription Confirmation")
-            print(f"   3. Click 'Confirm subscription' link")
-            print(f"   4. Subscription expires in 3 days if not confirmed")
-            print()
-            print("💡 Tip: Check spam/junk folder if email not received")
+            logger.info("✅ Email subscription created successfully")
+            logger.info("   Subscription ARN: {subscription_arn}")
+            logger.info("   Status: Pending confirmation")
+            logger.info()
+            logger.info("📬 IMPORTANT: Check your email inbox!")
+            logger.info("   1. Look for email from: AWS Notifications")
+            logger.info("   2. Subject: AWS Notification - Subscription Confirmation")
+            logger.info("   3. Click 'Confirm subscription' link")
+            logger.info("   4. Subscription expires in 3 days if not confirmed")
+            logger.info()
+            logger.info("💡 Tip: Check spam/junk folder if email not received")
 
             return {
                 "SubscriptionArn": subscription_arn,
@@ -124,7 +125,7 @@ class NotificationChannelManager:
             }
 
         except ClientError as e:
-            print(f"❌ Error setting up email subscription: {e}")
+            logger.info("❌ Error setting up email subscription: {e}")
             raise
 
     def setup_slack_subscription(
@@ -141,21 +142,19 @@ class NotificationChannelManager:
             Dictionary with subscription details
         """
         try:
-            print(f"💬 Setting up Slack subscription")
+            logger.info("💬 Setting up Slack subscription")
 
             # Validate webhook URL
             if not webhook_url.startswith("https://hooks.slack.com/"):
-                print("⚠️  Warning: Webhook URL doesn't look like a Slack webhook")
-                print(
-                    "   Expected format: https://hooks.slack.com/services/T00/B00/XXX"
-                )
+                logger.info("⚠️  Warning: Webhook URL doesn't look like a Slack webhook")
+                logger.info("   Expected format: https://hooks.slack.com/services/T00/B00/XXX")
 
             # Check if subscription already exists
             existing = self._get_subscription_by_endpoint(topic_arn, webhook_url)
             if existing:
-                print(f"ℹ️  Slack subscription already exists")
-                print(f"   Subscription ARN: {existing['SubscriptionArn']}")
-                print("✅ Subscription active (HTTPS subscriptions auto-confirm)")
+                logger.info("ℹ️  Slack subscription already exists")
+                logger.info("   Subscription ARN: {existing['SubscriptionArn']}")
+                logger.info("✅ Subscription active (HTTPS subscriptions auto-confirm)")
                 return existing
 
             # Create new subscription
@@ -165,14 +164,12 @@ class NotificationChannelManager:
 
             subscription_arn = response["SubscriptionArn"]
 
-            print(f"✅ Slack subscription created successfully")
-            print(f"   Subscription ARN: {subscription_arn}")
-            print(f"   Status: Active (HTTPS subscriptions auto-confirm)")
-            print()
-            print("💡 Tip: Test the subscription with:")
-            print(
-                f"   python {sys.argv[0]} test --topic-arn {topic_arn}"
-            )
+            logger.info("✅ Slack subscription created successfully")
+            logger.info("   Subscription ARN: {subscription_arn}")
+            logger.info("   Status: Active (HTTPS subscriptions auto-confirm)")
+            logger.info()
+            logger.info("💡 Tip: Test the subscription with:")
+            logger.info("   python {sys.argv[0]} test --topic-arn {topic_arn}")
 
             return {
                 "SubscriptionArn": subscription_arn,
@@ -182,7 +179,7 @@ class NotificationChannelManager:
             }
 
         except ClientError as e:
-            print(f"❌ Error setting up Slack subscription: {e}")
+            logger.info("❌ Error setting up Slack subscription: {e}")
             raise
 
     def list_subscriptions(self, topic_arn: str) -> List[Dict]:
@@ -196,9 +193,9 @@ class NotificationChannelManager:
             List of subscription dictionaries
         """
         try:
-            print(f"📋 Listing subscriptions for topic:")
-            print(f"   {topic_arn}")
-            print()
+            logger.info("📋 Listing subscriptions for topic:")
+            logger.info("   {topic_arn}")
+            logger.info()
 
             response = self.sns_client.list_subscriptions_by_topic(
                 TopicArn=topic_arn
@@ -207,11 +204,11 @@ class NotificationChannelManager:
             subscriptions = response.get("Subscriptions", [])
 
             if not subscriptions:
-                print("ℹ️  No subscriptions found")
+                logger.info("ℹ️  No subscriptions found")
                 return []
 
-            print(f"Found {len(subscriptions)} subscription(s):")
-            print()
+            logger.info("Found {len(subscriptions)} subscription(s):")
+            logger.info()
 
             for i, sub in enumerate(subscriptions, 1):
                 protocol = sub["Protocol"]
@@ -236,16 +233,16 @@ class NotificationChannelManager:
                 else:
                     display_endpoint = endpoint
 
-                print(f"{i}. {protocol.upper()} Subscription")
-                print(f"   Endpoint: {display_endpoint}")
-                print(f"   Status: {status}")
-                print(f"   ARN: {sub_arn}")
-                print()
+                logger.info("{i}. {protocol.upper()} Subscription")
+                logger.info("   Endpoint: {display_endpoint}")
+                logger.info("   Status: {status}")
+                logger.info("   ARN: {sub_arn}")
+                logger.info()
 
             return subscriptions
 
         except ClientError as e:
-            print(f"❌ Error listing subscriptions: {e}")
+            logger.info("❌ Error listing subscriptions: {e}")
             raise
 
     def test_notification(
@@ -270,9 +267,9 @@ class NotificationChannelManager:
                     f"If you received this message, your notification channel is configured correctly!"
                 )
 
-            print(f"🧪 Sending test notification...")
-            print(f"   Topic: {topic_arn}")
-            print()
+            logger.info("🧪 Sending test notification...")
+            logger.info("   Topic: {topic_arn}")
+            logger.info()
 
             response = self.sns_client.publish(
                 TopicArn=topic_arn,
@@ -282,19 +279,19 @@ class NotificationChannelManager:
 
             message_id = response["MessageId"]
 
-            print(f"✅ Test notification sent successfully")
-            print(f"   Message ID: {message_id}")
-            print()
-            print("📬 Check your notification channels:")
-            print("   • Email: Check inbox (and spam folder)")
-            print("   • Slack: Check configured channel")
-            print()
-            print("⏱️  Notifications should arrive within 1 minute")
+            logger.info("✅ Test notification sent successfully")
+            logger.info("   Message ID: {message_id}")
+            logger.info()
+            logger.info("📬 Check your notification channels:")
+            logger.info("   • Email: Check inbox (and spam folder)")
+            logger.info("   • Slack: Check configured channel")
+            logger.info()
+            logger.info("⏱️  Notifications should arrive within 1 minute")
 
             return True
 
         except ClientError as e:
-            print(f"❌ Error sending test notification: {e}")
+            logger.info("❌ Error sending test notification: {e}")
             raise
 
     def verify_configuration(self, topic_arn: str) -> Dict[str, any]:
@@ -307,8 +304,8 @@ class NotificationChannelManager:
         Returns:
             Dictionary with verification results
         """
-        print(f"🔍 Verifying notification channel configuration...")
-        print()
+        logger.info("🔍 Verifying notification channel configuration...")
+        logger.info()
 
         results = {
             "topic_exists": False,
@@ -324,10 +321,10 @@ class NotificationChannelManager:
             try:
                 self.sns_client.get_topic_attributes(TopicArn=topic_arn)
                 results["topic_exists"] = True
-                print("✅ SNS topic exists")
+                logger.info("✅ SNS topic exists")
             except ClientError:
                 results["issues"].append("SNS topic not found")
-                print("❌ SNS topic not found")
+                logger.info("❌ SNS topic not found")
                 return results
 
             # List subscriptions
@@ -339,11 +336,11 @@ class NotificationChannelManager:
 
             if not subscriptions:
                 results["issues"].append("No subscriptions configured")
-                print("⚠️  No subscriptions configured")
-                print()
-                print("💡 Configure notifications with:")
-                print(f"   python {sys.argv[0]} setup-email --topic-arn {topic_arn} --email YOUR_EMAIL")
-                print(f"   python {sys.argv[0]} setup-slack --topic-arn {topic_arn} --webhook-url YOUR_WEBHOOK")
+                logger.info("⚠️  No subscriptions configured")
+                logger.info()
+                logger.info("💡 Configure notifications with:")
+                logger.info("   python {sys.argv[0]} setup-email --topic-arn {topic_arn} --email YOUR_EMAIL")
+                logger.info("   python {sys.argv[0]} setup-slack --topic-arn {topic_arn} --webhook-url YOUR_WEBHOOK")
                 return results
 
             # Check each subscription
@@ -355,47 +352,39 @@ class NotificationChannelManager:
                     results["email_configured"] = True
                     if sub_arn != "PendingConfirmation":
                         results["email_confirmed"] = True
-                        print(f"✅ Email subscription active: {sub['Endpoint']}")
+                        logger.info("✅ Email subscription active: {sub['Endpoint']}")
                     else:
                         results["issues"].append(
                             "Email subscription pending confirmation"
                         )
-                        print(
-                            f"⚠️  Email subscription pending: {sub['Endpoint']}"
-                        )
-                        print("   Check email inbox and confirm subscription")
+                        logger.info("⚠️  Email subscription pending: {sub['Endpoint']}")
+                        logger.info("   Check email inbox and confirm subscription")
 
                 elif protocol == "https":
                     results["slack_configured"] = True
-                    print("✅ Slack subscription active")
+                    logger.info("✅ Slack subscription active")
 
             # Summary
-            print()
-            print("📊 Configuration Summary:")
-            print(f"   Total subscriptions: {results['total_subscriptions']}")
-            print(
-                f"   Email configured: {'✅' if results['email_configured'] else '❌'}"
-            )
-            print(
-                f"   Email confirmed: {'✅' if results['email_confirmed'] else '❌'}"
-            )
-            print(
-                f"   Slack configured: {'✅' if results['slack_configured'] else '❌'}"
-            )
+            logger.info()
+            logger.info("📊 Configuration Summary:")
+            logger.info("   Total subscriptions: {results['total_subscriptions']}")
+            logger.info("   Email configured: {'✅' if results['email_configured'] else '❌'}")
+            logger.info("   Email confirmed: {'✅' if results['email_confirmed'] else '❌'}")
+            logger.info("   Slack configured: {'✅' if results['slack_configured'] else '❌'}")
 
             if results["issues"]:
-                print()
-                print("⚠️  Issues found:")
+                logger.info()
+                logger.info("⚠️  Issues found:")
                 for issue in results["issues"]:
-                    print(f"   • {issue}")
+                    logger.info("   • {issue}")
             else:
-                print()
-                print("✅ All notification channels configured correctly!")
+                logger.info()
+                logger.info("✅ All notification channels configured correctly!")
 
             return results
 
         except ClientError as e:
-            print(f"❌ Error verifying configuration: {e}")
+            logger.info("❌ Error verifying configuration: {e}")
             raise
 
     def _get_subscription_by_endpoint(
@@ -545,7 +534,7 @@ Examples:
                 sys.exit(1)
 
     except Exception as e:
-        print(f"\n❌ Command failed: {e}")
+        logger.info("\n❌ Command failed: {e}")
         sys.exit(1)
 
 

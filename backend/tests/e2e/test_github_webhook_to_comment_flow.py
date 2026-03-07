@@ -19,6 +19,9 @@ Flow:
 This test runs in a staging environment with real database connections
 but mocked external services (GitHub API, LLM APIs).
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 import hmac
 import hashlib
@@ -342,12 +345,12 @@ def test_multiply():
             # Verify LLM was called
             assert llm_instance.generate.called
             
-            print(f"\n✓ E2E Test Passed!")
-            print(f"  Total time: {total_time:.2f}s")
-            print(f"  Files parsed: {len(parse_result['parsed_entities'])}")
-            print(f"  Graph nodes created: {graph_result['graph_stats']['nodes_created']}")
-            print(f"  Issues found: {analysis_result['llm_analysis']['total_issues']}")
-            print(f"  Comments posted: {final_result['comments_posted']}")
+            logger.info("\n✓ E2E Test Passed!")
+            logger.info("  Total time: {total_time:.2f}s")
+            logger.info("  Files parsed: {len(parse_result['parsed_entities'])}")
+            logger.info("  Graph nodes created: {graph_result['graph_stats']['nodes_created']}")
+            logger.info("  Issues found: {analysis_result['llm_analysis']['total_issues']}")
+            logger.info("  Comments posted: {final_result['comments_posted']}")
     
     @pytest.mark.asyncio
     @pytest.mark.e2e
@@ -428,7 +431,7 @@ def test_multiply():
             # Webhook should accept the request even if processing fails later
             assert response.status_code == 202
             
-            print("\n✓ Error handling test passed!")
+            logger.info("\n✓ Error handling test passed!")
     
     @pytest.mark.asyncio
     @pytest.mark.e2e
@@ -516,9 +519,9 @@ def test_multiply():
                 assert response.status_code == 202
             
             total_time = (end_time - start_time).total_seconds()
-            print(f"\n✓ Load test passed!")
-            print(f"  Processed 10 concurrent webhooks in {total_time:.2f}s")
-            print(f"  Average time per webhook: {total_time/10:.2f}s")
+            logger.info("\n✓ Load test passed!")
+            logger.info("  Processed 10 concurrent webhooks in {total_time:.2f}s")
+            logger.info("  Average time per webhook: {total_time/10:.2f}s")
 
 
 if __name__ == '__main__':

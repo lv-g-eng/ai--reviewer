@@ -4,6 +4,9 @@ Code Entity Extraction Demo
 This script demonstrates how to use the CodeEntityExtractor service
 to extract code entities, calculate complexity, and identify dependencies.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import sys
 from pathlib import Path
 
@@ -15,9 +18,9 @@ from app.services.code_entity_extractor import CodeEntityExtractor
 
 def demo_single_file_extraction():
     """Demonstrate extracting entities from a single file"""
-    print("=" * 80)
-    print("DEMO: Single File Entity Extraction")
-    print("=" * 80)
+    logger.info("=" * 80)
+    logger.info("DEMO: Single File Entity Extraction")
+    logger.info("=" * 80)
     
     extractor = CodeEntityExtractor()
     
@@ -26,46 +29,46 @@ def demo_single_file_extraction():
     result = extractor.extract_from_file(file_path)
     
     if result["errors"]:
-        print(f"Errors: {result['errors']}")
+        logger.info("Errors: {result['errors']}")
         return
     
-    print(f"\nFile: {file_path}")
-    print(f"Total entities extracted: {len(result['entities'])}")
+    logger.info("\nFile: {file_path}")
+    logger.info("Total entities extracted: {len(result['entities'])}")
     
     # Show entities by type
     functions = [e for e in result["entities"] if e.entity_type == "function"]
     classes = [e for e in result["entities"] if e.entity_type == "class"]
     methods = [e for e in result["entities"] if e.entity_type == "method"]
     
-    print(f"\nFunctions: {len(functions)}")
+    logger.info("\nFunctions: {len(functions)}")
     for func in functions:
-        print(f"  - {func.name} (complexity: {func.complexity}, LOC: {func.lines_of_code})")
+        logger.info("  - {func.name} (complexity: {func.complexity}, LOC: {func.lines_of_code})")
     
-    print(f"\nClasses: {len(classes)}")
+    logger.info("\nClasses: {len(classes)}")
     for cls in classes:
-        print(f"  - {cls.name} (complexity: {cls.complexity}, LOC: {cls.lines_of_code})")
+        logger.info("  - {cls.name} (complexity: {cls.complexity}, LOC: {cls.lines_of_code})")
     
-    print(f"\nMethods: {len(methods)}")
+    logger.info("\nMethods: {len(methods)}")
     for method in methods:
-        print(f"  - {method.name} (complexity: {method.complexity}, LOC: {method.lines_of_code})")
+        logger.info("  - {method.name} (complexity: {method.complexity}, LOC: {method.lines_of_code})")
     
     # Show metrics
-    print("\nMetrics:")
+    logger.info("\nMetrics:")
     metrics = result["metrics"]
     for key, value in metrics.items():
         if isinstance(value, float):
-            print(f"  {key}: {value:.2f}")
+            logger.info("  {key}: {value:.2f}")
         elif isinstance(value, list):
-            print(f"  {key}: {len(value)} items")
+            logger.info("  {key}: {len(value)} items")
         else:
-            print(f"  {key}: {value}")
+            logger.info("  {key}: {value}")
 
 
 def demo_high_complexity_detection():
     """Demonstrate finding high complexity entities"""
-    print("\n" + "=" * 80)
-    print("DEMO: High Complexity Detection")
-    print("=" * 80)
+    logger.info("\n" + "=" * 80)
+    logger.info("DEMO: High Complexity Detection")
+    logger.info("=" * 80)
     
     extractor = CodeEntityExtractor()
     
@@ -109,21 +112,21 @@ def complex_function(a, b, c):
         result = extractor.extract_from_file(temp_path)
         entities = result["entities"]
         
-        print(f"\nTotal entities: {len(entities)}")
+        logger.info("\nTotal entities: {len(entities)}")
         
         # Find high complexity entities (threshold: 3)
         high_complexity = extractor.find_high_complexity_entities(entities, threshold=3)
         
-        print(f"\nHigh complexity entities (complexity > 3): {len(high_complexity)}")
+        logger.info("\nHigh complexity entities (complexity > 3): {len(high_complexity)}")
         for entity in high_complexity:
-            print(f"  - {entity.name}: complexity = {entity.complexity}")
+            logger.info("  - {entity.name}: complexity = {entity.complexity}")
         
         # Show complexity distribution
         complexities = [e.complexity for e in entities]
-        print(f"\nComplexity statistics:")
-        print(f"  Min: {min(complexities)}")
-        print(f"  Max: {max(complexities)}")
-        print(f"  Avg: {sum(complexities) / len(complexities):.2f}")
+        logger.info("\nComplexity statistics:")
+        logger.info("  Min: {min(complexities)}")
+        logger.info("  Max: {max(complexities)}")
+        logger.info("  Avg: {sum(complexities) / len(complexities):.2f}")
     
     finally:
         import os
@@ -133,9 +136,9 @@ def complex_function(a, b, c):
 
 def demo_dependency_graph():
     """Demonstrate building dependency graphs"""
-    print("\n" + "=" * 80)
-    print("DEMO: Dependency Graph Construction")
-    print("=" * 80)
+    logger.info("\n" + "=" * 80)
+    logger.info("DEMO: Dependency Graph Construction")
+    logger.info("=" * 80)
     
     extractor = CodeEntityExtractor()
     
@@ -180,39 +183,39 @@ def another_function():
     try:
         result = extractor.extract_from_files([path1, path2])
         
-        print(f"\nTotal files analyzed: {len(result['parsed_files'])}")
-        print(f"Total entities: {len(result['entities'])}")
+        logger.info("\nTotal files analyzed: {len(result['parsed_files'])}")
+        logger.info("Total entities: {len(result['entities'])}")
         
         # Show dependency graph
         graph = result["dependency_graph"]
-        print(f"\nDependency Graph:")
-        print(f"  Nodes: {len(graph.nodes)}")
-        print(f"  Edges: {len(graph.edges)}")
+        logger.info("\nDependency Graph:")
+        logger.info("  Nodes: {len(graph.nodes)}")
+        logger.info("  Edges: {len(graph.edges)}")
         
-        print(f"\nDependencies:")
+        logger.info("\nDependencies:")
         for edge in graph.edges:
-            print(f"  {edge.source} --[{edge.type}]--> {edge.target}")
+            logger.info("  {edge.source} --[{edge.type}]--> {edge.target}")
         
         # Show graph metrics
-        print(f"\nGraph Metrics:")
+        logger.info("\nGraph Metrics:")
         for key, value in graph.metrics.items():
             if isinstance(value, float):
-                print(f"  {key}: {value:.2f}")
+                logger.info("  {key}: {value:.2f}")
             else:
-                print(f"  {key}: {value}")
+                logger.info("  {key}: {value}")
         
         # Show cross-file metrics
-        print(f"\nCross-File Metrics:")
+        logger.info("\nCross-File Metrics:")
         metrics = result["metrics"]
         for key, value in metrics.items():
             if key == "high_complexity_entities":
-                print(f"  {key}: {len(value)} entities")
+                logger.info("  {key}: {len(value)} entities")
             elif key == "graph_metrics":
                 continue  # Already shown above
             elif isinstance(value, float):
-                print(f"  {key}: {value:.2f}")
+                logger.info("  {key}: {value:.2f}")
             else:
-                print(f"  {key}: {value}")
+                logger.info("  {key}: {value}")
     
     finally:
         if os.path.exists(path1):
@@ -223,9 +226,9 @@ def another_function():
 
 def demo_entity_filtering():
     """Demonstrate filtering entities"""
-    print("\n" + "=" * 80)
-    print("DEMO: Entity Filtering")
-    print("=" * 80)
+    logger.info("\n" + "=" * 80)
+    logger.info("DEMO: Entity Filtering")
+    logger.info("=" * 80)
     
     extractor = CodeEntityExtractor()
     
@@ -253,25 +256,25 @@ def another_function():
         result = extractor.extract_from_file(temp_path)
         entities = result["entities"]
         
-        print(f"\nTotal entities: {len(entities)}")
+        logger.info("\nTotal entities: {len(entities)}")
         
         # Filter by type
         functions = extractor.get_entities_by_type(entities, "function")
         classes = extractor.get_entities_by_type(entities, "class")
         methods = extractor.get_entities_by_type(entities, "method")
         
-        print(f"\nFiltered by type:")
-        print(f"  Functions: {len(functions)}")
+        logger.info("\nFiltered by type:")
+        logger.info("  Functions: {len(functions)}")
         for func in functions:
-            print(f"    - {func.name}")
+            logger.info("    - {func.name}")
         
-        print(f"  Classes: {len(classes)}")
+        logger.info("  Classes: {len(classes)}")
         for cls in classes:
-            print(f"    - {cls.name}")
+            logger.info("    - {cls.name}")
         
-        print(f"  Methods: {len(methods)}")
+        logger.info("  Methods: {len(methods)}")
         for method in methods:
-            print(f"    - {method.name}")
+            logger.info("    - {method.name}")
     
     finally:
         import os
@@ -281,10 +284,10 @@ def another_function():
 
 def main():
     """Run all demos"""
-    print("\n")
-    print("╔" + "=" * 78 + "╗")
-    print("║" + " " * 20 + "CODE ENTITY EXTRACTION DEMO" + " " * 31 + "║")
-    print("╚" + "=" * 78 + "╝")
+    logger.info("\n")
+    logger.info("╔" + "=" * 78 + "╗")
+    logger.info("║" + " " * 20 + "CODE ENTITY EXTRACTION DEMO" + " " * 31 + "║")
+    logger.info("╚" + "=" * 78 + "╝")
     
     try:
         demo_single_file_extraction()
@@ -292,12 +295,12 @@ def main():
         demo_dependency_graph()
         demo_entity_filtering()
         
-        print("\n" + "=" * 80)
-        print("All demos completed successfully!")
-        print("=" * 80 + "\n")
+        logger.info("\n" + "=" * 80)
+        logger.info("All demos completed successfully!")
+        logger.info("=" * 80 + "\n")
     
     except Exception as e:
-        print(f"\nError running demo: {e}")
+        logger.info("\nError running demo: {e}")
         import traceback
         traceback.print_exc()
 

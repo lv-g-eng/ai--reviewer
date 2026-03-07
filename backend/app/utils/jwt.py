@@ -2,6 +2,9 @@
 JWT token utilities
 Handles token generation, validation, and management
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
@@ -191,13 +194,17 @@ def get_token_expiry(token: str) -> Optional[datetime]:
     return None
 
 
-async def revoke_token(jti: str, expires_at: datetime) -> None:
+async def revoke_token(jti: str, expires_at: datetime) -> bool:
     """
-    Revoke token by adding JTI to Redis blacklist
+    Revoke token by adding JTI to Redis blacklist atomically.
     
     Args:
         jti: JWT ID to revoke
         expires_at: Token expiration time (used to set TTL)
+        
+    Returns:
+        True if the token was successfully added to the blacklist (first time),
+        False if it was already in the blacklist (preventing concurrent reuse).
         
     The token is added to a Redis blacklist with TTL matching the token's
     expiration time. This ensures revoked tokens are automatically cleaned
@@ -213,11 +220,15 @@ async def revoke_token(jti: str, expires_at: datetime) -> None:
         # Only add to blacklist if token hasn't already expired
         if ttl_seconds > 0:
             # Store in Redis with key pattern: revoked:jti:{jti}
+            # Use SET with NX=True to atomically ensure we're the first to revoke it
             key = f"revoked:jti:{jti}"
-            await redis_client.set(key, "1", ex=ttl_seconds)
+            result = await redis_client.set(key, "1", ex=ttl_seconds, nx=True)
+            return bool(result)
+        return False
     except Exception as e:
         # Log error but don't raise - revocation failure shouldn't break the flow
-        print(f"Warning: Failed to revoke token {jti}: {e}")
+        logger.info("Warning: Failed to revoke token {jti}: {e}")
+        return False
 
 
 async def is_token_revoked(jti: str) -> bool:
@@ -237,7 +248,7 @@ async def is_token_revoked(jti: str) -> bool:
     except Exception as e:
         # Log error and fail open - if Redis is down, allow the token
         # This prioritizes availability over strict security
-        print(f"Warning: Failed to check token revocation status: {e}")
+        logger.info("Warning: Failed to check token revocation status: {e}")
         return False  # Fail open for availability
 
 

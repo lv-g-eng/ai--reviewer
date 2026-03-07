@@ -6,6 +6,9 @@ without requiring database connections.
 
 Validates Requirement: 10.6
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import ast
 import sys
 
@@ -13,186 +16,186 @@ import sys
 def verify_endpoint_code():
     """Verify the feature flag audit endpoint code structure"""
     
-    print("=" * 70)
-    print("Feature Flag Audit Endpoint Code Verification")
-    print("=" * 70)
-    print()
+    logger.info("=" * 70)
+    logger.info("Feature Flag Audit Endpoint Code Verification")
+    logger.info("=" * 70)
+    logger.info()
     
     # Check 1: Verify endpoint file exists
-    print("✓ Check 1: Verifying endpoint file exists...")
+    logger.info("✓ Check 1: Verifying endpoint file exists...")
     try:
         with open("app/api/v1/endpoints/audit_logs.py", "r", encoding="utf-8") as f:
             content = f.read()
-        print("  ✅ audit_logs.py file found")
+        logger.info("  ✅ audit_logs.py file found")
     except FileNotFoundError:
-        print("  ❌ audit_logs.py file not found")
+        logger.info("  ❌ audit_logs.py file not found")
         return False
     
     # Check 2: Verify FeatureFlagChangeLog model exists
-    print("\n✓ Check 2: Verifying FeatureFlagChangeLog model...")
+    logger.info("\n✓ Check 2: Verifying FeatureFlagChangeLog model...")
     if "class FeatureFlagChangeLog(BaseModel):" in content:
-        print("  ✅ FeatureFlagChangeLog model found")
+        logger.info("  ✅ FeatureFlagChangeLog model found")
         
         # Check required fields
         required_fields = ["flag_name", "old_value", "new_value"]
         for field in required_fields:
             if f"{field}:" in content:
-                print(f"    ✅ Field '{field}' defined")
+                logger.info("    ✅ Field '{field}' defined")
             else:
-                print(f"    ❌ Field '{field}' missing")
+                logger.info("    ❌ Field '{field}' missing")
                 return False
     else:
-        print("  ❌ FeatureFlagChangeLog model not found")
+        logger.info("  ❌ FeatureFlagChangeLog model not found")
         return False
     
     # Check 3: Verify FeatureFlagAuditResponse model exists
-    print("\n✓ Check 3: Verifying FeatureFlagAuditResponse model...")
+    logger.info("\n✓ Check 3: Verifying FeatureFlagAuditResponse model...")
     if "class FeatureFlagAuditResponse(BaseModel):" in content:
-        print("  ✅ FeatureFlagAuditResponse model found")
+        logger.info("  ✅ FeatureFlagAuditResponse model found")
         
         # Check response fields
         response_fields = ["success", "log_id", "message"]
         for field in response_fields:
             if f"{field}:" in content:
-                print(f"    ✅ Field '{field}' defined")
+                logger.info("    ✅ Field '{field}' defined")
             else:
-                print(f"    ❌ Field '{field}' missing")
+                logger.info("    ❌ Field '{field}' missing")
                 return False
     else:
-        print("  ❌ FeatureFlagAuditResponse model not found")
+        logger.info("  ❌ FeatureFlagAuditResponse model not found")
         return False
     
     # Check 4: Verify endpoint function exists
-    print("\n✓ Check 4: Verifying log_feature_flag_change function...")
+    logger.info("\n✓ Check 4: Verifying log_feature_flag_change function...")
     if "async def log_feature_flag_change(" in content:
-        print("  ✅ log_feature_flag_change function found")
+        logger.info("  ✅ log_feature_flag_change function found")
         
         # Check function parameters
         if "change_log: FeatureFlagChangeLog" in content:
-            print("    ✅ change_log parameter defined")
+            logger.info("    ✅ change_log parameter defined")
         else:
-            print("    ❌ change_log parameter missing")
+            logger.info("    ❌ change_log parameter missing")
             return False
             
         if "db: AsyncSession = Depends(get_db)" in content:
-            print("    ✅ db parameter defined")
+            logger.info("    ✅ db parameter defined")
         else:
-            print("    ❌ db parameter missing")
+            logger.info("    ❌ db parameter missing")
             return False
             
         if "current_user: dict = Depends(get_current_user)" in content:
-            print("    ✅ current_user parameter defined")
+            logger.info("    ✅ current_user parameter defined")
         else:
-            print("    ❌ current_user parameter missing")
+            logger.info("    ❌ current_user parameter missing")
             return False
     else:
-        print("  ❌ log_feature_flag_change function not found")
+        logger.info("  ❌ log_feature_flag_change function not found")
         return False
     
     # Check 5: Verify endpoint route decorator
-    print("\n✓ Check 5: Verifying endpoint route...")
+    logger.info("\n✓ Check 5: Verifying endpoint route...")
     if '@router.post(\n    "/feature-flags"' in content:
-        print("  ✅ POST /feature-flags route defined")
+        logger.info("  ✅ POST /feature-flags route defined")
     else:
-        print("  ❌ POST /feature-flags route not found")
+        logger.info("  ❌ POST /feature-flags route not found")
         return False
     
     # Check 6: Verify audit logging implementation
-    print("\n✓ Check 6: Verifying audit logging implementation...")
+    logger.info("\n✓ Check 6: Verifying audit logging implementation...")
     if "AuditEventType.FEATURE_FLAG_CHANGE" in content:
-        print("  ✅ Uses AuditEventType.FEATURE_FLAG_CHANGE")
+        logger.info("  ✅ Uses AuditEventType.FEATURE_FLAG_CHANGE")
     else:
-        print("  ❌ AuditEventType.FEATURE_FLAG_CHANGE not used")
+        logger.info("  ❌ AuditEventType.FEATURE_FLAG_CHANGE not used")
         return False
     
     if "audit_service.log_event(" in content:
-        print("  ✅ Calls audit_service.log_event()")
+        logger.info("  ✅ Calls audit_service.log_event()")
     else:
-        print("  ❌ audit_service.log_event() not called")
+        logger.info("  ❌ audit_service.log_event() not called")
         return False
     
     # Check 7: Verify structured logging
-    print("\n✓ Check 7: Verifying structured logging...")
+    logger.info("\n✓ Check 7: Verifying structured logging...")
     if 'logger.info(' in content and '"Feature flag state changed"' in content:
-        print("  ✅ Structured logging implemented")
+        logger.info("  ✅ Structured logging implemented")
     else:
-        print("  ❌ Structured logging not found")
+        logger.info("  ❌ Structured logging not found")
         return False
     
     # Check 8: Verify error handling
-    print("\n✓ Check 8: Verifying error handling...")
+    logger.info("\n✓ Check 8: Verifying error handling...")
     if "except ValueError as e:" in content:
-        print("  ✅ ValueError exception handling")
+        logger.info("  ✅ ValueError exception handling")
     else:
-        print("  ❌ ValueError exception handling missing")
+        logger.info("  ❌ ValueError exception handling missing")
         return False
     
     if "except Exception as e:" in content:
-        print("  ✅ Generic exception handling")
+        logger.info("  ✅ Generic exception handling")
     else:
-        print("  ❌ Generic exception handling missing")
+        logger.info("  ❌ Generic exception handling missing")
         return False
     
     # Check 9: Verify AuditEventType constant
-    print("\n✓ Check 9: Verifying AuditEventType constant...")
+    logger.info("\n✓ Check 9: Verifying AuditEventType constant...")
     try:
         with open("app/services/audit_logging_service.py", "r", encoding="utf-8") as f:
             audit_content = f.read()
         
         if 'FEATURE_FLAG_CHANGE = "admin.feature_flag.change"' in audit_content:
-            print("  ✅ FEATURE_FLAG_CHANGE constant defined")
+            logger.info("  ✅ FEATURE_FLAG_CHANGE constant defined")
         else:
-            print("  ❌ FEATURE_FLAG_CHANGE constant not found")
+            logger.info("  ❌ FEATURE_FLAG_CHANGE constant not found")
             return False
     except FileNotFoundError:
-        print("  ❌ audit_logging_service.py file not found")
+        logger.info("  ❌ audit_logging_service.py file not found")
         return False
     
     # Check 10: Verify requirement validation
-    print("\n✓ Check 10: Verifying requirement validation...")
+    logger.info("\n✓ Check 10: Verifying requirement validation...")
     if "Validates Requirement: 10.6" in content:
-        print("  ✅ Requirement 10.6 validation documented")
+        logger.info("  ✅ Requirement 10.6 validation documented")
     else:
-        print("  ⚠️  Requirement 10.6 validation not explicitly documented")
+        logger.info("  ⚠️  Requirement 10.6 validation not explicitly documented")
     
     # Summary
-    print("\n" + "=" * 70)
-    print("✅ All checks passed!")
-    print("=" * 70)
-    print()
-    print("Endpoint Implementation Summary:")
-    print("  ✅ POST /api/v1/audit-logs/feature-flags endpoint created")
-    print("  ✅ Request model (FeatureFlagChangeLog) defined with required fields")
-    print("  ✅ Response model (FeatureFlagAuditResponse) defined")
-    print("  ✅ Audit logging service integration implemented")
-    print("  ✅ Structured logging implemented")
-    print("  ✅ Error handling implemented")
-    print("  ✅ AuditEventType.FEATURE_FLAG_CHANGE constant added")
-    print()
-    print("Endpoint Details:")
-    print("  URL: POST /api/v1/audit-logs/feature-flags")
-    print("  Authentication: Required (Bearer token)")
-    print("  Request Body:")
-    print("    - flag_name: string (required)")
-    print("    - old_value: boolean (required)")
-    print("    - new_value: boolean (required)")
-    print("    - user_id: string (optional)")
-    print("    - timestamp: datetime (optional)")
-    print("    - metadata: object (optional)")
-    print()
-    print("  Response (200 OK):")
-    print("    - success: boolean")
-    print("    - log_id: string (UUID)")
-    print("    - message: string")
-    print()
-    print("  Error Responses:")
-    print("    - 400: Invalid data (e.g., invalid UUID)")
-    print("    - 401: Unauthorized (missing or invalid token)")
-    print("    - 500: Internal server error")
-    print()
-    print("  Validates Requirement: 10.6")
-    print("  (Log all feature flag state changes for audit purposes)")
-    print()
+    logger.info("\n" + "=" * 70)
+    logger.info("✅ All checks passed!")
+    logger.info("=" * 70)
+    logger.info()
+    logger.info("Endpoint Implementation Summary:")
+    logger.info("  ✅ POST /api/v1/audit-logs/feature-flags endpoint created")
+    logger.info("  ✅ Request model (FeatureFlagChangeLog) defined with required fields")
+    logger.info("  ✅ Response model (FeatureFlagAuditResponse) defined")
+    logger.info("  ✅ Audit logging service integration implemented")
+    logger.info("  ✅ Structured logging implemented")
+    logger.info("  ✅ Error handling implemented")
+    logger.info("  ✅ AuditEventType.FEATURE_FLAG_CHANGE constant added")
+    logger.info()
+    logger.info("Endpoint Details:")
+    logger.info("  URL: POST /api/v1/audit-logs/feature-flags")
+    logger.info("  Authentication: Required (Bearer token)")
+    logger.info("  Request Body:")
+    logger.info("    - flag_name: string (required)")
+    logger.info("    - old_value: boolean (required)")
+    logger.info("    - new_value: boolean (required)")
+    logger.info("    - user_id: string (optional)")
+    logger.info("    - timestamp: datetime (optional)")
+    logger.info("    - metadata: object (optional)")
+    logger.info()
+    logger.info("  Response (200 OK):")
+    logger.info("    - success: boolean")
+    logger.info("    - log_id: string (UUID)")
+    logger.info("    - message: string")
+    logger.info()
+    logger.info("  Error Responses:")
+    logger.info("    - 400: Invalid data (e.g., invalid UUID)")
+    logger.info("    - 401: Unauthorized (missing or invalid token)")
+    logger.info("    - 500: Internal server error")
+    logger.info()
+    logger.info("  Validates Requirement: 10.6")
+    logger.info("  (Log all feature flag state changes for audit purposes)")
+    logger.info()
     
     return True
 

@@ -1,19 +1,35 @@
 """
 Backend test configuration with Neo4j mocking support
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
+import pytest_asyncio
 import asyncio
 import json
 import os
 import subprocess
+import sys
+
+# Windows socket issues with ProactorEventLoop in tests
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 from typing import AsyncGenerator, Dict, Any, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
+import sqlalchemy
+from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
-# Set TESTING environment variable before importing app
+# Set TESTING environment variable and override DB name before importing app
 os.environ["TESTING"] = "true"
+os.environ["POSTGRES_DB"] = "ai_code_review_test"
+os.environ["POSTGRES_HOST"] = "127.0.0.1"
+os.environ["POSTGRES_PORT"] = "5433"
+os.environ["POSTGRES_USER"] = "postgres"
+os.environ["POSTGRES_PASSWORD"] = "" # Use empty password for trust auth on port 5433
 
 from app.main import app
 from app.database.postgresql import Base, get_db
@@ -65,11 +81,7 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_docker)
 
 # Test database URL
-TEST_DATABASE_URL = settings.postgres_url.replace("/ai_code_review", "/ai_code_review_test")
-
-# Create test engine
-test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+TEST_DATABASE_URL = settings.postgres_url
 
 # Test results collection for AI reviewer
 test_results = {
@@ -81,27 +93,54 @@ test_results = {
 }
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Create test database session"""
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    """Create test database session using a fresh engine for isolation"""
+    from app.database.postgresql import Base
+    logger.info("\n[DB_FIXTURE] Starting db_session setup")
     
-    async with TestSessionLocal() as session:
-        yield session
+    # Create a fresh engine
+    engine = create_async_engine(
+        settings.postgres_url,
+        poolclass=NullPool,
+        echo=False
+    )
     
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.begin())
-        await conn.run_sync(Base.metadata.drop_all)
+    async_session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    
+    try:
+        logger.info("[DB_FIXTURE] Creating tables")
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("[DB_FIXTURE] Tables created")
+        
+        async with async_session_factory() as session:
+            logger.info("[DB_FIXTURE] Yielding session")
+            yield session
+            logger.info("[DB_FIXTURE] Test finished, closing session")
+        
+        logger.info("[DB_FIXTURE] Dropping tables")
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        logger.info("[DB_FIXTURE] Tables dropped")
+    except Exception as e:
+        logger.info("[DB_FIXTURE] ERROR: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise e
+    finally:
+        logger.info("[DB_FIXTURE] Disposing engine")
+        await engine.dispose()
+        logger.info("[DB_FIXTURE] Engine disposed")
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def async_session(db_session: AsyncSession) -> AsyncSession:
     """Alias for db_session to match test expectations"""
     return db_session
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(db_session: AsyncSession) -> AsyncClient:
     """Create test client"""
     async def override_get_db():
@@ -115,7 +154,7 @@ async def client(db_session: AsyncSession) -> AsyncClient:
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def auth_headers(test_user):
     """Get authentication headers"""
     from app.utils.jwt import create_access_token
@@ -123,7 +162,7 @@ async def auth_headers(test_user):
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_user(db_session: AsyncSession):
     """Create test user"""
     from app.models import User
@@ -141,7 +180,7 @@ async def test_user(db_session: AsyncSession):
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def access_token(test_user):
     """Generate access token for test user"""
     from app.utils.jwt import create_access_token
@@ -150,7 +189,7 @@ async def access_token(test_user):
 
 # ===== NEO4J MOCKING FIXTURES =====
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function", autouse=True)
 async def mock_neo4j_driver():
     """
     Mock Neo4j driver for unit tests that don't need real database
@@ -179,7 +218,7 @@ async def mock_neo4j_driver():
         yield mock_driver
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def neo4j_session_data():
     """
     Pre-populated mock Neo4j session with test data
@@ -368,7 +407,7 @@ def mock_db_timeouts():
 
 # ===== REDIS MOCKING FIXTURES =====
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="function", autouse=True)
 def mock_redis_client():
     """
     Mock Redis client for unit tests
@@ -377,7 +416,10 @@ def mock_redis_client():
     ttls = {}
     
     class MockRedis:
-        async def set(self, key: str, value: str, ex: Optional[int] = None):
+        async def set(self, key: str, value: str, ex: Optional[int] = None, **kwargs):
+            nx = kwargs.get('nx', False)
+            if nx and key in storage:
+                return None
             storage[key] = value
             if ex:
                 ttls[key] = ex
@@ -401,6 +443,11 @@ def mock_redis_client():
     
     mock_redis = MockRedis()
     
+    import app.database.redis_db
+    app.database.redis_db.redis_client = mock_redis
+    
     with patch('app.database.redis_db.get_redis', return_value=mock_redis):
         with patch('app.utils.jwt.get_redis', return_value=mock_redis):
             yield mock_redis
+    
+    app.database.redis_db.redis_client = None

@@ -1,6 +1,8 @@
 """
 Main FastAPI application entry point
 """
+import os
+import logging
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +16,8 @@ from app.api.exception_handlers import register_exception_handlers
 from app.database.postgresql import init_postgres, close_postgres
 from app.database.neo4j_db import init_neo4j, close_neo4j
 from app.database.redis_db import init_redis, close_redis
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -41,35 +45,45 @@ async def lifespan(app: FastAPI):
     from app.services.graceful_shutdown import setup_graceful_shutdown
     shutdown_handler = setup_graceful_shutdown(shutdown_timeout=30)
     
+    # Skip database initialization during testing as it's handled by fixtures
+    testing = os.environ.get("TESTING") == "true"
+    
     # Run comprehensive startup validation (Requirement 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7)
     from app.core.startup_validator import run_startup_validation
-    validation_result = await run_startup_validation()
+    if not testing:
+        validation_result = await run_startup_validation()
+    else:
+        logger.info("Testing mode: Skipping startup validation")
     
     # Initialize databases (optional - will continue if they fail)
     db_status = {}
     postgres_available = False
     
-    try:
-        await init_postgres()
-        db_status["PostgreSQL"] = {"is_connected": True, "response_time_ms": 0}
-        postgres_available = True
-    except Exception as e:
-        db_status["PostgreSQL"] = {"is_connected": False, "error": str(e)[:50]}
-        print(f"⚠️  PostgreSQL not available: {e}")
-    
-    try:
-        await init_neo4j()
-        db_status["Neo4j"] = {"is_connected": True, "response_time_ms": 0}
-    except Exception as e:
-        db_status["Neo4j"] = {"is_connected": False, "error": str(e)[:50]}
-        print(f"⚠️  Neo4j not available: {e}")
-    
-    try:
-        await init_redis()
-        db_status["Redis"] = {"is_connected": True, "response_time_ms": 0}
-    except Exception as e:
-        db_status["Redis"] = {"is_connected": False, "error": str(e)[:50]}
-        print(f"⚠️  Redis not available: {e}")
+    if not testing:
+        try:
+            await init_postgres()
+            db_status["PostgreSQL"] = {"is_connected": True, "response_time_ms": 0}
+            postgres_available = True
+        except Exception as e:
+            db_status["PostgreSQL"] = {"is_connected": False, "error": str(e)[:50]}
+            logger.warning("PostgreSQL not available: %s", str(e)[:100])
+        
+        try:
+            await init_neo4j()
+            db_status["Neo4j"] = {"is_connected": True, "response_time_ms": 0}
+        except Exception as e:
+            db_status["Neo4j"] = {"is_connected": False, "error": str(e)[:50]}
+            logger.warning("Neo4j not available: %s", str(e)[:100])
+        
+        try:
+            await init_redis()
+            db_status["Redis"] = {"is_connected": True, "response_time_ms": 0}
+        except Exception as e:
+            db_status["Redis"] = {"is_connected": False, "error": str(e)[:50]}
+            logger.warning("Redis not available: %s", str(e)[:100])
+    else:
+        logger.info("Testing mode: Skipping database initialization in lifespan")
+        postgres_available = True # Assume available as it's handled by fixtures
     
     # Apply database migrations if PostgreSQL is available
     if postgres_available:
@@ -77,45 +91,40 @@ async def lifespan(app: FastAPI):
             from app.database.migration_manager import get_migration_manager
             migration_manager = get_migration_manager()
             
-            print("🔄 Checking for pending migrations...")
+            logger.info("Checking for pending migrations...")
             migration_status = await migration_manager.get_migration_status()
-            print(f"📊 {migration_status}")
+            logger.info("Migration status: %s", str(migration_status))
             
             if migration_status.pending_count > 0:
-                print(f"⏳ Applying {migration_status.pending_count} pending migration(s)...")
+                logger.info("Applying %d pending migration(s)...", migration_status.pending_count)
                 migration_status = await migration_manager.apply_pending_migrations()
-                print(f"✅ {migration_status}")
+                logger.info("Migration result: %s", str(migration_status))
                 
                 if migration_status.errors:
-                    print("❌ Migration errors:")
+                    logger.error("Migration errors: %s", migration_status.errors)
                     for error in migration_status.errors:
-                        print(f"   - {error}")
-                    print("⚠️  Some migrations failed, but continuing startup")
+                        logger.error("   Error: %s", error)
+                    logger.warning("Some migrations failed, but continuing startup")
             else:
-                print("✅ Database is up to date")
+                logger.info("Database is up to date")
         except Exception as e:
-            print(f"⚠️  Error during migration: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.warning("Error during migration: %s", str(e), exc_info=True)
     
     # Initialize LLM service if enabled
     if settings.LLM_ENABLED:
         from app.services.llm_service import llm_service
         await llm_service.initialize()
-        print("✅ LLM service initialized")
+        logger.info("LLM service initialized")
     
     # Initialize RBAC authentication system
     try:
         from app.auth import auth_settings
-        print(f"✅ RBAC Authentication initialized (JWT expiry: {auth_settings.jwt_access_token_expire_minutes}min)")
+        logger.info("RBAC Authentication initialized (JWT expiry: %d min)", auth_settings.jwt_access_token_expire_minutes)
     except Exception as e:
-        print(f"⚠️  RBAC Authentication initialization warning: {e}")
+        logger.warning("RBAC Authentication initialization warning: %s", str(e))
     
     # Log startup summary (Requirement 11.1, 11.2, 11.3, 11.4, 11.5, 11.6)
     from app.core.logging_config import log_startup_summary, log_database_status
-    import logging
-    
-    logger = logging.getLogger(__name__)
     
     # Log database status with masking
     log_database_status(db_status, logger)
@@ -142,7 +151,6 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    # Shutdown - use graceful shutdown handler (Requirement 12.10)
     logger.info("Application shutdown initiated...")
     
     # The graceful shutdown handler will handle:
@@ -151,22 +159,23 @@ async def lifespan(app: FastAPI):
     # - Stopping background tasks
     
     # Close database connections (gracefully handled if connections weren't established)
-    try:
-        await close_postgres()
-    except Exception:
-        pass
+    if not testing:
+        try:
+            await close_postgres()
+        except Exception:
+            pass
+        
+        try:
+            await close_neo4j()
+        except Exception:
+            pass
+        
+        try:
+            await close_redis()
+        except Exception:
+            pass
     
-    try:
-        await close_neo4j()
-    except Exception:
-        pass
-    
-    try:
-        await close_redis()
-    except Exception:
-        pass
-    
-    logger.info("✅ Shutdown complete")
+    logger.info("Shutdown complete")
 
 
 app = FastAPI(
@@ -274,9 +283,10 @@ Common HTTP status codes:
 - **500**: Internal Server Error - Server-side error
 - **503**: Service Unavailable - Service temporarily unavailable
     """,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    # Disable API documentation in production for security
+    openapi_url=f"{settings.API_V1_STR}/openapi.json" if settings.ENVIRONMENT != "production" else None,
+    docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
+    redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None,
     lifespan=lifespan,
     swagger_ui_parameters={
         "persistAuthorization": True,

@@ -75,8 +75,8 @@ class Neo4jService:
         """Find circular dependencies in module graph"""
         query = """
         MATCH (p:Project {projectId: $projectId})-[:CONTAINS]->(m1:Module)
-        MATCH path = (m1)-[:DEPENDS_ON*]->(m1)
-        WHERE length(path) >1
+        // Bound the traversal to max 5 hops to avoid Neo4j timeouts on massive repos
+        MATCH path = (m1)-[:DEPENDS_ON*2..5]->(m1)
         RETURN m1.name AS module,
                [n IN nodes(path) | n.name] AS cycle,
                length(path) AS cycleLength

@@ -72,7 +72,7 @@ class EncryptionService:
         if not key_b64:
             raise ValueError(
                 "ENCRYPTION_KEY environment variable not set. "
-                "Generate with: python -c 'import os, base64; print(base64.b64encode(os.urandom(32)).decode())'"
+                "Generate with: python -c 'import os, base64; logger.info(str(base64.b64encode(os.urandom(32))).decode())'"
             )
         
         try:

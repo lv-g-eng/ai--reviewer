@@ -2,6 +2,9 @@
 Database connection test script
 Run this script to verify all database connections are working properly
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import asyncio
 import sys
 from pathlib import Path
@@ -16,9 +19,9 @@ from app.database.redis_db import init_redis, test_redis_connection, close_redis
 
 async def test_all_connections():
     """Test all database connections"""
-    print("\n" + "="*60)
-    print("Testing Database Connections")
-    print("="*60 + "\n")
+    logger.info("\n" + "="*60)
+    logger.info("Testing Database Connections")
+    logger.info("="*60 + "\n")
     
     results = {
         "PostgreSQL": False,
@@ -28,47 +31,47 @@ async def test_all_connections():
     
     try:
         # Initialize and test PostgreSQL
-        print("Initializing PostgreSQL...")
+        logger.info("Initializing PostgreSQL...")
         await init_postgres()
         results["PostgreSQL"] = await test_postgres_connection()
         
         # Initialize and test Neo4j
-        print("\nInitializing Neo4j...")
+        logger.info("\nInitializing Neo4j...")
         await init_neo4j()
         results["Neo4j"] = await test_neo4j_connection()
         
         # Initialize and test Redis
-        print("\nInitializing Redis...")
+        logger.info("\nInitializing Redis...")
         await init_redis()
         results["Redis"] = await test_redis_connection()
         
     except Exception as e:
-        print(f"\n❌ Error during testing: {e}")
+        logger.info("\n❌ Error during testing: {e}")
     
     finally:
         # Cleanup
-        print("\n" + "-"*60)
-        print("Cleaning up connections...")
-        print("-"*60)
+        logger.info("\n" + "-"*60)
+        logger.info("Cleaning up connections...")
+        logger.info("-"*60)
         await close_postgres()
         await close_neo4j()
         await close_redis()
     
     # Print summary
-    print("\n" + "="*60)
-    print("Connection Test Summary")
-    print("="*60)
+    logger.info("\n" + "="*60)
+    logger.info("Connection Test Summary")
+    logger.info("="*60)
     for db, success in results.items():
         status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{db:20} {status}")
+        logger.info("{db:20} {status}")
     
     all_passed = all(results.values())
-    print("\n" + "="*60)
+    logger.info("\n" + "="*60)
     if all_passed:
-        print("✅ All database connections successful!")
+        logger.info("✅ All database connections successful!")
     else:
-        print("❌ Some database connections failed. Check configuration.")
-    print("="*60 + "\n")
+        logger.info("❌ Some database connections failed. Check configuration.")
+    logger.info("="*60 + "\n")
     
     return all_passed
 

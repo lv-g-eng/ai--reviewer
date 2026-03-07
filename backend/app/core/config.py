@@ -86,8 +86,26 @@ class Settings(BaseSettings):
     # OpenRouter Configuration (支持多模型访问)
     OPENROUTER_API_KEY: Optional[str] = Field(default=None, description="OpenRouter API key")
     OPENROUTER_BASE_URL: str = Field(default="https://openrouter.ai/api/v1", description="OpenRouter base URL")
-    DEFAULT_LLM_PROVIDER: str = Field(default="openai", description="Default LLM provider (openai, anthropic, openrouter)")
+    DEFAULT_LLM_PROVIDER: str = Field(default="openai", description="Default LLM provider (openai, anthropic, openrouter, lmstudio)")
     DEFAULT_LLM_MODEL: str = Field(default="gpt-4-turbo-preview", description="Default LLM model")
+
+    # LM Studio Configuration (local inference server)
+    LMSTUDIO_BASE_URL: str = Field(
+        default="http://10.122.128.180:1234/v1",
+        description="LM Studio server base URL (OpenAI-compatible endpoint)"
+    )
+    LMSTUDIO_MODEL: str = Field(
+        default="llama3.3-8b-instruct-thinking-heretic-uncensored-claude-4.5-opus-high-reasoning-i1",
+        description="LM Studio model identifier (must match the model loaded in LM Studio)"
+    )
+    LMSTUDIO_TIMEOUT: int = Field(
+        default=120,
+        description="LM Studio request timeout in seconds"
+    )
+    LMSTUDIO_ENABLED: bool = Field(
+        default=True,
+        description="Enable LM Studio as an LLM provider for project reviews"
+    )
     
     # Local LLM Configuration
     MODELS_DIR: str = "models"
@@ -449,6 +467,10 @@ class Settings(BaseSettings):
     def is_openrouter_enabled(self) -> bool:
         """Check if OpenRouter integration is enabled"""
         return bool(self.OPENROUTER_API_KEY)
+
+    def is_lmstudio_enabled(self) -> bool:
+        """Check if LM Studio local inference is enabled"""
+        return self.LMSTUDIO_ENABLED and bool(self.LMSTUDIO_BASE_URL)
 
     def is_ssl_enabled(self) -> bool:
         """Check if SSL/TLS is enabled (Requirement 8.5)"""

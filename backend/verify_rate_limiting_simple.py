@@ -4,6 +4,9 @@ Simple code inspection verification for rate limiting implementation
 This script verifies the implementation by inspecting the code files directly
 without loading the full application configuration.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import os
 import re
@@ -11,9 +14,9 @@ import re
 
 def verify_config_file():
     """Verify config.py has both rate limit settings"""
-    print("=" * 60)
-    print("Verifying backend/app/core/config.py")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("Verifying backend/app/core/config.py")
+    logger.info("=" * 60)
     
     config_path = "app/core/config.py"
     
@@ -23,35 +26,35 @@ def verify_config_file():
         
         # Check for RATE_LIMIT_PER_MINUTE
         if 'RATE_LIMIT_PER_MINUTE: int = 100' in content:
-            print("✓ RATE_LIMIT_PER_MINUTE: int = 100 found")
+            logger.info("✓ RATE_LIMIT_PER_MINUTE: int = 100 found")
         else:
-            print("✗ RATE_LIMIT_PER_MINUTE: int = 100 not found")
+            logger.info("✗ RATE_LIMIT_PER_MINUTE: int = 100 not found")
             return False
         
         # Check for RATE_LIMIT_PER_HOUR
         if 'RATE_LIMIT_PER_HOUR: int = 5000' in content:
-            print("✓ RATE_LIMIT_PER_HOUR: int = 5000 found")
+            logger.info("✓ RATE_LIMIT_PER_HOUR: int = 5000 found")
         else:
-            print("✗ RATE_LIMIT_PER_HOUR: int = 5000 not found")
+            logger.info("✗ RATE_LIMIT_PER_HOUR: int = 5000 not found")
             return False
         
         # Check for requirement reference
         if 'Requirement 8.3' in content or 'Requirements: 8.3' in content:
-            print("✓ Requirement 8.3 reference found")
+            logger.info("✓ Requirement 8.3 reference found")
         else:
-            print("⚠ Requirement 8.3 reference not found (minor issue)")
+            logger.info("⚠ Requirement 8.3 reference not found (minor issue)")
         
         return True
     except Exception as e:
-        print(f"✗ Error reading config file: {e}")
+        logger.info("✗ Error reading config file: {e}")
         return False
 
 
 def verify_middleware_file():
     """Verify rate_limiting.py has proper implementation"""
-    print("\n" + "=" * 60)
-    print("Verifying backend/app/middleware/rate_limiting.py")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("Verifying backend/app/middleware/rate_limiting.py")
+    logger.info("=" * 60)
     
     middleware_path = "app/middleware/rate_limiting.py"
     
@@ -78,22 +81,22 @@ def verify_middleware_file():
         all_passed = True
         for check_name, check_string in checks:
             if check_string in content:
-                print(f"✓ {check_name}")
+                logger.info("✓ {check_name}")
             else:
-                print(f"✗ {check_name} not found")
+                logger.info("✗ {check_name} not found")
                 all_passed = False
         
         return all_passed
     except Exception as e:
-        print(f"✗ Error reading middleware file: {e}")
+        logger.info("✗ Error reading middleware file: {e}")
         return False
 
 
 def verify_env_files():
     """Verify environment files have both rate limit settings"""
-    print("\n" + "=" * 60)
-    print("Verifying Environment Files")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("Verifying Environment Files")
+    logger.info("=" * 60)
     
     env_files = [
         '.env.example',
@@ -112,14 +115,14 @@ def verify_env_files():
             has_hour = 'RATE_LIMIT_PER_HOUR=' in content
             
             if has_minute and has_hour:
-                print(f"✓ {env_file}: Both limits present")
+                logger.info("✓ {env_file}: Both limits present")
             else:
-                print(f"✗ {env_file}: Missing limits (minute={has_minute}, hour={has_hour})")
+                logger.info("✗ {env_file}: Missing limits (minute={has_minute}, hour={has_hour})")
                 all_passed = False
         except FileNotFoundError:
-            print(f"⚠ {env_file}: File not found (optional)")
+            logger.info("⚠ {env_file}: File not found (optional)")
         except Exception as e:
-            print(f"✗ {env_file}: Error reading file: {e}")
+            logger.info("✗ {env_file}: Error reading file: {e}")
             all_passed = False
     
     return all_passed
@@ -127,9 +130,9 @@ def verify_env_files():
 
 def verify_main_py():
     """Verify main.py has rate limiting configured"""
-    print("\n" + "=" * 60)
-    print("Verifying backend/app/main.py")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("Verifying backend/app/main.py")
+    logger.info("=" * 60)
     
     main_path = "app/main.py"
     
@@ -146,28 +149,28 @@ def verify_main_py():
         all_passed = True
         for check_name, check_string in checks:
             if check_string in content:
-                print(f"✓ {check_name}")
+                logger.info("✓ {check_name}")
             else:
-                print(f"✗ {check_name} not found")
+                logger.info("✗ {check_name} not found")
                 all_passed = False
         
         return all_passed
     except Exception as e:
-        print(f"✗ Error reading main.py: {e}")
+        logger.info("✗ Error reading main.py: {e}")
         return False
 
 
 def main():
     """Run all verifications"""
-    print("\n" + "=" * 60)
-    print("RATE LIMITING IMPLEMENTATION VERIFICATION")
-    print("=" * 60)
-    print("\nRequirement 8.3: Implement rate limiting on all API endpoints")
-    print("  - 100 requests per minute")
-    print("  - 5000 requests per hour")
-    print("  - Return 429 error when exceeded")
-    print("  - Include appropriate headers")
-    print("  - Use Redis for distributed rate limiting")
+    logger.info("\n" + "=" * 60)
+    logger.info("RATE LIMITING IMPLEMENTATION VERIFICATION")
+    logger.info("=" * 60)
+    logger.info("\nRequirement 8.3: Implement rate limiting on all API endpoints")
+    logger.info("  - 100 requests per minute")
+    logger.info("  - 5000 requests per hour")
+    logger.info("  - Return 429 error when exceeded")
+    logger.info("  - Include appropriate headers")
+    logger.info("  - Use Redis for distributed rate limiting")
     
     results = []
     
@@ -178,37 +181,37 @@ def main():
     results.append(("Main Application", verify_main_py()))
     
     # Summary
-    print("\n" + "=" * 60)
-    print("VERIFICATION SUMMARY")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("VERIFICATION SUMMARY")
+    logger.info("=" * 60)
     
     all_passed = True
     for name, passed in results:
         status = "✓ PASS" if passed else "✗ FAIL"
-        print(f"{status}: {name}")
+        logger.info("{status}: {name}")
         if not passed:
             all_passed = False
     
-    print("\n" + "=" * 60)
+    logger.info("\n" + "=" * 60)
     if all_passed:
-        print("✓ ALL VERIFICATIONS PASSED")
-        print("=" * 60)
-        print("\nRate limiting implementation is complete and correct!")
-        print("\nKey features implemented:")
-        print("  1. ✓ 100 requests per minute limit")
-        print("  2. ✓ 5000 requests per hour limit")
-        print("  3. ✓ Redis-based distributed rate limiting")
-        print("  4. ✓ Per-user/IP tracking")
-        print("  5. ✓ 429 error response with proper headers")
-        print("  6. ✓ Health endpoints excluded from rate limiting")
-        print("  7. ✓ Configurable via environment variables")
-        print("\nImplementation satisfies Requirement 8.3:")
-        print("  'THE Backend SHALL implement rate limiting on all API endpoints:")
-        print("   100 requests per minute, 5000 requests per hour'")
+        logger.info("✓ ALL VERIFICATIONS PASSED")
+        logger.info("=" * 60)
+        logger.info("\nRate limiting implementation is complete and correct!")
+        logger.info("\nKey features implemented:")
+        logger.info("  1. ✓ 100 requests per minute limit")
+        logger.info("  2. ✓ 5000 requests per hour limit")
+        logger.info("  3. ✓ Redis-based distributed rate limiting")
+        logger.info("  4. ✓ Per-user/IP tracking")
+        logger.info("  5. ✓ 429 error response with proper headers")
+        logger.info("  6. ✓ Health endpoints excluded from rate limiting")
+        logger.info("  7. ✓ Configurable via environment variables")
+        logger.info("\nImplementation satisfies Requirement 8.3:")
+        logger.info("  'THE Backend SHALL implement rate limiting on all API endpoints:")
+        logger.info("   100 requests per minute, 5000 requests per hour'")
         return 0
     else:
-        print("✗ SOME VERIFICATIONS FAILED")
-        print("=" * 60)
+        logger.info("✗ SOME VERIFICATIONS FAILED")
+        logger.info("=" * 60)
         return 1
 
 

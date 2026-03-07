@@ -6,6 +6,9 @@ Implements Requirement 8.4: Encrypt all sensitive data at rest using AES-256 enc
 This module provides SQLAlchemy custom types that automatically encrypt/decrypt
 data when reading from and writing to the database.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import Optional
 from sqlalchemy import TypeDecorator, String, Text
 from sqlalchemy.engine import Dialect
@@ -146,7 +149,7 @@ def encrypt_existing_field(session, model_class, field_name: str) -> int:
         
         async with get_db() as session:
             count = encrypt_existing_field(session, User, "api_key")
-            print(f"Encrypted {count} records")
+            logger.info("Encrypted {count} records")
     
     Validates Requirement 8.4
     """
@@ -170,7 +173,7 @@ def encrypt_existing_field(session, model_class, field_name: str) -> int:
                 setattr(record, field_name, encrypted)
                 count += 1
             except Exception as e:
-                print(f"Failed to encrypt record {record.id}: {e}")
+                logger.info("Failed to encrypt record {record.id}: {e}")
     
     session.commit()
     return count

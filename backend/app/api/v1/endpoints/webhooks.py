@@ -77,6 +77,7 @@ def verify_github_signature(
 async def check_replay_protection(delivery_id: str) -> bool:
     """
     Check if webhook has already been processed (replay protection)
+    Uses atomic SET NX to prevent concurrent duplication
     
     Args:
         delivery_id: X-GitHub-Delivery header value
@@ -88,15 +89,9 @@ async def check_replay_protection(delivery_id: str) -> bool:
         return True  # Allow if no delivery ID (shouldn't happen with GitHub)
     
     cache = await get_cache_service()
-    delivery_key = f"webhook:delivery:{delivery_id}"
     
-    # Check if already processed
-    if await cache.cache_exists(delivery_key):
-        return False
-    
-    # Mark as processed (expires in 24 hours)
-    await cache.cache_set(delivery_key, "processed", expiration=86400)
-    return True
+    # mark_webhook_processed uses atomic SET NX (returns True if set successfully)
+    return await cache.mark_webhook_processed(delivery_id)
 
 
 async def extract_pr_metadata(payload: Dict[str, Any]) -> Dict[str, Any]:

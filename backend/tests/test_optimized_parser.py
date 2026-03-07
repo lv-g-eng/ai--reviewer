@@ -2,6 +2,9 @@
 Tests for optimized parser with parallel processing and caching
 Task 7.3: Optimize parser performance
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 import time
 import tempfile
@@ -26,7 +29,7 @@ class TestFileCache:
     def test_cache_miss(self):
         """Test cache miss on first access"""
         cache = FileCache()
-        result = cache.get("test.py", "print('hello')")
+        result = cache.get("test.py", "logger.info('hello')")
         assert result is None
         assert cache._misses == 1
         assert cache._hits == 0
@@ -42,7 +45,7 @@ class TestFileCache:
         )
         
         # Put in cache
-        content = "print('hello')"
+        content = "logger.info('hello')"
         cache.put("test.py", content, parsed)
         
         # Get from cache
@@ -61,10 +64,10 @@ class TestFileCache:
         )
         
         # Cache with original content
-        cache.put("test.py", "print('hello')", parsed)
+        cache.put("test.py", "logger.info('hello')", parsed)
         
         # Try to get with different content
-        result = cache.get("test.py", "print('world')")
+        result = cache.get("test.py", "logger.info('world')")
         assert result is None
         assert cache._misses == 1
     
@@ -95,7 +98,7 @@ class TestFileCache:
             module=ModuleNode(name="test", file_path="test.py", language="python")
         )
         
-        content = "print('hello')"
+        content = "logger.info('hello')"
         cache.put("test.py", content, parsed)
         
         # One miss, one hit
@@ -132,7 +135,7 @@ class TestParseSingleFile:
     def test_parse_python_file(self):
         """Test parsing a Python file"""
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write("def hello():\n    print('hello')\n")
+            f.write("def hello():\n    logger.info('hello')\n")
             f.flush()
             temp_path = f.name
         
@@ -150,7 +153,7 @@ class TestParseSingleFile:
     
     def test_parse_with_content(self):
         """Test parsing with provided content"""
-        content = "def hello():\n    print('hello')\n"
+        content = "def hello():\n    logger.info('hello')\n"
         file_path, parsed_file, parse_time = _parse_single_file("test.py", content)
         
         assert file_path == "test.py"
@@ -185,7 +188,7 @@ class TestOptimizedParser:
         parser = OptimizedParser()
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write("def hello():\n    print('hello')\n")
+            f.write("def hello():\n    logger.info('hello')\n")
             f.flush()
             temp_path = f.name
         
@@ -203,7 +206,7 @@ class TestOptimizedParser:
         """Test that second parse uses cache"""
         parser = OptimizedParser()
         
-        content = "def hello():\n    print('hello')\n"
+        content = "def hello():\n    logger.info('hello')\n"
         
         # First parse
         parsed1, time1 = parser.parse_file("test.py", content)
@@ -255,7 +258,7 @@ def func{i}():
     if True:
         for j in range(10):
             if j > 5:
-                print(j)
+                logger.info(j)
     return {i}
 
 class Class{i}:
@@ -324,7 +327,7 @@ class Class{i}:
         """Test cache invalidation"""
         parser = OptimizedParser()
         
-        content = "def hello():\n    print('hello')\n"
+        content = "def hello():\n    logger.info('hello')\n"
         
         # Parse and cache
         parser.parse_file("test.py", content)
@@ -343,7 +346,7 @@ class Class{i}:
         """Test performance statistics"""
         parser = OptimizedParser()
         
-        content = "def hello():\n    print('hello')\n"
+        content = "def hello():\n    logger.info('hello')\n"
         parser.parse_file("test.py", content)
         
         stats = parser.get_performance_stats()
@@ -418,7 +421,7 @@ def complex_function(x, y, z):
         """Test resetting statistics"""
         parser = OptimizedParser()
         
-        content = "def hello():\n    print('hello')\n"
+        content = "def hello():\n    logger.info('hello')\n"
         parser.parse_file("test.py", content)
         
         parser.reset_stats()
@@ -466,7 +469,7 @@ class TestOptimizedParserIntegration:
         """Test cache effectiveness with repeated parsing"""
         parser = OptimizedParser()
         
-        content = "def hello():\n    print('hello')\n"
+        content = "def hello():\n    logger.info('hello')\n"
         
         # Parse same file multiple times
         times = []

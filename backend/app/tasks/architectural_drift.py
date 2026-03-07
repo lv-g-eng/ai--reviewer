@@ -2,6 +2,9 @@
 Architectural drift detection tasks
 Detects cyclic dependencies, layer violations, and other drift patterns
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import asyncio
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
@@ -76,7 +79,7 @@ async def _detect_drift(project_id: str, baseline_version: str) -> Dict[str, Any
         return drift_report
         
     except Exception as e:
-        print(f"❌ Error detecting drift for project {project_id}: {e}")
+        logger.info("❌ Error detecting drift for project {project_id}: {e}")
         raise
 
 
@@ -120,8 +123,8 @@ async def detect_cyclic_dependencies_impl(
     """
     cypher_query = """
     MATCH (p:Project {projectId: $projectId})-[:CONTAINS]->(m1:Module)
-    MATCH path = (m1)-[:DEPENDS_ON*]->(m1)
-    WHERE length(path) > 1
+    // Bounded traversal to prevent timeouts on massive repositories (max depth 5)
+    MATCH path = (m1)-[:DEPENDS_ON*2..5]->(m1)
     WITH m1, path, relationships(path) as rels
     RETURN m1.name AS module,
            [n IN nodes(path) | n.name] AS cycle_path,
@@ -150,7 +153,7 @@ async def detect_cyclic_dependencies_impl(
         return cycles
         
     except Exception as e:
-        print(f"⚠️  Error in cyclic dependency detection: {e}")
+        logger.info("⚠️  Error in cyclic dependency detection: {e}")
         return []
 
 
@@ -271,7 +274,7 @@ async def detect_layer_violations_impl(
         return violations
         
     except Exception as e:
-        print(f"⚠️  Error in layer violation detection: {e}")
+        logger.info("⚠️  Error in layer violation detection: {e}")
         return []
 
 
@@ -351,7 +354,7 @@ async def _detect_golden_standard_drift(
         drift_report = await detector.detect_drift(project_id)
 
         if drift_report.get("status") == "failed":
-            print(f"❌ Drift analysis failed: {drift_report.get('error')}")
+            logger.info("❌ Drift analysis failed: {drift_report.get('error')}")
             return drift_report
 
         # Generate alerts
@@ -367,7 +370,7 @@ async def _detect_golden_standard_drift(
         should_fail = drift_report.get("should_fail_ci", False)
         if should_fail:
             failure_reason = drift_report.get("failure_reason", "Architectural drift exceeds thresholds")
-            print(f"🚨 CI will fail: {failure_reason}")
+            logger.info("🚨 CI will fail: {failure_reason}")
 
             # Retry with exponential backoff if this is a recoverable error
             if "connection" in failure_reason.lower() or "timeout" in failure_reason.lower():
@@ -379,7 +382,7 @@ async def _detect_golden_standard_drift(
         return drift_report
 
     except Exception as e:
-        print(f"❌ Error in golden standard drift detection for project {project_id}: {e}")
+        logger.info("❌ Error in golden standard drift detection for project {project_id}: {e}")
 
         # Create error result
         error_result = {
@@ -402,7 +405,7 @@ async def _detect_golden_standard_drift(
                     context="architectural-drift"
                 )
             except Exception as status_error:
-                print(f"⚠️  Failed to update GitHub status: {status_error}")
+                logger.info("⚠️  Failed to update GitHub status: {status_error}")
 
         raise
 

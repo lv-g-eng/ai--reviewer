@@ -134,6 +134,9 @@ class AuditLog(Base):
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
 
+AuditLogEntry = AuditLog
+
+
 class ArchitecturalBaseline(Base):
     """Architectural Baseline model"""
     __tablename__ = "architectural_baselines"

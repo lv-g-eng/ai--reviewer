@@ -1,6 +1,9 @@
 """
 Tests for JavaScript/TypeScript AST parser
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 from app.services.parsers.javascript_parser import JavaScriptParser
 
@@ -201,7 +204,7 @@ def test_complexity_calculation_javascript():
     if complex_func:
         # Should have complexity > 1 due to nested conditions
         assert complex_func.complexity > 1
-        print(f"Complex function complexity: {complex_func.complexity}")
+        logger.info("Complex function complexity: {complex_func.complexity}")
 
 
 def test_async_detection_javascript():

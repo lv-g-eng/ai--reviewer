@@ -41,18 +41,61 @@ export interface ProjectMetrics {
   overall_health: number;
 }
 
+export interface DependencyStats {
+  total: number;
+  circular: number;
+  outdated: number;
+  dependency_issues: number;
+}
+
+export interface PerformanceMetrics {
+  avg_build_time: string;
+  avg_test_time: string;
+  avg_analysis_time: string;
+  pr_review_time_avg: string;
+}
+
+export interface IssueStats {
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  security: number;
+  performance: number;
+  code_style: number;
+  best_practices: number;
+  total: number;
+}
+
+export interface TrendAnalysis {
+  code_quality_change: number;
+  test_coverage_change: number;
+  issues_change: number;
+}
+
+export interface RecentReview {
+  pr_id: string;
+  pr_number: number;
+  title: string;
+  status: string;
+  risk_score: number | null;
+  files_changed: number;
+  lines_added: number;
+  lines_deleted: number;
+  analyzed_at: string | null;
+}
+
 export interface ProjectAnalytics {
   project_id: string;
   metrics: ProjectMetrics;
+  dependency_stats: DependencyStats;
+  performance_metrics: PerformanceMetrics;
+  issue_stats: IssueStats;
+  trends: TrendAnalysis;
+  recent_reviews: RecentReview[];
   total_prs: number;
   reviewed_prs: number;
-  total_issues: number;
-  critical_issues: number;
-  high_issues: number;
-  medium_issues: number;
-  low_issues: number;
-  architecture_violations: number;
-  recent_reviews: any[];
+  analysis_timestamp: string;
 }
 
 /**

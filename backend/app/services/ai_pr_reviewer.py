@@ -157,26 +157,46 @@ class AIPRReviewer:
             "suggestions": []
         }
         
-        # Simple text parsing based on common patterns
+        if not analysis_text:
+            return result
+            
         lines = analysis_text.split('\n')
         current_section = None
+        
+        section_keywords = {
+            "architectural": "architectural_issues",
+            "architecture": "architectural_issues",
+            "security": "security_issues",
+            "quality": "code_quality_issues",
+            "suggestion": "suggestions",
+            "recommendation": "suggestions"
+        }
         
         for line in lines:
             line = line.strip()
             if not line:
                 continue
+            
+            # Check for section headers (must not start with bullet points)
+            lower_line = line.lower()
+            found_section = False
+            if not line.startswith(("- ", "* ")):
+                for keyword, section in section_keywords.items():
+                    if keyword in lower_line and ("issue" in lower_line or "suggest" in lower_line or "recommend" in lower_line or ":" in lower_line):
+                        current_section = section
+                        found_section = True
+                        break
+            
+            if found_section:
+                continue
                 
-            if "Architectural" in line and "issues" in line.lower():
-                current_section = "architectural_issues"
-            elif "Security" in line and "issues" in line.lower():
-                current_section = "security_issues"
-            elif "Code quality" in line.lower():
-                current_section = "code_quality_issues"
-            elif "Suggestions" in line.lower() or "Recommendations" in line.lower():
-                current_section = "suggestions"
-            elif line.startswith("- ") and current_section:
+            # Check for bullet points
+            if (line.startswith("- ") or line.startswith("* ")) and current_section:
                 result[current_section].append(line[2:])
-        
+            elif current_section:
+                # Fallback for lines that don't start with bullet points but are under a section
+                result[current_section].append(line)
+                
         return result
     
     def _calculate_safety_score(self, analysis_data: Dict, git_diff: str) -> int:
@@ -308,7 +328,7 @@ def create_design_standard_file():
     with open("design_standard.txt", "w") as f:
         f.write(design_standard)
     
-    print("Created design_standard.txt")
+    logger.info("Created design_standard.txt")
 
 
 if __name__ == "__main__":
@@ -391,13 +411,13 @@ index 0000000..abc1234
         # Generate report
         report = reviewer.generate_markdown_report(result)
         
-        print("=== AI PR Review Report ===")
-        print(report)
+        logger.info("=== AI PR Review Report ===")
+        logger.info(report)
         
         # Save report
         with open("pr_review_report.md", "w") as f:
             f.write(report)
         
-        print("\\nReport saved to pr_review_report.md")
+        logger.info("\\nReport saved to pr_review_report.md")
 
     asyncio.run(run_analysis())

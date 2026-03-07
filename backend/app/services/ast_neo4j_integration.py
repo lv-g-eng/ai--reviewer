@@ -5,6 +5,9 @@ This script implements the core engine for parsing Python code into an Abstract 
 extracting ClassDef, FunctionDef, and Import nodes, and providing Cypher queries for Neo4j insertion
 with support for detecting coupling anomalies and cyclic dependencies.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import ast
 import os
 from typing import Dict, List, Optional, Set, Tuple, Union, Any
@@ -305,7 +308,8 @@ class ASTNeo4jIntegration:
             f"""
             // Find strongly connected components (complex cycles)
             MATCH (p:Project {{projectId: '{project_id}'}})-[:CONTAINS*]->(n)
-            MATCH path = (n)-[:DEPENDS_ON*]->(n)
+            // Bound traversal to depth 5 to prevent timeouts on massive ast graphs
+            MATCH path = (n)-[:DEPENDS_ON*2..5]->(n)
             WITH n, collect(path) AS paths
             WHERE size(paths) > 0
             RETURN n.name AS component,
@@ -509,27 +513,27 @@ def main():
     # Example: Parse this file itself
     try:
         nodes = integration.parse_python_file(__file__)
-        print(f"Extracted {len(nodes)} AST nodes")
+        logger.info("Extracted {len(nodes)} AST nodes")
 
         # Generate Cypher queries
         queries = integration.get_cypher_queries_for_insertion("test-project")
-        print(f"Generated {len(queries)} Cypher queries")
+        logger.info("Generated {len(queries)} Cypher queries")
 
         # Get coupling analysis
         coupling = integration.detect_coupling_anomalies("test-project")
-        print("Coupling analysis queries generated")
+        logger.info("Coupling analysis queries generated")
 
         # Get cycle detection
         cycles = integration.detect_cyclic_dependencies("test-project")
-        print("Cycle detection queries generated")
+        logger.info("Cycle detection queries generated")
 
         # Print sample queries
-        print("\nSample Cypher queries:")
+        logger.info("\nSample Cypher queries:")
         for i, query in enumerate(queries[:3]):
-            print(f"{i+1}. {query.strip()[:100]}...")
+            logger.info("{i+1}. {query.strip()[:100]}...")
 
     except Exception as e:
-        print(f"Error: {e}")
+        logger.info("Error: {e}")
 
 
 if __name__ == "__main__":

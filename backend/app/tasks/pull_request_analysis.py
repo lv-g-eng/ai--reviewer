@@ -14,6 +14,7 @@ Validates Requirements: 1.1, 1.2, 1.3, 1.4, 1.5
 """
 import asyncio
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
@@ -35,6 +36,8 @@ from app.services.llm.prompts import PromptManager
 from app.database.neo4j_db import get_neo4j_driver
 from app.tasks.task_monitoring import MonitoredTask, TaskProgressStage
 from sqlalchemy import select
+
+logger = logging.getLogger(__name__)
 
 
 # ========================================
@@ -168,11 +171,11 @@ async def _parse_pr_files(pr_id: str, project_id: str, task) -> Dict[str, Any]:
                             TaskProgressStage.PARSING_FILES
                         )
                         
-                        print(f"✓ Parsed {file_data['filename']}: {len(entities)} entities in {parse_time:.2f}s")
+                        logger.info("Parsed %s: %d entities in %.2fs", file_data['filename'], len(entities), parse_time)
                         
                     except Exception as e:
                         # Continue with other files on parse error
-                        print(f"⚠️  Error parsing {file_data['filename']}: {e}")
+                        logger.warning("Error parsing %s: %s", file_data['filename'], str(e), exc_info=True)
             
             task.update_progress(80, "Building combined diff", TaskProgressStage.PARSING_FILES)
             
@@ -204,7 +207,7 @@ async def _parse_pr_files(pr_id: str, project_id: str, task) -> Dict[str, Any]:
             }
             
         except Exception as e:
-            print(f"❌ Error parsing PR files {pr_id}: {e}")
+            logger.error("Error parsing PR files %s: %s", pr_id, str(e), exc_info=True)
             
             # Update PR status to pending (revert from analyzing)
             try:
@@ -321,7 +324,7 @@ async def _build_graph(parse_result: Dict[str, Any], task) -> Dict[str, Any]:
             TaskProgressStage.BUILDING_GRAPH
         )
         
-        print(f"✓ Built graph: {graph_stats['nodes_created']} nodes, {graph_stats['relationships_created']} relationships")
+        logger.info("Built graph: %d nodes, %d relationships", graph_stats['nodes_created'], graph_stats['relationships_created'])
         
         # Return updated result with graph stats
         return {
@@ -330,7 +333,7 @@ async def _build_graph(parse_result: Dict[str, Any], task) -> Dict[str, Any]:
         }
         
     except Exception as e:
-        print(f"❌ Error building dependency graph: {e}")
+        logger.error("Error building dependency graph: %s", str(e), exc_info=True)
         raise task.retry(exc=e, countdown=60 * task.request.retries)
 
 
@@ -461,7 +464,7 @@ Dependencies: {graph_stats['relationships_created'] + graph_stats['relationships
             TaskProgressStage.ANALYZING_LLM
         )
         
-        print(f"✓ LLM analysis complete: {total_issues} issues found (Risk: {risk_score}/100)")
+        logger.info("LLM analysis complete: %d issues found (Risk: %d/100)", total_issues, risk_score)
         
         # Return updated result with LLM analysis
         return {
@@ -470,7 +473,7 @@ Dependencies: {graph_stats['relationships_created'] + graph_stats['relationships
         }
         
     except Exception as e:
-        print(f"❌ Error analyzing with LLM: {e}")
+        logger.error("Error analyzing with LLM: %s", str(e), exc_info=True)
         raise task.retry(exc=e, countdown=60 * task.request.retries)
 
 
@@ -562,7 +565,7 @@ async def _post_comments(analysis_result: Dict[str, Any], task) -> Dict[str, Any
                             TaskProgressStage.POSTING_COMMENTS
                         )
                 except Exception as e:
-                    print(f"⚠️  Error posting comment: {e}")
+                    logger.warning("Error posting comment: %s", str(e), exc_info=True)
             
             task.update_progress(70, "Updating PR status check", TaskProgressStage.POSTING_COMMENTS)
             
@@ -605,7 +608,7 @@ async def _post_comments(analysis_result: Dict[str, Any], task) -> Dict[str, Any
                 TaskProgressStage.COMPLETED
             )
             
-            print(f"✓ Posted {comments_posted} comments and updated PR status")
+            logger.info("Posted %d comments and updated PR status", comments_posted)
             
             return {
                 'pr_id': pr_id,
@@ -619,7 +622,7 @@ async def _post_comments(analysis_result: Dict[str, Any], task) -> Dict[str, Any
             }
             
         except Exception as e:
-            print(f"❌ Error posting review comments: {e}")
+            logger.error("Error posting review comments: %s", str(e), exc_info=True)
             
             # Update PR status to pending (revert from analyzing)
             try:
@@ -654,7 +657,7 @@ def analyze_pull_request_workflow(pr_id: str, project_id: str) -> Dict[str, Any]
         
     Example:
         >>> result = analyze_pull_request_workflow(pr_id="123", project_id="456")
-        >>> print(result['task_id'])  # Use this to poll for results
+        >>> logger.info(str(result['task_id']))  # Use this to poll for results
     """
     # Create task chain
     workflow = chain(
@@ -788,7 +791,7 @@ async def _analyze_pr(pr_id: str, project_id: str, task) -> Dict[str, Any]:
                             await neo4j_service.insert_ast_nodes(parsed, project_id)
                     except Exception as e:
                         # Continue with other files on parse error
-                        print(f"⚠️  Error parsing {file_data['filename']}: {e}")
+                        logger.warning("Error parsing %s: %s", file_data['filename'], str(e), exc_info=True)
             
             # Run AI analysis
             ai_engine = AIReasoningEngine()
@@ -844,7 +847,7 @@ async def _analyze_pr(pr_id: str, project_id: str, task) -> Dict[str, Any]:
             }
             
         except Exception as e:
-            print(f"❌ Error analyzing PR {pr_id}: {e}")
+            logger.error("Error analyzing PR %s: %s", pr_id, str(e), exc_info=True)
             
             # Update PR status to pending (revert from analyzing)
             try:

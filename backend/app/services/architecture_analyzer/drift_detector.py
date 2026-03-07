@@ -6,6 +6,9 @@ against a baseline snapshot. It calculates drift metrics and assigns severity le
 
 Implements Requirement 1.9: ISO/IEC 25010 compliance verification
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 from typing import Dict, List, Any, Optional, Set, Tuple
 from dataclasses import dataclass, asdict
@@ -201,7 +204,7 @@ class DriftDetector:
                     })
         
         except Exception as e:
-            print(f"Error getting current nodes: {str(e)}")
+            logger.info("Error getting current nodes: {str(e)}")
         
         return nodes
     
@@ -243,7 +246,7 @@ class DriftDetector:
                     })
         
         except Exception as e:
-            print(f"Error getting current relationships: {str(e)}")
+            logger.info("Error getting current relationships: {str(e)}")
         
         return relationships
     

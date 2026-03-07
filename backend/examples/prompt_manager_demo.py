@@ -11,6 +11,9 @@ This example shows:
 
 Validates Requirements: 1.4
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import asyncio
 from app.services.llm import (
@@ -61,9 +64,9 @@ def get_user(user_id):
 
 def demo_code_quality_prompt():
     """Demonstrate code quality review prompt generation"""
-    print("=" * 80)
-    print("CODE QUALITY REVIEW PROMPT")
-    print("=" * 80)
+    logger.info("=" * 80)
+    logger.info("CODE QUALITY REVIEW PROMPT")
+    logger.info("=" * 80)
     
     manager = get_prompt_manager()
     
@@ -74,19 +77,19 @@ def demo_code_quality_prompt():
         context="Authentication module review - checking for security issues and code quality"
     )
     
-    print("\n--- SYSTEM PROMPT ---")
-    print(prompt["system_prompt"][:500] + "...\n")
+    logger.info("\n--- SYSTEM PROMPT ---")
+    logger.info(str(prompt["system_prompt"][:500] + "...\n"))
     
-    print("--- USER PROMPT ---")
-    print(prompt["user_prompt"])
-    print()
+    logger.info("--- USER PROMPT ---")
+    logger.info(str(prompt["user_prompt"]))
+    logger.info()
 
 
 def demo_architecture_prompt():
     """Demonstrate architectural analysis prompt generation"""
-    print("=" * 80)
-    print("ARCHITECTURAL ANALYSIS PROMPT")
-    print("=" * 80)
+    logger.info("=" * 80)
+    logger.info("ARCHITECTURAL ANALYSIS PROMPT")
+    logger.info("=" * 80)
     
     manager = get_prompt_manager()
     
@@ -98,19 +101,19 @@ def demo_architecture_prompt():
         context="Service layer review - checking for proper separation of concerns and dependency management"
     )
     
-    print("\n--- SYSTEM PROMPT ---")
-    print(prompt["system_prompt"][:500] + "...\n")
+    logger.info("\n--- SYSTEM PROMPT ---")
+    logger.info(str(prompt["system_prompt"][:500] + "...\n"))
     
-    print("--- USER PROMPT ---")
-    print(prompt["user_prompt"])
-    print()
+    logger.info("--- USER PROMPT ---")
+    logger.info(str(prompt["user_prompt"]))
+    logger.info()
 
 
 def demo_security_prompt():
     """Demonstrate security vulnerability detection prompt generation"""
-    print("=" * 80)
-    print("SECURITY VULNERABILITY DETECTION PROMPT")
-    print("=" * 80)
+    logger.info("=" * 80)
+    logger.info("SECURITY VULNERABILITY DETECTION PROMPT")
+    logger.info("=" * 80)
     
     manager = get_prompt_manager()
     
@@ -122,25 +125,25 @@ def demo_security_prompt():
         exposure_level="public-facing"
     )
     
-    print("\n--- SYSTEM PROMPT ---")
-    print(prompt["system_prompt"][:500] + "...\n")
+    logger.info("\n--- SYSTEM PROMPT ---")
+    logger.info(str(prompt["system_prompt"][:500] + "...\n"))
     
-    print("--- USER PROMPT ---")
-    print(prompt["user_prompt"])
-    print()
+    logger.info("--- USER PROMPT ---")
+    logger.info(str(prompt["user_prompt"]))
+    logger.info()
 
 
 def demo_prompt_by_type():
     """Demonstrate generating prompts by analysis type"""
-    print("=" * 80)
-    print("GENERATING PROMPTS BY TYPE")
-    print("=" * 80)
+    logger.info("=" * 80)
+    logger.info("GENERATING PROMPTS BY TYPE")
+    logger.info("=" * 80)
     
     manager = get_prompt_manager()
     
     # Get available analysis types
     types = manager.get_available_analysis_types()
-    print(f"\nAvailable analysis types: {types}\n")
+    logger.info("\nAvailable analysis types: {types}\n")
     
     # Generate prompt for each type
     for analysis_type in [AnalysisType.CODE_QUALITY, AnalysisType.ARCHITECTURE, AnalysisType.SECURITY]:
@@ -152,18 +155,18 @@ def demo_prompt_by_type():
             context=f"{analysis_type.value} analysis"
         )
         
-        print(f"--- {analysis_type.value.upper()} ---")
-        print(f"System prompt length: {len(prompt['system_prompt'])} chars")
-        print(f"User prompt length: {len(prompt['user_prompt'])} chars")
-        print()
+        logger.info("--- {analysis_type.value.upper()} ---")
+        logger.info("System prompt length: {len(prompt['system_prompt'])} chars")
+        logger.info("User prompt length: {len(prompt['user_prompt'])} chars")
+        logger.info()
 
 
 async def demo_with_llm_orchestrator():
     """Demonstrate using prompts with LLM orchestrator"""
-    print("=" * 80)
-    print("USING PROMPTS WITH LLM ORCHESTRATOR")
-    print("=" * 80)
-    print("\nNOTE: This demo requires valid API keys to run.\n")
+    logger.info("=" * 80)
+    logger.info("USING PROMPTS WITH LLM ORCHESTRATOR")
+    logger.info("=" * 80)
+    logger.info("\nNOTE: This demo requires valid API keys to run.\n")
     
     try:
         # Create prompt manager and orchestrator
@@ -183,9 +186,9 @@ async def demo_with_llm_orchestrator():
             exposure_level="public-facing"
         )
         
-        print("Generated security analysis prompt")
-        print(f"System prompt: {len(prompt['system_prompt'])} chars")
-        print(f"User prompt: {len(prompt['user_prompt'])} chars")
+        logger.info("Generated security analysis prompt")
+        logger.info("System prompt: {len(prompt['system_prompt'])} chars")
+        logger.info("User prompt: {len(prompt['user_prompt'])} chars")
         
         # Create LLM request
         request = LLMRequest(
@@ -195,31 +198,31 @@ async def demo_with_llm_orchestrator():
             max_tokens=2000
         )
         
-        print("\nSending request to LLM orchestrator...")
+        logger.info("\nSending request to LLM orchestrator...")
         
         # Generate analysis (this will fail without valid API keys)
         response = await orchestrator.generate(request)
         
-        print("\n--- LLM ANALYSIS RESPONSE ---")
-        print(response.content)
-        print(f"\nTokens used: {response.tokens['total']}")
-        print(f"Cost: ${response.cost:.4f}")
-        print(f"Provider: {response.provider}")
+        logger.info("\n--- LLM ANALYSIS RESPONSE ---")
+        logger.info(str(response.content))
+        logger.info("\nTokens used: {response.tokens['total']}")
+        logger.info("Cost: ${response.cost:.4f}")
+        logger.info("Provider: {response.provider}")
         
     except Exception as e:
-        print(f"Error: {e}")
-        print("\nThis is expected if API keys are not configured.")
-        print("To run this demo with actual LLM calls:")
-        print("1. Set OPENAI_API_KEY environment variable")
-        print("2. Set ANTHROPIC_API_KEY environment variable")
-        print("3. Run this script again")
+        logger.info("Error: {e}")
+        logger.info("\nThis is expected if API keys are not configured.")
+        logger.info("To run this demo with actual LLM calls:")
+        logger.info("1. Set OPENAI_API_KEY environment variable")
+        logger.info("2. Set ANTHROPIC_API_KEY environment variable")
+        logger.info("3. Run this script again")
 
 
 def demo_custom_prompt_template():
     """Demonstrate creating custom prompt templates"""
-    print("=" * 80)
-    print("CUSTOM PROMPT TEMPLATE")
-    print("=" * 80)
+    logger.info("=" * 80)
+    logger.info("CUSTOM PROMPT TEMPLATE")
+    logger.info("=" * 80)
     
     from app.services.llm.prompts import PromptTemplate
     
@@ -261,21 +264,21 @@ def process_data(items):
 """
     )
     
-    print("\n--- CUSTOM SYSTEM PROMPT ---")
-    print(prompt["system_prompt"])
+    logger.info("\n--- CUSTOM SYSTEM PROMPT ---")
+    logger.info(str(prompt["system_prompt"]))
     
-    print("\n--- CUSTOM USER PROMPT ---")
-    print(prompt["user_prompt"])
-    print()
+    logger.info("\n--- CUSTOM USER PROMPT ---")
+    logger.info(str(prompt["user_prompt"]))
+    logger.info()
 
 
 def main():
     """Run all demos"""
-    print("\n")
-    print("╔" + "=" * 78 + "╗")
-    print("║" + " " * 20 + "PROMPT MANAGER DEMONSTRATION" + " " * 30 + "║")
-    print("╚" + "=" * 78 + "╝")
-    print()
+    logger.info("\n")
+    logger.info("╔" + "=" * 78 + "╗")
+    logger.info("║" + " " * 20 + "PROMPT MANAGER DEMONSTRATION" + " " * 30 + "║")
+    logger.info("╚" + "=" * 78 + "╝")
+    logger.info()
     
     # Run synchronous demos
     demo_code_quality_prompt()
@@ -285,19 +288,19 @@ def main():
     demo_custom_prompt_template()
     
     # Run async demo
-    print("\n--- ASYNC DEMO ---")
+    logger.info("\n--- ASYNC DEMO ---")
     asyncio.run(demo_with_llm_orchestrator())
     
-    print("\n" + "=" * 80)
-    print("DEMO COMPLETE")
-    print("=" * 80)
-    print("\nKey Takeaways:")
-    print("1. Use get_prompt_manager() to get a prompt manager instance")
-    print("2. Generate prompts using convenience methods or generate_prompt()")
-    print("3. Prompts include both system and user prompts")
-    print("4. All prompts support variable substitution")
-    print("5. Integrate with LLM orchestrator for actual analysis")
-    print()
+    logger.info("\n" + "=" * 80)
+    logger.info("DEMO COMPLETE")
+    logger.info("=" * 80)
+    logger.info("\nKey Takeaways:")
+    logger.info("1. Use get_prompt_manager() to get a prompt manager instance")
+    logger.info("2. Generate prompts using convenience methods or generate_prompt()")
+    logger.info("3. Prompts include both system and user prompts")
+    logger.info("4. All prompts support variable substitution")
+    logger.info("5. Integrate with LLM orchestrator for actual analysis")
+    logger.info()
 
 
 if __name__ == "__main__":

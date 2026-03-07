@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 Generate self-signed SSL certificates for development/testing.
@@ -40,7 +43,7 @@ def generate_self_signed_cert(
     cert_path.mkdir(parents=True, exist_ok=True)
     
     # Generate private key
-    print(f"🔐 Generating RSA private key (4096 bits)...")
+    logger.info("🔐 Generating RSA private key (4096 bits)...")
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=4096,
@@ -48,7 +51,7 @@ def generate_self_signed_cert(
     )
     
     # Generate certificate
-    print(f"📜 Generating self-signed certificate...")
+    logger.info("📜 Generating self-signed certificate...")
     subject = issuer = x509.Name([
         x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
         x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
@@ -114,27 +117,27 @@ def generate_self_signed_cert(
             )
         )
     os.chmod(key_file, 0o600)  # Restrict permissions
-    print(f"✅ Private key saved to: {key_file}")
+    logger.info("✅ Private key saved to: {key_file}")
     
     # Write certificate
     cert_file = cert_path / "server.crt"
     with open(cert_file, "wb") as f:
         f.write(cert.public_bytes(serialization.Encoding.PEM))
-    print(f"✅ Certificate saved to: {cert_file}")
+    logger.info("✅ Certificate saved to: {cert_file}")
     
     # Print certificate info
-    print(f"\n📋 Certificate Information:")
-    print(f"   Common Name: {common_name}")
-    print(f"   Valid From: {cert.not_valid_before}")
-    print(f"   Valid Until: {cert.not_valid_after}")
-    print(f"   Serial Number: {cert.serial_number}")
+    logger.info("\n📋 Certificate Information:")
+    logger.info("   Common Name: {common_name}")
+    logger.info("   Valid From: {cert.not_valid_before}")
+    logger.info("   Valid Until: {cert.not_valid_after}")
+    logger.info("   Serial Number: {cert.serial_number}")
     
-    print(f"\n⚠️  WARNING: This is a self-signed certificate for development only!")
-    print(f"   For production, use certificates from a trusted CA.")
+    logger.info("\n⚠️  WARNING: This is a self-signed certificate for development only!")
+    logger.info("   For production, use certificates from a trusted CA.")
     
-    print(f"\n🔧 To use these certificates, set in your .env file:")
-    print(f"   SSL_CERT_FILE={cert_file.absolute()}")
-    print(f"   SSL_KEY_FILE={key_file.absolute()}")
+    logger.info("\n🔧 To use these certificates, set in your .env file:")
+    logger.info("   SSL_CERT_FILE={cert_file.absolute()}")
+    logger.info("   SSL_KEY_FILE={key_file.absolute()}")
     
     return str(cert_file), str(key_file)
 
@@ -173,7 +176,7 @@ def main():
         )
         return 0
     except Exception as e:
-        print(f"❌ Error generating certificates: {e}", file=sys.stderr)
+        logger.info(str(f"❌ Error generating certificates: {e}", file=sys.stderr))
         import traceback
         traceback.print_exc()
         return 1

@@ -83,6 +83,13 @@ export default function ProjectDetailPage() {
      healthMetrics.testCoverage) / 4
   )
 
+  // 获取详细的分析数据
+  const dependencyStats = analytics?.dependency_stats || { total: 0, circular: 0, outdated: 0, dependency_issues: 0 }
+  const performanceMetrics = analytics?.performance_metrics || { avg_build_time: "0m", avg_test_time: "0m", avg_analysis_time: "0m", pr_review_time_avg: "0h" }
+  const issueStats = analytics?.issue_stats || { critical: 0, high: 0, medium: 0, low: 0, security: 0, performance: 0, code_style: 0, best_practices: 0, total: 0 }
+  const trends = analytics?.trends || { code_quality_change: 0, test_coverage_change: 0, issues_change: 0 }
+  const recentAnalysisReviews = analytics?.recent_reviews || []
+
   const getHealthScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600'
     if (score >= 60) return 'text-yellow-600'
@@ -296,24 +303,24 @@ export default function ProjectDetailPage() {
                   <CardDescription>Latest code review and analysis findings</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {pullRequests.length > 0 ? (
+                  {recentAnalysisReviews.length > 0 ? (
                     <div className="space-y-4">
-                      {pullRequests.slice(0, 3).map((pr: any) => (
-                        <div key={pr.id} className="flex items-start space-x-4">
+                      {recentAnalysisReviews.slice(0, 3).map((review: any) => (
+                        <div key={review.pr_id} className="flex items-start space-x-4">
                           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                             <GitPullRequest className="h-5 w-5 text-primary" />
                           </div>
                           <div className="flex-1 space-y-1">
                             <p className="text-sm font-medium">
-                              PR #{pr.github_pr_number}: {pr.title}
+                              PR #{review.pr_number}: {review.title}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {pr.status} • {new Date(pr.created_at).toLocaleDateString()}
+                              {review.status} • {review.analyzed_at ? new Date(review.analyzed_at).toLocaleDateString() : 'Not analyzed yet'}
                             </p>
                           </div>
-                          {pr.risk_score && (
-                            <Badge variant={pr.risk_score > 70 ? 'destructive' : pr.risk_score > 40 ? 'warning' : 'success'}>
-                              Risk: {pr.risk_score}
+                          {review.risk_score && (
+                            <Badge variant={review.risk_score > 70 ? 'destructive' : review.risk_score > 40 ? 'warning' : 'success'}>
+                              Risk: {review.risk_score}
                             </Badge>
                           )}
                         </div>

@@ -1,6 +1,9 @@
 """
 Sample test file for Python AST parser
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 from pathlib import Path
 from app.services.parsers.python_parser import PythonASTParser
@@ -126,7 +129,7 @@ def test_complexity_calculation():
     
     # Should have high complexity due to nested if statements
     assert complex_func.complexity > 1
-    print(f"Complex function complexity: {complex_func.complexity}")
+    logger.info("Complex function complexity: {complex_func.complexity}")
 
 
 def test_nesting_depth():
@@ -198,4 +201,4 @@ if __name__ == "__main__":
     test_line_counting()
     test_error_handling()
     
-    print("All tests passed!")
+    logger.info("All tests passed!")

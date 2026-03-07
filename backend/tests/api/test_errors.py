@@ -10,10 +10,18 @@ from fastapi.testclient import TestClient
 from datetime import datetime
 
 
+
+@pytest.fixture
+def sync_client():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    return TestClient(app)
+
 class TestClientErrorReporting:
+
     """Test client error reporting endpoint"""
 
-    def test_report_client_error_success(self, client: TestClient):
+    def test_report_client_error_success(self, sync_client: TestClient):
         """Test successful error report submission"""
         error_report = {
             "type": "NETWORK_ERROR",
@@ -28,7 +36,7 @@ class TestClientErrorReporting:
             "url": "https://example.com/dashboard"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         data = response.json()
@@ -37,7 +45,7 @@ class TestClientErrorReporting:
         assert "error_id" in data
         assert data["error_id"].startswith("client-")
 
-    def test_report_timeout_error(self, client: TestClient):
+    def test_report_timeout_error(self, sync_client: TestClient):
         """Test reporting timeout error"""
         error_report = {
             "type": "TIMEOUT_ERROR",
@@ -52,12 +60,12 @@ class TestClientErrorReporting:
             "url": "https://example.com/projects"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         assert response.json()["status"] == "success"
 
-    def test_report_auth_error(self, client: TestClient):
+    def test_report_auth_error(self, sync_client: TestClient):
         """Test reporting authentication error"""
         error_report = {
             "type": "AUTH_ERROR",
@@ -71,12 +79,12 @@ class TestClientErrorReporting:
             "url": "https://example.com/dashboard"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         assert response.json()["status"] == "success"
 
-    def test_report_server_error(self, client: TestClient):
+    def test_report_server_error(self, sync_client: TestClient):
         """Test reporting server error"""
         error_report = {
             "type": "SERVER_ERROR",
@@ -90,12 +98,12 @@ class TestClientErrorReporting:
             "url": "https://example.com/api/data"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         assert response.json()["status"] == "success"
 
-    def test_report_validation_error(self, client: TestClient):
+    def test_report_validation_error(self, sync_client: TestClient):
         """Test reporting validation error"""
         error_report = {
             "type": "VALIDATION_ERROR",
@@ -110,23 +118,23 @@ class TestClientErrorReporting:
             "url": "https://example.com/settings"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         assert response.json()["status"] == "success"
 
-    def test_report_error_missing_required_fields(self, client: TestClient):
+    def test_report_error_missing_required_fields(self, sync_client: TestClient):
         """Test error report with missing required fields"""
         error_report = {
             "type": "NETWORK_ERROR",
             # Missing required fields: message, timestamp, userAgent, url
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 422  # Validation error
 
-    def test_report_error_invalid_timestamp(self, client: TestClient):
+    def test_report_error_invalid_timestamp(self, sync_client: TestClient):
         """Test error report with invalid timestamp format"""
         error_report = {
             "type": "NETWORK_ERROR",
@@ -136,12 +144,12 @@ class TestClientErrorReporting:
             "url": "https://example.com"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         # Should still accept it as it's just a string field
         assert response.status_code == 201
 
-    def test_report_error_with_complex_details(self, client: TestClient):
+    def test_report_error_with_complex_details(self, sync_client: TestClient):
         """Test error report with complex nested details"""
         error_report = {
             "type": "NETWORK_ERROR",
@@ -163,12 +171,12 @@ class TestClientErrorReporting:
             "url": "https://example.com"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         assert response.json()["status"] == "success"
 
-    def test_report_error_with_null_details(self, client: TestClient):
+    def test_report_error_with_null_details(self, sync_client: TestClient):
         """Test error report with null details"""
         error_report = {
             "type": "NETWORK_ERROR",
@@ -180,21 +188,21 @@ class TestClientErrorReporting:
             "url": "https://example.com"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         assert response.json()["status"] == "success"
 
-    def test_error_reporting_health_check(self, client: TestClient):
+    def test_error_reporting_health_check(self, sync_client: TestClient):
         """Test error reporting service health check"""
-        response = client.get("/api/v1/errors/health")
+        response = sync_client.get("/api/v1/errors/health")
 
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
         assert data["service"] == "error-reporting"
 
-    def test_multiple_error_reports(self, client: TestClient):
+    def test_multiple_error_reports(self, sync_client: TestClient):
         """Test submitting multiple error reports"""
         error_reports = [
             {
@@ -208,11 +216,11 @@ class TestClientErrorReporting:
         ]
 
         for error_report in error_reports:
-            response = client.post("/api/v1/errors/client", json=error_report)
+            response = sync_client.post("/api/v1/errors/client", json=error_report)
             assert response.status_code == 201
             assert response.json()["status"] == "success"
 
-    def test_error_report_with_special_characters(self, client: TestClient):
+    def test_error_report_with_special_characters(self, sync_client: TestClient):
         """Test error report with special characters in message"""
         error_report = {
             "type": "VALIDATION_ERROR",
@@ -222,12 +230,12 @@ class TestClientErrorReporting:
             "url": "https://example.com"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         assert response.json()["status"] == "success"
 
-    def test_error_report_with_long_message(self, client: TestClient):
+    def test_error_report_with_long_message(self, sync_client: TestClient):
         """Test error report with very long message"""
         long_message = "A" * 10000  # 10KB message
 
@@ -239,12 +247,12 @@ class TestClientErrorReporting:
             "url": "https://example.com"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         assert response.json()["status"] == "success"
 
-    def test_error_report_with_unicode(self, client: TestClient):
+    def test_error_report_with_unicode(self, sync_client: TestClient):
         """Test error report with unicode characters"""
         error_report = {
             "type": "VALIDATION_ERROR",
@@ -254,7 +262,7 @@ class TestClientErrorReporting:
             "url": "https://example.com/页面"
         }
 
-        response = client.post("/api/v1/errors/client", json=error_report)
+        response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         assert response.json()["status"] == "success"
@@ -263,7 +271,7 @@ class TestClientErrorReporting:
 class TestErrorReportingIntegration:
     """Integration tests for error reporting"""
 
-    def test_error_report_logged_correctly(self, client: TestClient, caplog):
+    def test_error_report_logged_correctly(self, sync_client: TestClient, caplog):
         """Test that error reports are logged with correct structure"""
         error_report = {
             "type": "NETWORK_ERROR",
@@ -274,7 +282,7 @@ class TestErrorReportingIntegration:
         }
 
         with caplog.at_level("ERROR"):
-            response = client.post("/api/v1/errors/client", json=error_report)
+            response = sync_client.post("/api/v1/errors/client", json=error_report)
 
         assert response.status_code == 201
         
@@ -284,7 +292,7 @@ class TestErrorReportingIntegration:
         assert "Client error reported" in log_record.message
         assert "NETWORK_ERROR" in log_record.message
 
-    def test_concurrent_error_reports(self, client: TestClient):
+    def test_concurrent_error_reports(self, sync_client: TestClient):
         """Test handling concurrent error reports"""
         import concurrent.futures
 
@@ -296,7 +304,7 @@ class TestErrorReportingIntegration:
                 "userAgent": "Mozilla/5.0",
                 "url": f"https://example.com/page{index}"
             }
-            return client.post("/api/v1/errors/client", json=error_report)
+            return sync_client.post("/api/v1/errors/client", json=error_report)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = [executor.submit(submit_error_report, i) for i in range(20)]

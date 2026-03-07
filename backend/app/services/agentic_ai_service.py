@@ -20,10 +20,6 @@ from app.shared.llm_provider import LLMOrchestrator, LLMProviderConfig, LLMProvi
 from app.shared.exceptions import LLMProviderException
 from app.services.context_builder import ContextBuilder, create_context_builder
 
-
-logger = logging.getLogger(__name__)
-
-
 class CleanCodePrinciple(str, Enum):
     """Clean Code principles for violation detection"""
     MEANINGFUL_NAMES = "meaningful_names"
@@ -521,52 +517,64 @@ Provide detailed reasoning with explanations and references."""
 def create_agentic_ai_service(
     model_path: Optional[str] = None,
     ollama_base_url: str = "http://localhost:11434",
-) -> AgenticAIService:
+    lmstudio_base_url: Optional[str] = None,
+    lmstudio_model: Optional[str] = None,
+) -> "AgenticAIService":
     """
-    Factory function to create Agentic AI Service with local models.
-    
+    Factory function to create Agentic AI Service.
+
+    LM Studio is used as the **primary** provider for project reviews.
+    Ollama models serve as fallback providers.
+
     Args:
-        model_path: Path to local model file (for Ollama)
-        ollama_base_url: Ollama API base URL
-        
+        model_path:        Unused legacy parameter (kept for backward compat)
+        ollama_base_url:   Ollama API base URL (fallback)
+        lmstudio_base_url: LM Studio base URL; defaults to ``settings.LMSTUDIO_BASE_URL``
+        lmstudio_model:    LM Studio model name; defaults to ``settings.LMSTUDIO_MODEL``
+
     Returns:
         Configured Agentic AI Service
     """
-    # Configure providers with local models
+    from app.core.config import settings as _settings
+
+    _lmstudio_url = (lmstudio_base_url or _settings.LMSTUDIO_BASE_URL).rstrip("/")
+    _lmstudio_model = lmstudio_model or _settings.LMSTUDIO_MODEL
+
     providers = [
-        # Primary: Qwen2.5-Coder (best for code analysis)
+        # Primary: LM Studio (local, no cost, fast)
+        LLMProviderConfig(
+            provider_type=LLMProviderType.LMSTUDIO,
+            model=_lmstudio_model,
+            base_url=_lmstudio_url,
+            max_tokens=4000,
+            temperature=0.3,
+            timeout=_settings.LMSTUDIO_TIMEOUT,
+            priority=1,
+        ),
+        # Secondary: Qwen2.5-Coder via Ollama
         LLMProviderConfig(
             provider_type=LLMProviderType.OLLAMA,
             model="qwen2.5-coder:14b",
             base_url=ollama_base_url,
             max_tokens=4000,
-            temperature=0.3,  # Lower temperature for more focused analysis
-            priority=1,
+            temperature=0.3,
+            priority=2,
         ),
-        # Secondary: DeepSeek-R1 (good reasoning)
+        # Tertiary: DeepSeek-R1 via Ollama (good reasoning)
         LLMProviderConfig(
             provider_type=LLMProviderType.OLLAMA,
             model="deepseek-r1:7b",
             base_url=ollama_base_url,
             max_tokens=4000,
             temperature=0.5,
-            priority=2,
-        ),
-        # Tertiary: Llama3.3 (general purpose)
-        LLMProviderConfig(
-            provider_type=LLMProviderType.OLLAMA,
-            model="llama3.3:8b",
-            base_url=ollama_base_url,
-            max_tokens=4000,
-            temperature=0.7,
             priority=3,
         ),
     ]
-    
+
     orchestrator = LLMOrchestrator(providers)
-    
+
     return AgenticAIService(
         llm_orchestrator=orchestrator,
-        neo4j_client=None,  # TODO: Add Neo4j client
-        redis_client=None,  # TODO: Add Redis client
+        neo4j_client=None,
+        redis_client=None,
     )

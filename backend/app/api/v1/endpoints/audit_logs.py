@@ -16,7 +16,7 @@ import io
 import logging
 
 from app.database.postgresql import get_db
-from app.services.audit_logging_service import AuditLoggingService
+from app.services.audit_logging_service import AuditLoggingService, AuditEventType, AuditLogEntry as AuditLogModel
 from app.api.dependencies import get_current_user
 
 router = APIRouter(tags=["audit-logs"])
@@ -49,26 +49,26 @@ class AuditLogQueryParams(BaseModel):
 class AuditLogEntry(BaseModel):
     """Audit log entry response model"""
     id: str
-    timestamp: str
-    event_type: str
-    event_category: str
-    severity: str
-    resource_type: Optional[str]
-    resource_id: Optional[str]
-    resource_name: Optional[str]
-    user_id: Optional[str]
-    user_email: Optional[str]
-    user_role: Optional[str]
-    ip_address: Optional[str]
-    user_agent: Optional[str]
-    action: str
-    description: str
-    success: bool
-    error_message: Optional[str]
-    previous_state: Optional[dict]
-    new_state: Optional[dict]
-    changes: Optional[dict]
-    metadata: Optional[dict]
+    timestamp: str = ""
+    event_type: str = "unknown"
+    event_category: str = "unknown"
+    severity: str = "info"
+    resource_type: Optional[str] = None
+    resource_id: Optional[str] = None
+    resource_name: Optional[str] = None
+    user_id: Optional[str] = None
+    user_email: Optional[str] = None
+    user_role: Optional[str] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    action: str = "unknown"
+    description: str = ""
+    success: bool = True
+    error_message: Optional[str] = None
+    previous_state: Optional[dict] = None
+    new_state: Optional[dict] = None
+    changes: Optional[dict] = None
+    metadata: Optional[dict] = None
 
 
 class AuditLogQueryResponse(BaseModel):
@@ -312,8 +312,6 @@ async def get_event_types(
     
     Returns all event type constants that can be used for filtering.
     """
-    from app.services.audit_logging_service import AuditEventType
-    
     # Get all event type constants
     event_types = [
         getattr(AuditEventType, attr)
@@ -352,18 +350,17 @@ async def get_audit_log_statistics(
             detail="Only administrators and compliance officers can view audit log statistics"
         )
     
-    from app.services.audit_logging_service import AuditLogEntry
     from sqlalchemy import func, select
     
     # Build base query with date filters
     filters = []
     if start_date:
-        filters.append(AuditLogEntry.timestamp >= start_date)
+        filters.append(AuditLogModel.timestamp >= start_date)
     if end_date:
-        filters.append(AuditLogEntry.timestamp <= end_date)
+        filters.append(AuditLogModel.timestamp <= end_date)
     
     # Total logs
-    total_query = select(func.count(AuditLogEntry.id))
+    total_query = select(func.count(AuditLogModel.id))
     if filters:
         total_query = total_query.where(*filters)
     total_result = await db.execute(total_query)
@@ -371,9 +368,9 @@ async def get_audit_log_statistics(
     
     # Logs by category
     category_query = select(
-        AuditLogEntry.event_category,
-        func.count(AuditLogEntry.id).label('count')
-    ).group_by(AuditLogEntry.event_category)
+        AuditLogModel.event_category,
+        func.count(AuditLogModel.id).label('count')
+    ).group_by(AuditLogModel.event_category)
     if filters:
         category_query = category_query.where(*filters)
     category_result = await db.execute(category_query)
@@ -381,9 +378,9 @@ async def get_audit_log_statistics(
     
     # Logs by success/failure
     success_query = select(
-        AuditLogEntry.success,
-        func.count(AuditLogEntry.id).label('count')
-    ).group_by(AuditLogEntry.success)
+        AuditLogModel.success,
+        func.count(AuditLogModel.id).label('count')
+    ).group_by(AuditLogModel.success)
     if filters:
         success_query = success_query.where(*filters)
     success_result = await db.execute(success_query)
@@ -391,23 +388,23 @@ async def get_audit_log_statistics(
     
     # Most active users (top 10)
     users_query = select(
-        AuditLogEntry.user_email,
-        func.count(AuditLogEntry.id).label('count')
-    ).where(AuditLogEntry.user_email.isnot(None))
+        AuditLogModel.user_email,
+        func.count(AuditLogModel.id).label('count')
+    ).where(AuditLogModel.user_email.isnot(None))
     if filters:
         users_query = users_query.where(*filters)
-    users_query = users_query.group_by(AuditLogEntry.user_email).order_by(func.count(AuditLogEntry.id).desc()).limit(10)
+    users_query = users_query.group_by(AuditLogModel.user_email).order_by(func.count(AuditLogModel.id).desc()).limit(10)
     users_result = await db.execute(users_query)
     most_active_users = [{"email": row[0], "count": row[1]} for row in users_result]
     
     # Most common actions (top 10)
     actions_query = select(
-        AuditLogEntry.action,
-        func.count(AuditLogEntry.id).label('count')
+        AuditLogModel.action,
+        func.count(AuditLogModel.id).label('count')
     )
     if filters:
         actions_query = actions_query.where(*filters)
-    actions_query = actions_query.group_by(AuditLogEntry.action).order_by(func.count(AuditLogEntry.id).desc()).limit(10)
+    actions_query = actions_query.group_by(AuditLogModel.action).order_by(func.count(AuditLogModel.id).desc()).limit(10)
     actions_result = await db.execute(actions_query)
     most_common_actions = [{"action": row[0], "count": row[1]} for row in actions_result]
     

@@ -1,6 +1,9 @@
 """
 Pytest for testing Architecture Analysis endpoint with anyio and ASGITransport for Windows stability
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -65,7 +68,7 @@ class TestArchitectureAnalysisAPI:
             response = await ac.post("/api/v1/analyze/analyze", json=request_data)
 
         if response.status_code != 200:
-            print(f"DEBUG Analyze Streaming Response: {response.json()}")
+            logger.info("DEBUG Analyze Streaming Response: {response.json()}")
 
         # Should return 200 with text/event-stream (might include charset)
         assert response.status_code == 200
@@ -82,7 +85,7 @@ class TestArchitectureAnalysisAPI:
                 response = await ac.post(f"/api/v1/analysis/projects/{project_id}/analyze", params={"pr_id": pr_id})
         
         if response.status_code != 200:
-            print(f"DEBUG PR Analyze Response: {response.json()}")
+            logger.info("DEBUG PR Analyze Response: {response.json()}")
             
         assert response.status_code == 200
         assert response.json()["task_id"] == "test-task"

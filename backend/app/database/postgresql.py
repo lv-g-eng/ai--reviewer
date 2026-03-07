@@ -1,6 +1,9 @@
 """
 PostgreSQL database connection and session management
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from typing import AsyncGenerator
@@ -63,13 +66,13 @@ async def init_postgres():
         if tracing_config:
             tracing_config.instrument_sqlalchemy(engine)
     
-    print("✅ PostgreSQL initialized")
+    logger.info("✅ PostgreSQL initialized")
 
 
 async def close_postgres():
     """Close PostgreSQL connections"""
     await engine.dispose()
-    print("✅ PostgreSQL connections closed")
+    logger.info("✅ PostgreSQL connections closed")
 
 
 async def test_postgres_connection():
@@ -79,8 +82,8 @@ async def test_postgres_connection():
         async with AsyncSessionLocal() as session:
             result = await session.execute(text("SELECT 1"))
             assert result.scalar() == 1
-        print("✅ PostgreSQL connection successful")
+        logger.info("✅ PostgreSQL connection successful")
         return True
     except Exception as e:
-        print(f"❌ PostgreSQL connection failed: {e}")
+        logger.info("❌ PostgreSQL connection failed: {e}")
         return False

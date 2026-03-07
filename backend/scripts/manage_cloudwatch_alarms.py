@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 CloudWatch Alarms Management Script
@@ -27,7 +30,7 @@ try:
     import boto3
     from botocore.exceptions import ClientError, NoCredentialsError
 except ImportError:
-    print("Error: boto3 is required. Install with: pip install boto3")
+    logger.info("Error: boto3 is required. Install with: pip install boto3")
     sys.exit(1)
 
 
@@ -71,8 +74,8 @@ class CloudWatchAlarmsManager:
                 ]
             )
             topic_arn = response['TopicArn']
-            print(f"✓ Created SNS topic: {topic_name}")
-            print(f"  ARN: {topic_arn}")
+            logger.info("✓ Created SNS topic: {topic_name}")
+            logger.info("  ARN: {topic_arn}")
 
             # Subscribe email if provided
             if email:
@@ -81,8 +84,8 @@ class CloudWatchAlarmsManager:
                     Protocol='email',
                     Endpoint=email
                 )
-                print(f"✓ Subscribed email: {email}")
-                print(f"  Note: Check your email to confirm the subscription")
+                logger.info("✓ Subscribed email: {email}")
+                logger.info("  Note: Check your email to confirm the subscription")
 
             return topic_arn
 
@@ -92,7 +95,7 @@ class CloudWatchAlarmsManager:
                 topics = self.sns.list_topics()
                 for topic in topics['Topics']:
                     if topic_name in topic['TopicArn']:
-                        print(f"✓ Using existing SNS topic: {topic_name}")
+                        logger.info("✓ Using existing SNS topic: {topic_name}")
                         return topic['TopicArn']
             raise
 
@@ -157,7 +160,7 @@ class CloudWatchAlarmsManager:
             ]
         )
 
-        print(f"✓ Created alarm: {alarm_name}")
+        logger.info("✓ Created alarm: {alarm_name}")
         return alarm_name
 
     def create_high_response_time_alarm(self, sns_topic_arn: str, threshold: float = 1.0) -> str:
@@ -203,7 +206,7 @@ class CloudWatchAlarmsManager:
             ]
         )
 
-        print(f"✓ Created alarm: {alarm_name}")
+        logger.info("✓ Created alarm: {alarm_name}")
         return alarm_name
 
     def create_high_cpu_alarm(self, sns_topic_arn: str, threshold: float = 80.0,
@@ -247,7 +250,7 @@ class CloudWatchAlarmsManager:
             ]
 
         self.cloudwatch.put_metric_alarm(**alarm_config)
-        print(f"✓ Created alarm: {alarm_name}")
+        logger.info("✓ Created alarm: {alarm_name}")
         return alarm_name
 
     def create_high_memory_alarm(self, sns_topic_arn: str, threshold: float = 85.0) -> str:
@@ -283,7 +286,7 @@ class CloudWatchAlarmsManager:
             ]
         )
 
-        print(f"✓ Created alarm: {alarm_name}")
+        logger.info("✓ Created alarm: {alarm_name}")
         return alarm_name
 
     def create_high_disk_alarm(self, sns_topic_arn: str, threshold: float = 90.0) -> str:
@@ -319,7 +322,7 @@ class CloudWatchAlarmsManager:
             ]
         )
 
-        print(f"✓ Created alarm: {alarm_name}")
+        logger.info("✓ Created alarm: {alarm_name}")
         return alarm_name
 
     def create_all_alarms(self, email: Optional[str] = None,
@@ -334,13 +337,13 @@ class CloudWatchAlarmsManager:
         Returns:
             List of created alarm names
         """
-        print(f"\nCreating CloudWatch alarms for {self.environment} environment...")
-        print(f"Region: {self.region}")
-        print(f"Service: {self.service_name}\n")
+        logger.info("\nCreating CloudWatch alarms for {self.environment} environment...")
+        logger.info("Region: {self.region}")
+        logger.info("Service: {self.service_name}\n")
 
         # Create SNS topic
         sns_topic_arn = self.create_sns_topic(email)
-        print()
+        logger.info()
 
         # Create alarms
         alarm_names = []
@@ -350,7 +353,7 @@ class CloudWatchAlarmsManager:
         alarm_names.append(self.create_high_memory_alarm(sns_topic_arn))
         alarm_names.append(self.create_high_disk_alarm(sns_topic_arn))
 
-        print(f"\n✓ Successfully created {len(alarm_names)} alarms")
+        logger.info("\n✓ Successfully created {len(alarm_names)} alarms")
         return alarm_names
 
     def list_alarms(self, prefix: Optional[str] = None) -> List[Dict]:
@@ -375,10 +378,10 @@ class CloudWatchAlarmsManager:
             alarms = response.get('MetricAlarms', [])
 
             if not alarms:
-                print("No alarms found")
+                logger.info("No alarms found")
                 return []
 
-            print(f"\nFound {len(alarms)} alarm(s):\n")
+            logger.info("\nFound {len(alarms)} alarm(s):\n")
             for alarm in alarms:
                 state = alarm['StateValue']
                 state_emoji = {
@@ -387,16 +390,16 @@ class CloudWatchAlarmsManager:
                     'INSUFFICIENT_DATA': '?'
                 }.get(state, '-')
 
-                print(f"{state_emoji} {alarm['AlarmName']}")
-                print(f"  State: {state}")
-                print(f"  Description: {alarm.get('AlarmDescription', 'N/A')}")
-                print(f"  Threshold: {alarm.get('Threshold', 'N/A')}")
-                print()
+                logger.info("{state_emoji} {alarm['AlarmName']}")
+                logger.info("  State: {state}")
+                logger.info("  Description: {alarm.get('AlarmDescription', 'N/A')}")
+                logger.info("  Threshold: {alarm.get('Threshold', 'N/A')}")
+                logger.info()
 
             return alarms
 
         except ClientError as e:
-            print(f"Error listing alarms: {e}")
+            logger.info("Error listing alarms: {e}")
             return []
 
     def describe_alarm(self, alarm_name: str) -> Optional[Dict]:
@@ -414,16 +417,16 @@ class CloudWatchAlarmsManager:
             alarms = response.get('MetricAlarms', [])
 
             if not alarms:
-                print(f"Alarm not found: {alarm_name}")
+                logger.info("Alarm not found: {alarm_name}")
                 return None
 
             alarm = alarms[0]
-            print(f"\nAlarm Details: {alarm_name}\n")
-            print(json.dumps(alarm, indent=2, default=str))
+            logger.info("\nAlarm Details: {alarm_name}\n")
+            logger.info(str(json.dumps(alarm, indent=2, default=str)))
             return alarm
 
         except ClientError as e:
-            print(f"Error describing alarm: {e}")
+            logger.info("Error describing alarm: {e}")
             return None
 
     def delete_alarm(self, alarm_name: str) -> bool:
@@ -438,11 +441,11 @@ class CloudWatchAlarmsManager:
         """
         try:
             self.cloudwatch.delete_alarms(AlarmNames=[alarm_name])
-            print(f"✓ Deleted alarm: {alarm_name}")
+            logger.info("✓ Deleted alarm: {alarm_name}")
             return True
 
         except ClientError as e:
-            print(f"Error deleting alarm: {e}")
+            logger.info("Error deleting alarm: {e}")
             return False
 
     def test_alarm(self, alarm_name: str) -> bool:
@@ -465,12 +468,12 @@ class CloudWatchAlarmsManager:
                     'message': 'This is a test alarm notification'
                 })
             )
-            print(f"✓ Set alarm to ALARM state: {alarm_name}")
-            print("  Check your notification channels for the test alert")
+            logger.info("✓ Set alarm to ALARM state: {alarm_name}")
+            logger.info("  Check your notification channels for the test alert")
             return True
 
         except ClientError as e:
-            print(f"Error testing alarm: {e}")
+            logger.info("Error testing alarm: {e}")
             return False
 
 
@@ -563,19 +566,19 @@ Examples:
             manager.test_alarm(args.alarm_name)
 
     except NoCredentialsError:
-        print("\nError: AWS credentials not found")
-        print("Configure credentials using one of these methods:")
-        print("  1. Environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY")
-        print("  2. AWS credentials file: ~/.aws/credentials")
-        print("  3. IAM role (if running on EC2)")
+        logger.info("\nError: AWS credentials not found")
+        logger.info("Configure credentials using one of these methods:")
+        logger.info("  1. Environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY")
+        logger.info("  2. AWS credentials file: ~/.aws/credentials")
+        logger.info("  3. IAM role (if running on EC2)")
         sys.exit(1)
 
     except ClientError as e:
-        print(f"\nAWS Error: {e}")
+        logger.info("\nAWS Error: {e}")
         sys.exit(1)
 
     except Exception as e:
-        print(f"\nUnexpected error: {e}")
+        logger.info("\nUnexpected error: {e}")
         sys.exit(1)
 
 

@@ -29,6 +29,7 @@ class LLMProvider(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     OLLAMA = "ollama"
+    LMSTUDIO = "lmstudio"
 
 
 class LLMClient:
@@ -53,6 +54,10 @@ class LLMClient:
             self.client = None  # Ollama uses HTTP requests
             self.model = model or "qwen2.5-coder"
             self.ollama_base_url = settings.OLLAMA_BASE_URL or "http://localhost:11434"
+        elif provider == LLMProvider.LMSTUDIO:
+            self.client = None  # LM Studio uses HTTP requests
+            self.model = model or settings.LMSTUDIO_MODEL
+            self.lmstudio_base_url = settings.LMSTUDIO_BASE_URL
         else:
             raise ValueError(f"Unsupported provider: {provider}")
         
@@ -98,6 +103,14 @@ class LLMClient:
             )
         elif self.provider == LLMProvider.OLLAMA:
             return await self._ollama_completion(
+                system_prompt,
+                user_prompt,
+                temperature,
+                max_tokens,
+                json_mode
+            )
+        elif self.provider == LLMProvider.LMSTUDIO:
+            return await self._lmstudio_completion(
                 system_prompt,
                 user_prompt,
                 temperature,
@@ -237,6 +250,70 @@ class LLMClient:
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True
     )
+    async def _lmstudio_completion(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float,
+        max_tokens: int,
+        json_mode: bool
+    ) -> Dict[str, Any]:
+        """LM Studio completion using OpenAI-compatible HTTP API"""
+        try:
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt + ("\n\nPlease respond with valid JSON only." if json_mode else "")},
+            ]
+
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
+
+            base = self.lmstudio_base_url.rstrip("/")
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{base}/chat/completions",
+                    json=payload,
+                    timeout=settings.LMSTUDIO_TIMEOUT,
+                )
+                response.raise_for_status()
+                result = response.json()
+
+            content = result["choices"][0]["message"]["content"]
+            usage = result.get("usage", {})
+            prompt_tokens = usage.get("prompt_tokens", 0)
+            completion_tokens = usage.get("completion_tokens", 0)
+            total_tokens = usage.get("total_tokens", prompt_tokens + completion_tokens)
+
+            self.total_tokens += total_tokens
+            # Local inference — no monetary cost
+            self.total_cost += 0.0
+
+            return {
+                "content": content,
+                "provider": "lmstudio",
+                "model": self.model,
+                "tokens": {
+                    "prompt": prompt_tokens,
+                    "completion": completion_tokens,
+                    "total": total_tokens,
+                },
+                "cost": 0.0,
+            }
+
+        except Exception as e:
+            raise Exception(f"LM Studio API error: {str(e)}")
+
+    @retry(
+        retry=retry_if_exception_type((httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError)),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        stop=stop_after_attempt(3),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True
+    )
     async def _ollama_completion(
         self,
         system_prompt: str,
@@ -348,12 +425,14 @@ class LLMClient:
 # Singleton instances
 _openai_client: Optional[LLMClient] = None
 _anthropic_client: Optional[LLMClient] = None
+_ollama_client: Optional[LLMClient] = None
+_lmstudio_client: Optional[LLMClient] = None
 
 
-def get_llm_client(provider: LLMProvider = LLMProvider.OPENAI) -> LLMClient:
-    """Get LLM client instance"""
-    global _openai_client, _anthropic_client, _ollama_client
-    
+def get_llm_client(provider: LLMProvider = LLMProvider.LMSTUDIO) -> LLMClient:
+    """Get LLM client instance — defaults to LM Studio"""
+    global _openai_client, _anthropic_client, _ollama_client, _lmstudio_client
+
     if provider == LLMProvider.OPENAI:
         if _openai_client is None:
             _openai_client = LLMClient(LLMProvider.OPENAI)
@@ -366,9 +445,9 @@ def get_llm_client(provider: LLMProvider = LLMProvider.OPENAI) -> LLMClient:
         if _ollama_client is None:
             _ollama_client = LLMClient(LLMProvider.OLLAMA)
         return _ollama_client
+    elif provider == LLMProvider.LMSTUDIO:
+        if _lmstudio_client is None:
+            _lmstudio_client = LLMClient(LLMProvider.LMSTUDIO)
+        return _lmstudio_client
     else:
         raise ValueError(f"Unsupported provider: {provider}")
-
-
-# Add Ollama client instance
-_ollama_client: Optional[LLMClient] = None

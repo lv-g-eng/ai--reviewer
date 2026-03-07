@@ -1,6 +1,9 @@
 """
 Redis cache and session management
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import redis.asyncio as redis
 from typing import Optional
 
@@ -34,9 +37,9 @@ async def init_redis():
         )
         # Test connection
         await redis_client.ping()
-        print("✅ Redis initialized")
+        logger.info("✅ Redis initialized")
     except Exception as e:
-        print(f"❌ Failed to initialize Redis: {e}")
+        logger.info("❌ Failed to initialize Redis: {e}")
         raise
 
 
@@ -46,7 +49,7 @@ async def close_redis():
     if redis_client:
         await redis_client.close()
         redis_client = None
-        print("✅ Redis connections closed")
+        logger.info("✅ Redis connections closed")
 
 
 async def test_redis_connection():
@@ -59,10 +62,10 @@ async def test_redis_connection():
         value = await client.get(test_key)
         assert value == "success"
         await client.delete(test_key)
-        print("✅ Redis connection successful")
+        logger.info("✅ Redis connection successful")
         return True
     except Exception as e:
-        print(f"❌ Redis connection failed: {e}")
+        logger.info("❌ Redis connection failed: {e}")
         return False
 
 

@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 Script to set up secrets in AWS Secrets Manager.
@@ -47,9 +50,9 @@ def create_or_update_secret(
         secret_string = secret_value
     
     if dry_run:
-        print(f"[DRY RUN] Would create/update secret: {secret_name}")
-        print(f"  Description: {description}")
-        print(f"  Value: {secret_string[:50]}..." if len(secret_string) > 50 else f"  Value: {secret_string}")
+        logger.info("[DRY RUN] Would create/update secret: {secret_name}")
+        logger.info("  Description: {description}")
+        logger.info(str(f"  Value: {secret_string[:50]}..." if len(secret_string)) > 50 else f"  Value: {secret_string}")
         return True
     
     try:
@@ -59,7 +62,7 @@ def create_or_update_secret(
             Description=description,
             SecretString=secret_string
         )
-        print(f"✓ Created secret: {secret_name}")
+        logger.info("✓ Created secret: {secret_name}")
         return True
         
     except ClientError as e:
@@ -70,19 +73,19 @@ def create_or_update_secret(
                     SecretId=secret_name,
                     SecretString=secret_string
                 )
-                print(f"✓ Updated secret: {secret_name}")
+                logger.info("✓ Updated secret: {secret_name}")
                 return True
             except ClientError as update_error:
-                print(f"✗ Failed to update secret {secret_name}: {update_error}")
+                logger.info("✗ Failed to update secret {secret_name}: {update_error}")
                 return False
         else:
-            print(f"✗ Failed to create secret {secret_name}: {e}")
+            logger.info("✗ Failed to create secret {secret_name}: {e}")
             return False
 
 
 def setup_database_secrets(client, environment: str, dry_run: bool = False):
     """Set up database-related secrets."""
-    print(f"\n=== Setting up database secrets for {environment} ===")
+    logger.info("\n=== Setting up database secrets for {environment} ===")
     
     # PostgreSQL credentials
     postgres_secret = {
@@ -134,7 +137,7 @@ def setup_database_secrets(client, environment: str, dry_run: bool = False):
 
 def setup_api_secrets(client, environment: str, dry_run: bool = False):
     """Set up external API secrets."""
-    print(f"\n=== Setting up API secrets for {environment} ===")
+    logger.info("\n=== Setting up API secrets for {environment} ===")
     
     # GitHub integration
     github_secret = {
@@ -171,7 +174,7 @@ def setup_api_secrets(client, environment: str, dry_run: bool = False):
 
 def setup_app_secrets(client, environment: str, dry_run: bool = False):
     """Set up application secrets."""
-    print(f"\n=== Setting up application secrets for {environment} ===")
+    logger.info("\n=== Setting up application secrets for {environment} ===")
     
     # Application secrets
     app_secret = {
@@ -193,7 +196,7 @@ def setup_app_secrets(client, environment: str, dry_run: bool = False):
 
 def setup_frontend_secrets(client, environment: str, dry_run: bool = False):
     """Set up frontend secrets."""
-    print(f"\n=== Setting up frontend secrets for {environment} ===")
+    logger.info("\n=== Setting up frontend secrets for {environment} ===")
     
     # NextAuth secret
     create_or_update_secret(
@@ -223,7 +226,7 @@ def setup_frontend_secrets(client, environment: str, dry_run: bool = False):
 
 def setup_monitoring_secrets(client, environment: str, dry_run: bool = False):
     """Set up monitoring and observability secrets."""
-    print(f"\n=== Setting up monitoring secrets for {environment} ===")
+    logger.info("\n=== Setting up monitoring secrets for {environment} ===")
     
     monitoring_secret = {
         "sentry_dsn": "REPLACE_WITH_SENTRY_DSN",
@@ -250,7 +253,7 @@ def enable_secret_rotation(client, secret_name: str, lambda_arn: str, dry_run: b
         dry_run: If True, only print what would be done
     """
     if dry_run:
-        print(f"[DRY RUN] Would enable rotation for: {secret_name}")
+        logger.info("[DRY RUN] Would enable rotation for: {secret_name}")
         return
     
     try:
@@ -261,9 +264,9 @@ def enable_secret_rotation(client, secret_name: str, lambda_arn: str, dry_run: b
                 'AutomaticallyAfterDays': 30
             }
         )
-        print(f"✓ Enabled rotation for secret: {secret_name}")
+        logger.info("✓ Enabled rotation for secret: {secret_name}")
     except ClientError as e:
-        print(f"✗ Failed to enable rotation for {secret_name}: {e}")
+        logger.info("✗ Failed to enable rotation for {secret_name}: {e}")
 
 
 def main():
@@ -301,9 +304,9 @@ def main():
     # Initialize AWS Secrets Manager client
     try:
         client = boto3.client('secretsmanager', region_name=args.region)
-        print(f"Connected to AWS Secrets Manager in region: {args.region}")
+        logger.info("Connected to AWS Secrets Manager in region: {args.region}")
     except Exception as e:
-        print(f"Failed to connect to AWS Secrets Manager: {e}")
+        logger.info("Failed to connect to AWS Secrets Manager: {e}")
         sys.exit(1)
     
     # Set up secrets
@@ -316,9 +319,9 @@ def main():
     # Enable rotation if requested
     if args.enable_rotation:
         if not args.rotation_lambda_arn:
-            print("\n⚠ Warning: --rotation-lambda-arn required for rotation")
+            logger.info("\n⚠ Warning: --rotation-lambda-arn required for rotation")
         else:
-            print(f"\n=== Enabling secret rotation ===")
+            logger.info("\n=== Enabling secret rotation ===")
             secrets_to_rotate = [
                 f"{args.environment}/database/postgresql",
                 f"{args.environment}/database/neo4j",
@@ -332,14 +335,14 @@ def main():
                     args.dry_run
                 )
     
-    print("\n" + "="*60)
+    logger.info("\n" + "="*60)
     if args.dry_run:
-        print("DRY RUN COMPLETE - No changes were made")
+        logger.info("DRY RUN COMPLETE - No changes were made")
     else:
-        print("SETUP COMPLETE")
-        print("\n⚠ IMPORTANT: Replace all placeholder values with actual secrets!")
-        print("   Use AWS Console or AWS CLI to update secret values.")
-    print("="*60)
+        logger.info("SETUP COMPLETE")
+        logger.info("\n⚠ IMPORTANT: Replace all placeholder values with actual secrets!")
+        logger.info("   Use AWS Console or AWS CLI to update secret values.")
+    logger.info("="*60)
 
 
 if __name__ == "__main__":

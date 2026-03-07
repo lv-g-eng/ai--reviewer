@@ -9,6 +9,9 @@ Implements Requirements 1.6, 1.7:
 - Detect circular dependencies using graph traversal algorithms
 - Highlight cycles with severity ratings in dependency graph visualization
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import List, Dict, Set, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
@@ -297,7 +300,7 @@ class CircularDependencyDetector:
                         sccs.append(unique_nodes)
         
         except Exception as e:
-            print(f"Error finding strongly connected components: {str(e)}")
+            logger.info("Error finding strongly connected components: {str(e)}")
         
         return sccs
     
@@ -381,7 +384,7 @@ class CircularDependencyDetector:
                 )
         
         except Exception as e:
-            print(f"Error building cycle object: {str(e)}")
+            logger.info("Error building cycle object: {str(e)}")
             return None
     
     def _calculate_severity(

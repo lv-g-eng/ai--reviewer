@@ -20,6 +20,9 @@ Test Categories:
 - A09:2021 - Security Logging and Monitoring Failures
 - A10:2021 - Server Side Request Forgery (SSRF)
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import json
 import os
@@ -39,6 +42,14 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 ZAP_REPORTS_DIR = Path(__file__).parent.parent.parent / "security" / "zap_reports"
 ZAP_CONFIG_FILE = Path(__file__).parent.parent.parent / "security" / "zap_config.yaml"
 
+def is_backend_running():
+    try:
+        response = requests.get(f"{BACKEND_URL}/api/v1/health", timeout=2)
+        return response.status_code == 200
+    except requests.RequestException:
+        return False
+
+pytestmark = pytest.mark.skipif(not is_backend_running(), reason="Backend server is not running")
 
 class TestOWASPZAPScan:
     """Test OWASP ZAP automated security scanning"""
@@ -121,10 +132,10 @@ class TestOWASPZAPScan:
         ZAP_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
         
         # Run ZAP baseline scan
-        print(f"\n{'='*60}")
-        print("Running OWASP ZAP Baseline Security Scan")
-        print(f"Target: {BACKEND_URL}")
-        print(f"{'='*60}\n")
+        logger.info("\n{'='*60}")
+        logger.info("Running OWASP ZAP Baseline Security Scan")
+        logger.info("Target: {BACKEND_URL}")
+        logger.info("{'='*60}\n")
         
         cmd = [
             'docker', 'run',
@@ -147,9 +158,9 @@ class TestOWASPZAPScan:
                 timeout=600  # 10 minute timeout
             )
             
-            print(result.stdout)
+            logger.info(str(result.stdout))
             if result.stderr:
-                print(result.stderr, file=sys.stderr)
+                logger.info(str(result.stderr, file=sys.stderr))
             
             # Parse results
             json_report = ZAP_REPORTS_DIR / 'baseline_report.json'
@@ -163,12 +174,12 @@ class TestOWASPZAPScan:
                 high_severity = [a for a in alerts if 'High' in a.get('riskdesc', '')]
                 medium_severity = [a for a in alerts if 'Medium' in a.get('riskdesc', '')]
                 
-                print(f"\n{'='*60}")
-                print("Security Scan Results:")
-                print(f"  Total Alerts: {len(alerts)}")
-                print(f"  High Severity: {len(high_severity)}")
-                print(f"  Medium Severity: {len(medium_severity)}")
-                print(f"{'='*60}\n")
+                logger.info("\n{'='*60}")
+                logger.info("Security Scan Results:")
+                logger.info("  Total Alerts: {len(alerts)}")
+                logger.info("  High Severity: {len(high_severity)}")
+                logger.info("  Medium Severity: {len(medium_severity)}")
+                logger.info("{'='*60}\n")
                 
                 # Requirement 8.10: Zero high severity vulnerabilities
                 assert len(high_severity) == 0, \
@@ -177,9 +188,9 @@ class TestOWASPZAPScan:
                 
                 # Log medium severity for awareness
                 if medium_severity:
-                    print(f"WARNING: Found {len(medium_severity)} medium severity issues")
+                    logger.info("WARNING: Found {len(medium_severity)} medium severity issues")
                     for alert in medium_severity[:5]:  # Show first 5
-                        print(f"  - {alert.get('name', 'Unknown')}")
+                        logger.info("  - {alert.get('name', 'Unknown')}")
             
         except subprocess.TimeoutExpired:
             pytest.fail("ZAP scan timed out after 10 minutes")
@@ -292,7 +303,7 @@ class TestOWASPTop10Vulnerabilities:
         # CSP header may be set by frontend or reverse proxy
         # This is informational
         if 'Content-Security-Policy' not in headers:
-            print("INFO: Content-Security-Policy header not set")
+            logger.info("INFO: Content-Security-Policy header not set")
 
     
     def test_a05_security_misconfiguration(self, api_client):
@@ -362,7 +373,7 @@ class TestOWASPTop10Vulnerabilities:
             )
             # Should reject weak passwords (400 or 422)
             if response.status_code == 200:
-                print(f"WARNING: Weak password accepted: {weak_password}")
+                logger.info("WARNING: Weak password accepted: {weak_password}")
         
         # Test that login requires valid credentials
         response = api_client.post(
@@ -481,13 +492,13 @@ class TestRateLimiting:
             response = requests.get(endpoint)
             if response.status_code == 429:  # Too Many Requests
                 rate_limited = True
-                print(f"Rate limiting triggered after {i+1} requests")
+                logger.info("Rate limiting triggered after {i+1} requests")
                 break
         
         # Rate limiting should be enforced
         # Note: This may not trigger if rate limit is per-user and we're not authenticated
         if not rate_limited:
-            print("INFO: Rate limiting not triggered (may require authentication)")
+            logger.info("INFO: Rate limiting not triggered (may require authentication)")
 
 
 if __name__ == '__main__':

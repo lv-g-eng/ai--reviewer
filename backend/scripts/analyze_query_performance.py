@@ -6,6 +6,9 @@ using PostgreSQL's EXPLAIN ANALYZE to verify index effectiveness.
 
 Requirements: 10.5 - Database query optimization with proper indexes
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import asyncio
 import sys
 from pathlib import Path
@@ -19,25 +22,25 @@ from app.database.postgresql import AsyncSessionLocal
 
 async def analyze_query(session, query_name: str, query: str):
     """Execute EXPLAIN ANALYZE on a query and print results"""
-    print(f"\n{'='*80}")
-    print(f"Query: {query_name}")
-    print(f"{'='*80}")
-    print(f"SQL: {query}\n")
+    logger.info("\n{'='*80}")
+    logger.info("Query: {query_name}")
+    logger.info("{'='*80}")
+    logger.info("SQL: {query}\n")
     
     try:
         result = await session.execute(text(f"EXPLAIN ANALYZE {query}"))
-        print("Execution Plan:")
+        logger.info("Execution Plan:")
         for row in result:
-            print(f"  {row[0]}")
+            logger.info("  {row[0]}")
     except Exception as e:
-        print(f"Error: {e}")
+        logger.info("Error: {e}")
 
 
 async def main():
     """Run query performance analysis"""
     async with AsyncSessionLocal() as session:
-        print("Database Query Performance Analysis")
-        print("=" * 80)
+        logger.info("Database Query Performance Analysis")
+        logger.info("=" * 80)
         
         # Query 1: Get PRs by project and status (uses composite index)
         await analyze_query(
@@ -206,14 +209,14 @@ async def main():
             """
         )
         
-        print(f"\n{'='*80}")
-        print("Analysis Complete")
-        print(f"{'='*80}")
-        print("\nLook for:")
-        print("  - 'Index Scan' or 'Index Only Scan' (good - using indexes)")
-        print("  - 'Seq Scan' (bad - full table scan, missing index)")
-        print("  - Low execution times (< 10ms for simple queries)")
-        print("  - 'Bitmap Index Scan' (acceptable for multi-column queries)")
+        logger.info("\n{'='*80}")
+        logger.info("Analysis Complete")
+        logger.info("{'='*80}")
+        logger.info("\nLook for:")
+        logger.info("  - 'Index Scan' or 'Index Only Scan' (good - using indexes)")
+        logger.info("  - 'Seq Scan' (bad - full table scan, missing index)")
+        logger.info("  - Low execution times (< 10ms for simple queries)")
+        logger.info("  - 'Bitmap Index Scan' (acceptable for multi-column queries)")
 
 
 if __name__ == "__main__":

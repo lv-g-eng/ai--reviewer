@@ -11,6 +11,7 @@ from fastapi import Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from typing import Callable, Optional
+import os
 import logging
 import time
 from datetime import datetime
@@ -54,10 +55,12 @@ def get_user_identifier(request: Request) -> str:
 
 
 # Initialize rate limiter with Redis backend
-# Apply both per-minute and per-hour limits
+# Use memory storage during testing to avoid connection errors
+storage_uri = "memory://" if os.environ.get("TESTING") == "true" else settings.redis_url
+
 limiter = Limiter(
     key_func=get_user_identifier,
-    storage_uri=settings.redis_url,
+    storage_uri=storage_uri,
     default_limits=[
         f"{settings.RATE_LIMIT_PER_MINUTE}/minute",
         f"{settings.RATE_LIMIT_PER_HOUR}/hour"

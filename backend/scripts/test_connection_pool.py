@@ -6,6 +6,9 @@ concurrent database connections and monitoring pool behavior.
 
 Requirements: 10.6 - Connection pooling for PostgreSQL with pool size of 20 connections
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import asyncio
 import sys
 from pathlib import Path
@@ -25,91 +28,91 @@ async def simulate_query(session_id: int, duration: float = 0.1):
         try:
             # Simulate query work
             await session.execute(text("SELECT pg_sleep(:duration)"), {"duration": duration})
-            print(f"  Session {session_id}: Query completed")
+            logger.info("  Session {session_id}: Query completed")
         except Exception as e:
-            print(f"  Session {session_id}: Error - {e}")
+            logger.info("  Session {session_id}: Error - {e}")
 
 
 async def test_pool_capacity():
     """Test pool capacity with concurrent connections"""
-    print("\n" + "="*80)
-    print("Test 1: Pool Capacity Test")
-    print("="*80)
-    print("Testing with 20 concurrent connections (pool size)...\n")
+    logger.info("\n" + "="*80)
+    logger.info("Test 1: Pool Capacity Test")
+    logger.info("="*80)
+    logger.info("Testing with 20 concurrent connections (pool size)...\n")
     
     # Initial pool status
-    print("Initial Pool Status:")
-    print(format_pool_status(get_pool_status(engine.pool)))
+    logger.info("Initial Pool Status:")
+    logger.info(str(format_pool_status(get_pool_status(engine.pool))))
     
     # Create 20 concurrent connections (exactly pool size)
     tasks = [simulate_query(i, 0.5) for i in range(20)]
     
-    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Starting 20 concurrent queries...")
+    logger.info("\n[{datetime.now().strftime('%H:%M:%S')}] Starting 20 concurrent queries...")
     await asyncio.gather(*tasks)
     
-    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] All queries completed")
-    print("\nFinal Pool Status:")
-    print(format_pool_status(get_pool_status(engine.pool)))
+    logger.info("\n[{datetime.now().strftime('%H:%M:%S')}] All queries completed")
+    logger.info("\nFinal Pool Status:")
+    logger.info(str(format_pool_status(get_pool_status(engine.pool))))
 
 
 async def test_pool_overflow():
     """Test pool overflow with connections beyond pool size"""
-    print("\n" + "="*80)
-    print("Test 2: Pool Overflow Test")
-    print("="*80)
-    print("Testing with 30 concurrent connections (pool size + overflow)...\n")
+    logger.info("\n" + "="*80)
+    logger.info("Test 2: Pool Overflow Test")
+    logger.info("="*80)
+    logger.info("Testing with 30 concurrent connections (pool size + overflow)...\n")
     
     # Initial pool status
-    print("Initial Pool Status:")
-    print(format_pool_status(get_pool_status(engine.pool)))
+    logger.info("Initial Pool Status:")
+    logger.info(str(format_pool_status(get_pool_status(engine.pool))))
     
     # Create 30 concurrent connections (pool size + 10 overflow)
     tasks = [simulate_query(i, 0.5) for i in range(30)]
     
-    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Starting 30 concurrent queries...")
+    logger.info("\n[{datetime.now().strftime('%H:%M:%S')}] Starting 30 concurrent queries...")
     await asyncio.gather(*tasks)
     
-    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] All queries completed")
-    print("\nFinal Pool Status:")
-    print(format_pool_status(get_pool_status(engine.pool)))
+    logger.info("\n[{datetime.now().strftime('%H:%M:%S')}] All queries completed")
+    logger.info("\nFinal Pool Status:")
+    logger.info(str(format_pool_status(get_pool_status(engine.pool))))
 
 
 async def test_pool_timeout():
     """Test pool timeout behavior"""
-    print("\n" + "="*80)
-    print("Test 3: Pool Timeout Test")
-    print("="*80)
-    print("Testing pool timeout with 35 concurrent connections (beyond capacity)...\n")
+    logger.info("\n" + "="*80)
+    logger.info("Test 3: Pool Timeout Test")
+    logger.info("="*80)
+    logger.info("Testing pool timeout with 35 concurrent connections (beyond capacity)...\n")
     
     # Initial pool status
-    print("Initial Pool Status:")
-    print(format_pool_status(get_pool_status(engine.pool)))
+    logger.info("Initial Pool Status:")
+    logger.info(str(format_pool_status(get_pool_status(engine.pool))))
     
     # Create 35 concurrent connections (beyond pool + overflow)
     # This should trigger timeout behavior
     tasks = [simulate_query(i, 1.0) for i in range(35)]
     
-    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Starting 35 concurrent queries...")
-    print("(Some connections may timeout waiting for available pool slots)\n")
+    logger.info("\n[{datetime.now().strftime('%H:%M:%S')}] Starting 35 concurrent queries...")
+    logger.info("(Some connections may timeout waiting for available pool slots)\n")
     
     try:
         await asyncio.gather(*tasks)
     except Exception as e:
-        print(f"\nExpected timeout behavior: {e}")
+        logger.info("\nExpected timeout behavior: {e}")
     
-    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Test completed")
-    print("\nFinal Pool Status:")
-    print(format_pool_status(get_pool_status(engine.pool)))
+    logger.info("\n[{datetime.now().strftime('%H:%M:%S')}] Test completed")
+    logger.info("\nFinal Pool Status:")
+    logger.info(str(format_pool_status(get_pool_status(engine.pool))))
 
 
 async def test_pool_health_monitoring():
     """Test pool health monitoring"""
-    print("\n" + "="*80)
-    print("Test 4: Pool Health Monitoring")
-    print("="*80)
+    logger.info("\n" + "="*80)
+    logger.info("Test 4: Pool Health Monitoring")
+    logger.info("="*80)
     
     # Test with low utilization
-    print("\n1. Low Utilization (5 connections):")
+    logger.info("\n1. Low Utilization (5 connections):")
     tasks = [simulate_query(i, 0.2) for i in range(5)]
     
     # Start tasks but don't wait
@@ -117,57 +120,57 @@ async def test_pool_health_monitoring():
     await asyncio.sleep(0.1)  # Let them start
     
     health = check_pool_health(engine.pool)
-    print(f"  Healthy: {health['healthy']}")
-    print(f"  Utilization: {health['utilization_percent']:.1f}%")
+    logger.info("  Healthy: {health['healthy']}")
+    logger.info("  Utilization: {health['utilization_percent']:.1f}%")
     if health['warnings']:
-        print(f"  Warnings: {health['warnings']}")
+        logger.info("  Warnings: {health['warnings']}")
     
     await asyncio.gather(*running_tasks)
     
     # Test with high utilization
-    print("\n2. High Utilization (18 connections):")
+    logger.info("\n2. High Utilization (18 connections):")
     tasks = [simulate_query(i, 0.2) for i in range(18)]
     
     running_tasks = [asyncio.create_task(t) for t in tasks]
     await asyncio.sleep(0.1)  # Let them start
     
     health = check_pool_health(engine.pool)
-    print(f"  Healthy: {health['healthy']}")
-    print(f"  Utilization: {health['utilization_percent']:.1f}%")
+    logger.info("  Healthy: {health['healthy']}")
+    logger.info("  Utilization: {health['utilization_percent']:.1f}%")
     if health['warnings']:
-        print(f"  Warnings:")
+        logger.info("  Warnings:")
         for warning in health['warnings']:
-            print(f"    - {warning}")
+            logger.info("    - {warning}")
     
     await asyncio.gather(*running_tasks)
 
 
 async def test_pool_recycle():
     """Test pool recycle behavior"""
-    print("\n" + "="*80)
-    print("Test 5: Pool Recycle Configuration")
-    print("="*80)
+    logger.info("\n" + "="*80)
+    logger.info("Test 5: Pool Recycle Configuration")
+    logger.info("="*80)
     
     pool = engine.pool
-    print(f"\nPool Configuration:")
-    print(f"  Pool Size: {pool.size()}")
-    print(f"  Max Overflow: {pool.overflow()}")
-    print(f"  Pool Timeout: {pool._timeout}s")
-    print(f"  Pool Recycle: {pool._recycle}s (connections recycled after 1 hour)")
-    print(f"  Pool Pre-Ping: Enabled (verifies connections before use)")
-    print(f"  Pool LIFO: Enabled (reduces connection churn)")
+    logger.info("\nPool Configuration:")
+    logger.info("  Pool Size: {pool.size()}")
+    logger.info("  Max Overflow: {pool.overflow()}")
+    logger.info("  Pool Timeout: {pool._timeout}s")
+    logger.info("  Pool Recycle: {pool._recycle}s (connections recycled after 1 hour)")
+    logger.info("  Pool Pre-Ping: Enabled (verifies connections before use)")
+    logger.info("  Pool LIFO: Enabled (reduces connection churn)")
 
 
 async def main():
     """Run all connection pool tests"""
-    print("="*80)
-    print("PostgreSQL Connection Pool Testing")
-    print("="*80)
-    print("\nConfiguration:")
-    print("  Pool Size: 20 connections")
-    print("  Max Overflow: 10 connections")
-    print("  Pool Timeout: 30 seconds")
-    print("  Pool Recycle: 3600 seconds (1 hour)")
+    logger.info("="*80)
+    logger.info("PostgreSQL Connection Pool Testing")
+    logger.info("="*80)
+    logger.info("\nConfiguration:")
+    logger.info("  Pool Size: 20 connections")
+    logger.info("  Max Overflow: 10 connections")
+    logger.info("  Pool Timeout: 30 seconds")
+    logger.info("  Pool Recycle: 3600 seconds (1 hour)")
     
     try:
         # Test 1: Pool capacity
@@ -189,19 +192,19 @@ async def main():
         # Test 5: Pool recycle
         await test_pool_recycle()
         
-        print("\n" + "="*80)
-        print("All Tests Completed Successfully")
-        print("="*80)
-        print("\nConnection pool is properly configured with:")
-        print("  ✅ Pool size: 20 connections")
-        print("  ✅ Max overflow: 10 connections")
-        print("  ✅ Pool timeout: 30 seconds")
-        print("  ✅ Pool recycle: 1 hour")
-        print("  ✅ Pre-ping enabled")
-        print("  ✅ LIFO enabled")
+        logger.info("\n" + "="*80)
+        logger.info("All Tests Completed Successfully")
+        logger.info("="*80)
+        logger.info("\nConnection pool is properly configured with:")
+        logger.info("  ✅ Pool size: 20 connections")
+        logger.info("  ✅ Max overflow: 10 connections")
+        logger.info("  ✅ Pool timeout: 30 seconds")
+        logger.info("  ✅ Pool recycle: 1 hour")
+        logger.info("  ✅ Pre-ping enabled")
+        logger.info("  ✅ LIFO enabled")
         
     except Exception as e:
-        print(f"\n❌ Test failed: {e}")
+        logger.info("\n❌ Test failed: {e}")
         import traceback
         traceback.print_exc()
     finally:

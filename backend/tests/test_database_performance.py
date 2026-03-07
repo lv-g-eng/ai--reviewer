@@ -8,6 +8,9 @@ Requirements:
 - 10.1: API responds within 500ms for P95 of requests
 - 10.5: Database query optimization with proper indexes
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 import asyncio
 import time
@@ -162,11 +165,11 @@ async def test_query_prs_by_project_performance(test_data):
     p99 = calculate_percentile(times, 99)
     avg = statistics.mean(times)
     
-    print(f"\nQuery PRs by Project Performance:")
-    print(f"  Average: {avg:.2f}ms")
-    print(f"  P50: {p50:.2f}ms")
-    print(f"  P95: {p95:.2f}ms")
-    print(f"  P99: {p99:.2f}ms")
+    logger.info("\nQuery PRs by Project Performance:")
+    logger.info("  Average: {avg:.2f}ms")
+    logger.info("  P50: {p50:.2f}ms")
+    logger.info("  P95: {p95:.2f}ms")
+    logger.info("  P99: {p99:.2f}ms")
     
     # Requirement: P95 < 500ms
     assert p95 < 500, f"P95 response time {p95:.2f}ms exceeds 500ms threshold"
@@ -199,10 +202,10 @@ async def test_query_prs_by_status_performance(test_data):
     p95 = calculate_percentile(times, 95)
     avg = statistics.mean(times)
     
-    print(f"\nQuery PRs by Status Performance:")
-    print(f"  Average: {avg:.2f}ms")
-    print(f"  P50: {p50:.2f}ms")
-    print(f"  P95: {p95:.2f}ms")
+    logger.info("\nQuery PRs by Status Performance:")
+    logger.info("  Average: {avg:.2f}ms")
+    logger.info("  P50: {p50:.2f}ms")
+    logger.info("  P95: {p95:.2f}ms")
     
     assert p95 < 500, f"P95 response time {p95:.2f}ms exceeds 500ms threshold"
 
@@ -234,10 +237,10 @@ async def test_query_reviews_with_comments_performance(test_data):
     p95 = calculate_percentile(times, 95)
     avg = statistics.mean(times)
     
-    print(f"\nQuery Reviews with Comments Performance:")
-    print(f"  Average: {avg:.2f}ms")
-    print(f"  P50: {p50:.2f}ms")
-    print(f"  P95: {p95:.2f}ms")
+    logger.info("\nQuery Reviews with Comments Performance:")
+    logger.info("  Average: {avg:.2f}ms")
+    logger.info("  P50: {p50:.2f}ms")
+    logger.info("  P95: {p95:.2f}ms")
     
     assert p95 < 500, f"P95 response time {p95:.2f}ms exceeds 500ms threshold"
 
@@ -267,10 +270,10 @@ async def test_query_comments_by_severity_performance(test_data):
     p95 = calculate_percentile(times, 95)
     avg = statistics.mean(times)
     
-    print(f"\nQuery Comments by Severity Performance:")
-    print(f"  Average: {avg:.2f}ms")
-    print(f"  P50: {p50:.2f}ms")
-    print(f"  P95: {p95:.2f}ms")
+    logger.info("\nQuery Comments by Severity Performance:")
+    logger.info("  Average: {avg:.2f}ms")
+    logger.info("  P50: {p50:.2f}ms")
+    logger.info("  P95: {p95:.2f}ms")
     
     assert p95 < 500, f"P95 response time {p95:.2f}ms exceeds 500ms threshold"
 
@@ -305,11 +308,11 @@ async def test_concurrent_query_performance(test_data):
     p99 = calculate_percentile(times, 99)
     avg = statistics.mean(times)
     
-    print(f"\nConcurrent Query Performance (50 concurrent queries):")
-    print(f"  Average: {avg:.2f}ms")
-    print(f"  P50: {p50:.2f}ms")
-    print(f"  P95: {p95:.2f}ms")
-    print(f"  P99: {p99:.2f}ms")
+    logger.info("\nConcurrent Query Performance (50 concurrent queries):")
+    logger.info("  Average: {avg:.2f}ms")
+    logger.info("  P50: {p50:.2f}ms")
+    logger.info("  P95: {p95:.2f}ms")
+    logger.info("  P99: {p99:.2f}ms")
     
     assert p95 < 500, f"P95 response time {p95:.2f}ms exceeds 500ms threshold under load"
 
@@ -344,10 +347,10 @@ async def test_complex_query_performance(test_data):
     p95 = calculate_percentile(times, 95)
     avg = statistics.mean(times)
     
-    print(f"\nComplex Multi-Table Query Performance:")
-    print(f"  Average: {avg:.2f}ms")
-    print(f"  P50: {p50:.2f}ms")
-    print(f"  P95: {p95:.2f}ms")
+    logger.info("\nComplex Multi-Table Query Performance:")
+    logger.info("  Average: {avg:.2f}ms")
+    logger.info("  P50: {p50:.2f}ms")
+    logger.info("  P95: {p95:.2f}ms")
     
     assert p95 < 500, f"P95 response time {p95:.2f}ms exceeds 500ms threshold"
 
@@ -376,9 +379,9 @@ async def test_connection_pool_under_load(test_data):
     total_time = (end - start) * 1000
     avg_time_per_query = total_time / 100
     
-    print(f"\nConnection Pool Under Load (100 concurrent queries):")
-    print(f"  Total Time: {total_time:.2f}ms")
-    print(f"  Average per Query: {avg_time_per_query:.2f}ms")
+    logger.info("\nConnection Pool Under Load (100 concurrent queries):")
+    logger.info("  Total Time: {total_time:.2f}ms")
+    logger.info("  Average per Query: {avg_time_per_query:.2f}ms")
     
     # With proper pooling, average should still be reasonable
     assert avg_time_per_query < 100, f"Average query time {avg_time_per_query:.2f}ms too high under load"
@@ -404,8 +407,8 @@ async def test_index_effectiveness():
         
         # Check if index scan is used (not sequential scan)
         plan_str = str(plan)
-        print(f"\nIndex Usage Check:")
-        print(f"  Query Plan: {plan_str[:200]}...")
+        logger.info("\nIndex Usage Check:")
+        logger.info("  Query Plan: {plan_str[:200]}...")
         
         # Index scan or bitmap index scan indicates index is being used
         assert "Index Scan" in plan_str or "Bitmap Index Scan" in plan_str, \

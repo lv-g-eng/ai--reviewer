@@ -2,6 +2,9 @@
 Tests for multi-language AST parser
 Task 7.1: Create multi-language AST parser
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 from app.services.parsers.factory import ParserFactory
 from app.services.parsers.python_parser import PythonASTParser
@@ -92,7 +95,7 @@ class TestPythonParser:
         code = '''
 def hello_world():
     """Say hello"""
-    print("Hello, World!")
+    logger.info("Hello, World!")
     return True
 
 class MyClass:
@@ -251,7 +254,7 @@ def complex_function(x):
 def hello():
     """Docstring"""
     # Another comment
-    print("Hello")
+    logger.info("Hello")
     
     return True
 

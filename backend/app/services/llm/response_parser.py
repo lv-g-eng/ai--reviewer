@@ -196,7 +196,7 @@ class ResponseParser:
             >>> parser = ResponseParser()
             >>> result = parser.parse(llm_response, "src/auth.py")
             >>> for comment in result.comments:
-            ...     print(comment)
+            ...     logger.info(comment)
         """
         if not response or not response.strip():
             return ParseResult(
@@ -532,7 +532,7 @@ def parse_llm_response(
         >>> result = parse_llm_response(llm_response, "src/auth.py")
         >>> if result.success:
         ...     for comment in result.comments:
-        ...         print(f"{comment.severity}: {comment.issue}")
+        ...         logger.info("{comment.severity}: {comment.issue}")
     """
     parser = ResponseParser(default_file_path=file_path)
     return parser.parse(response, file_path)

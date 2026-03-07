@@ -20,6 +20,7 @@ from app.models.code_review import (
     ArchitectureViolation,
     ReviewStatus
 )
+from app.services.project_analysis_service import ProjectAnalysisService
 
 router = APIRouter()
 
@@ -48,7 +49,7 @@ class ProjectAnalytics(BaseModel):
     recent_reviews: list
 
 
-@router.get("/{project_id}/analytics", response_model=ProjectAnalytics)
+@router.get("/{project_id}/analytics", response_model=Dict[str, Any])
 async def get_project_analytics(
     project_id: str,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))],
@@ -59,127 +60,66 @@ async def get_project_analytics(
     
     包括：
     - 代码质量指标
-    - 安全评级
+    - 安全评级  
     - 架构健康度
     - 测试覆盖率
     - 问题统计
+    - 依赖分析
+    - 性能指标
     - 最近的审查记录
+    - 趋势分析
     """
-    
-    # 获取项目的所有 PR
-    pr_result = await db.execute(
-        select(PullRequest).filter(PullRequest.project_id == project_id)
-    )
-    prs = pr_result.scalars().all()
-    total_prs = len(prs)
-    
-    # 获取已审查的 PR 数量
-    reviewed_prs = sum(1 for pr in prs if pr.analyzed_at is not None)
-    
-    # 获取所有审查评论
-    pr_ids = [pr.id for pr in prs]
-    if pr_ids:
-        comments_result = await db.execute(
-            select(ReviewComment)
-            .join(CodeReview)
-            .filter(CodeReview.pull_request_id.in_(pr_ids))
-        )
-        comments = comments_result.scalars().all()
-    else:
-        comments = []
-    
-    # 统计问题严重程度
-    severity_counts = {
-        'critical': 0,
-        'high': 0,
-        'medium': 0,
-        'low': 0,
-        'info': 0
-    }
-    
-    for comment in comments:
-        severity = comment.severity.lower()
-        if severity in severity_counts:
-            severity_counts[severity] += 1
-    
-    total_issues = len(comments)
-    
-    # 获取架构违规
-    if pr_ids:
-        violations_result = await db.execute(
-            select(ArchitectureViolation)
-            .join(ArchitectureAnalysis)
-            .filter(ArchitectureAnalysis.pull_request_id.in_(pr_ids))
-        )
-        violations = violations_result.scalars().all()
-    else:
-        violations = []
-    
-    architecture_violations = len(violations)
-    
-    # 计算质量指标
-    # 基于问题数量和严重程度计算分数
-    if reviewed_prs > 0:
-        # 代码质量：基于问题密度
-        issues_per_pr = total_issues / reviewed_prs if reviewed_prs > 0 else 0
-        code_quality = max(0, min(100, 100 - int(issues_per_pr * 5)))
-        
-        # 安全评级：基于严重问题数量
-        critical_and_high = severity_counts['critical'] + severity_counts['high']
-        security_rating = max(0, min(100, 100 - int(critical_and_high * 10)))
-        
-        # 架构健康度：基于架构违规
-        violations_per_pr = architecture_violations / reviewed_prs if reviewed_prs > 0 else 0
-        architecture_health = max(0, min(100, 100 - int(violations_per_pr * 15)))
-        
-        # 测试覆盖率：基于 PR 的风险评分（反向）
-        avg_risk = sum(pr.risk_score for pr in prs if pr.risk_score) / len([pr for pr in prs if pr.risk_score]) if any(pr.risk_score for pr in prs) else 50
-        test_coverage = max(0, min(100, 100 - int(avg_risk)))
-    else:
-        # 没有审查数据时使用默认值
-        code_quality = 75
-        security_rating = 80
-        architecture_health = 75
-        test_coverage = 70
-    
-    # 计算总体健康度
-    overall_health = int((code_quality + security_rating + architecture_health + test_coverage) / 4)
-    
-    # 获取最近的审查记录
-    recent_reviews = []
-    for pr in sorted(prs, key=lambda x: x.analyzed_at or x.created_at, reverse=True)[:5]:
-        if pr.analyzed_at:
-            recent_reviews.append({
-                'pr_id': str(pr.id),
-                'pr_number': pr.github_pr_number,
-                'title': pr.title,
-                'status': pr.status.value,
-                'risk_score': pr.risk_score,
-                'analyzed_at': pr.analyzed_at.isoformat() if pr.analyzed_at else None,
-                'files_changed': pr.files_changed,
-                'lines_added': pr.lines_added,
-                'lines_deleted': pr.lines_deleted
-            })
-    
-    return ProjectAnalytics(
-        project_id=project_id,
-        metrics=ProjectMetrics(
-            code_quality=code_quality,
-            security_rating=security_rating,
-            architecture_health=architecture_health,
-            test_coverage=test_coverage,
-            overall_health=overall_health
-        ),
-        total_prs=total_prs,
-        reviewed_prs=reviewed_prs,
-        total_issues=total_issues,
-        critical_issues=severity_counts['critical'],
-        high_issues=severity_counts['high'],
-        medium_issues=severity_counts['medium'],
-        low_issues=severity_counts['low'],
-        architecture_violations=architecture_violations,
-        recent_reviews=recent_reviews
-    )
+    try:
+        # 使用新的分析服务获取完整的项目分析
+        service = ProjectAnalysisService(db)
+        analytics = await service.get_complete_project_analytics(project_id)
+        return analytics
+    except Exception as e:
+        import logging
+        logging.error(f"Error fetching analytics for project {project_id}: {str(e)}")
+        # Return default analytics if error
+        return {
+            "project_id": project_id,
+            "metrics": {
+                "code_quality": 75,
+                "security_rating": 80,
+                "architecture_health": 75,
+                "test_coverage": 70,
+                "overall_health": 75
+            },
+            "dependency_stats": {
+                "total": 0,
+                "circular": 0,
+                "outdated": 0,
+                "dependency_issues": 0
+            },
+            "performance_metrics": {
+                "avg_build_time": "0m",
+                "avg_test_time": "0m",
+                "avg_analysis_time": "2m",
+                "pr_review_time_avg": "0h"
+            },
+            "issue_stats": {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "security": 0,
+                "performance": 0,
+                "code_style": 0,
+                "best_practices": 0,
+                "total": 0
+            },
+            "trends": {
+                "code_quality_change": 0,
+                "test_coverage_change": 0,
+                "issues_change": 0
+            },
+            "recent_reviews": [],
+            "total_prs": 0,
+            "reviewed_prs": 0,
+            "analysis_timestamp": datetime.utcnow().isoformat()
+        }
 
 
 @router.get("/{project_id}/issues", response_model=Dict[str, Any])

@@ -6,6 +6,9 @@ components have been implemented correctly.
 
 Task 5: Checkpoint - Verify backend API and monitoring
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import sys
 import ast
@@ -15,15 +18,15 @@ from typing import List, Tuple
 
 def print_header(title: str):
     """Print a formatted header"""
-    print("\n" + "=" * 70)
-    print(f"  {title}")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("  {title}")
+    logger.info("=" * 70)
 
 
 def print_section(title: str):
     """Print a formatted section header"""
-    print(f"\n{title}")
-    print("-" * 70)
+    logger.info("\n{title}")
+    logger.info("-" * 70)
 
 
 def verify_health_check_service() -> bool:
@@ -32,7 +35,7 @@ def verify_health_check_service() -> bool:
     
     health_service_path = Path("app/services/health_service.py")
     if not health_service_path.exists():
-        print("❌ Health service file not found")
+        logger.info("❌ Health service file not found")
         return False
     
     with open(health_service_path, 'r', encoding='utf-8') as f:
@@ -48,7 +51,7 @@ def verify_health_check_service() -> bool:
             break
     
     if not health_service_class:
-        print("❌ HealthService class not found")
+        logger.info("❌ HealthService class not found")
         return False
     
     # Check for required methods
@@ -69,9 +72,9 @@ def verify_health_check_service() -> bool:
     all_found = True
     for method in required_methods:
         if method in found_methods:
-            print(f"  ✅ {method}()")
+            logger.info("  ✅ {method}()")
         else:
-            print(f"  ❌ {method}() - MISSING")
+            logger.info("  ❌ {method}() - MISSING")
             all_found = False
     
     return all_found
@@ -83,7 +86,7 @@ def verify_health_endpoints() -> bool:
     
     health_endpoints_path = Path("app/api/v1/endpoints/health.py")
     if not health_endpoints_path.exists():
-        print("❌ Health endpoints file not found")
+        logger.info("❌ Health endpoints file not found")
         return False
     
     with open(health_endpoints_path, 'r', encoding='utf-8') as f:
@@ -98,9 +101,9 @@ def verify_health_endpoints() -> bool:
     all_found = True
     for func_name, description in required_endpoints:
         if func_name in content:
-            print(f"  ✅ {description}")
+            logger.info("  ✅ {description}")
         else:
-            print(f"  ❌ {description} - MISSING")
+            logger.info("  ❌ {description} - MISSING")
             all_found = False
     
     return all_found
@@ -113,26 +116,26 @@ def verify_prometheus_metrics() -> bool:
     # Check metrics module
     metrics_path = Path("app/core/prometheus_metrics.py")
     if not metrics_path.exists():
-        print("❌ Prometheus metrics module not found")
+        logger.info("❌ Prometheus metrics module not found")
         return False
     
-    print("  ✅ Prometheus metrics module exists")
+    logger.info("  ✅ Prometheus metrics module exists")
     
     # Check metrics endpoint
     metrics_endpoint_path = Path("app/api/v1/endpoints/metrics.py")
     if not metrics_endpoint_path.exists():
-        print("❌ Metrics endpoint not found")
+        logger.info("❌ Metrics endpoint not found")
         return False
     
-    print("  ✅ Metrics endpoint exists (GET /api/v1/metrics)")
+    logger.info("  ✅ Metrics endpoint exists (GET /api/v1/metrics)")
     
     # Check middleware
     middleware_path = Path("app/middleware/prometheus_middleware.py")
     if not middleware_path.exists():
-        print("❌ Prometheus middleware not found")
+        logger.info("❌ Prometheus middleware not found")
         return False
     
-    print("  ✅ Prometheus middleware exists")
+    logger.info("  ✅ Prometheus middleware exists")
     
     # Verify key metrics are defined
     with open(metrics_path, 'r', encoding='utf-8') as f:
@@ -148,9 +151,9 @@ def verify_prometheus_metrics() -> bool:
     all_found = True
     for metric in key_metrics:
         if metric in content:
-            print(f"  ✅ Metric: {metric}")
+            logger.info("  ✅ Metric: {metric}")
         else:
-            print(f"  ❌ Metric: {metric} - MISSING")
+            logger.info("  ❌ Metric: {metric} - MISSING")
             all_found = False
     
     return all_found
@@ -162,7 +165,7 @@ def verify_structured_logging() -> bool:
     
     logging_config_path = Path("app/core/logging_config.py")
     if not logging_config_path.exists():
-        print("❌ Logging config module not found")
+        logger.info("❌ Logging config module not found")
         return False
     
     with open(logging_config_path, 'r', encoding='utf-8') as f:
@@ -170,29 +173,29 @@ def verify_structured_logging() -> bool:
     
     # Check for JSON logging
     if "pythonjsonlogger" in content or "JsonFormatter" in content:
-        print("  ✅ JSON structured logging configured")
+        logger.info("  ✅ JSON structured logging configured")
     else:
-        print("  ❌ JSON structured logging not configured")
+        logger.info("  ❌ JSON structured logging not configured")
         return False
     
     # Check for request logging
     if "log_request" in content:
-        print("  ✅ Request logging middleware exists")
+        logger.info("  ✅ Request logging middleware exists")
     else:
-        print("  ❌ Request logging middleware not found")
+        logger.info("  ❌ Request logging middleware not found")
         return False
     
     # Check for log rotation
     if "TimedRotatingFileHandler" in content and "backupCount" in content:
-        print("  ✅ Log rotation configured")
+        logger.info("  ✅ Log rotation configured")
         
         # Check for 30-day retention
         if "backupCount=30" in content or "backup_count=30" in content:
-            print("  ✅ 30-day log retention configured")
+            logger.info("  ✅ 30-day log retention configured")
         else:
-            print("  ⚠️  Warning: backupCount may not be set to 30 days")
+            logger.info("  ⚠️  Warning: backupCount may not be set to 30 days")
     else:
-        print("  ❌ Log rotation not configured")
+        logger.info("  ❌ Log rotation not configured")
         return False
     
     return True
@@ -204,7 +207,7 @@ def verify_opentelemetry_tracing() -> bool:
     
     tracing_path = Path("app/core/tracing.py")
     if not tracing_path.exists():
-        print("❌ Tracing module not found")
+        logger.info("❌ Tracing module not found")
         return False
     
     with open(tracing_path, 'r', encoding='utf-8') as f:
@@ -220,9 +223,9 @@ def verify_opentelemetry_tracing() -> bool:
     all_found = True
     for component, description in components:
         if component in content:
-            print(f"  ✅ {description}")
+            logger.info("  ✅ {description}")
         else:
-            print(f"  ❌ {description} - MISSING")
+            logger.info("  ❌ {description} - MISSING")
             all_found = False
     
     return all_found
@@ -234,7 +237,7 @@ def verify_rate_limiting() -> bool:
     
     rate_limiting_path = Path("app/middleware/rate_limiting.py")
     if not rate_limiting_path.exists():
-        print("❌ Rate limiting middleware not found")
+        logger.info("❌ Rate limiting middleware not found")
         return False
     
     with open(rate_limiting_path, 'r', encoding='utf-8') as f:
@@ -242,16 +245,16 @@ def verify_rate_limiting() -> bool:
     
     # Check for rate limiting configuration
     if "SlowAPI" in content or "Limiter" in content:
-        print("  ✅ Rate limiting middleware configured")
+        logger.info("  ✅ Rate limiting middleware configured")
     else:
-        print("  ❌ Rate limiting not properly configured")
+        logger.info("  ❌ Rate limiting not properly configured")
         return False
     
     # Check for rate limits
     if "100" in content and "5000" in content:
-        print("  ✅ Rate limits configured (100/min, 5000/hour)")
+        logger.info("  ✅ Rate limits configured (100/min, 5000/hour)")
     else:
-        print("  ⚠️  Warning: Rate limits may not match requirements")
+        logger.info("  ⚠️  Warning: Rate limits may not match requirements")
     
     return True
 
@@ -262,9 +265,9 @@ def verify_security_headers() -> bool:
     
     security_headers_path = Path("app/middleware/security_headers.py")
     if not security_headers_path.exists():
-        print("  ⚠️  Security headers middleware not found (may be in main.py)")
+        logger.info("  ⚠️  Security headers middleware not found (may be in main.py)")
     else:
-        print("  ✅ Security headers middleware exists")
+        logger.info("  ✅ Security headers middleware exists")
     
     # Check main.py for CORS configuration
     main_path = Path("app/main.py")
@@ -273,9 +276,9 @@ def verify_security_headers() -> bool:
             content = f.read()
         
         if "CORSMiddleware" in content:
-            print("  ✅ CORS middleware configured")
+            logger.info("  ✅ CORS middleware configured")
         else:
-            print("  ❌ CORS middleware not configured")
+            logger.info("  ❌ CORS middleware not configured")
             return False
     
     return True
@@ -299,12 +302,12 @@ def verify_audit_logging() -> bool:
                 content = f.read()
             
             if "audit" in content.lower() or "log" in content.lower():
-                print(f"  ✅ Audit logging found in {path.name}")
+                logger.info("  ✅ Audit logging found in {path.name}")
                 found = True
                 break
     
     if not found:
-        print("  ⚠️  Warning: Audit logging implementation not clearly identified")
+        logger.info("  ⚠️  Warning: Audit logging implementation not clearly identified")
     
     return True  # Non-critical for checkpoint
 
@@ -312,7 +315,7 @@ def verify_audit_logging() -> bool:
 def main():
     """Main verification function"""
     print_header("Phase 2 Checkpoint Verification")
-    print("\nVerifying Backend API and Monitoring Infrastructure...")
+    logger.info("\nVerifying Backend API and Monitoring Infrastructure...")
     
     results = []
     
@@ -332,24 +335,24 @@ def main():
     passed = sum(1 for _, result in results if result)
     total = len(results)
     
-    print(f"\nResults: {passed}/{total} components verified\n")
+    logger.info("\nResults: {passed}/{total} components verified\n")
     
     for component, result in results:
         status = "✅ PASS" if result else "❌ FAIL"
-        print(f"  {status}  {component}")
+        logger.info("  {status}  {component}")
     
-    print("\n" + "=" * 70)
+    logger.info("\n" + "=" * 70)
     
     if passed == total:
-        print("\n✅ ALL PHASE 2 COMPONENTS VERIFIED SUCCESSFULLY!")
-        print("\nPhase 2 (Backend API and Monitoring Infrastructure) is complete.")
-        print("Ready to proceed to Phase 3 (Frontend API Client and Data Validation).")
-        print("\n" + "=" * 70)
+        logger.info("\n✅ ALL PHASE 2 COMPONENTS VERIFIED SUCCESSFULLY!")
+        logger.info("\nPhase 2 (Backend API and Monitoring Infrastructure) is complete.")
+        logger.info("Ready to proceed to Phase 3 (Frontend API Client and Data Validation).")
+        logger.info("\n" + "=" * 70)
         return 0
     else:
-        print(f"\n⚠️  {total - passed} COMPONENT(S) NEED ATTENTION")
-        print("\nPlease review the failed components above.")
-        print("\n" + "=" * 70)
+        logger.info("\n⚠️  {total - passed} COMPONENT(S) NEED ATTENTION")
+        logger.info("\nPlease review the failed components above.")
+        logger.info("\n" + "=" * 70)
         return 1
 
 

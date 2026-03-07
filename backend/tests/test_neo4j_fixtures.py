@@ -1,6 +1,9 @@
 """
 Example tests demonstrating Neo4j fixtures and failure analysis
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 from unittest.mock import patch
 
@@ -246,7 +249,7 @@ def test_json_output_format():
         assert len(loaded["failures"]) == 1
         assert loaded["summary"]["failed"] == 1
 
-        print(f"✅ JSON format validation passed. File size: {os.path.getsize(test_file)} bytes")
+        logger.info("✅ JSON format validation passed. File size: {os.path.getsize(test_file)} bytes")
 
     finally:
         if os.path.exists(test_file):
@@ -256,4 +259,4 @@ def test_json_output_format():
 if __name__ == "__main__":
     # Quick manual test
     test_json_output_format()
-    print("Manual test passed!")
+    logger.info("Manual test passed!")

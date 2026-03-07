@@ -425,4 +425,4 @@ if __name__ == "__main__":
     # neo4j_db = Neo4jDB()  # Initialize with your connection details
     # service = SecurityComplianceService(neo4j_db)
     # report = service.process_audit_report("my-project", example_audit_json)
-    # print(f"Compliance Score: {report.compliance_score}")
+    # logger.info("Compliance Score: {report.compliance_score}")

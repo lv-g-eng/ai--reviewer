@@ -7,6 +7,9 @@ clean state for end-to-end tests.
 Usage:
     python backend/scripts/cleanup_test_data.py
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import asyncio
 import sys
 from pathlib import Path
@@ -35,13 +38,13 @@ async def cleanup_test_projects():
         test_projects = result.scalars().all()
         
         if not test_projects:
-            print("No test projects found to clean up")
+            logger.info("No test projects found to clean up")
             return
         
-        print(f"Found {len(test_projects)} test projects to clean up")
+        logger.info("Found {len(test_projects)} test projects to clean up")
         
         for project in test_projects:
-            print(f"  Cleaning project: {project.name} (ID: {project.id})")
+            logger.info("  Cleaning project: {project.name} (ID: {project.id})")
             
             # Delete code entities
             await db.execute(
@@ -58,16 +61,16 @@ async def cleanup_test_projects():
                 graph_service = GraphBuilderService()
                 await graph_service.delete_project_graph(project.id)
                 await graph_service.close()
-                print(f"    ✓ Deleted Neo4j graph data")
+                logger.info("    ✓ Deleted Neo4j graph data")
             except Exception as e:
-                print(f"    ⚠ Warning: Could not delete Neo4j data: {e}")
+                logger.info("    ⚠ Warning: Could not delete Neo4j data: {e}")
             
             # Delete project
             await db.delete(project)
-            print(f"    ✓ Deleted project and related data")
+            logger.info("    ✓ Deleted project and related data")
         
         await db.commit()
-        print(f"\n✓ Cleaned up {len(test_projects)} test projects")
+        logger.info("\n✓ Cleaned up {len(test_projects)} test projects")
 
 
 async def cleanup_test_users():
@@ -85,17 +88,17 @@ async def cleanup_test_users():
         test_users = result.scalars().all()
         
         if not test_users:
-            print("No test users found to clean up")
+            logger.info("No test users found to clean up")
             return
         
-        print(f"Found {len(test_users)} test users to clean up")
+        logger.info("Found {len(test_users)} test users to clean up")
         
         for user in test_users:
-            print(f"  Cleaning user: {user.email} (ID: {user.id})")
+            logger.info("  Cleaning user: {user.email} (ID: {user.id})")
             await db.delete(user)
         
         await db.commit()
-        print(f"✓ Cleaned up {len(test_users)} test users")
+        logger.info("✓ Cleaned up {len(test_users)} test users")
 
 
 async def cleanup_orphaned_data():
@@ -112,11 +115,11 @@ async def cleanup_orphaned_data():
         orphaned_entities = result.scalars().all()
         
         if orphaned_entities:
-            print(f"Found {len(orphaned_entities)} orphaned code entities")
+            logger.info("Found {len(orphaned_entities)} orphaned code entities")
             for entity in orphaned_entities:
                 await db.delete(entity)
             await db.commit()
-            print(f"✓ Cleaned up {len(orphaned_entities)} orphaned entities")
+            logger.info("✓ Cleaned up {len(orphaned_entities)} orphaned entities")
         
         # Find orphaned pull requests
         result = await db.execute(
@@ -129,39 +132,39 @@ async def cleanup_orphaned_data():
         orphaned_prs = result.scalars().all()
         
         if orphaned_prs:
-            print(f"Found {len(orphaned_prs)} orphaned pull requests")
+            logger.info("Found {len(orphaned_prs)} orphaned pull requests")
             for pr in orphaned_prs:
                 await db.delete(pr)
             await db.commit()
-            print(f"✓ Cleaned up {len(orphaned_prs)} orphaned PRs")
+            logger.info("✓ Cleaned up {len(orphaned_prs)} orphaned PRs")
 
 
 async def main():
     """Main cleanup function"""
-    print("=" * 60)
-    print("Cleaning Up Test Data")
-    print("=" * 60)
-    print()
+    logger.info("=" * 60)
+    logger.info("Cleaning Up Test Data")
+    logger.info("=" * 60)
+    logger.info()
     
     try:
         # Cleanup test projects
         await cleanup_test_projects()
-        print()
+        logger.info()
         
         # Cleanup test users
         await cleanup_test_users()
-        print()
+        logger.info()
         
         # Cleanup orphaned data
         await cleanup_orphaned_data()
-        print()
+        logger.info()
         
-        print("=" * 60)
-        print("✓ Cleanup Complete")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("✓ Cleanup Complete")
+        logger.info("=" * 60)
         
     except Exception as e:
-        print(f"\n✗ Error during cleanup: {e}")
+        logger.info("\n✗ Error during cleanup: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

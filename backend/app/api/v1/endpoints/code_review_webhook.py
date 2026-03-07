@@ -214,12 +214,13 @@ async def code_review_webhook(
             'supported_events': ['pull_request']
         }
     
-    # Check for replay protection
+    # Check for replay protection and concurrent duplicates using atomic SET NX
     if x_github_delivery:
         cache = await get_cache_service()
-        delivery_key = f"webhook:delivery:{x_github_delivery}"
         
-        if await cache.cache_exists(delivery_key):
+        # Atomically check and mark as processed
+        is_new = await cache.mark_webhook_processed(x_github_delivery)
+        if not is_new:
             logger.warning(
                 f"Duplicate webhook delivery detected: {x_github_delivery}",
                 extra={'delivery_id': x_github_delivery}
@@ -228,9 +229,6 @@ async def code_review_webhook(
                 'message': 'Webhook already processed',
                 'delivery_id': x_github_delivery
             }
-        
-        # Store delivery ID for 24 hours to prevent replays
-        await cache.cache_set(delivery_key, "processed", expiration=86400)
     
     # Extract PR data
     try:

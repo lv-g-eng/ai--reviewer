@@ -16,6 +16,7 @@ from .base import (
 )
 from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
+from .lmstudio_provider import LMStudioProvider
 from .factory import LLMProviderFactory, get_llm_provider
 from .circuit_breaker import (
     CircuitBreaker,
@@ -50,6 +51,7 @@ __all__ = [
     "LLMResponse",
     "OpenAIProvider",
     "AnthropicProvider",
+    "LMStudioProvider",
     "LLMProviderFactory",
     "get_llm_provider",
     "CircuitBreaker",

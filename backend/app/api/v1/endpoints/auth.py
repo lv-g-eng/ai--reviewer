@@ -45,6 +45,7 @@ async def register(
     - **password**: Strong password (min 8 chars, uppercase, lowercase, digit, special char)
     - **full_name**: Optional full name
     """
+    logger.info("DEBUG: Registering user {user_data.email}")
     # Validate password strength before hashing (Requirement 2.3)
     is_valid, error_message = validate_password_strength(user_data.password)
     if not is_valid:
@@ -295,6 +296,32 @@ async def refresh_token(
             detail="User not found or inactive"
         )
     
+    # Invalidate old refresh token (rotation) atomically before issuing new ones (Requirement 5.2)
+    # This mitigates concurrent refresh race conditions
+    if old_jti:
+        from app.utils.jwt import revoke_token
+        old_exp = payload.get("exp")
+        if old_exp:
+            old_expires_at = datetime.fromtimestamp(old_exp, tz=timezone.utc)
+            revoked_successfully = await revoke_token(old_jti, old_expires_at)
+            
+            if not revoked_successfully:
+                logger.warning(f"Concurrent refresh detected and blocked for token {old_jti}")
+                user_id_uuid = uuid.UUID(user_id) if user_id else None
+                await AuditService.log_token_refresh_failure(
+                    db=db,
+                    user_id=user_id_uuid,
+                    ip_address=client_ip,
+                    user_agent=user_agent,
+                    failure_reason="Refresh token already used (concurrent Request)"
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Refresh token already used",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            logger.info(f"Revoked old refresh token {old_jti} for user {user.id} (rotation)")
+            
     # Create new token pair (Requirement 5.2)
     token_payload = {
         "sub": str(user.id),
@@ -304,15 +331,6 @@ async def refresh_token(
     
     new_access_token = create_access_token(token_payload)
     new_refresh_token = create_refresh_token({"sub": str(user.id)})
-    
-    # Invalidate old refresh token (rotation) (Requirement 5.2)
-    if old_jti:
-        from app.utils.jwt import revoke_token
-        old_exp = payload.get("exp")
-        if old_exp:
-            old_expires_at = datetime.fromtimestamp(old_exp, tz=timezone.utc)
-            await revoke_token(old_jti, old_expires_at)
-            logger.info(f"Revoked old refresh token {old_jti} for user {user.id} (rotation)")
     
     # Store new refresh token metadata in Redis (Requirement 5.5)
     # Decode the new refresh token to get its JTI and expiration

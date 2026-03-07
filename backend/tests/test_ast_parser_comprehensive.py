@@ -11,6 +11,9 @@ This test suite provides comprehensive coverage for:
 - Complexity calculation
 - Line counting and metrics
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 import tempfile
 import os
@@ -35,7 +38,7 @@ class TestPythonParserValidCode:
         """Test parsing a simple function"""
         code = """
 def hello_world():
-    print("Hello, World!")
+    logger.info("Hello, World!")
     return True
 """
         result = parser.parse_file("test.py", content=code)

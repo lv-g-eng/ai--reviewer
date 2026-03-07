@@ -9,6 +9,9 @@ Usage:
 Requirements:
     - Set OPENAI_API_KEY or ANTHROPIC_API_KEY in environment
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import asyncio
 import os
@@ -29,18 +32,18 @@ from app.services.llm import (
 
 async def demo_openai_provider():
     """Demonstrate OpenAI provider usage"""
-    print("\n" + "="*60)
-    print("OpenAI GPT-4 Provider Demo")
-    print("="*60)
+    logger.info("\n" + "="*60)
+    logger.info("OpenAI GPT-4 Provider Demo")
+    logger.info("="*60)
     
     if not os.getenv("OPENAI_API_KEY"):
-        print("⚠️  OPENAI_API_KEY not set. Skipping OpenAI demo.")
+        logger.info("⚠️  OPENAI_API_KEY not set. Skipping OpenAI demo.")
         return
     
     try:
         # Get provider
         provider = get_llm_provider(LLMProviderType.OPENAI, model="gpt-4-turbo-preview")
-        print(f"✓ Provider initialized: {provider.get_provider_type().value}/{provider.model}")
+        logger.info("✓ Provider initialized: {provider.get_provider_type().value}/{provider.model}")
         
         # Create request
         request = LLMRequest(
@@ -50,32 +53,32 @@ async def demo_openai_provider():
             max_tokens=500
         )
         
-        print("\n📝 Generating response...")
+        logger.info("\n📝 Generating response...")
         response = await provider.generate(request)
         
-        print(f"\n✓ Response generated successfully!")
-        print(f"  - Tokens: {response.tokens['total']} (prompt: {response.tokens['prompt']}, completion: {response.tokens['completion']})")
-        print(f"  - Cost: ${response.cost:.4f}")
-        print(f"\n📄 Content:\n{response.content[:200]}...")
+        logger.info("\n✓ Response generated successfully!")
+        logger.info("  - Tokens: {response.tokens['total']} (prompt: {response.tokens['prompt']}, completion: {response.tokens['completion']})")
+        logger.info("  - Cost: ${response.cost:.4f}")
+        logger.info("\n📄 Content:\n{response.content[:200]}...")
         
         # Show usage stats
         stats = provider.get_usage_stats()
-        print(f"\n📊 Usage Statistics:")
-        print(f"  - Total tokens: {stats['total_tokens']}")
-        print(f"  - Total cost: ${stats['total_cost']:.4f}")
+        logger.info("\n📊 Usage Statistics:")
+        logger.info("  - Total tokens: {stats['total_tokens']}")
+        logger.info("  - Total cost: ${stats['total_cost']:.4f}")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.info("❌ Error: {e}")
 
 
 async def demo_anthropic_provider():
     """Demonstrate Anthropic provider usage"""
-    print("\n" + "="*60)
-    print("Anthropic Claude 3.5 Provider Demo")
-    print("="*60)
+    logger.info("\n" + "="*60)
+    logger.info("Anthropic Claude 3.5 Provider Demo")
+    logger.info("="*60)
     
     if not os.getenv("ANTHROPIC_API_KEY"):
-        print("⚠️  ANTHROPIC_API_KEY not set. Skipping Anthropic demo.")
+        logger.info("⚠️  ANTHROPIC_API_KEY not set. Skipping Anthropic demo.")
         return
     
     try:
@@ -84,7 +87,7 @@ async def demo_anthropic_provider():
             LLMProviderType.ANTHROPIC,
             model="claude-3-5-sonnet-20241022"
         )
-        print(f"✓ Provider initialized: {provider.get_provider_type().value}/{provider.model}")
+        logger.info("✓ Provider initialized: {provider.get_provider_type().value}/{provider.model}")
         
         # Create request with JSON mode
         request = LLMRequest(
@@ -95,68 +98,68 @@ async def demo_anthropic_provider():
             json_mode=True
         )
         
-        print("\n📝 Generating response (JSON mode)...")
+        logger.info("\n📝 Generating response (JSON mode)...")
         response = await provider.generate(request)
         
-        print(f"\n✓ Response generated successfully!")
-        print(f"  - Tokens: {response.tokens['total']} (input: {response.tokens['prompt']}, output: {response.tokens['completion']})")
-        print(f"  - Cost: ${response.cost:.6f}")
-        print(f"\n📄 Content:\n{response.content[:300]}...")
+        logger.info("\n✓ Response generated successfully!")
+        logger.info("  - Tokens: {response.tokens['total']} (input: {response.tokens['prompt']}, output: {response.tokens['completion']})")
+        logger.info("  - Cost: ${response.cost:.6f}")
+        logger.info("\n📄 Content:\n{response.content[:300]}...")
         
         # Show usage stats
         stats = provider.get_usage_stats()
-        print(f"\n📊 Usage Statistics:")
-        print(f"  - Total tokens: {stats['total_tokens']}")
-        print(f"  - Total cost: ${stats['total_cost']:.6f}")
+        logger.info("\n📊 Usage Statistics:")
+        logger.info("  - Total tokens: {stats['total_tokens']}")
+        logger.info("  - Total cost: ${stats['total_cost']:.6f}")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.info("❌ Error: {e}")
 
 
 async def demo_provider_comparison():
     """Compare responses from different providers"""
-    print("\n" + "="*60)
-    print("Provider Comparison Demo")
-    print("="*60)
+    logger.info("\n" + "="*60)
+    logger.info("Provider Comparison Demo")
+    logger.info("="*60)
     
     has_openai = bool(os.getenv("OPENAI_API_KEY"))
     has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
     
     if not (has_openai and has_anthropic):
-        print("⚠️  Both OPENAI_API_KEY and ANTHROPIC_API_KEY required for comparison.")
+        logger.info("⚠️  Both OPENAI_API_KEY and ANTHROPIC_API_KEY required for comparison.")
         return
     
     prompt = "Explain the concept of dependency injection in 2 sentences."
     
     try:
         # OpenAI
-        print("\n🤖 OpenAI GPT-4:")
+        logger.info("\n🤖 OpenAI GPT-4:")
         openai_provider = get_llm_provider(LLMProviderType.OPENAI)
         openai_request = LLMRequest(prompt=prompt, temperature=0.3, max_tokens=200)
         openai_response = await openai_provider.generate(openai_request)
-        print(f"  Response: {openai_response.content}")
-        print(f"  Cost: ${openai_response.cost:.4f}")
+        logger.info("  Response: {openai_response.content}")
+        logger.info("  Cost: ${openai_response.cost:.4f}")
         
         # Anthropic
-        print("\n🤖 Anthropic Claude:")
+        logger.info("\n🤖 Anthropic Claude:")
         anthropic_provider = get_llm_provider(LLMProviderType.ANTHROPIC)
         anthropic_request = LLMRequest(prompt=prompt, temperature=0.3, max_tokens=200)
         anthropic_response = await anthropic_provider.generate(anthropic_request)
-        print(f"  Response: {anthropic_response.content}")
-        print(f"  Cost: ${anthropic_response.cost:.6f}")
+        logger.info("  Response: {anthropic_response.content}")
+        logger.info("  Cost: ${anthropic_response.cost:.6f}")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.info("❌ Error: {e}")
 
 
 async def demo_usage_tracking():
     """Demonstrate usage tracking across multiple requests"""
-    print("\n" + "="*60)
-    print("Usage Tracking Demo")
-    print("="*60)
+    logger.info("\n" + "="*60)
+    logger.info("Usage Tracking Demo")
+    logger.info("="*60)
     
     if not os.getenv("OPENAI_API_KEY"):
-        print("⚠️  OPENAI_API_KEY not set. Skipping usage tracking demo.")
+        logger.info("⚠️  OPENAI_API_KEY not set. Skipping usage tracking demo.")
         return
     
     try:
@@ -168,87 +171,87 @@ async def demo_usage_tracking():
             "What is TypeScript?"
         ]
         
-        print(f"\n📝 Making {len(prompts)} requests...")
+        logger.info("\n📝 Making {len(prompts)} requests...")
         
         for i, prompt in enumerate(prompts, 1):
             request = LLMRequest(prompt=prompt, max_tokens=100)
             response = await provider.generate(request)
-            print(f"  {i}. {prompt[:30]}... - {response.tokens['total']} tokens, ${response.cost:.4f}")
+            logger.info("  {i}. {prompt[:30]}... - {response.tokens['total']} tokens, ${response.cost:.4f}")
         
         # Show cumulative stats
         stats = provider.get_usage_stats()
-        print(f"\n📊 Cumulative Statistics:")
-        print(f"  - Total requests: {len(prompts)}")
-        print(f"  - Total tokens: {stats['total_tokens']}")
-        print(f"  - Total cost: ${stats['total_cost']:.4f}")
-        print(f"  - Average tokens per request: {stats['total_tokens'] / len(prompts):.0f}")
-        print(f"  - Average cost per request: ${stats['total_cost'] / len(prompts):.4f}")
+        logger.info("\n📊 Cumulative Statistics:")
+        logger.info("  - Total requests: {len(prompts)}")
+        logger.info("  - Total tokens: {stats['total_tokens']}")
+        logger.info("  - Total cost: ${stats['total_cost']:.4f}")
+        logger.info("  - Average tokens per request: {stats['total_tokens'] / len(prompts):.0f}")
+        logger.info("  - Average cost per request: ${stats['total_cost'] / len(prompts):.4f}")
         
         # Reset usage
-        print("\n🔄 Resetting usage statistics...")
+        logger.info("\n🔄 Resetting usage statistics...")
         provider.reset_usage()
         stats = provider.get_usage_stats()
-        print(f"  - Total tokens after reset: {stats['total_tokens']}")
-        print(f"  - Total cost after reset: ${stats['total_cost']:.4f}")
+        logger.info("  - Total tokens after reset: {stats['total_tokens']}")
+        logger.info("  - Total cost after reset: ${stats['total_cost']:.4f}")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.info("❌ Error: {e}")
 
 
 async def demo_factory_pattern():
     """Demonstrate factory pattern usage"""
-    print("\n" + "="*60)
-    print("Factory Pattern Demo")
-    print("="*60)
+    logger.info("\n" + "="*60)
+    logger.info("Factory Pattern Demo")
+    logger.info("="*60)
     
     if not os.getenv("OPENAI_API_KEY"):
-        print("⚠️  OPENAI_API_KEY not set. Skipping factory demo.")
+        logger.info("⚠️  OPENAI_API_KEY not set. Skipping factory demo.")
         return
     
     try:
         # Create provider with custom configuration
-        print("\n🏭 Creating provider with custom configuration...")
+        logger.info("\n🏭 Creating provider with custom configuration...")
         provider = LLMProviderFactory.create_provider(
             provider_type=LLMProviderType.OPENAI,
             model="gpt-4",
             timeout=60
         )
-        print(f"  ✓ Created: {provider.model} with 60s timeout")
+        logger.info("  ✓ Created: {provider.model} with 60s timeout")
         
         # Get cached provider
-        print("\n📦 Getting cached provider...")
+        logger.info("\n📦 Getting cached provider...")
         cached_provider = LLMProviderFactory.get_provider(
             LLMProviderType.OPENAI,
             model="gpt-4",
             use_cache=True
         )
-        print(f"  ✓ Same instance: {provider is cached_provider}")
+        logger.info("  ✓ Same instance: {provider is cached_provider}")
         
         # Get new instance without cache
-        print("\n🆕 Getting new provider without cache...")
+        logger.info("\n🆕 Getting new provider without cache...")
         new_provider = LLMProviderFactory.get_provider(
             LLMProviderType.OPENAI,
             model="gpt-4",
             use_cache=False
         )
-        print(f"  ✓ Different instance: {provider is not new_provider}")
+        logger.info("  ✓ Different instance: {provider is not new_provider}")
         
         # Clear cache
-        print("\n🗑️  Clearing provider cache...")
+        logger.info("\n🗑️  Clearing provider cache...")
         LLMProviderFactory.clear_cache()
-        print("  ✓ Cache cleared")
+        logger.info("  ✓ Cache cleared")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.info("❌ Error: {e}")
 
 
 async def main():
     """Run all demos"""
-    print("\n" + "="*60)
-    print("LLM Client Multi-Provider Demo")
-    print("="*60)
-    print("\nThis demo showcases the multi-provider LLM client capabilities.")
-    print("Make sure to set OPENAI_API_KEY and/or ANTHROPIC_API_KEY in your environment.")
+    logger.info("\n" + "="*60)
+    logger.info("LLM Client Multi-Provider Demo")
+    logger.info("="*60)
+    logger.info("\nThis demo showcases the multi-provider LLM client capabilities.")
+    logger.info("Make sure to set OPENAI_API_KEY and/or ANTHROPIC_API_KEY in your environment.")
     
     # Run demos
     await demo_openai_provider()
@@ -257,9 +260,9 @@ async def main():
     await demo_usage_tracking()
     await demo_factory_pattern()
     
-    print("\n" + "="*60)
-    print("Demo Complete!")
-    print("="*60)
+    logger.info("\n" + "="*60)
+    logger.info("Demo Complete!")
+    logger.info("="*60)
 
 
 if __name__ == "__main__":
@@ -268,13 +271,13 @@ if __name__ == "__main__":
     has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
     
     if not (has_openai or has_anthropic):
-        print("\n⚠️  Warning: No API keys found!")
-        print("Please set at least one of the following environment variables:")
-        print("  - OPENAI_API_KEY")
-        print("  - ANTHROPIC_API_KEY")
-        print("\nExample:")
-        print("  export OPENAI_API_KEY='sk-...'")
-        print("  export ANTHROPIC_API_KEY='sk-ant-...'")
+        logger.info("\n⚠️  Warning: No API keys found!")
+        logger.info("Please set at least one of the following environment variables:")
+        logger.info("  - OPENAI_API_KEY")
+        logger.info("  - ANTHROPIC_API_KEY")
+        logger.info("\nExample:")
+        logger.info("  export OPENAI_API_KEY='sk-...'")
+        logger.info("  export ANTHROPIC_API_KEY='sk-ant-...'")
         sys.exit(1)
     
     # Run demos

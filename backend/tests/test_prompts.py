@@ -5,6 +5,9 @@ Tests the prompt manager and code analysis prompt generation.
 
 Validates Requirements: 1.4
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import pytest
 from app.services.llm.prompts import (
@@ -39,10 +42,10 @@ class TestPromptTemplate:
             analysis_type=AnalysisType.CODE_QUALITY
         )
         
-        result = template.format(file="test.py", code="print('hello')")
+        result = template.format(file="test.py", code="logger.info('hello')")
         
         assert result["system_prompt"] == "System prompt"
-        assert result["user_prompt"] == "File: test.py, Code: print('hello')"
+        assert result["user_prompt"] == "File: test.py, Code: logger.info('hello')"
     
     def test_template_format_missing_variable(self):
         """Test formatting template with missing variable raises error"""

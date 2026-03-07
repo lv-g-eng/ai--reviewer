@@ -6,6 +6,9 @@ and can log feature flag changes.
 
 Validates Requirement: 10.6
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import asyncio
 import sys
 from datetime import datetime, timezone
@@ -14,68 +17,68 @@ from datetime import datetime, timezone
 async def verify_endpoint():
     """Verify the feature flag audit endpoint exists and is properly configured"""
     
-    print("=" * 70)
-    print("Feature Flag Audit Endpoint Verification")
-    print("=" * 70)
-    print()
+    logger.info("=" * 70)
+    logger.info("Feature Flag Audit Endpoint Verification")
+    logger.info("=" * 70)
+    logger.info()
     
     # Check 1: Verify endpoint file exists and imports correctly
-    print("✓ Check 1: Verifying endpoint file...")
+    logger.info("✓ Check 1: Verifying endpoint file...")
     try:
         from app.api.v1.endpoints import audit_logs
-        print("  ✅ audit_logs module imported successfully")
+        logger.info("  ✅ audit_logs module imported successfully")
     except ImportError as e:
-        print(f"  ❌ Failed to import audit_logs: {e}")
+        logger.info("  ❌ Failed to import audit_logs: {e}")
         return False
     
     # Check 2: Verify the endpoint function exists
-    print("\n✓ Check 2: Verifying endpoint function...")
+    logger.info("\n✓ Check 2: Verifying endpoint function...")
     if hasattr(audit_logs, 'log_feature_flag_change'):
-        print("  ✅ log_feature_flag_change function exists")
+        logger.info("  ✅ log_feature_flag_change function exists")
     else:
-        print("  ❌ log_feature_flag_change function not found")
+        logger.info("  ❌ log_feature_flag_change function not found")
         return False
     
     # Check 3: Verify request/response models exist
-    print("\n✓ Check 3: Verifying request/response models...")
+    logger.info("\n✓ Check 3: Verifying request/response models...")
     if hasattr(audit_logs, 'FeatureFlagChangeLog'):
-        print("  ✅ FeatureFlagChangeLog model exists")
+        logger.info("  ✅ FeatureFlagChangeLog model exists")
     else:
-        print("  ❌ FeatureFlagChangeLog model not found")
+        logger.info("  ❌ FeatureFlagChangeLog model not found")
         return False
     
     if hasattr(audit_logs, 'FeatureFlagAuditResponse'):
-        print("  ✅ FeatureFlagAuditResponse model exists")
+        logger.info("  ✅ FeatureFlagAuditResponse model exists")
     else:
-        print("  ❌ FeatureFlagAuditResponse model not found")
+        logger.info("  ❌ FeatureFlagAuditResponse model not found")
         return False
     
     # Check 4: Verify AuditEventType.FEATURE_FLAG_CHANGE exists
-    print("\n✓ Check 4: Verifying AuditEventType constant...")
+    logger.info("\n✓ Check 4: Verifying AuditEventType constant...")
     try:
         from app.services.audit_logging_service import AuditEventType
         if hasattr(AuditEventType, 'FEATURE_FLAG_CHANGE'):
-            print(f"  ✅ AuditEventType.FEATURE_FLAG_CHANGE = '{AuditEventType.FEATURE_FLAG_CHANGE}'")
+            logger.info("  ✅ AuditEventType.FEATURE_FLAG_CHANGE = '{AuditEventType.FEATURE_FLAG_CHANGE}'")
         else:
-            print("  ❌ AuditEventType.FEATURE_FLAG_CHANGE not found")
+            logger.info("  ❌ AuditEventType.FEATURE_FLAG_CHANGE not found")
             return False
     except ImportError as e:
-        print(f"  ❌ Failed to import AuditEventType: {e}")
+        logger.info("  ❌ Failed to import AuditEventType: {e}")
         return False
     
     # Check 5: Verify router registration
-    print("\n✓ Check 5: Verifying router registration...")
+    logger.info("\n✓ Check 5: Verifying router registration...")
     try:
         from app.api.v1 import router as api_router
         # Check if audit_logs router is included
-        print("  ✅ API router imported successfully")
-        print("  ℹ️  Endpoint should be available at: POST /api/v1/audit-logs/feature-flags")
+        logger.info("  ✅ API router imported successfully")
+        logger.info("  ℹ️  Endpoint should be available at: POST /api/v1/audit-logs/feature-flags")
     except ImportError as e:
-        print(f"  ❌ Failed to import API router: {e}")
+        logger.info("  ❌ Failed to import API router: {e}")
         return False
     
     # Check 6: Verify model validation
-    print("\n✓ Check 6: Verifying model validation...")
+    logger.info("\n✓ Check 6: Verifying model validation...")
     try:
         from app.api.v1.endpoints.audit_logs import FeatureFlagChangeLog
         
@@ -87,7 +90,7 @@ async def verify_endpoint():
             user_id="123e4567-e89b-12d3-a456-426614174000",
             metadata={"source": "test"}
         )
-        print("  ✅ Valid model creation successful")
+        logger.info("  ✅ Valid model creation successful")
         
         # Test required fields
         try:
@@ -96,38 +99,38 @@ async def verify_endpoint():
                 old_value=False
                 # missing new_value
             )
-            print("  ❌ Model validation failed - should require new_value")
+            logger.info("  ❌ Model validation failed - should require new_value")
             return False
         except Exception:
-            print("  ✅ Model validation working - rejects missing required fields")
+            logger.info("  ✅ Model validation working - rejects missing required fields")
             
     except Exception as e:
-        print(f"  ❌ Model validation error: {e}")
+        logger.info("  ❌ Model validation error: {e}")
         return False
     
     # Summary
-    print("\n" + "=" * 70)
-    print("✅ All checks passed!")
-    print("=" * 70)
-    print()
-    print("Endpoint Details:")
-    print("  URL: POST /api/v1/audit-logs/feature-flags")
-    print("  Authentication: Required (Bearer token)")
-    print("  Request Body:")
-    print("    - flag_name: string (required)")
-    print("    - old_value: boolean (required)")
-    print("    - new_value: boolean (required)")
-    print("    - user_id: string (optional)")
-    print("    - timestamp: datetime (optional)")
-    print("    - metadata: object (optional)")
-    print()
-    print("  Response:")
-    print("    - success: boolean")
-    print("    - log_id: string (UUID)")
-    print("    - message: string")
-    print()
-    print("  Validates Requirement: 10.6")
-    print()
+    logger.info("\n" + "=" * 70)
+    logger.info("✅ All checks passed!")
+    logger.info("=" * 70)
+    logger.info()
+    logger.info("Endpoint Details:")
+    logger.info("  URL: POST /api/v1/audit-logs/feature-flags")
+    logger.info("  Authentication: Required (Bearer token)")
+    logger.info("  Request Body:")
+    logger.info("    - flag_name: string (required)")
+    logger.info("    - old_value: boolean (required)")
+    logger.info("    - new_value: boolean (required)")
+    logger.info("    - user_id: string (optional)")
+    logger.info("    - timestamp: datetime (optional)")
+    logger.info("    - metadata: object (optional)")
+    logger.info()
+    logger.info("  Response:")
+    logger.info("    - success: boolean")
+    logger.info("    - log_id: string (UUID)")
+    logger.info("    - message: string")
+    logger.info()
+    logger.info("  Validates Requirement: 10.6")
+    logger.info()
     
     return True
 

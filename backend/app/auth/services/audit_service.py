@@ -1,6 +1,9 @@
 """
 Audit service for logging user actions and compliance tracking.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, List
@@ -89,7 +92,7 @@ class AuditService:
         except Exception as e:
             # Graceful degradation - log error but don't fail the operation
             await db.rollback()
-            print(f"Failed to create audit log: {e}")
+            logger.info("Failed to create audit log: {e}")
             raise
     
     @staticmethod

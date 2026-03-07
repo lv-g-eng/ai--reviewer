@@ -127,6 +127,14 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "property_test: marks tests as property-based tests",
+    "feature: marks tests as feature-specific tests",
+    "property: marks tests with property parameters",
+    "neo4j: marks tests as Neo4j-specific tests",
+    "database: marks tests requiring a database",
+    "async: marks tests as asynchronous",
+    "requires_docker: marks tests requiring Docker",
+    "e2e: marks tests as end-to-end tests",
 ]
 
 [project.scripts]

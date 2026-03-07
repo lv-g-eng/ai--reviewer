@@ -2,6 +2,9 @@
 Simple integration test for error reporting endpoint
 Tests without complex fixtures
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 from fastapi.testclient import TestClient
 from datetime import datetime
@@ -72,17 +75,17 @@ def test_missing_required_fields():
 
 
 if __name__ == "__main__":
-    print("Running simple error reporting tests...")
+    logger.info("Running simple error reporting tests...")
     test_error_reporting_endpoint_exists()
-    print("✓ Health check test passed")
+    logger.info("✓ Health check test passed")
     
     test_submit_client_error()
-    print("✓ Submit client error test passed")
+    logger.info("✓ Submit client error test passed")
     
     test_submit_error_with_status_code()
-    print("✓ Submit error with status code test passed")
+    logger.info("✓ Submit error with status code test passed")
     
     test_missing_required_fields()
-    print("✓ Missing required fields test passed")
+    logger.info("✓ Missing required fields test passed")
     
-    print("\nAll tests passed!")
+    logger.info("\nAll tests passed!")

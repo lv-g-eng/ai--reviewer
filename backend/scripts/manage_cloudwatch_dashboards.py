@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 CloudWatch Dashboard Management Script
@@ -25,7 +28,7 @@ try:
     BOTO3_AVAILABLE = True
 except ImportError:
     BOTO3_AVAILABLE = False
-    print("Warning: boto3 not installed. Install with: pip install boto3")
+    logger.info("Warning: boto3 not installed. Install with: pip install boto3")
 
 
 class CloudWatchDashboardManager:
@@ -419,15 +422,15 @@ class CloudWatchDashboardManager:
                 DashboardBody=json.dumps(dashboard_body)
             )
             
-            print(f"✓ Successfully created/updated dashboard: {dashboard_name}")
-            print(f"  URL: https://console.aws.amazon.com/cloudwatch/home?region={self.region}#dashboards:name={dashboard_name}")
+            logger.info("✓ Successfully created/updated dashboard: {dashboard_name}")
+            logger.info("  URL: https://console.aws.amazon.com/cloudwatch/home?region={self.region}#dashboards:name={dashboard_name}")
             
             return response
             
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
-            print(f"✗ Failed to create dashboard {dashboard_name}: {error_code}")
-            print(f"  Error: {str(e)}")
+            logger.info("✗ Failed to create dashboard {dashboard_name}: {error_code}")
+            logger.info("  Error: {str(e)}")
             raise
     
     def list_dashboards(self) -> List[Dict]:
@@ -441,14 +444,14 @@ class CloudWatchDashboardManager:
             response = self.cloudwatch.list_dashboards()
             dashboards = response.get('DashboardEntries', [])
             
-            print(f"\nFound {len(dashboards)} CloudWatch dashboards:")
+            logger.info("\nFound {len(dashboards)} CloudWatch dashboards:")
             for dashboard in dashboards:
-                print(f"  - {dashboard['DashboardName']}")
+                logger.info("  - {dashboard['DashboardName']}")
             
             return dashboards
             
         except ClientError as e:
-            print(f"✗ Failed to list dashboards: {str(e)}")
+            logger.info("✗ Failed to list dashboards: {str(e)}")
             raise
     
     def get_dashboard(self, dashboard_name: str) -> Dict:
@@ -466,7 +469,7 @@ class CloudWatchDashboardManager:
             return json.loads(response['DashboardBody'])
             
         except ClientError as e:
-            print(f"✗ Failed to get dashboard {dashboard_name}: {str(e)}")
+            logger.info("✗ Failed to get dashboard {dashboard_name}: {str(e)}")
             raise
     
     def delete_dashboard(self, dashboard_name: str) -> Dict:
@@ -484,11 +487,11 @@ class CloudWatchDashboardManager:
                 DashboardNames=[dashboard_name]
             )
             
-            print(f"✓ Successfully deleted dashboard: {dashboard_name}")
+            logger.info("✓ Successfully deleted dashboard: {dashboard_name}")
             return response
             
         except ClientError as e:
-            print(f"✗ Failed to delete dashboard {dashboard_name}: {str(e)}")
+            logger.info("✗ Failed to delete dashboard {dashboard_name}: {str(e)}")
             raise
     
     def create_all_dashboards(self) -> None:
@@ -497,15 +500,15 @@ class CloudWatchDashboardManager:
         
         Validates Requirements: 18.2
         """
-        print(f"\nCreating CloudWatch dashboards for {self.environment} environment...")
-        print(f"Region: {self.region}")
-        print(f"Service: {self.service_name}\n")
+        logger.info("\nCreating CloudWatch dashboards for {self.environment} environment...")
+        logger.info("Region: {self.region}")
+        logger.info("Service: {self.service_name}\n")
         
         self.create_system_health_dashboard()
         self.create_performance_dashboard()
         self.create_business_metrics_dashboard()
         
-        print("\n✓ All dashboards created successfully!")
+        logger.info("\n✓ All dashboards created successfully!")
 
 
 def main():
@@ -546,7 +549,7 @@ def main():
     args = parser.parse_args()
     
     if not BOTO3_AVAILABLE:
-        print("Error: boto3 is not installed. Install with: pip install boto3")
+        logger.info("Error: boto3 is not installed. Install with: pip install boto3")
         sys.exit(1)
     
     try:
@@ -561,7 +564,7 @@ def main():
         
         elif args.action == 'create':
             if not args.dashboard:
-                print("Error: --dashboard is required for create action")
+                logger.info("Error: --dashboard is required for create action")
                 sys.exit(1)
             
             if 'health' in args.dashboard.lower():
@@ -571,7 +574,7 @@ def main():
             elif 'business' in args.dashboard.lower():
                 manager.create_business_metrics_dashboard()
             else:
-                print(f"Error: Unknown dashboard type: {args.dashboard}")
+                logger.info("Error: Unknown dashboard type: {args.dashboard}")
                 sys.exit(1)
         
         elif args.action == 'list':
@@ -579,25 +582,25 @@ def main():
         
         elif args.action == 'get':
             if not args.dashboard:
-                print("Error: --dashboard is required for get action")
+                logger.info("Error: --dashboard is required for get action")
                 sys.exit(1)
             
             config = manager.get_dashboard(args.dashboard)
-            print(json.dumps(config, indent=2))
+            logger.info(str(json.dumps(config, indent=2)))
         
         elif args.action == 'delete':
             if not args.dashboard:
-                print("Error: --dashboard is required for delete action")
+                logger.info("Error: --dashboard is required for delete action")
                 sys.exit(1)
             
             manager.delete_dashboard(args.dashboard)
     
     except NoCredentialsError:
-        print("Error: AWS credentials not found. Configure with 'aws configure'")
+        logger.info("Error: AWS credentials not found. Configure with 'aws configure'")
         sys.exit(1)
     
     except Exception as e:
-        print(f"Error: {str(e)}")
+        logger.info("Error: {str(e)}")
         sys.exit(1)
 
 

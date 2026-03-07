@@ -4,6 +4,9 @@ AST Insert Service
 Handles insertion of parsed AST data into Neo4j graph database.
 Separated from Neo4jASTService for single responsibility.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import Optional
 from neo4j import AsyncSession
 
@@ -69,7 +72,7 @@ class ASTInsertService:
                 return True
                 
             except Exception as e:
-                print(f"Error inserting AST nodes: {e}")
+                logger.info("Error inserting AST nodes: {e}")
                 return False
     
     async def _insert_module(

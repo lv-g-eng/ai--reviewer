@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 Generate OpenAPI specification from FastAPI application.
@@ -35,14 +38,14 @@ def save_spec_json(spec: Dict[str, Any], output_path: Path) -> None:
     """Save OpenAPI spec as JSON."""
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(spec, f, indent=2, ensure_ascii=False)
-    print(f"✅ Saved JSON spec to: {output_path}")
+    logger.info("✅ Saved JSON spec to: {output_path}")
 
 
 def save_spec_yaml(spec: Dict[str, Any], output_path: Path) -> None:
     """Save OpenAPI spec as YAML."""
     with open(output_path, 'w', encoding='utf-8') as f:
         yaml.dump(spec, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-    print(f"✅ Saved YAML spec to: {output_path}")
+    logger.info("✅ Saved YAML spec to: {output_path}")
 
 
 def validate_spec(spec: Dict[str, Any]) -> List[str]:
@@ -96,9 +99,9 @@ def validate_spec(spec: Dict[str, Any]) -> List[str]:
                     missing_responses.append(f"{method.upper()} {path}")
     
     # Report findings
-    print(f"\n📊 OpenAPI Specification Summary:")
-    print(f"   Total endpoints: {total_endpoints}")
-    print(f"   Total paths: {len(paths)}")
+    logger.info("\n📊 OpenAPI Specification Summary:")
+    logger.info("   Total endpoints: {total_endpoints}")
+    logger.info("   Total paths: {len(paths)}")
     
     if undocumented_endpoints:
         issues.append(f"⚠️  {len(undocumented_endpoints)} endpoints missing description/summary")
@@ -118,21 +121,21 @@ def validate_spec(spec: Dict[str, Any]) -> List[str]:
     # Check schemas
     if 'components' in spec and 'schemas' in spec['components']:
         schema_count = len(spec['components']['schemas'])
-        print(f"   Schemas defined: {schema_count}")
+        logger.info("   Schemas defined: {schema_count}")
     else:
         issues.append("⚠️  No schemas defined in components")
     
     # Check security schemes
     if 'components' in spec and 'securitySchemes' in spec['components']:
         security_schemes = spec['components']['securitySchemes']
-        print(f"   Security schemes: {', '.join(security_schemes.keys())}")
+        logger.info("   Security schemes: {', '.join(security_schemes.keys())}")
     else:
         issues.append("⚠️  No security schemes defined")
     
     # Check tags
     if 'tags' in spec:
         tag_count = len(spec['tags'])
-        print(f"   Tags defined: {tag_count}")
+        logger.info("   Tags defined: {tag_count}")
     else:
         issues.append("⚠️  No tags defined for endpoint organization")
     
@@ -163,14 +166,14 @@ def print_endpoint_summary(spec: Dict[str, Any]) -> None:
                         f"   {auth_marker} {method.upper():6} {path:50} - {summary}"
                     )
     
-    print("\n📋 Endpoints by Category:")
-    print("   🔒 = Authentication required")
-    print("   🔓 = Public endpoint\n")
+    logger.info("\n📋 Endpoints by Category:")
+    logger.info("   🔒 = Authentication required")
+    logger.info("   🔓 = Public endpoint\n")
     
     for tag in sorted(endpoints_by_tag.keys()):
-        print(f"\n{tag}:")
+        logger.info("\n{tag}:")
         for endpoint in sorted(endpoints_by_tag[tag]):
-            print(endpoint)
+            logger.info(endpoint)
 
 
 def main():
@@ -197,13 +200,13 @@ def main():
     
     args = parser.parse_args()
     
-    print("🔄 Generating OpenAPI specification...")
+    logger.info("🔄 Generating OpenAPI specification...")
     
     # Generate spec
     try:
         spec = generate_openapi_spec()
     except Exception as e:
-        print(f"❌ Failed to generate OpenAPI spec: {e}")
+        logger.info("❌ Failed to generate OpenAPI spec: {e}")
         import traceback
         traceback.print_exc()
         return 1
@@ -219,31 +222,31 @@ def main():
         save_spec_json(spec, json_path)
         save_spec_yaml(spec, yaml_path)
     except Exception as e:
-        print(f"❌ Failed to save specs: {e}")
+        logger.info("❌ Failed to save specs: {e}")
         return 1
     
     # Validate if requested
     if args.validate:
-        print("\n🔍 Validating OpenAPI specification...")
+        logger.info("\n🔍 Validating OpenAPI specification...")
         issues = validate_spec(spec)
         
         if issues:
-            print("\n⚠️  Validation Issues:")
+            logger.info("\n⚠️  Validation Issues:")
             for issue in issues:
-                print(issue)
+                logger.info(issue)
         else:
-            print("\n✅ No validation issues found!")
+            logger.info("\n✅ No validation issues found!")
     
     # Print summary if requested
     if args.summary:
         print_endpoint_summary(spec)
     
-    print(f"\n✅ OpenAPI specification generated successfully!")
-    print(f"\n📖 View documentation at:")
-    print(f"   Swagger UI: http://localhost:8000/docs")
-    print(f"   ReDoc:      http://localhost:8000/redoc")
-    print(f"   JSON spec:  {json_path}")
-    print(f"   YAML spec:  {yaml_path}")
+    logger.info("\n✅ OpenAPI specification generated successfully!")
+    logger.info("\n📖 View documentation at:")
+    logger.info("   Swagger UI: http://localhost:8000/docs")
+    logger.info("   ReDoc:      http://localhost:8000/redoc")
+    logger.info("   JSON spec:  {json_path}")
+    logger.info("   YAML spec:  {yaml_path}")
     
     return 0
 

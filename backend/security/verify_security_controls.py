@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 Security Controls Verification Script
@@ -36,7 +39,7 @@ class SecurityControlVerifier:
         """Log message if verbose"""
         if self.verbose or level == "ERROR":
             prefix = "✅" if level == "PASS" else "❌" if level == "FAIL" else "ℹ️"
-            print(f"{prefix} {message}")
+            logger.info("{prefix} {message}")
     
     def check_file_exists(self, file_path: str, description: str) -> bool:
         """Check if a file exists"""
@@ -421,7 +424,7 @@ def main():
     if args.output:
         with open(args.output, 'w') as f:
             json.dump(results, f, indent=2)
-        print(f"\nReport saved to: {args.output}")
+        logger.info("\nReport saved to: {args.output}")
     
     # Exit with appropriate code
     sys.exit(0 if results["compliant"] else 1)

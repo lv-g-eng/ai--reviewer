@@ -301,9 +301,9 @@ def get_task_status(task_id: str) -> Dict[str, Any]:
         
     Example:
         >>> status = get_task_status("abc-123-def")
-        >>> print(status['state'])  # PENDING, STARTED, PROGRESS, SUCCESS, FAILURE
-        >>> print(status['progress'])  # 0-100
-        >>> print(status['message'])  # Current status message
+        >>> logger.info(str(status['state']))  # PENDING, STARTED, PROGRESS, SUCCESS, FAILURE
+        >>> logger.info(str(status['progress']))  # 0-100
+        >>> logger.info(str(status['message']))  # Current status message
     """
     result = AsyncResult(task_id, app=celery_app)
     

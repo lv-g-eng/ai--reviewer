@@ -1,6 +1,9 @@
 """
 Extended Neo4j service with AST and architecture analysis operations
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 import json
@@ -79,7 +82,7 @@ class Neo4jASTService(BaseNeo4jService):
                 return True
                 
             except Exception as e:
-                print(f"Error inserting AST nodes: {e}")
+                logger.info("Error inserting AST nodes: {e}")
                 return False
     
     async def _insert_class(
@@ -387,7 +390,7 @@ class Neo4jASTService(BaseNeo4jService):
                 """, projectId=project_id)
                 return True
             except Exception as e:
-                print(f"Error deleting project graph: {e}")
+                logger.info("Error deleting project graph: {e}")
                 return False
     
     async def detect_cyclic_dependencies(

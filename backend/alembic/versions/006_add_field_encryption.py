@@ -14,6 +14,9 @@ This migration:
 Note: This migration does NOT encrypt existing data. To encrypt existing data,
 run the encryption migration script after applying this migration.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -71,8 +74,8 @@ def upgrade() -> None:
             (gen_random_uuid(), 'users', 'password_hash', false, 'bcrypt', 'Password hashes are already encrypted using bcrypt')
     """)
     
-    print("✅ Encryption metadata table created")
-    print("⚠️  To encrypt existing data, run: python backend/scripts/encrypt_existing_data.py")
+    logger.info("✅ Encryption metadata table created")
+    logger.info("⚠️  To encrypt existing data, run: python backend/scripts/encrypt_existing_data.py")
 
 
 def downgrade() -> None:

@@ -14,6 +14,7 @@ from .base import BaseLLMProvider, LLMProviderType
 from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
 from .openrouter_provider import OpenRouterProvider
+from .lmstudio_provider import LMStudioProvider
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,8 @@ class LLMProviderFactory:
                 return cls._create_anthropic_provider(model, api_key, **kwargs)
             elif provider_type == LLMProviderType.OPENROUTER:
                 return cls._create_openrouter_provider(model, api_key, **kwargs)
+            elif provider_type == LLMProviderType.LMSTUDIO:
+                return cls._create_lmstudio_provider(model, **kwargs)
             else:
                 raise ValueError(f"Unsupported provider type: {provider_type}")
                 
@@ -150,6 +153,28 @@ class LLMProviderFactory:
             timeout=kwargs.get("timeout", 60)
         )
     
+    @classmethod
+    def _create_lmstudio_provider(
+        cls,
+        model: Optional[str] = None,
+        **kwargs
+    ) -> LMStudioProvider:
+        """Create LM Studio provider instance"""
+        base_url = kwargs.get("base_url") or settings.LMSTUDIO_BASE_URL
+        model = model or settings.LMSTUDIO_MODEL
+        timeout = kwargs.get("timeout", 120)
+
+        logger.info(
+            f"Creating LM Studio provider — base_url: {base_url}, model: {model}",
+            extra={"provider": "lmstudio", "model": model}
+        )
+
+        return LMStudioProvider(
+            model=model,
+            base_url=base_url,
+            timeout=timeout,
+        )
+
     @classmethod
     def get_provider(
         cls,
@@ -245,7 +270,8 @@ def get_default_llm_provider(model: Optional[str] = None) -> BaseLLMProvider:
     provider_map = {
         "openrouter": LLMProviderType.OPENROUTER,
         "openai": LLMProviderType.OPENAI,
-        "anthropic": LLMProviderType.ANTHROPIC
+        "anthropic": LLMProviderType.ANTHROPIC,
+        "lmstudio": LLMProviderType.LMSTUDIO,
     }
     
     provider_type = provider_map.get(provider_name, LLMProviderType.OPENROUTER)

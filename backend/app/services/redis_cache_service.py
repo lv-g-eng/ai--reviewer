@@ -4,11 +4,14 @@ Implements caching strategies for the AI code review platform
 """
 import json
 import hashlib
+import logging
 from typing import Any, Optional, Dict, List
 from datetime import timedelta
 import redis.asyncio as redis
 
 from app.database.redis_db import get_redis
+
+logger = logging.getLogger(__name__)
 
 
 class RedisCacheService:
@@ -42,7 +45,7 @@ class RedisCacheService:
             await self.redis.set(key, serialized_data, ex=ttl)
             return True
         except Exception as e:
-            print(f"Error setting session: {e}")
+            logger.error("Error setting session for user %s: %s", user_id, e, exc_info=True)
             return False
     
     async def get_session(
@@ -62,7 +65,7 @@ class RedisCacheService:
             self.metrics["misses"] += 1
             return None
         except Exception as e:
-            print(f"Error getting session: {e}")
+            logger.error("Error getting session for user %s: %s", user_id, e, exc_info=True)
             self.metrics["misses"] += 1
             return None
     
@@ -76,7 +79,7 @@ class RedisCacheService:
             await self.redis.delete(key)
             return True
         except Exception as e:
-            print(f"Error deleting session: {e}")
+            logger.error("Error deleting session for user %s: %s", user_id, e, exc_info=True)
             return False
     
     async def extend_session(
@@ -90,7 +93,7 @@ class RedisCacheService:
             await self.redis.expire(key, ttl)
             return True
         except Exception as e:
-            print(f"Error extending session: {e}")
+            logger.error("Error extending session for user %s: %s", user_id, e, exc_info=True)
             return False
     
     # ================================================
@@ -114,7 +117,7 @@ class RedisCacheService:
             await self.redis.set(key, serialized_data, ex=ttl)
             return True
         except Exception as e:
-            print(f"Error caching analysis result: {e}")
+            logger.error("Error caching analysis result for PR %s: %s", pr_id, e, exc_info=True)
             return False
     
     async def get_analysis_result(
@@ -131,7 +134,7 @@ class RedisCacheService:
             self.metrics["misses"] += 1
             return None
         except Exception as e:
-            print(f"Error retrieving analysis result: {e}")
+            logger.error("Error retrieving analysis result for PR %s: %s", pr_id, e, exc_info=True)
             self.metrics["misses"] += 1
             return None
     
@@ -145,7 +148,7 @@ class RedisCacheService:
             await self.redis.delete(key)
             return True
         except Exception as e:
-            print(f"Error invalidating analysis: {e}")
+            logger.error("Error invalidating analysis cache for PR %s: %s", pr_id, e, exc_info=True)
             return False
     
     # ================================================
@@ -183,7 +186,7 @@ class RedisCacheService:
             await self.redis.set(key, serialized_data, ex=ttl)
             return True
         except Exception as e:
-            print(f"Error caching graph query: {e}")
+            logger.error("Error caching graph query for project %s: %s", project_id, e, exc_info=True)
             return False
     
     async def get_graph_query_result(
@@ -203,7 +206,7 @@ class RedisCacheService:
             self.metrics["misses"] += 1
             return None
         except Exception as e:
-            print(f"Error retrieving graph query: {e}")
+            logger.error("Error retrieving graph query for project %s: %s", project_id, e, exc_info=True)
             self.metrics["misses"] += 1
             return None
     
@@ -222,7 +225,7 @@ class RedisCacheService:
                 return await self.redis.delete(*keys)
             return 0
         except Exception as e:
-            print(f"Error invalidating project cache: {e}")
+            logger.error("Error invalidating project cache for project %s: %s", project_id, e, exc_info=True)
             return 0
     
     # ================================================
@@ -247,7 +250,7 @@ class RedisCacheService:
             await self.redis.rpush(queue_key, task_json)
             return True
         except Exception as e:
-            print(f"Error enqueueing task: {e}")
+            logger.error("Error enqueueing analysis task for PR %s: %s", pr_id, e, exc_info=True)
             return False
     
     async def dequeue_pr_analysis(
@@ -266,7 +269,7 @@ class RedisCacheService:
                 return json.loads(task_json)
             return None
         except Exception as e:
-            print(f"Error dequeuing task: {e}")
+            logger.error("Error dequeuing analysis task: %s", e, exc_info=True)
             return None
     
     async def get_queue_length(self) -> int:
@@ -275,9 +278,40 @@ class RedisCacheService:
         try:
             return await self.redis.llen(queue_key)
         except Exception as e:
-            print(f"Error getting queue length: {e}")
+            logger.warning("Error getting queue length: %s", e)
             return 0
     
+    # ================================================
+    # WEBHOOK REPLAY PROTECTION
+    # ================================================
+    
+    async def mark_webhook_processed(
+        self,
+        delivery_id: str,
+        ttl: int = 86400  # 24 hours
+    ) -> bool:
+        """
+        Atomically check and mark a webhook as processed to prevent replays.
+        Uses SET NX to avoid race conditions from concurrent duplicate webhooks.
+        
+        Returns: True if successfully marked (was not processed), False if already processed.
+        """
+        key = f"webhook:delivery:{delivery_id}"
+        try:
+            # SET NX ensures we only write if key doesn't exist
+            # This is atomic and prevents race conditions
+            result = await self.redis.set(
+                key,
+                "processed",
+                nx=True,
+                ex=ttl
+            )
+            return bool(result)
+        except Exception as e:
+            logger.error("Error checking webhook replay protection for delivery %s: %s", delivery_id, e, exc_info=True)
+            # Fail open if Redis is down, to maintain availability
+            return True
+            
     # ================================================
     # RATE LIMITING
     # ================================================
@@ -317,7 +351,7 @@ class RedisCacheService:
             return True, max_requests - current_count - 1
             
         except Exception as e:
-            print(f"Error checking rate limit: {e}")
+            logger.error("Error checking rate limit for user %s on %s: %s", user_id, endpoint, e, exc_info=True)
             # On error, allow the request (fail open)
             return True, max_requests
     
@@ -332,7 +366,7 @@ class RedisCacheService:
             await self.redis.delete(key)
             return True
         except Exception as e:
-            print(f"Error resetting rate limit: {e}")
+            logger.error("Error resetting rate limit for user %s on %s: %s", user_id, endpoint, e, exc_info=True)
             return False
     
     # ================================================
@@ -363,7 +397,7 @@ class RedisCacheService:
             )
             return bool(result)
         except Exception as e:
-            print(f"Error acquiring lock: {e}")
+            logger.error("Error acquiring lock on resource %s: %s", resource, e, exc_info=True)
             return False
     
     async def release_lock(
@@ -388,7 +422,7 @@ class RedisCacheService:
             result = await self.redis.eval(lua_script, 1, key, lock_id)
             return bool(result)
         except Exception as e:
-            print(f"Error releasing lock: {e}")
+            logger.error("Error releasing lock on resource %s: %s", resource, e, exc_info=True)
             return False
     
     async def extend_lock(
@@ -411,7 +445,7 @@ class RedisCacheService:
             result = await self.redis.eval(lua_script, 1, key, lock_id, timeout)
             return bool(result)
         except Exception as e:
-            print(f"Error extending lock: {e}")
+            logger.error("Error extending lock on resource %s: %s", resource, e, exc_info=True)
             return False
     
     # ================================================

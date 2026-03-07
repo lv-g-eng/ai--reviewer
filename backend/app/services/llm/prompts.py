@@ -6,6 +6,9 @@ code quality review, architectural analysis, and security vulnerability detectio
 
 Validates Requirements: 1.4
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 from typing import Dict, Any, Optional, List
 from enum import Enum
@@ -403,8 +406,8 @@ class PromptManager:
             ...     code_diff="def login(user, password): ...",
             ...     context="Authentication module review"
             ... )
-            >>> print(prompt['system_prompt'])
-            >>> print(prompt['user_prompt'])
+            >>> logger.info(str(prompt['system_prompt']))
+            >>> logger.info(str(prompt['user_prompt']))
         """
         return self.prompts.get_prompt_by_type(
             analysis_type=analysis_type,

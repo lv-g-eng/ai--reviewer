@@ -4,6 +4,9 @@ Neo4j Service Facade
 Provides a unified interface to all Neo4j services while maintaining
 separation of concerns. This facade simplifies usage for clients.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import Dict, Any, List, Optional
 
 from app.database.neo4j_db import get_neo4j_driver
@@ -192,7 +195,7 @@ class Neo4jServiceFacade:
                 """, projectId=project_id)
                 return True
             except Exception as e:
-                print(f"Error deleting project graph: {e}")
+                logger.info("Error deleting project graph: {e}")
                 return False
 
 

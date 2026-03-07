@@ -4,6 +4,9 @@ Neo4j Client Integration Example
 This module demonstrates how to integrate the enhanced Neo4j client
 with the existing codebase, replacing direct neo4j_db.py usage.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import asyncio
 from typing import Optional
@@ -37,14 +40,14 @@ class Neo4jIntegrationService:
             is_connected = await self.neo4j_client.test_connectivity()
             
             if is_connected:
-                print("✅ Neo4j client initialized successfully with enhanced features")
+                logger.info("✅ Neo4j client initialized successfully with enhanced features")
                 return True
             else:
-                print("❌ Neo4j connectivity test failed")
+                logger.info("❌ Neo4j connectivity test failed")
                 return False
                 
         except Exception as e:
-            print(f"❌ Neo4j initialization failed: {e}")
+            logger.info("❌ Neo4j initialization failed: {e}")
             return False
     
     async def create_indexes_with_retry(self) -> bool:
@@ -71,11 +74,11 @@ class Neo4jIntegrationService:
                     "CREATE INDEX IF NOT EXISTS FOR (n:Module) ON (n.path)"
                 )
             
-            print("✅ Neo4j indexes created successfully")
+            logger.info("✅ Neo4j indexes created successfully")
             return True
             
         except Exception as e:
-            print(f"❌ Failed to create Neo4j indexes: {e}")
+            logger.info("❌ Failed to create Neo4j indexes: {e}")
             return False
     
     async def execute_code_analysis_query(self, file_path: str) -> Optional[dict]:
@@ -114,7 +117,7 @@ class Neo4jIntegrationService:
             return None
             
         except Exception as e:
-            print(f"❌ Code analysis query failed: {e}")
+            logger.info("❌ Code analysis query failed: {e}")
             return None
     
     async def get_service_health(self) -> dict:
@@ -136,7 +139,7 @@ class Neo4jIntegrationService:
     async def close(self) -> None:
         """Close the Neo4j client and clean up resources."""
         await self.neo4j_client.close()
-        print("✅ Neo4j integration service closed")
+        logger.info("✅ Neo4j integration service closed")
 
 
 # Example usage function
@@ -149,7 +152,7 @@ async def example_usage():
     try:
         # Initialize the service
         if not await service.initialize():
-            print("Failed to initialize Neo4j service")
+            logger.info("Failed to initialize Neo4j service")
             return
         
         # Create indexes
@@ -158,11 +161,11 @@ async def example_usage():
         # Example query
         result = await service.execute_code_analysis_query("app/main.py")
         if result:
-            print(f"Analysis result: {result}")
+            logger.info("Analysis result: {result}")
         
         # Get health information
         health = await service.get_service_health()
-        print(f"Service health: {health['health']['status']}")
+        logger.info("Service health: {health['health']['status']}")
         
     finally:
         # Always clean up

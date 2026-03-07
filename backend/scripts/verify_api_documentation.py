@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 Verify API documentation setup.
@@ -34,16 +37,16 @@ def check_endpoint(url: str, endpoint: str, expected_content: List[str]) -> bool
         True if all checks pass, False otherwise
     """
     full_url = f"{url}{endpoint}"
-    print(f"\n🔍 Checking {full_url}...")
+    logger.info("\n🔍 Checking {full_url}...")
     
     try:
         response = requests.get(full_url, timeout=10)
         
         if response.status_code != 200:
-            print(f"   ❌ Failed: HTTP {response.status_code}")
+            logger.info("   ❌ Failed: HTTP {response.status_code}")
             return False
         
-        print(f"   ✅ Accessible (HTTP {response.status_code})")
+        logger.info("   ✅ Accessible (HTTP {response.status_code})")
         
         # Check content
         content = response.text.lower()
@@ -54,16 +57,16 @@ def check_endpoint(url: str, endpoint: str, expected_content: List[str]) -> bool
                 missing_content.append(expected)
         
         if missing_content:
-            print(f"   ⚠️  Missing expected content:")
+            logger.info("   ⚠️  Missing expected content:")
             for item in missing_content:
-                print(f"      - {item}")
+                logger.info("      - {item}")
             return False
         
-        print(f"   ✅ Contains all expected content")
+        logger.info("   ✅ Contains all expected content")
         return True
         
     except requests.exceptions.RequestException as e:
-        print(f"   ❌ Request failed: {e}")
+        logger.info("   ❌ Request failed: {e}")
         return False
 
 
@@ -78,87 +81,87 @@ def check_openapi_spec(url: str) -> bool:
         True if all checks pass, False otherwise
     """
     spec_url = f"{url}/api/v1/openapi.json"
-    print(f"\n🔍 Checking OpenAPI spec at {spec_url}...")
+    logger.info("\n🔍 Checking OpenAPI spec at {spec_url}...")
     
     try:
         response = requests.get(spec_url, timeout=10)
         
         if response.status_code != 200:
-            print(f"   ❌ Failed: HTTP {response.status_code}")
+            logger.info("   ❌ Failed: HTTP {response.status_code}")
             return False
         
         spec = response.json()
-        print(f"   ✅ OpenAPI spec accessible")
+        logger.info("   ✅ OpenAPI spec accessible")
         
         # Check basic structure
         checks_passed = True
         
         # Check info section
         if "info" not in spec:
-            print("   ❌ Missing 'info' section")
+            logger.info("   ❌ Missing 'info' section")
             checks_passed = False
         else:
             info = spec["info"]
             if "title" in info:
-                print(f"   ✅ Title: {info['title']}")
+                logger.info("   ✅ Title: {info['title']}")
             else:
-                print("   ❌ Missing title")
+                logger.info("   ❌ Missing title")
                 checks_passed = False
             
             if "version" in info:
-                print(f"   ✅ Version: {info['version']}")
+                logger.info("   ✅ Version: {info['version']}")
             else:
-                print("   ❌ Missing version")
+                logger.info("   ❌ Missing version")
                 checks_passed = False
             
             if "description" in info and info["description"]:
                 desc = info["description"]
-                print(f"   ✅ Description: {len(desc)} characters")
+                logger.info("   ✅ Description: {len(desc)} characters")
                 
                 # Check for authentication documentation
                 auth_keywords = ["authentication", "bearer", "authorization", "jwt", "token"]
                 found_keywords = [kw for kw in auth_keywords if kw.lower() in desc.lower()]
                 
                 if found_keywords:
-                    print(f"   ✅ Authentication documented (found: {', '.join(found_keywords)})")
+                    logger.info("   ✅ Authentication documented (found: {', '.join(found_keywords)})")
                 else:
-                    print("   ⚠️  Authentication documentation may be incomplete")
+                    logger.info("   ⚠️  Authentication documentation may be incomplete")
                 
                 # Check for examples
                 if "curl" in desc.lower() or "example" in desc.lower():
-                    print("   ✅ Includes examples")
+                    logger.info("   ✅ Includes examples")
                 else:
-                    print("   ⚠️  No examples found")
+                    logger.info("   ⚠️  No examples found")
                 
                 # Check for Swagger UI instructions
                 if "swagger" in desc.lower() and "authorize" in desc.lower():
-                    print("   ✅ Includes Swagger UI usage instructions")
+                    logger.info("   ✅ Includes Swagger UI usage instructions")
                 else:
-                    print("   ⚠️  Swagger UI instructions not found")
+                    logger.info("   ⚠️  Swagger UI instructions not found")
             else:
-                print("   ❌ Missing or empty description")
+                logger.info("   ❌ Missing or empty description")
                 checks_passed = False
         
         # Check security schemes
         if "components" in spec and "securitySchemes" in spec["components"]:
             schemes = spec["components"]["securitySchemes"]
-            print(f"   ✅ Security schemes defined: {', '.join(schemes.keys())}")
+            logger.info("   ✅ Security schemes defined: {', '.join(schemes.keys())}")
             
             if "HTTPBearer" in schemes:
                 bearer = schemes["HTTPBearer"]
                 if bearer.get("type") == "http" and bearer.get("scheme") == "bearer":
-                    print("   ✅ HTTPBearer properly configured")
+                    logger.info("   ✅ HTTPBearer properly configured")
                 else:
-                    print("   ⚠️  HTTPBearer configuration may be incorrect")
+                    logger.info("   ⚠️  HTTPBearer configuration may be incorrect")
                     checks_passed = False
         else:
-            print("   ❌ No security schemes defined")
+            logger.info("   ❌ No security schemes defined")
             checks_passed = False
         
         # Check paths
         if "paths" in spec:
             path_count = len(spec["paths"])
-            print(f"   ✅ Endpoints documented: {path_count}")
+            logger.info("   ✅ Endpoints documented: {path_count}")
             
             # Count protected endpoints
             protected_count = 0
@@ -167,45 +170,45 @@ def check_openapi_spec(url: str) -> bool:
                     if "security" in details:
                         protected_count += 1
             
-            print(f"   ✅ Protected endpoints: {protected_count}")
+            logger.info("   ✅ Protected endpoints: {protected_count}")
         else:
-            print("   ❌ No paths defined")
+            logger.info("   ❌ No paths defined")
             checks_passed = False
         
         # Check tags
         if "tags" in spec:
             tag_count = len(spec["tags"])
-            print(f"   ✅ Tags defined: {tag_count}")
+            logger.info("   ✅ Tags defined: {tag_count}")
         else:
-            print("   ⚠️  No tags defined")
+            logger.info("   ⚠️  No tags defined")
         
         # Check contact info
         if "contact" in spec.get("info", {}):
             contact = spec["info"]["contact"]
             if "name" in contact and "email" in contact:
-                print(f"   ✅ Contact info: {contact['name']} ({contact['email']})")
+                logger.info("   ✅ Contact info: {contact['name']} ({contact['email']})")
             else:
-                print("   ⚠️  Incomplete contact info")
+                logger.info("   ⚠️  Incomplete contact info")
         else:
-            print("   ⚠️  No contact info")
+            logger.info("   ⚠️  No contact info")
         
         # Check license
         if "license" in spec.get("info", {}):
             license_info = spec["info"]["license"]
             if "name" in license_info:
-                print(f"   ✅ License: {license_info['name']}")
+                logger.info("   ✅ License: {license_info['name']}")
             else:
-                print("   ⚠️  Incomplete license info")
+                logger.info("   ⚠️  Incomplete license info")
         else:
-            print("   ⚠️  No license info")
+            logger.info("   ⚠️  No license info")
         
         return checks_passed
         
     except requests.exceptions.RequestException as e:
-        print(f"   ❌ Request failed: {e}")
+        logger.info("   ❌ Request failed: {e}")
         return False
     except Exception as e:
-        print(f"   ❌ Error parsing spec: {e}")
+        logger.info("   ❌ Error parsing spec: {e}")
         return False
 
 
@@ -223,10 +226,10 @@ def main():
     
     args = parser.parse_args()
     
-    print("=" * 70)
-    print("API Documentation Verification")
-    print("=" * 70)
-    print(f"\nTarget URL: {args.url}")
+    logger.info("=" * 70)
+    logger.info("API Documentation Verification")
+    logger.info("=" * 70)
+    logger.info("\nTarget URL: {args.url}")
     
     all_checks_passed = True
     
@@ -251,24 +254,24 @@ def main():
     all_checks_passed = all_checks_passed and spec_checks
     
     # Summary
-    print("\n" + "=" * 70)
+    logger.info("\n" + "=" * 70)
     if all_checks_passed:
-        print("✅ All checks passed!")
-        print("\n📖 Documentation is accessible at:")
-        print(f"   Swagger UI: {args.url}/docs")
-        print(f"   ReDoc:      {args.url}/redoc")
-        print(f"   OpenAPI:    {args.url}/api/v1/openapi.json")
-        print("\n💡 To use authentication in Swagger UI:")
-        print("   1. Click the 'Authorize' button")
-        print("   2. Enter your JWT token (get it from /api/v1/auth/login)")
-        print("   3. Click 'Authorize' to apply")
+        logger.info("✅ All checks passed!")
+        logger.info("\n📖 Documentation is accessible at:")
+        logger.info("   Swagger UI: {args.url}/docs")
+        logger.info("   ReDoc:      {args.url}/redoc")
+        logger.info("   OpenAPI:    {args.url}/api/v1/openapi.json")
+        logger.info("\n💡 To use authentication in Swagger UI:")
+        logger.info("   1. Click the 'Authorize' button")
+        logger.info("   2. Enter your JWT token (get it from /api/v1/auth/login)")
+        logger.info("   3. Click 'Authorize' to apply")
         return 0
     else:
-        print("❌ Some checks failed")
-        print("\n⚠️  Please ensure:")
-        print("   1. The backend server is running")
-        print("   2. The server is accessible at the specified URL")
-        print("   3. All required configuration is in place")
+        logger.info("❌ Some checks failed")
+        logger.info("\n⚠️  Please ensure:")
+        logger.info("   1. The backend server is running")
+        logger.info("   2. The server is accessible at the specified URL")
+        logger.info("   3. All required configuration is in place")
         return 1
 
 

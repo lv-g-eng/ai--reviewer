@@ -124,12 +124,12 @@ class AuditLogEntry(Base):
     
     # Indexes for efficient querying
     __table_args__ = (
-        Index('idx_audit_timestamp_desc', timestamp.desc()),
-        Index('idx_audit_user_timestamp', 'user_id', timestamp.desc()),
-        Index('idx_audit_event_timestamp', 'event_type', timestamp.desc()),
-        Index('idx_audit_resource', 'resource_type', 'resource_id'),
-        Index('idx_audit_category_timestamp', 'event_category', timestamp.desc()),
-        Index('idx_audit_ip_timestamp', 'ip_address', timestamp.desc()),
+        Index('idx_audit_entry_timestamp_desc', timestamp.desc()),
+        Index('idx_audit_entry_user_timestamp', 'user_id', timestamp.desc()),
+        Index('idx_audit_entry_event_timestamp', 'event_type', timestamp.desc()),
+        Index('idx_audit_entry_resource', 'resource_type', 'resource_id'),
+        Index('idx_audit_entry_category_timestamp', 'event_category', timestamp.desc()),
+        Index('idx_audit_entry_ip_timestamp', 'ip_address', timestamp.desc()),
     )
 
 

@@ -1,6 +1,9 @@
 """
 Unit tests for diff_parser utility
 """
+import logging
+logger = logging.getLogger(__name__)
+
 import pytest
 from app.utils.diff_parser import DiffParser
 
@@ -22,7 +25,7 @@ index 0000000..1234567
 +++ b/test.py
 @@ -0,0 +1,3 @@
 +def hello():
-+    print("Hello")
++    logger.info("Hello")
 +    return True
 """
         result = DiffParser.parse_diff(diff)

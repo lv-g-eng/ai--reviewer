@@ -4,6 +4,9 @@ Baseline Snapshot Management
 This module handles creation, storage, and retrieval of architectural baselines.
 A baseline captures the state of the dependency graph at a specific point in time.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 import json
 import hashlib
@@ -159,7 +162,7 @@ class BaselineManager:
                         "description": data["metadata"].get("description", "")
                     })
             except Exception as e:
-                print(f"Error reading baseline file {baseline_file}: {str(e)}")
+                logger.info("Error reading baseline file {baseline_file}: {str(e)}")
         
         # Sort by timestamp (newest first)
         baselines.sort(key=lambda x: x["timestamp"], reverse=True)
@@ -222,7 +225,7 @@ class BaselineManager:
                     })
         
         except Exception as e:
-            print(f"Error capturing nodes: {str(e)}")
+            logger.info("Error capturing nodes: {str(e)}")
         
         return nodes
     
@@ -273,7 +276,7 @@ class BaselineManager:
                     })
         
         except Exception as e:
-            print(f"Error capturing relationships: {str(e)}")
+            logger.info("Error capturing relationships: {str(e)}")
         
         return relationships
     
@@ -357,7 +360,7 @@ class BaselineManager:
             with open(baseline_file, 'w') as f:
                 json.dump(baseline.to_dict(), f, indent=2)
         except Exception as e:
-            print(f"Error storing baseline: {str(e)}")
+            logger.info("Error storing baseline: {str(e)}")
             raise
     
     async def _load_baseline_by_id(
@@ -383,7 +386,7 @@ class BaselineManager:
                 data = json.load(f)
                 return ArchitectureBaseline.from_dict(data)
         except Exception as e:
-            print(f"Error loading baseline: {str(e)}")
+            logger.info("Error loading baseline: {str(e)}")
             return None
     
     async def _get_latest_baseline(

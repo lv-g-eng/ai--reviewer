@@ -198,7 +198,7 @@ class FineTuningDataset:
                     
             except Exception as e:
                 # Log error but continue with other PRs
-                print(f"Error processing PR {pr.id}: {str(e)}")
+                logger.info("Error processing PR {pr.id}: {str(e)}")
                 continue
             
             if len(examples) >= limit:
@@ -514,7 +514,7 @@ class FineTuningPipeline:
         results = {}
         
         # Step 1: Collect training data
-        print("Collecting training data...")
+        logger.info("Collecting training data...")
         examples = self.dataset.collect_training_data(
             limit=10000
         )
@@ -529,7 +529,7 @@ class FineTuningPipeline:
         val_data = examples[split_idx:]
         
         # Step 2: Export to JSONL
-        print(f"Exporting {len(train_data)} training examples...")
+        logger.info("Exporting {len(train_data)} training examples...")
         self.dataset.export_jsonl(train_data, f"train_{domain}.jsonl")
         self.dataset.export_jsonl(val_data, f"val_{domain}.jsonl")
         
@@ -537,7 +537,7 @@ class FineTuningPipeline:
         results["validation_examples"] = len(val_data)
         
         # Step 3: Create fine-tuning job
-        print("Starting fine-tuning job...")
+        logger.info("Starting fine-tuning job...")
         job_id = self.tuner.create_fine_tuning_job(
             training_file=f"train_{domain}.jsonl",
             validation_file=f"val_{domain}.jsonl",
@@ -547,7 +547,7 @@ class FineTuningPipeline:
         results["job_id"] = job_id
         
         # Step 4: Monitor until completion
-        print(f"Monitoring job {job_id}...")
+        logger.info("Monitoring job {job_id}...")
         # Would poll job status
         
         # Step 5: Evaluate model
@@ -555,7 +555,7 @@ class FineTuningPipeline:
         
         # Step 6: RLHF (optional)
         if use_rlhf:
-            print("Running RLHF training...")
+            logger.info("Running RLHF training...")
             preference_data = self.rlhf.create_preference_dataset()
             # Would run RLHF
         

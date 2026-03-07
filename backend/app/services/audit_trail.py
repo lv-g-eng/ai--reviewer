@@ -60,11 +60,11 @@ class AuditLog(Base):
     
     # Indexes
     __table_args__ = (
-        Index('idx_audit_timestamp', 'timestamp'),
-        Index('idx_audit_user', 'user_id'),
-        Index('idx_audit_resource', 'resource_type', 'resource_id'),
-        Index('idx_audit_event_type', 'event_type'),
-        Index('idx_audit_action', 'action'),
+        Index('idx_audit_trail_timestamp', 'timestamp'),
+        Index('idx_audit_trail_user', 'user_id'),
+        Index('idx_audit_trail_resource', 'resource_type', 'resource_id'),
+        Index('idx_audit_trail_event_type', 'event_type'),
+        Index('idx_audit_trail_action', 'action'),
     )
 
 

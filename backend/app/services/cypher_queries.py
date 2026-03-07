@@ -10,6 +10,9 @@ This module contains Cypher queries for Neo4j to detect:
 
 Each query includes detailed explanation of the pattern matching logic.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 
 # ========================================
 # 1. CYCLIC DEPENDENCY DETECTION
@@ -424,7 +427,7 @@ async def check_cycles():
     )
     
     for record in results:
-        print(f"Cycle found: {record['cycle_path']}")
+        logger.info("Cycle found: {record['cycle_path']}")
 
 
 Example 2: Detect Layer Violations
@@ -439,7 +442,7 @@ async def check_layer_violations():
     )
     
     for record in results:
-        print(f"Violation: {record['source_module']} -> {record['target_module']}")
+        logger.info("Violation: {record['source_module']} -> {record['target_module']}")
 
 
 Example 3: Generate Weekly Report

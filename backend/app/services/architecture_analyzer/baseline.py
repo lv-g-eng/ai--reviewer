@@ -376,6 +376,11 @@ class BaselineManager:
         Returns:
             ArchitectureBaseline or None if not found
         """
+        # Validate baseline_id to prevent path traversal
+        if not baseline_id or '..' in baseline_id or '/' in baseline_id or '\\' in baseline_id:
+            logger.warning(f"Invalid baseline_id rejected: {baseline_id}")
+            return None
+            
         baseline_file = self.storage_path / f"{baseline_id}.json"
         
         if not baseline_file.exists():
@@ -386,7 +391,7 @@ class BaselineManager:
                 data = json.load(f)
                 return ArchitectureBaseline.from_dict(data)
         except Exception as e:
-            logger.info("Error loading baseline: {str(e)}")
+            logger.info(f"Error loading baseline: {str(e)}")
             return None
     
     async def _get_latest_baseline(

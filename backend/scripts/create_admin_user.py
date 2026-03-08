@@ -24,18 +24,26 @@ import uuid
 
 
 async def create_admin_user(
-    email: str = "admin@example.com",
-    password: str = "Admin123!",
+    email: str = None,
+    password: str = None,
     full_name: str = "System Administrator"
 ):
     """
     Create a default admin user.
     
     Args:
-        email: Admin email address
-        password: Admin password (must meet strength requirements)
+        email: Admin email address (or get from ADMIN_EMAIL env var)
+        password: Admin password (must get from ADMIN_PASSWORD env var for security)
         full_name: Admin full name
     """
+    # Get credentials from environment variables for security
+    email = email or os.environ.get("ADMIN_EMAIL", "admin@example.com")
+    password = password or os.environ.get("ADMIN_PASSWORD")
+    
+    if not password:
+        logger.error("Password is required. Set ADMIN_PASSWORD environment variable or pass as argument.")
+        sys.exit(1)
+    
     logger.info("=" * 60)
     logger.info("AI Code Review Platform - Admin User Creation")
     logger.info("=" * 60)

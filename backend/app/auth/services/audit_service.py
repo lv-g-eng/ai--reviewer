@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, List
-from sqlalchemy.orm import Session as DBSession
+from sqlalchemy.ext.asyncio import AsyncSession as DBSession
 from sqlalchemy import and_, or_
 
 from app.auth.models import AuditLog, User

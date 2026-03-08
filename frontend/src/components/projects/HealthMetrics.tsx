@@ -6,43 +6,43 @@
 import { Shield, Code, Layers, TestTube } from 'lucide-react';
 
 interface HealthMetricsProps {
-    codeQuality?: number;
-    securityRating?: number;
-    architectureHealth?: number;
-    testCoverage?: number;
+    code_quality?: number;
+    security_rating?: number;
+    architecture_health?: number;
+    test_coverage?: number;
 }
 
 export default function HealthMetrics({
-    codeQuality = 0,
-    securityRating = 0,
-    architectureHealth = 0,
-    testCoverage = 0,
+    code_quality = 0,
+    security_rating = 0,
+    architecture_health = 0,
+    test_coverage = 0,
 }: HealthMetricsProps) {
     const metrics = [
         {
             name: 'Code Quality',
-            value: codeQuality,
+            value: code_quality,
             icon: Code,
             color: 'text-blue-600 dark:text-blue-400',
             bgColor: 'bg-blue-100 dark:bg-blue-900/30',
         },
         {
             name: 'Security Rating',
-            value: securityRating,
+            value: security_rating,
             icon: Shield,
             color: 'text-green-600 dark:text-green-400',
             bgColor: 'bg-green-100 dark:bg-green-900/30',
         },
         {
             name: 'Architecture Health',
-            value: architectureHealth,
+            value: architecture_health,
             icon: Layers,
             color: 'text-purple-600 dark:text-purple-400',
             bgColor: 'bg-purple-100 dark:bg-purple-900/30',
         },
         {
             name: 'Test Coverage',
-            value: testCoverage,
+            value: test_coverage,
             icon: TestTube,
             color: 'text-orange-600 dark:text-orange-400',
             bgColor: 'bg-orange-100 dark:bg-orange-900/30',

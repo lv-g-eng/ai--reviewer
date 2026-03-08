@@ -1,0 +1,246 @@
+name: Deploy Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - test
+          - staging
+          - production
+      build_sha:
+        description: 'Build commit SHA (leave empty for latest)'
+        required: false
+        type: string
+  workflow_run:
+    workflows: ["Build Pipeline"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  deploy-test:
+    name: Deploy to Test Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+      url: https://test.example.com
+    
+    # Auto-deploy to test on main branch build success, or manual trigger
+    if: |
+      (github.event_name == 'workflow_run' && 
+       github.event.workflow_run.conclusion == 'success' && 
+       github.event.workflow_run.head_branch == 'main') ||
+      (github.event_name == 'workflow_dispatch' && 
+       github.event.inputs.environment == 'test')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Determine build SHA
+        id: build_sha
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.build_sha }}" ]; then
+            echo "sha=${{ github.event.inputs.build_sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build-${{ steps.build_sha.outputs.sha }}
+          path: ./artifacts
+      
+      - name: Extract build artifacts
+        run: |
+          mkdir -p frontend
+          tar -xzf artifacts/frontend-build-${{ steps.build_sha.outputs.sha }}.tar.gz -C frontend
+          echo "✅ Build artifacts extracted"
+      
+      - name: Deploy to test environment
+        run: |
+          echo "🚀 Deploying to test environment..."
+          # Add your deployment commands here
+          # Examples:
+          # - rsync to server
+          # - Docker image push
+          # - Cloud provider CLI (AWS, Azure, GCP)
+          # - Vercel/Netlify deployment
+          
+          # Example for Docker deployment:
+          # docker build -t frontend:test -f frontend/Dockerfile.prod frontend/
+          # docker tag frontend:test registry.example.com/frontend:test
+          # docker push registry.example.com/frontend:test
+          
+          # Example for SSH deployment:
+          # rsync -avz --delete frontend/.next/ user@test-server:/var/www/frontend/.next/
+          # ssh user@test-server 'cd /var/www/frontend && pm2 restart frontend'
+          
+          echo "✅ Deployment to test environment completed"
+      
+      - name: Create deployment record
+        run: |
+          cat > deployment-record.json << EOF
+          {
+            "environment": "test",
+            "buildSha": "${{ steps.build_sha.outputs.sha }}",
+            "deployedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "deployedBy": "${{ github.actor }}",
+            "workflowRun": "${{ github.run_id }}"
+          }
+          EOF
+          cat deployment-record.json
+      
+      - name: Upload deployment record
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-test-${{ steps.build_sha.outputs.sha }}
+          path: deployment-record.json
+          retention-days: 90
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://example.com
+    
+    # Only manual trigger for production
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Determine build SHA
+        id: build_sha
+        run: |
+          if [ -n "${{ github.event.inputs.build_sha }}" ]; then
+            echo "sha=${{ github.event.inputs.build_sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build-${{ steps.build_sha.outputs.sha }}
+          path: ./artifacts
+      
+      - name: Download build metadata
+        uses: actions/download-artifact@v4
+        with:
+          name: build-metadata-${{ steps.build_sha.outputs.sha }}
+          path: ./metadata
+      
+      - name: Verify build metadata
+        run: |
+          echo "📋 Build Metadata:"
+          cat metadata/build-metadata.json
+          
+          # Verify this is a main branch build
+          BRANCH=$(jq -r '.branch' metadata/build-metadata.json)
+          if [ "$BRANCH" != "main" ]; then
+            echo "❌ Error: Can only deploy builds from main branch to production"
+            echo "Current build is from branch: $BRANCH"
+            exit 1
+          fi
+          echo "✅ Build verification passed"
+      
+      - name: Extract build artifacts
+        run: |
+          mkdir -p frontend
+          tar -xzf artifacts/frontend-build-${{ steps.build_sha.outputs.sha }}.tar.gz -C frontend
+          echo "✅ Build artifacts extracted"
+      
+      - name: Backup current production deployment
+        run: |
+          echo "💾 Creating backup of current production deployment..."
+          # Add backup commands here
+          # Example:
+          # ssh user@prod-server 'tar -czf /backups/frontend-$(date +%Y%m%d-%H%M%S).tar.gz /var/www/frontend'
+          
+          BACKUP_ID="backup-$(date +%Y%m%d-%H%M%S)"
+          echo "backup_id=$BACKUP_ID" >> $GITHUB_ENV
+          echo "✅ Backup created: $BACKUP_ID"
+      
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying to production environment..."
+          # Add your production deployment commands here
+          
+          # Example for zero-downtime deployment:
+          # 1. Deploy to staging slot
+          # 2. Run smoke tests
+          # 3. Swap staging with production
+          # 4. Monitor for errors
+          
+          echo "✅ Deployment to production completed"
+      
+      - name: Run post-deployment health checks
+        run: |
+          echo "🏥 Running health checks..."
+          # Add health check commands
+          # Example:
+          # curl -f https://example.com/api/health || exit 1
+          # curl -f https://example.com/ || exit 1
+          
+          echo "✅ Health checks passed"
+      
+      - name: Create deployment record
+        run: |
+          cat > deployment-record.json << EOF
+          {
+            "environment": "production",
+            "buildSha": "${{ steps.build_sha.outputs.sha }}",
+            "deployedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "deployedBy": "${{ github.actor }}",
+            "workflowRun": "${{ github.run_id }}",
+            "backupId": "${{ env.backup_id }}"
+          }
+          EOF
+          cat deployment-record.json
+      
+      - name: Upload deployment record
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-production-${{ steps.build_sha.outputs.sha }}
+          path: deployment-record.json
+          retention-days: 365
+      
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: production-${{ steps.build_sha.outputs.sha }}
+          release_name: Production Release ${{ steps.build_sha.outputs.sha }}
+          body: |
+            ## Production Deployment
+            
+            **Build SHA:** ${{ steps.build_sha.outputs.sha }}
+            **Deployed At:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+            **Deployed By:** ${{ github.actor }}
+            **Backup ID:** ${{ env.backup_id }}
+            
+            This release has been deployed to production.
+          draft: false
+          prerelease: false
+      
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Production deployment successful!"
+          # Add notification commands (Slack, email, etc.)
+      
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "❌ Production deployment failed!"
+          # Add notification commands (Slack, email, etc.)

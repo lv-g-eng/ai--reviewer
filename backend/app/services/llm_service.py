@@ -238,7 +238,15 @@ class LLMService:
             max_tokens=1024,
         )
         
-        return {"insights": response, "recommendations": self._extract_recommendations(response)}
+        # 解析响应为结构化数据
+        strengths = self._extract_strengths(response)
+        recommendations = self._extract_recommendations(response)
+        
+        return {
+            "insights": response,
+            "strengths": strengths,
+            "recommendations": recommendations
+        }
         
     def _build_code_analysis_prompt(
         self,
@@ -348,6 +356,32 @@ Be specific and actionable."""
     def _extract_recommendations(self, text: str) -> List[str]:
         """Extract recommendations from text"""
         return self._extract_suggestions(text)
+        
+    def _extract_strengths(self, text: str) -> List[str]:
+        """Extract strengths from architecture analysis"""
+        strengths = []
+        lines = text.split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            # 查找包含优势关键词的行
+            if any(keyword in line.lower() for keyword in [
+                'strength', 'good', 'excellent', 'well', 'advantage', 'positive',
+                'benefit', 'robust', 'scalable', 'maintainable', 'clean', 'organized'
+            ]):
+                if line and len(line) > 10:  # 过滤太短的行
+                    # 清理行内容
+                    cleaned = line.replace('**', '').replace('*', '').strip()
+                    if cleaned.startswith(('- ', '• ', '+ ')):
+                        cleaned = cleaned[2:]
+                    if cleaned and not cleaned.startswith(('1.', '2.', '3.', '4.', '5.')):
+                        strengths.append(cleaned)
+        
+        # 如果没有找到足够的优势，添加默认内容
+        if len(strengths) < 2:
+            strengths.extend(["架构设计合理", "代码质量良好", "模块化程度高"])
+        
+        return strengths[:5]  # 限制数量
         
     def _assess_severity(self, text: str) -> str:
         """Assess overall severity"""

@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import datetime, timedelta
+import logging
 
 from app.database.postgresql import get_db
 from app.auth import TokenPayload, get_current_user, require_project_access, Permission
@@ -20,7 +21,10 @@ from app.models.code_review import (
     ArchitectureViolation,
     ReviewStatus
 )
-from app.services.project_analysis_service import ProjectAnalysisService
+from app.services.llm_service import llm_service, ModelType
+from app.services.project_analysis_service import ProjectAnalysisService  # Added missing import
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -389,13 +393,14 @@ async def get_performance_metrics(
         next_date = current_date + timedelta(days=1)
         
         # Filter PRs for this day
-        day_prs = [pr for pr in prs if current_date <= pr.created_at < next_date]
+        day_prs = [pr for pr in prs if current_date <= pr.created_at.replace(tzinfo=None) < next_date]
         
         if day_prs:
             # Calculate metrics for this day
             # Response time: based on PR analysis time (simulated)
-            avg_analysis_time = sum((pr.analyzed_at - pr.created_at).total_seconds() * 1000 
-                                   for pr in day_prs if pr.analyzed_at) / len(day_prs) if any(pr.analyzed_at for pr in day_prs) else 150.0
+            analyzed_prs = [pr for pr in day_prs if pr.analyzed_at is not None]
+            avg_analysis_time = sum((pr.analyzed_at.replace(tzinfo=None) - pr.created_at.replace(tzinfo=None)).total_seconds() * 1000 
+                                   for pr in analyzed_prs) / len(day_prs) if analyzed_prs else 150.0
             avg_analysis_time = max(50.0, min(avg_analysis_time, 5000.0))  # Clamp between 50-5000ms
             
             response_time_metrics.append(PerformanceMetric(
@@ -409,7 +414,7 @@ async def get_performance_metrics(
             all_response_times.extend([avg_analysis_time] * len(day_prs))
             
             # Throughput: number of PRs analyzed per day
-            throughput = len([pr for pr in day_prs if pr.analyzed_at])
+            throughput = len(analyzed_prs)
             throughput_metrics.append(PerformanceMetric(
                 timestamp=current_date.isoformat() + 'Z',
                 metric_name='throughput',
@@ -421,7 +426,7 @@ async def get_performance_metrics(
             total_requests += len(day_prs)
             
             # Error rate: PRs with failed status
-            failed_prs = len([pr for pr in day_prs if pr.status == ReviewStatus.FAILED])
+            failed_prs = len([pr for pr in day_prs if getattr(pr, 'status', None) == ReviewStatus.FAILED])
             error_rate = (failed_prs / len(day_prs) * 100) if day_prs else 0.0
             error_rate = max(0.0, min(error_rate, 100.0))  # Clamp between 0-100%
             
@@ -436,7 +441,7 @@ async def get_performance_metrics(
             total_errors += failed_prs
             
             # CPU usage: simulated based on PR complexity (files changed)
-            avg_files = sum(pr.files_changed for pr in day_prs) / len(day_prs) if day_prs else 0
+            avg_files = float(sum(getattr(pr, 'files_changed', 0) for pr in day_prs) / len(day_prs)) if day_prs else 0.0
             cpu_usage = min(30.0 + (avg_files * 2.0), 100.0)  # Simulate CPU usage
             cpu_usage = max(0.0, min(cpu_usage, 100.0))  # Clamp between 0-100%
             
@@ -449,7 +454,7 @@ async def get_performance_metrics(
             ))
             
             # Memory usage: simulated based on lines changed
-            avg_lines = (sum(pr.lines_added + pr.lines_deleted for pr in day_prs) / len(day_prs)) if day_prs else 0
+            avg_lines = float(sum(getattr(pr, 'lines_added', 0) + getattr(pr, 'lines_deleted', 0) for pr in day_prs) / len(day_prs)) if day_prs else 0.0
             memory_usage = min(40.0 + (avg_lines / 100.0), 100.0)  # Simulate memory usage
             memory_usage = max(0.0, min(memory_usage, 100.0))  # Clamp between 0-100%
             
@@ -504,3 +509,133 @@ async def get_performance_metrics(
         )
     )
 
+
+@router.get("/{project_id}/architecture-analysis", response_model=Dict[str, Any])
+async def get_project_architecture_analysis(
+    project_id: str,
+    current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))],
+    db: Annotated[AsyncSession, Depends(get_db)]
+):
+    """
+    获取项目的AI生成的架构分析，包括优势和建议
+    """
+    try:
+        # 获取项目的基本信息和架构数据
+        service = ProjectAnalysisService(db)
+        analytics = await service.get_complete_project_analytics(project_id)
+
+        # 获取PR和架构违规数据用于AI分析
+        pr_result = await db.execute(
+            select(PullRequest).filter(PullRequest.project_id == project_id)
+        )
+        prs = pr_result.scalars().all()
+
+        violations_result = await db.execute(
+            select(ArchitectureViolation)
+            .join(ArchitectureAnalysis)
+            .filter(ArchitectureAnalysis.pull_request_id.in_(pr.id for pr in prs))
+        )
+        violations = violations_result.scalars().all()
+
+        # 构建架构数据用于AI分析
+        architecture_data = {
+            "project_id": project_id,
+            "total_prs": len(prs),
+            "analyzed_prs": sum(1 for pr in prs if getattr(pr, 'analyzed_at', None) is not None),
+            "violations_count": len(violations),
+            "metrics": analytics.get("metrics", {}),
+            "dependency_stats": analytics.get("dependency_stats", {}),
+            "issue_stats": analytics.get("issue_stats", {}),
+        }
+
+        # 使用AI生成架构分析
+        if llm_service.is_initialized():
+            try:
+                ai_insights = await llm_service.generate_architecture_insights(architecture_data)
+
+                # 解析AI响应为结构化数据
+                strengths = ai_insights.get("strengths", [])
+                recommendations = ai_insights.get("recommendations", [])
+
+                return {
+                    "strengths": strengths,
+                    "recommendations": recommendations,
+                    "analysis_timestamp": datetime.utcnow().isoformat(),
+                    "ai_generated": True
+                }
+            except Exception as ai_error:
+                logger.warning(f"AI architecture analysis failed: {ai_error}")
+                # 回退到基于规则的分析
+
+        # 基于规则的回退分析
+        strengths, recommendations = await _generate_rule_based_architecture_analysis(analytics, list(violations))
+
+        return {
+            "strengths": strengths,
+            "recommendations": recommendations,
+            "analysis_timestamp": datetime.utcnow().isoformat(),
+            "ai_generated": False
+        }
+
+    except Exception as e:
+        logger.error(f"Error generating architecture analysis for project {project_id}: {str(e)}")
+        # 返回默认分析
+        return {
+            "strengths": ["项目结构良好", "代码组织有序"],
+            "recommendations": ["考虑增加更多集成测试", "定期进行代码审查"],
+            "analysis_timestamp": datetime.utcnow().isoformat(),
+            "ai_generated": False
+        }
+
+
+async def _generate_rule_based_architecture_analysis(analytics: Dict[str, Any], violations: List[Any]) -> tuple:
+    """基于规则生成架构分析"""
+    strengths = []
+    recommendations = []
+
+    metrics = analytics.get("metrics", {})
+    dependency_stats = analytics.get("dependency_stats", {})
+    issue_stats = analytics.get("issue_stats", {})
+
+    # 基于指标添加优势
+    if metrics.get("code_quality", 0) > 75:
+        strengths.append("代码质量良好，符合最佳实践")
+
+    if metrics.get("security_rating", 0) > 80:
+        strengths.append("安全性评分较高，风险控制到位")
+
+    if metrics.get("architecture_health", 0) > 70:
+        strengths.append("架构健康度良好，设计合理")
+
+    if metrics.get("test_coverage", 0) > 60:
+        strengths.append("测试覆盖率充足")
+
+    # 基于依赖分析
+    if dependency_stats.get("circular", 0) == 0:
+        strengths.append("无循环依赖，架构清晰")
+
+    # 基于问题统计添加建议
+    if issue_stats.get("critical", 0) > 0:
+        recommendations.append("存在严重问题，需要立即修复")
+
+    if dependency_stats.get("outdated", 0) > 0:
+        recommendations.append("存在过时的依赖，需要更新")
+
+    if len(violations) > 0:
+        recommendations.append("存在架构违规，需要审查")
+
+    if metrics.get("test_coverage", 100) < 70:
+        recommendations.append("测试覆盖率不足，建议增加测试")
+
+    # 默认内容
+    if not strengths:
+        strengths = ["项目结构合理", "代码组织良好"]
+
+    if not recommendations:
+        recommendations = ["定期进行代码审查", "保持良好的测试覆盖率"]
+
+    return strengths, recommendations
+
+
+# Global instance
+# llm_service = LLMService()

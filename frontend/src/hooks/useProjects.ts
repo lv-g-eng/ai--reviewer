@@ -9,9 +9,12 @@ export interface Project {
   id: string;
   name: string;
   description: string | null;
-  github_repo_url: string;
-  owner_id: string;
+  github_repo_url: string | null;
+  github_connection_type: 'https' | 'ssh' | 'cli';
+  github_ssh_key_id: string | null;
   language: string | null;
+  is_active: boolean;
+  owner_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -168,17 +171,42 @@ export function useSyncProject() {
 }
 
 /**
- * Create new project
+ * Create new project with GitHub connection options
  */
 export function useCreateProject() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<Project>) => {
+    mutationFn: async (data: {
+      name: string;
+      description?: string;
+      github_repo_url?: string;
+      github_connection_type?: 'https' | 'ssh' | 'cli';
+      github_ssh_key_id?: string;
+      github_cli_token?: string;
+      language?: string;
+    }) => {
       return apiClient.post<Project>('/rbac/projects', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
+
+/**
+ * Update project
+ */
+export function useUpdateProject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ projectId, updates }: { projectId: string; updates: Partial<Project> }) => {
+      return apiClient.put<Project>(`/rbac/projects/${projectId}`, updates);
+    },
+    onSuccess: (_, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
     },
   });
 }
@@ -195,6 +223,60 @@ export function useDeleteProject() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
+
+// SSH Key Management Interfaces
+export interface SSHKey {
+  id: string;
+  name: string;
+  public_key: string;
+  key_fingerprint: string;
+  github_username: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_used_at: string | null;
+}
+
+// SSH Key Management Hooks
+export function useSSHKeys() {
+  return useQuery({
+    queryKey: ['ssh-keys'],
+    queryFn: async () => {
+      return apiClient.get<SSHKey[]>('/rbac/ssh-keys');
+    },
+  });
+}
+
+export function useCreateSSHKey() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      name: string;
+      public_key: string;
+      private_key: string;
+      github_username?: string;
+    }) => {
+      return apiClient.post<SSHKey>('/rbac/ssh-keys', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ssh-keys'] });
+    },
+  });
+}
+
+export function useDeleteSSHKey() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (keyId: string) => {
+      await apiClient.delete(`/rbac/ssh-keys/${keyId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ssh-keys'] });
     },
   });
 }
@@ -219,25 +301,28 @@ export function useBranchArchitecture(projectId: string, branchId: string) {
   return useQuery({
     queryKey: ['architecture', projectId, 'branches', branchId],
     queryFn: async () => {
-      return apiClient.get<BranchArchitecture>(`/architecture/${projectId}/branches/${branchId}/architecture`);
+      return apiClient.get<BranchArchitecture>(
+        `/architecture/${projectId}/branches/${branchId}/architecture`
+      );
     },
     enabled: !!(projectId && branchId),
   });
 }
 
 /**
- * Trigger code review for a PR
+ * Fetch project architecture analysis (AI-generated)
  */
-export function useTriggerCodeReview() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: { pr_id: string; force?: boolean }) => {
-      return apiClient.post('/code-review/trigger', data);
+export function useProjectArchitectureAnalysis(projectId: string) {
+  return useQuery({
+    queryKey: ['projects', projectId, 'architecture-analysis'],
+    queryFn: async () => {
+      return apiClient.get<{
+        strengths: string[];
+        recommendations: string[];
+        analysis_timestamp: string;
+      }>(`/projects/${projectId}/architecture-analysis`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-    },
+    enabled: !!projectId,
   });
 }
 

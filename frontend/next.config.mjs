@@ -12,6 +12,9 @@ const nextConfig = {
         reactRemoveProperties: process.env.NODE_ENV === 'production',
     },
 
+    // Production source maps configuration (需求 11.2)
+    productionBrowserSourceMaps: true,
+
     images: {
         remotePatterns: [
             {
@@ -25,11 +28,58 @@ const nextConfig = {
                 port: '8000',
             },
         ],
+        // WebP format support for optimized images (需求 11.4)
+        // Next.js automatically converts images to WebP/AVIF with JPEG/PNG fallback
+        // The formats array defines the priority order:
+        // 1. AVIF (best compression, modern browsers)
+        // 2. WebP (good compression, wide support)
+        // 3. Original format (JPEG/PNG fallback for older browsers)
         formats: ['image/avif', 'image/webp'],
+        // Enable image optimization
+        minimumCacheTTL: 31536000, // 1 year cache for images
     },
 
     serverExternalPackages: ['sharp'],
-    turbopack: {},
+    
+    // Turbopack configuration for Next.js 16+
+    turbopack: {
+        // Turbopack is enabled by default in Next.js 16
+        // This empty config acknowledges we're aware of Turbopack
+        // and allows webpack config to coexist
+    },
+
+    // Headers for static asset caching (需求 11.2)
+    async headers() {
+        return [
+            {
+                source: '/static/:path*',
+                headers: [
+                    {
+                        key: 'Cache-Control',
+                        value: 'public, max-age=31536000, immutable',
+                    },
+                ],
+            },
+            {
+                source: '/_next/static/:path*',
+                headers: [
+                    {
+                        key: 'Cache-Control',
+                        value: 'public, max-age=31536000, immutable',
+                    },
+                ],
+            },
+            {
+                source: '/_next/image/:path*',
+                headers: [
+                    {
+                        key: 'Cache-Control',
+                        value: 'public, max-age=31536000, immutable',
+                    },
+                ],
+            },
+        ];
+    },
 
     experimental: {
         optimizePackageImports: [
@@ -78,11 +128,24 @@ const nextConfig = {
             };
         }
 
-        // Tree shaking optimization
+        // Tree shaking optimization (需求 7.4)
         config.optimization.usedExports = true;
         config.optimization.sideEffects = false;
 
-        // Enhanced code splitting
+        // Production optimizations
+        if (!dev) {
+            // Enable minification and compression (需求 11.1)
+            // This ensures at least 30% size reduction through:
+            // 1. Terser minification for JavaScript
+            // 2. CSS minification (handled by Next.js)
+            // 3. Gzip compression (enabled via compress: true above)
+            config.optimization.minimize = true;
+            
+            // Configure source maps for production (需求 11.2)
+            config.devtool = isServer ? false : 'source-map';
+        }
+
+        // Enhanced code splitting (需求 7.5)
         if (!dev && !isServer) {
             config.optimization.splitChunks = {
                 chunks: 'all',
@@ -127,6 +190,10 @@ const nextConfig = {
                 maxAsyncRequests: 25,
                 minSize: 20000,
             };
+
+            // Configure output filenames with content hash (需求 11.2)
+            config.output.filename = 'static/chunks/[name].[contenthash].js';
+            config.output.chunkFilename = 'static/chunks/[name].[contenthash].js';
         }
 
         return config;

@@ -33,7 +33,7 @@ import {
   User,
   Trash2
 } from 'lucide-react'
-import { useProject, useProjectPullRequests, useDeleteProject, useProjectAnalytics } from '@/hooks/useProjects'
+import { useProject, useProjectPullRequests, useDeleteProject, useProjectAnalytics, useProjectArchitectureAnalysis } from '@/hooks/useProjects'
 import HealthMetrics from '@/components/projects/HealthMetrics'
 
 export default function ProjectDetailPage() {
@@ -46,6 +46,7 @@ export default function ProjectDetailPage() {
   const { data: project, isLoading } = useProject(projectId)
   const { data: pullRequestsData = [] } = useProjectPullRequests(projectId)
   const { data: analytics, isLoading: analyticsLoading } = useProjectAnalytics(projectId)
+  const { data: architectureAnalysis, isLoading: architectureLoading } = useProjectArchitectureAnalysis(projectId)
   const pullRequests = Array.isArray(pullRequestsData) ? pullRequestsData : []
   const deleteProject = useDeleteProject()
 
@@ -68,20 +69,10 @@ export default function ProjectDetailPage() {
     }
   }
 
-  // 使用真实的 AI 审查数据，如果没有则使用默认值
-  const healthMetrics = analytics?.metrics || {
-    codeQuality: 75,
-    securityRating: 80,
-    architectureHealth: 75,
-    testCoverage: 70,
-  }
+  // 使用真实的 AI 审查数据，如果没有则显示加载状态
+  const healthMetrics = analytics?.metrics || null
 
-  const overallHealth = analytics?.metrics?.overall_health || Math.round(
-    (healthMetrics.codeQuality + 
-     healthMetrics.securityRating + 
-     healthMetrics.architectureHealth + 
-     healthMetrics.testCoverage) / 4
-  )
+  const overallHealth = analytics?.metrics?.overall_health || null
 
   // 获取详细的分析数据
   const dependencyStats = analytics?.dependency_stats || { total: 0, circular: 0, outdated: 0, dependency_issues: 0 }
@@ -191,12 +182,23 @@ export default function ProjectDetailPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${getHealthScoreColor(overallHealth)}`}>
-                {overallHealth}%
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Based on 4 metrics
-              </p>
+              {overallHealth !== null ? (
+                <>
+                  <div className={`text-2xl font-bold ${getHealthScoreColor(overallHealth)}`}>
+                    {overallHealth}%
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Based on 4 metrics
+                  </p>
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <Activity className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-xs text-muted-foreground">
+                    Calculating...
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -257,7 +259,18 @@ export default function ProjectDetailPage() {
                 <CardDescription>Real-time analysis of code quality, security, and architecture</CardDescription>
               </CardHeader>
               <CardContent>
-                <HealthMetrics {...healthMetrics} />
+                {healthMetrics ? (
+                  <HealthMetrics {...healthMetrics} />
+                ) : (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-center">
+                      <Activity className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        Analyzing project data...
+                      </p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -469,7 +482,7 @@ export default function ProjectDetailPage() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-muted-foreground">Architecture Health</p>
-                            <p className="text-2xl font-bold text-green-600">{healthMetrics.architectureHealth}%</p>
+                            <p className="text-2xl font-bold text-green-600">{healthMetrics ? healthMetrics.architecture_health : 'N/A'}%</p>
                           </div>
                           <CheckCircle className="h-8 w-8 text-green-600" />
                         </div>
@@ -479,7 +492,7 @@ export default function ProjectDetailPage() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-muted-foreground">Code Quality</p>
-                            <p className="text-2xl font-bold text-blue-600">{healthMetrics.codeQuality}%</p>
+                            <p className="text-2xl font-bold text-blue-600">{healthMetrics ? healthMetrics.code_quality : 'N/A'}%</p>
                           </div>
                           <Activity className="h-8 w-8 text-blue-600" />
                         </div>
@@ -489,7 +502,7 @@ export default function ProjectDetailPage() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-muted-foreground">Test Coverage</p>
-                            <p className="text-2xl font-bold text-purple-600">{healthMetrics.testCoverage}%</p>
+                            <p className="text-2xl font-bold text-purple-600">{healthMetrics ? healthMetrics.test_coverage : 'N/A'}%</p>
                           </div>
                           <TrendingUp className="h-8 w-8 text-purple-600" />
                         </div>
@@ -503,24 +516,21 @@ export default function ProjectDetailPage() {
                           <CheckCircle className="h-5 w-5 text-green-600" />
                           Strengths
                         </h4>
-                        <ul className="space-y-2 text-sm">
-                          <li className="flex items-start gap-2">
-                            <span className="text-green-600">✓</span>
-                            <span>Well-structured module organization</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-green-600">✓</span>
-                            <span>Clear separation of concerns</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-green-600">✓</span>
-                            <span>Good test coverage in core modules</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-green-600">✓</span>
-                            <span>Consistent coding standards</span>
-                          </li>
-                        </ul>
+                        {architectureAnalysis?.strengths ? (
+                          <ul className="space-y-2 text-sm">
+                            {architectureAnalysis.strengths.map((strength: string, index: number) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <span className="text-green-600">✓</span>
+                                <span>{strength}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="flex items-center justify-center py-4">
+                            <Activity className="h-6 w-6 text-muted-foreground mx-auto mr-2" />
+                            <p className="text-sm text-muted-foreground">Analyzing strengths...</p>
+                          </div>
+                        )}
                       </Card>
                       
                       <Card className="p-4">
@@ -528,24 +538,21 @@ export default function ProjectDetailPage() {
                           <AlertTriangle className="h-5 w-5 text-yellow-600" />
                           Recommendations
                         </h4>
-                        <ul className="space-y-2 text-sm">
-                          <li className="flex items-start gap-2">
-                            <span className="text-yellow-600">⚠</span>
-                            <span>Consider adding more integration tests</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-yellow-600">⚠</span>
-                            <span>Some modules have high complexity</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-yellow-600">⚠</span>
-                            <span>Documentation could be improved</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <span className="text-yellow-600">⚠</span>
-                            <span>Review circular dependencies</span>
-                          </li>
-                        </ul>
+                        {architectureAnalysis?.recommendations ? (
+                          <ul className="space-y-2 text-sm">
+                            {architectureAnalysis.recommendations.map((recommendation: string, index: number) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <span className="text-yellow-600">⚠</span>
+                                <span>{recommendation}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="flex items-center justify-center py-4">
+                            <Activity className="h-6 w-6 text-muted-foreground mx-auto mr-2" />
+                            <p className="text-sm text-muted-foreground">Generating recommendations...</p>
+                          </div>
+                        )}
                       </Card>
                     </div>
                     
@@ -612,12 +619,12 @@ export default function ProjectDetailPage() {
                         <Card className="p-4">
                           <p className="text-sm text-muted-foreground mb-1">Maintainability Index</p>
                           <p className="text-2xl font-bold text-green-600">
-                            {healthMetrics.codeQuality}
+                            {healthMetrics ? healthMetrics.code_quality : 'N/A'}
                           </p>
                           <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className="bg-green-600 h-2 rounded-full" 
-                              style={{ width: `${healthMetrics.codeQuality}%` }}
+                              style={{ width: healthMetrics ? `${healthMetrics.code_quality}%` : '0%' }}
                             />
                           </div>
                         </Card>
@@ -625,12 +632,12 @@ export default function ProjectDetailPage() {
                         <Card className="p-4">
                           <p className="text-sm text-muted-foreground mb-1">Code Complexity</p>
                           <p className="text-2xl font-bold text-blue-600">
-                            {100 - healthMetrics.codeQuality}
+                            {healthMetrics ? (100 - healthMetrics.code_quality) : 'N/A'}%
                           </p>
                           <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className="bg-blue-600 h-2 rounded-full" 
-                              style={{ width: `${100 - healthMetrics.codeQuality}%` }}
+                              style={{ width: healthMetrics ? `${100 - healthMetrics.code_quality}%` : '0%' }}
                             />
                           </div>
                         </Card>
@@ -638,12 +645,12 @@ export default function ProjectDetailPage() {
                         <Card className="p-4">
                           <p className="text-sm text-muted-foreground mb-1">Test Coverage</p>
                           <p className="text-2xl font-bold text-purple-600">
-                            {healthMetrics.testCoverage}%
+                            {healthMetrics ? healthMetrics.test_coverage : 'N/A'}%
                           </p>
                           <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className="bg-purple-600 h-2 rounded-full" 
-                              style={{ width: `${healthMetrics.testCoverage}%` }}
+                              style={{ width: healthMetrics ? `${healthMetrics.test_coverage}%` : '0%' }}
                             />
                           </div>
                         </Card>
@@ -651,12 +658,12 @@ export default function ProjectDetailPage() {
                         <Card className="p-4">
                           <p className="text-sm text-muted-foreground mb-1">Security Rating</p>
                           <p className="text-2xl font-bold text-green-600">
-                            {healthMetrics.securityRating}%
+                            {healthMetrics ? healthMetrics.security_rating : 'N/A'}%
                           </p>
                           <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className="bg-green-600 h-2 rounded-full" 
-                              style={{ width: `${healthMetrics.securityRating}%` }}
+                              style={{ width: healthMetrics ? `${healthMetrics.security_rating}%` : '0%' }}
                             />
                           </div>
                         </Card>

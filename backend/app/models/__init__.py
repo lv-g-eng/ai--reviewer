@@ -76,6 +76,13 @@ class User(Base):
     pull_requests = relationship("PullRequest", back_populates="author")
 
 
+class GitHubConnectionType(str, enum.Enum):
+    """GitHub connection type enum"""
+    HTTPS = "https"
+    SSH = "ssh"
+    CLI = "cli"
+
+
 class Project(Base):
     """Project model"""
     __tablename__ = "projects"
@@ -85,6 +92,9 @@ class Project(Base):
     name = Column(String(255), nullable=False)
     description = Column(Text)
     github_repo_url = Column(String(500), unique=True)
+    github_connection_type = Column(SQLEnum(GitHubConnectionType), default=GitHubConnectionType.HTTPS)
+    github_ssh_key_id = Column(UUID(as_uuid=True), ForeignKey("ssh_keys.id"), nullable=True)
+    github_cli_token = Column(String(500), nullable=True)  # Encrypted GitHub CLI token
     github_webhook_secret = Column(String(255))
     language = Column(String(50))
     is_active = Column(Boolean, default=True)
@@ -94,6 +104,7 @@ class Project(Base):
     # Relationships
     owner = relationship("User", back_populates="projects")
     pull_requests = relationship("PullRequest", back_populates="project")
+    ssh_key = relationship("SSHKey", back_populates="projects")
 
 
 # Use PullRequest from code_review module
@@ -222,3 +233,31 @@ class CodeEntity(Base):
         sa.Index('idx_code_entity_project_type', 'project_id', 'entity_type'),
         sa.Index('idx_code_entity_file_name', 'file_path', 'name'),
     )
+
+
+class SSHKey(Base):
+    """SSH Key model for GitHub SSH connections"""
+    __tablename__ = "ssh_keys"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)  # User-friendly name for the key
+    public_key = Column(Text, nullable=False)   # SSH public key content
+    private_key = Column(Text, nullable=False)  # Encrypted SSH private key
+    key_fingerprint = Column(String(255), unique=True, nullable=False)  # SSH key fingerprint
+    github_username = Column(String(255), nullable=True)  # Associated GitHub username
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    last_used_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Relationships
+    user = relationship("User", back_populates="ssh_keys")
+    projects = relationship("Project", back_populates="ssh_key")
+    
+    def __repr__(self):
+        return f"<SSHKey(id={self.id}, name={self.name}, fingerprint={self.key_fingerprint[:16]}...)>"
+
+
+# Add SSH keys relationship to User model
+User.ssh_keys = relationship("SSHKey", back_populates="user", cascade="all, delete-orphan")

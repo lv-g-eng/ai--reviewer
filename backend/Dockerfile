@@ -73,4 +73,4 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
 EXPOSE 8000
 
 # Run application with proper settings for production
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

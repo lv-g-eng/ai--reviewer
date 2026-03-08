@@ -10,7 +10,7 @@ Provides comprehensive AI-powered project analysis including:
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Sequence
 from datetime import datetime, timedelta
 from statistics import mean, median
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -86,21 +86,21 @@ class ProjectAnalysisService:
                 "trends": trends,
                 "recent_reviews": recent_reviews,
                 "total_prs": len(prs),
-                "reviewed_prs": sum(1 for pr in prs if pr.analyzed_at),
+                "reviewed_prs": sum(1 for pr in prs if getattr(pr, 'analyzed_at', None)),
                 "analysis_timestamp": datetime.utcnow().isoformat()
             }
         except Exception as e:
             logger.error(f"Error generating project analytics: {str(e)}", exc_info=True)
             raise
     
-    async def _get_pull_requests(self, project_id: str) -> List[Any]:
+    async def _get_pull_requests(self, project_id: str) -> Sequence[PullRequest]:
         """Get all pull requests for a project"""
         result = await self.db.execute(
             select(PullRequest).filter(PullRequest.project_id == project_id)
         )
         return result.scalars().all()
     
-    async def _get_review_comments(self, project_id: str) -> List[Any]:
+    async def _get_review_comments(self, project_id: str) -> Sequence[ReviewComment]:
         """Get all code review comments for a project"""
         prs_result = await self.db.execute(
             select(PullRequest.id).filter(PullRequest.project_id == project_id)
@@ -117,7 +117,7 @@ class ProjectAnalysisService:
         )
         return result.scalars().all()
     
-    async def _get_architecture_violations(self, project_id: str) -> List[Any]:
+    async def _get_architecture_violations(self, project_id: str) -> Sequence[ArchitectureViolation]:
         """Get all architecture violations for a project"""
         prs_result = await self.db.execute(
             select(PullRequest.id).filter(PullRequest.project_id == project_id)
@@ -134,20 +134,44 @@ class ProjectAnalysisService:
         )
         return result.scalars().all()
     
-    def _calculate_metrics(self, prs: List[Any], comments: List[Any], 
-                          violations: List[Any]) -> Dict[str, int]:
+    def _calculate_metrics(self, prs: Sequence[Any], comments: Sequence[Any], 
+                          violations: Sequence[Any]) -> Dict[str, int]:
         """Calculate quality metrics based on PR and review data"""
-        reviewed_prs = [pr for pr in prs if pr.analyzed_at]
+        # Consider PRs as reviewed if they have been analyzed or have a completed status
+        reviewed_prs = [pr for pr in prs if getattr(pr, 'analyzed_at', None) or 
+                       getattr(pr, 'status', '').lower() in ['reviewed', 'approved', 'merged', 'closed']]
         
         if not reviewed_prs:
-            # Default metrics when no data available
-            return {
-                "code_quality": 75,
-                "security_rating": 80,
-                "architecture_health": 75,
-                "test_coverage": 70,
-                "overall_health": 75
-            }
+            # If no reviewed PRs, but we have PRs, calculate basic metrics from PR data
+            if prs:
+                # Calculate basic metrics from PR metadata
+                total_files = sum(getattr(pr, 'files_changed', 0) for pr in prs)
+                total_lines = sum(getattr(pr, 'lines_added', 0) + getattr(pr, 'lines_deleted', 0) for pr in prs)
+                avg_risk = sum(getattr(pr, 'risk_score', 0) or 0 for pr in prs) / len(prs) if prs else 0
+                
+                # Basic calculation based on PR complexity
+                code_quality = max(60, min(90, 100 - int(total_lines / max(1, len(prs)) / 10)))
+                security_rating = max(70, min(95, 100 - int(avg_risk * 20)))
+                architecture_health = max(65, min(85, 100 - int(total_files / max(1, len(prs)))))
+                test_coverage = max(50, min(80, 100 - int(avg_risk * 25)))
+                overall_health = int((code_quality + security_rating + architecture_health + test_coverage) / 4)
+                
+                return {
+                    "code_quality": code_quality,
+                    "security_rating": security_rating,
+                    "architecture_health": architecture_health,
+                    "test_coverage": test_coverage,
+                    "overall_health": overall_health
+                }
+            else:
+                # No PRs at all - return minimal defaults
+                return {
+                    "code_quality": 70,
+                    "security_rating": 75,
+                    "architecture_health": 70,
+                    "test_coverage": 60,
+                    "overall_health": 69
+                }
         
         # Code quality: Based on issue density
         issues_per_pr = len(comments) / len(reviewed_prs) if reviewed_prs else 0
@@ -163,7 +187,8 @@ class ProjectAnalysisService:
         architecture_health = max(0, min(100, int(100 - (violations_per_pr * 15))))
         
         # Test coverage: Based on risk scores
-        risk_scores = [pr.risk_score for pr in reviewed_prs if pr.risk_score]
+        risk_scores_raw = [getattr(pr, 'risk_score', None) for pr in reviewed_prs if getattr(pr, 'risk_score', None) is not None]
+        risk_scores: List[float] = [float(score) for score in risk_scores_raw if score is not None]
         avg_risk = mean(risk_scores) if risk_scores else 50
         test_coverage = max(0, min(100, int(100 - avg_risk)))
         
@@ -177,7 +202,7 @@ class ProjectAnalysisService:
             "overall_health": overall_health
         }
     
-    def _calculate_dependency_stats(self, prs: List[Any], comments: List[Any]) -> Dict[str, int]:
+    def _calculate_dependency_stats(self, prs: Sequence[Any], comments: Sequence[Any]) -> Dict[str, int]:
         """Calculate dependency analysis statistics"""
         # Count dependencies from review comments
         dependency_issues = [c for c in comments if "depend" in str(c.message).lower()]
@@ -191,7 +216,7 @@ class ProjectAnalysisService:
             "dependency_issues": len(dependency_issues)
         }
     
-    def _calculate_performance_metrics(self, prs: List[Any]) -> Dict[str, Any]:
+    def _calculate_performance_metrics(self, prs: Sequence[Any]) -> Dict[str, Any]:
         """Calculate performance metrics from PR data"""
         if not prs:
             return {
@@ -201,25 +226,26 @@ class ProjectAnalysisService:
                 "pr_review_time_avg": "0h"
             }
         
-        # Estimate metrics based on PR count and timestamps
-        reviewed_prs = [pr for pr in prs if pr.analyzed_at]
+        # Consider PRs as analyzed if they have been analyzed or have a completed status
+        analyzed_prs = [pr for pr in prs if getattr(pr, 'analyzed_at', None) or 
+                       getattr(pr, 'status', '').lower() in ['reviewed', 'approved', 'merged', 'closed']]
         
         build_times = []
-        for pr in reviewed_prs:
+        for pr in analyzed_prs:
             # Estimate build time based on files changed
-            estimated_time = max(30, pr.files_changed * 0.5)  # seconds
+            estimated_time = max(30, getattr(pr, 'files_changed', 0) * 0.5)  # seconds
             build_times.append(estimated_time)
         
         avg_build_time = mean(build_times) if build_times else 60
         
         return {
             "avg_build_time": f"{int(avg_build_time / 60)}m {int(avg_build_time % 60)}s",
-            "avg_test_time": f"{max(1, int(len(reviewed_prs) * 0.3))}m",
-            "avg_analysis_time": f"{max(1, int(len(reviewed_prs) * 0.05))}m",
-            "pr_review_time_avg": f"{int(len(reviewed_prs) / max(1, len(prs)))}h"
+            "avg_test_time": f"{max(1, int(len(analyzed_prs) * 0.3))}m",
+            "avg_analysis_time": f"{max(1, int(len(analyzed_prs) * 0.05))}m",
+            "pr_review_time_avg": f"{int(len(analyzed_prs) / max(1, len(prs)))}h"
         }
     
-    def _calculate_issue_stats(self, comments: List[Any], violations: List[Any]) -> Dict[str, int]:
+    def _calculate_issue_stats(self, comments: Sequence[Any], violations: Sequence[Any]) -> Dict[str, int]:
         """Calculate issue statistics"""
         severity_counts = self._count_by_severity(comments)
         
@@ -241,7 +267,7 @@ class ProjectAnalysisService:
             "total": len(comments) + len(violations)
         }
     
-    def _count_by_severity(self, comments: List[Any]) -> Dict[str, int]:
+    def _count_by_severity(self, comments: Sequence[Any]) -> Dict[str, int]:
         """Count issues by severity level"""
         counts = {}
         for comment in comments:
@@ -258,8 +284,12 @@ class ProjectAnalysisService:
         current_comments = await self._get_review_comments(project_id)
         current_violations = await self._get_architecture_violations(project_id)
         
-        current_quality = 100 - (len(current_comments) / max(1, len(current_prs)) * 5)
-        current_coverage = 100 - (len(current_violations) / max(1, len(current_prs)) * 15)
+        # Consider PRs as analyzed based on status
+        analyzed_prs = [pr for pr in current_prs if getattr(pr, 'analyzed_at', None) or 
+                       getattr(pr, 'status', '').lower() in ['reviewed', 'approved', 'merged', 'closed']]
+        
+        current_quality = 100 - (len(current_comments) / max(1, len(analyzed_prs)) * 5) if analyzed_prs else 70
+        current_coverage = 100 - (len(current_violations) / max(1, len(analyzed_prs)) * 15) if analyzed_prs else 65
         
         # Estimate trends (in production, compare with historical data)
         return {
@@ -272,25 +302,32 @@ class ProjectAnalysisService:
         """Get recent code reviews"""
         prs = await self._get_pull_requests(project_id)
         
-        # Sort by analyzed date
-        analyzed_prs = sorted(
-            [pr for pr in prs if pr.analyzed_at],
-            key=lambda x: x.analyzed_at,
+        # Sort by analyzed date or creation date for PRs that haven't been analyzed yet
+        analyzed_prs = []
+        for pr in prs:
+            if getattr(pr, 'analyzed_at', None) or getattr(pr, 'status', '').lower() in ['reviewed', 'approved', 'merged', 'closed']:
+                analyzed_prs.append(pr)
+        
+        # Sort by analyzed date if available, otherwise by creation date
+        analyzed_prs.sort(
+            key=lambda x: getattr(x, 'analyzed_at', None) or getattr(x, 'created_at', datetime.min),
             reverse=True
-        )[:limit]
+        )
+        
+        recent_prs = analyzed_prs[:limit]
         
         reviews = []
-        for pr in analyzed_prs:
+        for pr in recent_prs:
             reviews.append({
-                "pr_id": str(pr.id),
-                "pr_number": pr.github_pr_number,
-                "title": pr.title,
-                "status": pr.status.value if hasattr(pr.status, 'value') else str(pr.status),
-                "risk_score": pr.risk_score,
-                "files_changed": pr.files_changed,
-                "lines_added": pr.lines_added,
-                "lines_deleted": pr.lines_deleted,
-                "analyzed_at": pr.analyzed_at.isoformat() if pr.analyzed_at else None
+                "pr_id": str(getattr(pr, 'id', '')),
+                "pr_number": getattr(pr, 'github_pr_number', 0),
+                "title": getattr(pr, 'title', ''),
+                "status": str(getattr(pr, 'status', '')),
+                "risk_score": getattr(pr, 'risk_score', None),
+                "files_changed": getattr(pr, 'files_changed', 0),
+                "lines_added": getattr(pr, 'lines_added', 0),
+                "lines_deleted": getattr(pr, 'lines_deleted', 0),
+                "analyzed_at": (lambda dt: dt.isoformat() if dt else None)(getattr(pr, 'analyzed_at', None))
             })
         
         return reviews

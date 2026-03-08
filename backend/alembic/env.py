@@ -17,9 +17,6 @@ from app.core.config import settings
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override sqlalchemy.url with our settings
-config.set_main_option('sqlalchemy.url', settings.sync_postgres_url)
-
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -63,9 +60,12 @@ def run_migrations_online() -> None:
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    # Create engine directly with psycopg URL to avoid driver detection issues
+    from sqlalchemy import create_engine
+    database_url = 'postgresql+psycopg://postgres:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6@postgres:5432/ai_code_review'
+
+    connectable = create_engine(
+        database_url,
         poolclass=pool.NullPool,
     )
 

@@ -1,0 +1,361 @@
+/**
+ * Global Responsive Styles
+ * 
+ * Implements responsive design for 320px-2560px viewport widths
+ * Uses CSS media queries and modern layout techniques (flexbox/grid)
+ * Ensures no horizontal scrollbars across all viewport sizes
+ * 
+ * Requirements: 15.1
+ */
+
+/* Base styles - Mobile first approach */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* Container base styles */
+.responsive-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 16px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+/* Mobile: 320px - 767px */
+@media (min-width: 320px) {
+  .responsive-container {
+    padding: 12px;
+  }
+  
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .responsive-flex {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .responsive-text-sm {
+    font-size: 12px;
+  }
+  
+  .responsive-text-base {
+    font-size: 14px;
+  }
+  
+  .responsive-text-lg {
+    font-size: 16px;
+  }
+  
+  .responsive-text-xl {
+    font-size: 20px;
+  }
+  
+  .responsive-text-2xl {
+    font-size: 24px;
+  }
+}
+
+/* Small tablets: 480px - 767px */
+@media (min-width: 480px) {
+  .responsive-container {
+    padding: 16px;
+  }
+  
+  .responsive-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .responsive-text-base {
+    font-size: 15px;
+  }
+  
+  .responsive-text-lg {
+    font-size: 18px;
+  }
+  
+  .responsive-text-xl {
+    font-size: 22px;
+  }
+  
+  .responsive-text-2xl {
+    font-size: 28px;
+  }
+}
+
+/* Tablets: 768px - 1023px */
+@media (min-width: 768px) {
+  .responsive-container {
+    padding: 20px;
+    max-width: 1200px;
+  }
+  
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .responsive-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .responsive-flex {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .responsive-text-base {
+    font-size: 16px;
+  }
+  
+  .responsive-text-lg {
+    font-size: 20px;
+  }
+  
+  .responsive-text-xl {
+    font-size: 24px;
+  }
+  
+  .responsive-text-2xl {
+    font-size: 32px;
+  }
+}
+
+/* Desktop: 1024px - 1439px */
+@media (min-width: 1024px) {
+  .responsive-container {
+    padding: 24px;
+    max-width: 1400px;
+  }
+  
+  .responsive-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  
+  .responsive-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .responsive-flex {
+    gap: 20px;
+  }
+}
+
+/* Large desktop: 1440px - 1919px */
+@media (min-width: 1440px) {
+  .responsive-container {
+    max-width: 1600px;
+  }
+  
+  .responsive-grid {
+    gap: 24px;
+  }
+  
+  .responsive-grid-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Extra large desktop: 1920px - 2560px */
+@media (min-width: 1920px) {
+  .responsive-container {
+    max-width: 2000px;
+  }
+  
+  .responsive-grid-6 {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* Utility classes for responsive behavior */
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hide-mobile {
+    display: block;
+  }
+  
+  .hide-tablet {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hide-tablet {
+    display: block;
+  }
+  
+  .hide-desktop {
+    display: none;
+  }
+}
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive tables */
+.responsive-table {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.responsive-table table {
+  min-width: 600px;
+  width: 100%;
+}
+
+/* Responsive buttons */
+.responsive-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .responsive-button {
+    padding: 10px 20px;
+    font-size: 15px;
+  }
+}
+
+/* Responsive spacing */
+.responsive-spacing-sm {
+  margin: 8px 0;
+}
+
+.responsive-spacing-md {
+  margin: 16px 0;
+}
+
+.responsive-spacing-lg {
+  margin: 24px 0;
+}
+
+@media (min-width: 768px) {
+  .responsive-spacing-sm {
+    margin: 12px 0;
+  }
+  
+  .responsive-spacing-md {
+    margin: 20px 0;
+  }
+  
+  .responsive-spacing-lg {
+    margin: 32px 0;
+  }
+}
+
+/* Prevent text overflow */
+.responsive-text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.responsive-text-wrap {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Responsive card layouts */
+.responsive-card {
+  padding: 16px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 768px) {
+  .responsive-card {
+    padding: 20px;
+    border-radius: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-card {
+    padding: 24px;
+  }
+}
+
+/* Responsive header */
+.responsive-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .responsive-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+}
+
+/* Responsive form inputs */
+.responsive-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+  .responsive-input {
+    padding: 12px 16px;
+    font-size: 15px;
+  }
+}
+
+/* Ensure no horizontal overflow on any element */
+.no-overflow {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Responsive modal/dialog */
+.responsive-modal {
+  width: 90%;
+  max-width: 500px;
+  margin: 20px auto;
+}
+
+@media (min-width: 768px) {
+  .responsive-modal {
+    width: 80%;
+    max-width: 600px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-modal {
+    width: 70%;
+    max-width: 800px;
+  }
+}

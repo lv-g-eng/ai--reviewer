@@ -1,0 +1,11 @@
+# Pages Directory
+
+This directory contains page-level components for the six core pages:
+- Dashboard: System overview and key metrics
+- Projects: Project management and operations
+- PullRequests: Code review and diff display
+- Architecture: Architecture visualization and dependency analysis
+- AnalysisQueue: Task queue management and scheduling
+- Metrics: Metrics analysis and custom dashboards
+
+Note: This is separate from the Next.js app directory and contains reusable page components.

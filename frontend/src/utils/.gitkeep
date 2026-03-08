@@ -1,0 +1,10 @@
+# Utils Directory
+
+This directory contains utility functions and helper modules used across the application.
+
+Examples:
+- requestDeduplicator: Request deduplication logic
+- retryWithBackoff: Exponential backoff retry mechanism
+- performanceMonitor: Performance monitoring utilities
+- validator: Data validation functions
+- formatter: Data formatting utilities

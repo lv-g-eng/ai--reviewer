@@ -137,6 +137,32 @@ global.fetch = jest.fn(() =>
   })
 );
 
+// Mock Prism.js for syntax highlighting
+jest.mock('prismjs', () => ({
+  highlight: jest.fn((code) => code),
+  languages: {
+    javascript: {},
+    typescript: {},
+    jsx: {},
+    tsx: {},
+    python: {},
+    css: {},
+    json: {},
+    markdown: {},
+    markup: {},
+  },
+}));
+
+jest.mock('prismjs/themes/prism-tomorrow.css', () => ({}));
+jest.mock('prismjs/components/prism-python', () => ({}));
+jest.mock('prismjs/components/prism-javascript', () => ({}));
+jest.mock('prismjs/components/prism-typescript', () => ({}));
+jest.mock('prismjs/components/prism-jsx', () => ({}));
+jest.mock('prismjs/components/prism-tsx', () => ({}));
+jest.mock('prismjs/components/prism-css', () => ({}));
+jest.mock('prismjs/components/prism-json', () => ({}));
+jest.mock('prismjs/components/prism-markdown', () => ({}));
+
 // Clean up after each test
 afterEach(() => {
   jest.clearAllMocks();

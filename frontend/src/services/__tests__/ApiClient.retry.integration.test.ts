@@ -106,7 +106,7 @@ describe('ApiClient Retry Integration', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2);
     });
 
-    it('shouldBeAt最多retry3times后抛出error', async () => {
+    it('should throw error after max 3 retries', async () => {
       const networkError: any = new Error('Persistent Network Error');
       networkError.code = 'ETIMEDOUT';
 
@@ -120,7 +120,7 @@ describe('ApiClient Retry Integration', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(4); // 1 initial + 3 retries
     });
 
-    it('should不retry4xx客户端error', async () => {
+    it('should not retry 4xx client errors', async () => {
       const clientError: any = new Error('Bad Request');
       clientError.response = { status: 400 };
 
@@ -134,11 +134,11 @@ describe('ApiClient Retry Integration', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1); // No retries
     });
 
-    it('shouldsupport自定义retryconfig', async () => {
+    it('should support custom retry config', async () => {
       const customConfig: ApiClientConfig = {
         baseURL: 'http://localhost:8000/api/v1',
         timeout: 30000,
-        maxRetries: 2, // 只retry2times
+        maxRetries: 2, // Only retry 2 times
         maxConcurrent: 6,
         cacheTimeout: 5 * 60 * 1000,
         retryOptions: {
@@ -194,10 +194,10 @@ describe('ApiClient Retry Integration', () => {
       const networkError: any = new Error('Network Error');
       networkError.code = 'ECONNABORTED';
 
-      // 所有request都会failure并retry
+      // All requests will fail and retry
       mockAxiosInstance.request.mockRejectedValue(networkError);
 
-      // 发起多itemrequest
+      // Make multiple requests
       const promises = [
         apiClient.post('/test1', {}),
         apiClient.post('/test2', {}),
@@ -206,16 +206,16 @@ describe('ApiClient Retry Integration', () => {
 
       await jest.runAllTimersAsync();
 
-      // 所有request都shouldfailure
+      // All requests should fail
       await expect(Promise.all(promises)).rejects.toThrow();
 
-      // 每itemrequestshouldretry3times（1 initial + 3 retries = 4 calls per request）
+      // Each request should retry 3 times (1 initial + 3 retries = 4 calls per request)
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(12); // 3 requests * 4 calls
     });
   });
 
-  describe('skipRetry选项', () => {
-    it('shouldsupportskipretry', async () => {
+  describe('skipRetry option', () => {
+    it('should support skip retry', async () => {
       const networkError: any = new Error('Network Error');
       networkError.code = 'ECONNABORTED';
 

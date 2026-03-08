@@ -952,18 +952,18 @@ describe('ApiClient Property-Based Tests', () => {
               skipRetry: true
             });
 
-            // 快进到5sec
+            // Fast forward to 5 seconds
             jest.advanceTimersByTime(5000);
 
-            // verify: should调用console.warnshow默认timeouthint
+            // Verify: should call console.warn to show default timeout hint
             expect(consoleWarnSpy).toHaveBeenCalledWith(
-              expect.stringContaining('APIrequesttimeout')
+              expect.stringContaining('API request timeout')
             );
             expect(consoleWarnSpy).toHaveBeenCalledWith(
               expect.stringContaining(url)
             );
 
-            // completerequest
+            // Complete request
             jest.advanceTimersByTime(delayMs - 5000);
             await requestPromise;
 

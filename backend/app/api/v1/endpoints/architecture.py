@@ -1,7 +1,7 @@
 """
-architecture可视化 API endpoint
+Architecture Visualization API Endpoint
 
-provideproject分支的architectureanalyzedata
+Provides architecture analysis data for project branches.
 """
 from typing import Annotated, List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Path
@@ -27,7 +27,7 @@ API_VERSION = "1.0.0"
 
 
 class BranchInfo(BaseModel):
-    """分支info模型"""
+    """Branch information model."""
     id: str
     name: str
     last_commit: str
@@ -40,7 +40,7 @@ class BranchInfo(BaseModel):
 
 
 class GraphNode(BaseModel):
-    """architecture图节点模型"""
+    """Architecture graph node model."""
     id: str
     label: str
     type: str
@@ -52,7 +52,7 @@ class GraphNode(BaseModel):
 
 
 class GraphEdge(BaseModel):
-    """architecture图边模型"""
+    """Architecture graph edge model."""
     id: str
     source: str
     target: str
@@ -62,7 +62,7 @@ class GraphEdge(BaseModel):
 
 
 class ArchitectureMetrics(BaseModel):
-    """architecture指标模型"""
+    """Architecture metrics model."""
     total_nodes: int = Field(ge=0)
     total_edges: int = Field(ge=0)
     circular_dependencies: int = Field(ge=0)
@@ -71,7 +71,7 @@ class ArchitectureMetrics(BaseModel):
 
 
 class ArchitectureAnalysisResponse(BaseModel):
-    """architectureanalyzeresponse模型 - 符合prodenv要求"""
+    """Architecture analysis response model - meets production requirements."""
     id: str
     project_id: str
     branch_id: str
@@ -83,10 +83,10 @@ class ArchitectureAnalysisResponse(BaseModel):
     created_at: str
     updated_at: str
     api_version: str = Field(default=API_VERSION, description="API version for backward compatibility")
-    
+
     @validator('status')
     def validate_status(cls, v):
-        """verifystatusvalue"""
+        """Verify status value."""
         valid_statuses = ['pending', 'in_progress', 'processing', 'completed', 'failed']
         if v not in valid_statuses:
             raise ValueError(f'Status must be one of {valid_statuses}')
@@ -94,7 +94,7 @@ class ArchitectureAnalysisResponse(BaseModel):
 
 
 class BranchArchitecture(BaseModel):
-    """分支architecturedata模型"""
+    """Branch architecture data model."""
     branch_info: BranchInfo
     nodes: List[GraphNode]
     edges: List[GraphEdge]
@@ -108,22 +108,22 @@ async def get_project_branches(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    getproject的所有分支列表
-    
-    return每item分支的基本infoandarchitecture健康status
+    Get all branches list for a project.
+
+    Returns basic information and architecture health status for each branch.
     """
-    # getproject的所有 PR，按分支分组
+    # Get all PRs for the project, grouped by branch
     pr_result = await db.execute(
         select(PullRequest)
         .filter(PullRequest.project_id == project_id)
         .order_by(PullRequest.created_at.desc())
     )
     prs = pr_result.scalars().all()
-    
+
     if not prs:
         return []
-    
-    # 按分支名称分组
+
+    # Group by branch name
     branches_dict = {}
     for pr in prs:
         branch_name = pr.branch_name or 'unknown'
@@ -133,14 +133,14 @@ async def get_project_branches(
                 'latest_pr': pr
             }
         branches_dict[branch_name]['prs'].append(pr)
-    
-    # 构建分支info列表
+
+    # Build branch information list
     branches = []
     for branch_name, data in branches_dict.items():
         latest_pr = data['latest_pr']
         prs_list = data['prs']
-        
-        # get该分支的architecture违规
+
+        # Get architecture violations for this branch
         pr_ids = [pr.id for pr in prs_list]
         violations_result = await db.execute(
             select(func.count(ArchitectureViolation.id))
@@ -148,8 +148,8 @@ async def get_project_branches(
             .filter(ArchitectureAnalysis.pull_request_id.in_(pr_ids))
         )
         violations_count = violations_result.scalar() or 0
-        
-        # 计算循环dependency数量
+
+        # Calculate circular dependency count
         circular_deps_result = await db.execute(
             select(func.count(ArchitectureViolation.id))
             .join(ArchitectureAnalysis)
@@ -159,19 +159,19 @@ async def get_project_branches(
             )
         )
         circular_deps = circular_deps_result.scalar() or 0
-        
-        # 计算平均complexity（基于风险评分）
+
+        # Calculate average complexity (based on risk score)
         avg_risk = sum(pr.risk_score for pr in prs_list if pr.risk_score) / len(prs_list) if prs_list else 0
         complexity = int(avg_risk / 10) if avg_risk else 5
-        
-        # 确定健康status
+
+        # Determine health status
         if violations_count == 0:
             health_status = 'healthy'
         elif violations_count < 5:
             health_status = 'warning'
         else:
             health_status = 'critical'
-        
+
         branches.append(BranchInfo(
             id=branch_name.replace('/', '-'),
             name=branch_name,
@@ -183,7 +183,7 @@ async def get_project_branches(
             health_status=health_status,
             circular_dependencies=circular_deps
         ))
-    
+
     return branches
 
 
@@ -195,14 +195,14 @@ async def get_branch_architecture(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    get指定分支的architecture图data
-    
-    包括节点、边、统计info等
+    Get architecture graph data for a specified branch.
+
+    Includes nodes, edges, statistics, etc.
     """
-    # 将 branch_id 转换回分支名称
+    # Convert branch_id back to branch name
     branch_name = branch_id.replace('-', '/')
-    
-    # get该分支的最新 PR
+
+    # Get the latest PR for this branch
     pr_result = await db.execute(
         select(PullRequest)
         .filter(
@@ -213,14 +213,14 @@ async def get_branch_architecture(
         .limit(1)
     )
     latest_pr = pr_result.scalar_one_or_none()
-    
+
     if not latest_pr:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Branch {branch_name} not found"
         )
-    
-    # getarchitectureanalyzedata
+
+    # Get architecture analysis data
     analysis_result = await db.execute(
         select(ArchitectureAnalysis)
         .filter(ArchitectureAnalysis.pull_request_id == latest_pr.id)
@@ -228,8 +228,8 @@ async def get_branch_architecture(
         .limit(1)
     )
     analysis = analysis_result.scalar_one_or_none()
-    
-    # getarchitecture违规
+
+    # Get architecture violations
     violations = []
     circular_deps = 0
     if analysis:
@@ -239,16 +239,16 @@ async def get_branch_architecture(
         )
         violations = violations_result.scalars().all()
         circular_deps = sum(1 for v in violations if v.type == 'circular_dependency')
-    
-    # 构建节点and边（从architectureanalyzedata中提取）
+
+    # Build nodes and edges (extracted from architecture analysis data)
     nodes = []
     edges = []
-    
+
     if analysis and analysis.summary:
-        # 从 summary JSON 中提取architecture图data
+        # Extract architecture graph data from summary JSON
         summary = analysis.summary
         if isinstance(summary, dict):
-            # 提取componentinfo
+            # Extract component information
             components = summary.get('components', [])
             for idx, component in enumerate(components):
                 nodes.append(GraphNode(
@@ -259,8 +259,8 @@ async def get_branch_architecture(
                     complexity=component.get('complexity', 5),
                     position={'x': 100 + (idx % 3) * 200, 'y': 100 + (idx // 3) * 200}
                 ))
-            
-            # 提取dependency关系
+
+            # Extract dependency relationships
             dependencies = summary.get('dependencies', [])
             for idx, dep in enumerate(dependencies):
                 edges.append(GraphEdge(
@@ -270,8 +270,8 @@ async def get_branch_architecture(
                     type='default',
                     is_circular=dep.get('is_circular', False)
                 ))
-    
-    # 如果没有architecturedata，从违规info中构建基本图
+
+    # If no architecture data, build basic graph from violation information
     if not nodes and violations:
         components_set = set()
         for violation in violations:
@@ -279,7 +279,7 @@ async def get_branch_architecture(
                 components_set.add(violation.component)
             if violation.related_component:
                 components_set.add(violation.related_component)
-        
+
         for idx, component in enumerate(components_set):
             health = 'critical' if any(v.component == component and v.severity == 'critical' for v in violations) else 'warning'
             nodes.append(GraphNode(
@@ -290,8 +290,8 @@ async def get_branch_architecture(
                 complexity=5,
                 position={'x': 100 + (idx % 3) * 200, 'y': 100 + (idx // 3) * 200}
             ))
-        
-        # 从违规中提取dependency关系
+
+        # Extract dependency relationships from violations
         for idx, violation in enumerate(violations):
             if violation.component and violation.related_component:
                 source_idx = list(components_set).index(violation.component) + 1
@@ -303,8 +303,8 @@ async def get_branch_architecture(
                     type='default',
                     is_circular=(violation.type == 'circular_dependency')
                 ))
-    
-    # 构建分支info
+
+    # Build branch information
     branch_info = BranchInfo(
         id=branch_id,
         name=branch_name,
@@ -316,8 +316,8 @@ async def get_branch_architecture(
         health_status='critical' if len(violations) > 5 else 'warning' if len(violations) > 0 else 'healthy',
         circular_dependencies=circular_deps
     )
-    
-    # 统计info
+
+    # Statistics
     statistics = {
         'total_components': len(nodes),
         'total_dependencies': len(edges),
@@ -327,7 +327,7 @@ async def get_branch_architecture(
         'critical_violations': sum(1 for v in violations if v.severity == 'critical'),
         'high_violations': sum(1 for v in violations if v.severity == 'high'),
     }
-    
+
     return BranchArchitecture(
         branch_info=branch_info,
         nodes=nodes,
@@ -337,7 +337,7 @@ async def get_branch_architecture(
 
 
 def is_valid_uuid(uuid_string: str) -> bool:
-    """verifyUUIDformat"""
+    """Verify UUID format."""
     uuid_pattern = re.compile(
         r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
         re.IGNORECASE
@@ -346,7 +346,7 @@ def is_valid_uuid(uuid_string: str) -> bool:
 
 
 class DependencyGraphNode(BaseModel):
-    """dependency图节点模型"""
+    """Dependency graph node model."""
     id: str
     name: str
     type: str = Field(..., description="Node type: module, class, function, package")
@@ -357,7 +357,7 @@ class DependencyGraphNode(BaseModel):
 
 
 class DependencyGraphEdge(BaseModel):
-    """dependency图边模型"""
+    """Dependency graph edge model."""
     id: str
     source: str
     target: str
@@ -368,7 +368,7 @@ class DependencyGraphEdge(BaseModel):
 
 
 class DependencyGraphMetrics(BaseModel):
-    """dependency图指标模型"""
+    """Dependency graph metrics model."""
     total_nodes: int = Field(ge=0)
     total_edges: int = Field(ge=0)
     circular_dependencies: int = Field(ge=0)
@@ -377,7 +377,7 @@ class DependencyGraphMetrics(BaseModel):
 
 
 class DependencyGraphResponse(BaseModel):
-    """dependency图response模型 - 符合prodenv要求"""
+    """Dependency graph response model - meets production requirements."""
     id: str
     project_id: str
     branch_id: Optional[str] = None
@@ -389,10 +389,10 @@ class DependencyGraphResponse(BaseModel):
     created_at: str
     updated_at: str
     api_version: str = Field(default=API_VERSION, description="API version for backward compatibility")
-    
+
     @validator('status')
     def validate_status(cls, v):
-        """verifystatusvalue"""
+        """Verify status value."""
         valid_statuses = ['pending', 'in_progress', 'processing', 'completed', 'failed']
         if v not in valid_statuses:
             raise ValueError(f'Status must be one of {valid_statuses}')
@@ -407,34 +407,34 @@ async def get_dependency_graph(
     db: Annotated[AsyncSession, Depends(get_db)] = None
 ):
     """
-    getproject的dependency关系图data
-    
-    此endpoint符合prodenv要求：
-    - 实现inputverify（UUIDformatverify）- Requirement 3.6
-    - containAPIversionInfo - Requirement 3.4
-    - provideprod级APIendpoint - Requirement 2.4
-    
+    Get dependency graph data for a project.
+
+    This endpoint meets production requirements:
+    - Implements input validation (UUID format validation) - Requirement 3.6
+    - Contains API version info - Requirement 3.4
+    - Provides production-level API endpoint - Requirement 2.4
+
     Args:
-        project_id: project的UUID
-        branch_id: 可选的分支标识符
-        current_user: 当前authuser
-        db: dbSession
-        
+        project_id: Project UUID
+        branch_id: Optional branch identifier
+        current_user: Current authenticated user
+        db: Database session
+
     Returns:
-        DependencyGraphResponse: dependency图data，contain节点、边、指标等
-        
+        DependencyGraphResponse: Dependency graph data containing nodes, edges, metrics, etc.
+
     Raises:
-        HTTPException 422: UUIDformat无效
-        HTTPException 404: project不存在或无dependencydata
-        HTTPException 403: 无permission访问
+        HTTPException 422: Invalid UUID format
+        HTTPException 404: Project not found or no dependency data
+        HTTPException 403: No permission to access
     """
-    # inputverify：verifyUUIDformat (Requirement 3.6)
+    # Input validation: verify UUID format (Requirement 3.6)
     if not is_valid_uuid(project_id):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Invalid UUID format: {project_id}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
         )
-    
+
     try:
         project_uuid = UUID(project_id)
     except ValueError:
@@ -442,51 +442,51 @@ async def get_dependency_graph(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Invalid UUID format: {project_id}"
         )
-    
-    # queryproject的最新architectureanalyze
+
+    # Query latest architecture analysis for project
     query = select(ArchitectureAnalysis).join(PullRequest).filter(
         PullRequest.project_id == project_uuid
     )
-    
-    # 如果指定了分支，filter分支
+
+    # Filter by branch if specified
     if branch_id:
         branch_name = branch_id.replace('-', '/')
         query = query.filter(PullRequest.branch_name == branch_name)
-    
+
     query = query.order_by(ArchitectureAnalysis.started_at.desc()).limit(1)
-    
+
     analysis_result = await db.execute(query)
     analysis = analysis_result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"No dependency graph data found for project {project_id}"
         )
-    
-    # get关联的PR
+
+    # Get associated PR
     pr_result = await db.execute(
         select(PullRequest).filter(PullRequest.id == analysis.pull_request_id)
     )
     pr = pr_result.scalar_one_or_none()
-    
+
     if not pr:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Pull request for analysis not found"
         )
-    
-    # 构建dependency图节点and边
+
+    # Build dependency graph nodes and edges
     nodes = []
     edges = []
     circular_dependency_chains = []
-    
+
     if analysis.summary and isinstance(analysis.summary, dict):
-        # 从summary中提取dependency图data
+        # Extract dependency graph data from summary
         components = analysis.summary.get('components', [])
         dependencies_data = analysis.summary.get('dependencies', [])
-        
-        # 构建节点
+
+        # Build nodes
         for idx, component in enumerate(components):
             node = DependencyGraphNode(
                 id=str(component.get('id', idx + 1)),
@@ -498,8 +498,8 @@ async def get_dependency_graph(
                 properties=component.get('properties')
             )
             nodes.append(node)
-        
-        # 构建边
+
+        # Build edges
         for idx, dep in enumerate(dependencies_data):
             edge = DependencyGraphEdge(
                 id=dep.get('id', f'e{idx + 1}'),
@@ -511,11 +511,11 @@ async def get_dependency_graph(
                 properties=dep.get('properties')
             )
             edges.append(edge)
-        
-        # 提取循环dependency链
+
+        # Extract circular dependency chains
         circular_dependency_chains = analysis.summary.get('circular_dependency_chains', [])
-    
-    # 如果没有summarydata，从violations构建基本dependency图
+
+    # If no summary data, build basic dependency graph from violations
     if not nodes:
         violations_result = await db.execute(
             select(ArchitectureViolation).filter(
@@ -523,7 +523,7 @@ async def get_dependency_graph(
             )
         )
         violations = violations_result.scalars().all()
-        
+
         if violations:
             components_set = set()
             for violation in violations:
@@ -531,8 +531,8 @@ async def get_dependency_graph(
                     components_set.add(violation.component)
                 if violation.related_component:
                     components_set.add(violation.related_component)
-            
-            # 构建节点
+
+            # Build nodes
             for idx, component in enumerate(sorted(components_set)):
                 node = DependencyGraphNode(
                     id=str(idx + 1),
@@ -541,8 +541,8 @@ async def get_dependency_graph(
                     complexity=5
                 )
                 nodes.append(node)
-            
-            # 构建边
+
+            # Build edges
             component_to_id = {comp: str(idx + 1) for idx, comp in enumerate(sorted(components_set))}
             for idx, violation in enumerate(violations):
                 if violation.component and violation.related_component:
@@ -555,14 +555,14 @@ async def get_dependency_graph(
                             is_circular=(violation.type == 'circular_dependency')
                         )
                         edges.append(edge)
-    
-    # 计算指标
+
+    # Calculate metrics
     circular_deps_count = sum(1 for e in edges if e.is_circular)
     avg_deps_per_node = None
     if nodes:
         total_deps = len(edges)
         avg_deps_per_node = round(total_deps / len(nodes), 2)
-    
+
     metrics = DependencyGraphMetrics(
         total_nodes=len(nodes),
         total_edges=len(edges),
@@ -570,8 +570,8 @@ async def get_dependency_graph(
         max_depth=analysis.summary.get('max_depth') if analysis.summary else None,
         avg_dependencies_per_node=avg_deps_per_node
     )
-    
-    # 确定status
+
+    # Determine status
     status_mapping = {
         'pending': 'pending',
         'in_progress': 'processing',
@@ -579,8 +579,8 @@ async def get_dependency_graph(
         'failed': 'failed'
     }
     analysis_status = status_mapping.get(analysis.status.value, 'pending')
-    
-    # 构建response (containAPIversionInfo - Requirement 3.4)
+
+    # Build response (contains API version info - Requirement 3.4)
     response = DependencyGraphResponse(
         id=str(analysis.id),
         project_id=str(pr.project_id),
@@ -594,7 +594,7 @@ async def get_dependency_graph(
         updated_at=analysis.completed_at.isoformat() if analysis.completed_at else analysis.started_at.isoformat() if analysis.started_at else datetime.utcnow().isoformat(),
         api_version=API_VERSION
     )
-    
+
     return response
 
 
@@ -605,34 +605,34 @@ async def get_architecture_analysis(
     db: Annotated[AsyncSession, Depends(get_db)] = None
 ):
     """
-    get指定的architectureanalyzedata
-    
-    此endpoint符合prodenv要求：
-    - 实现inputverify（UUIDformatverify）- Requirement 3.6
-    - containAPIversionInfo - Requirement 3.4
-    - provideprod级APIendpoint - Requirement 2.4
-    
+    Get specified architecture analysis data.
+
+    This endpoint meets production requirements:
+    - Implements input validation (UUID format validation) - Requirement 3.6
+    - Contains API version info - Requirement 3.4
+    - Provides production-level API endpoint - Requirement 2.4
+
     Args:
-        analysis_id: architectureanalyze的UUID
-        current_user: 当前authuser
-        db: dbSession
-        
+        analysis_id: Architecture analysis UUID
+        current_user: Current authenticated user
+        db: Database session
+
     Returns:
-        ArchitectureAnalysisResponse: architectureanalyzedata，contain节点、边、指标等
-        
+        ArchitectureAnalysisResponse: Architecture analysis data containing nodes, edges, metrics, etc.
+
     Raises:
-        HTTPException 422: UUIDformat无效
-        HTTPException 404: architectureanalyze不存在
-        HTTPException 403: 无permission访问
+        HTTPException 422: Invalid UUID format
+        HTTPException 404: Architecture analysis not found
+        HTTPException 403: No permission to access
     """
-    # inputverify：verifyUUIDformat (Requirement 3.6)
+    # Input validation: verify UUID format (Requirement 3.6)
     if not is_valid_uuid(analysis_id):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Invalid UUID format: {analysis_id}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
         )
-    
-    # queryarchitectureanalyze
+
+    # Query architecture analysis
     try:
         analysis_uuid = UUID(analysis_id)
     except ValueError:
@@ -640,50 +640,50 @@ async def get_architecture_analysis(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Invalid UUID format: {analysis_id}"
         )
-    
+
     analysis_result = await db.execute(
         select(ArchitectureAnalysis)
         .filter(ArchitectureAnalysis.id == analysis_uuid)
     )
     analysis = analysis_result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Architecture analysis with id {analysis_id} not found"
         )
-    
-    # get关联的PR以getprojectinfo
+
+    # Get associated PR to get project information
     pr_result = await db.execute(
         select(PullRequest)
         .filter(PullRequest.id == analysis.pull_request_id)
     )
     pr = pr_result.scalar_one_or_none()
-    
+
     if not pr:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Pull request for analysis {analysis_id} not found"
         )
-    
-    # permissioncheck：verifyuser是否有permission访问该project
-    # note：这里简化了permissioncheck，实际shouldcheckuser是否有permission访问该project
-    # 在prodenv中，shoulduse require_project_access 装饰器
-    
-    # getarchitecture违规data
+
+    # Permission check: verify user has permission to access the project
+    # Note: Simplified permission check here, should check user permission for the project in production
+    # In production environment, should use require_project_access decorator
+
+    # Get architecture violation data
     violations_result = await db.execute(
         select(ArchitectureViolation)
         .filter(ArchitectureViolation.analysis_id == analysis_uuid)
     )
     violations = violations_result.scalars().all()
-    
-    # 构建节点and边
+
+    # Build nodes and edges
     nodes = []
     edges = []
     circular_dependency_chains = []
-    
+
     if analysis.summary and isinstance(analysis.summary, dict):
-        # 从summary中提取architecture图data
+        # Extract architecture graph data from summary
         components = analysis.summary.get('components', [])
         for idx, component in enumerate(components):
             node = GraphNode(
@@ -697,8 +697,8 @@ async def get_architecture_analysis(
                 metrics=component.get('metrics')
             )
             nodes.append(node)
-        
-        # 提取dependency关系
+
+        # Extract dependency relationships
         dependencies = analysis.summary.get('dependencies', [])
         for idx, dep in enumerate(dependencies):
             edge = GraphEdge(
@@ -710,11 +710,11 @@ async def get_architecture_analysis(
                 properties=dep.get('properties')
             )
             edges.append(edge)
-        
-        # 提取循环dependency链
+
+        # Extract circular dependency chains
         circular_dependency_chains = analysis.summary.get('circular_dependency_chains', [])
-    
-    # 如果没有summarydata，从violations构建基本图
+
+    # If no summary data, build basic graph from violations
     if not nodes and violations:
         components_set = set()
         for violation in violations:
@@ -722,13 +722,13 @@ async def get_architecture_analysis(
                 components_set.add(violation.component)
             if violation.related_component:
                 components_set.add(violation.related_component)
-        
+
         for idx, component in enumerate(sorted(components_set)):
             health = 'critical' if any(
-                v.component == component and v.severity == 'critical' 
+                v.component == component and v.severity == 'critical'
                 for v in violations
             ) else 'warning'
-            
+
             node = GraphNode(
                 id=str(idx + 1),
                 label=component,
@@ -738,8 +738,8 @@ async def get_architecture_analysis(
                 position={'x': 100 + (idx % 3) * 200, 'y': 100 + (idx // 3) * 200}
             )
             nodes.append(node)
-        
-        # 从violations提取dependency关系
+
+        # Extract dependency relationships from violations
         component_to_id = {comp: str(idx + 1) for idx, comp in enumerate(sorted(components_set))}
         for idx, violation in enumerate(violations):
             if violation.component and violation.related_component:
@@ -752,19 +752,19 @@ async def get_architecture_analysis(
                         is_circular=(violation.type == 'circular_dependency')
                     )
                     edges.append(edge)
-    
-    # 计算循环dependency数量
+
+    # Calculate circular dependency count
     circular_deps_count = sum(1 for e in edges if e.is_circular)
     if not circular_deps_count:
         circular_deps_count = sum(1 for v in violations if v.type == 'circular_dependency')
-    
-    # 计算平均complexity
+
+    # Calculate average complexity
     avg_complexity = None
     if nodes:
         total_complexity = sum(n.complexity for n in nodes)
         avg_complexity = round(total_complexity / len(nodes), 2)
-    
-    # 构建指标
+
+    # Build metrics
     metrics = ArchitectureMetrics(
         total_nodes=len(nodes),
         total_edges=len(edges),
@@ -772,8 +772,8 @@ async def get_architecture_analysis(
         max_depth=analysis.summary.get('max_depth') if analysis.summary else None,
         avg_complexity=avg_complexity
     )
-    
-    # 确定status
+
+    # Determine status
     status_mapping = {
         'pending': 'pending',
         'in_progress': 'processing',
@@ -781,8 +781,8 @@ async def get_architecture_analysis(
         'failed': 'failed'
     }
     analysis_status = status_mapping.get(analysis.status.value, 'pending')
-    
-    # 构建response (containAPIversionInfo - Requirement 3.4)
+
+    # Build response (contains API version info - Requirement 3.4)
     response = ArchitectureAnalysisResponse(
         id=str(analysis.id),
         project_id=str(pr.project_id),
@@ -796,5 +796,5 @@ async def get_architecture_analysis(
         updated_at=analysis.completed_at.isoformat() if analysis.completed_at else analysis.started_at.isoformat() if analysis.started_at else datetime.utcnow().isoformat(),
         api_version=API_VERSION
     )
-    
+
     return response

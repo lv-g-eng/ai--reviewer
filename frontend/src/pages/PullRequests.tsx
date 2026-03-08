@@ -15,8 +15,14 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { LoadingState } from '../components/LoadingState';
-import CodeDiff, { FileDiff, Comment } from '../components/CodeDiff';
+import dynamic from 'next/dynamic';
+import type { FileDiff, Comment } from '../components/CodeDiff/types';
 import '../styles/responsive.css';
+
+const CodeDiff = dynamic(() => import('../components/CodeDiff').then(mod => ({ default: mod.default })), {
+  ssr: false,
+  loading: () => <div className="p-4">Loading...</div>
+});
 
 // Types based on design.md
 export interface User {
@@ -198,7 +204,7 @@ export const PullRequestsComponent: React.FC<PullRequestsProps> = ({ initialPRs 
 
       const newComment: Comment = {
         id: `comment-${Date.now()}`,
-        author: 'Current User', // In real app, get from auth context
+        author: 'Current User',
         content,
         createdAt: new Date(),
         lineNumber,

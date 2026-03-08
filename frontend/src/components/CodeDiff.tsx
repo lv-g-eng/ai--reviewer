@@ -12,18 +12,8 @@
  * **Validates: Requirements 3.1, 3.5**
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronRight, MessageSquare, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
-import Prism from 'prismjs';
-import 'prismjs/themes/prism-tomorrow.css';
-import 'prismjs/components/prism-python';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/components/prism-jsx';
-import 'prismjs/components/prism-tsx';
-import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-markdown';
 
 // Types
 export interface DiffLine {
@@ -95,9 +85,25 @@ function detectLanguage(filePath: string): string {
 
 /**
  * Apply syntax highlighting to code content
+ * Uses dynamic import to avoid SSR issues with Prism.js
  */
-function highlightCode(content: string, language: string): string {
+async function loadPrismAndHighlight(content: string, language: string): Promise<string> {
+  if (typeof window === 'undefined') {
+    return content;
+  }
+  
   try {
+    const Prism = (await import('prismjs')).default;
+    await import('prismjs/themes/prism-tomorrow.css');
+    await import('prismjs/components/prism-python');
+    await import('prismjs/components/prism-javascript');
+    await import('prismjs/components/prism-typescript');
+    await import('prismjs/components/prism-jsx');
+    await import('prismjs/components/prism-tsx');
+    await import('prismjs/components/prism-css');
+    await import('prismjs/components/prism-json');
+    await import('prismjs/components/prism-markdown');
+    
     const grammar = Prism.languages[language];
     if (grammar) {
       return Prism.highlight(content, grammar, language);
@@ -106,6 +112,14 @@ function highlightCode(content: string, language: string): string {
     console.warn('Syntax highlighting failed:', error);
   }
   return content;
+}
+
+// Simple synchronous highlight that doesn't use Prism
+function simpleHighlight(content: string): string {
+  return content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 /**
@@ -240,9 +254,11 @@ export default function CodeDiff({
 
   // Render line with syntax highlighting
   const renderLine = useCallback(
-    (line: DiffLine, file: FileDiff) => {
+    async (line: DiffLine, file: FileDiff) => {
       const language = file.language || detectLanguage(file.path);
-      const highlighted = highlightCode(line.content, language);
+      const highlighted = typeof window !== 'undefined' 
+        ? await loadPrismAndHighlight(line.content, language)
+        : simpleHighlight(line.content);
       return (
         <code
           className="whitespace-pre"

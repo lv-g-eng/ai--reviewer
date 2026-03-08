@@ -1,3 +1,4 @@
+from typing import Annotated
 """
 Authentication API endpoints.
 """
@@ -50,7 +51,7 @@ def get_client_ip(request: Request) -> str:
 async def login(
     request: Request,
     credentials: LoginRequest,
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Authenticate user and return JWT token.
@@ -113,7 +114,7 @@ async def login(
 async def logout(
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Logout user and invalidate session.
@@ -152,7 +153,7 @@ async def logout(
 @router.post("/refresh", response_model=RefreshResponse)
 async def refresh_token(
     refresh_req: RefreshRequest,
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Refresh JWT token.
@@ -177,7 +178,7 @@ async def refresh_token(
 async def get_current_user(
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Get current authenticated user information.

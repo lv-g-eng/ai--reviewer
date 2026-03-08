@@ -3,7 +3,7 @@ Project management API endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Annotated
 from sqlalchemy.orm import Session
 import uuid
 from datetime import datetime, timezone
@@ -58,7 +58,7 @@ async def create_project(
     request: Request,
     project_data: CreateProjectRequest,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Create a new project (programmer or admin).
@@ -113,7 +113,7 @@ async def create_project(
 async def list_projects(
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     List all accessible projects.
@@ -171,7 +171,7 @@ async def get_project(
     project_id: str,
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Get project details.
@@ -215,7 +215,7 @@ async def update_project(
     request: Request,
     project_data: UpdateProjectRequest,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Update project (owner or admin).
@@ -298,7 +298,7 @@ async def delete_project(
     project_id: str,
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Delete project (owner or admin).
@@ -365,7 +365,7 @@ async def grant_project_access(
     request: Request,
     access_data: GrantAccessRequest,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Grant user access to project (owner or admin).
@@ -457,7 +457,7 @@ async def revoke_project_access(
     user_id: str,
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Revoke user access to project (owner or admin).

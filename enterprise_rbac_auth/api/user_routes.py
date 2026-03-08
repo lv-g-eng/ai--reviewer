@@ -3,7 +3,7 @@ User management API endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Annotated
 from sqlalchemy.orm import Session
 
 from ..database import get_db_session
@@ -52,7 +52,7 @@ async def create_user(
     request: Request,
     user_data: CreateUserRequest,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Create a new user (admin only).
@@ -137,7 +137,7 @@ async def create_user(
 async def list_users(
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     List all users (admin only).
@@ -166,7 +166,7 @@ async def get_user(
     user_id: str,
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Get user details.
@@ -208,7 +208,7 @@ async def update_user_role(
     request: Request,
     role_data: UpdateRoleRequest,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Update user role (admin only).
@@ -289,7 +289,7 @@ async def delete_user(
     user_id: str,
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session)
+    db: Annotated[Session, Depends(get_db_session)]
 ):
     """
     Delete a user (admin only).

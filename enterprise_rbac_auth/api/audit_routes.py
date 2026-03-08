@@ -3,7 +3,7 @@ Audit log API endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Annotated
 from datetime import datetime
 from sqlalchemy.orm import Session
 
@@ -35,7 +35,7 @@ class AuditLogResponse(BaseModel):
 async def query_audit_logs(
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session),
+    db: Annotated[Session, Depends(get_db_session)],
     user_id: Optional[str] = Query(None, description="Filter by user ID"),
     action: Optional[str] = Query(None, description="Filter by action"),
     start_date: Optional[str] = Query(None, description="Filter by start date (ISO format)"),
@@ -117,7 +117,7 @@ async def get_user_audit_logs(
     user_id: str,
     request: Request,
     credentials = Depends(security),
-    db: Session = Depends(get_db_session),
+    db: Annotated[Session, Depends(get_db_session)],
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of logs to return")
 ):
     """

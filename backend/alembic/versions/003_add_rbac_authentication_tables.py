@@ -122,18 +122,19 @@ def upgrade():
     op.create_index('ix_rbac_audit_logs_success', 'rbac_audit_logs', ['success'])
     
     # Insert default admin user
-    # Password: admin123 (hashed with bcrypt, 12 rounds)
-    # IMPORTANT: Change this password in production!
+    # IMPORTANT: This is a placeholder hash. In production, create admin user through 
+    # secure registration or use environment variables for initial setup.
+    # The password hash below is a random string and will not work for login.
     op.execute("""
         INSERT INTO rbac_users (id, username, password_hash, role, created_at, updated_at, is_active)
         VALUES (
             'admin-default-id',
             'admin',
-            '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYqVr/1jrYK',
+            '$2b$12$PLACEHOLDERHASHREQUIRESREPLACEMENT',
             'ADMIN',
             NOW(),
             NOW(),
-            true
+            false
         )
     """)
 

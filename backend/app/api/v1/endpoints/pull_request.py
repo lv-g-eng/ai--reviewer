@@ -5,7 +5,7 @@ Handles PR creation, analysis status, and results
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
+from typing import Optional, Annotated
 
 from app.database.postgresql import get_db
 from app.models import PullRequest, Project
@@ -24,9 +24,9 @@ router = APIRouter()
 async def analyze_pull_request_endpoint(
     project_id: str,
     pr_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user),
-    _ = Depends(check_project_access)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    _: Annotated[bool, Depends(check_project_access)]
 ):
     """
     Queue a pull request for asynchronous analysis
@@ -67,7 +67,7 @@ async def analyze_pull_request_endpoint(
 @router.get("/analysis/{task_id}/status")
 async def get_analysis_status(
     task_id: str,
-    current_user = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """
     Get the status of an analysis task
@@ -107,9 +107,9 @@ async def get_analysis_status(
 async def reanalyze_pull_request(
     project_id: str,
     pr_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user),
-    _ = Depends(check_project_access)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    _: Annotated[bool, Depends(check_project_access)]
 ):
     """
     Re-analyze an existing pull request
@@ -145,9 +145,9 @@ async def reanalyze_pull_request(
 async def analyze_circular_dependencies(
     project_id: str,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user),
-    _ = Depends(check_project_access)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    _: Annotated[bool, Depends(check_project_access)]
 ):
     """
     Analyze circular dependencies in a project using AST analysis

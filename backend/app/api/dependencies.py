@@ -17,8 +17,8 @@ security = HTTPBearer()
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db)
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> User:
     """
     Get current authenticated user from JWT token
@@ -93,7 +93,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ) -> User:
     """Get current active user"""
     return current_user
@@ -106,7 +106,7 @@ class RoleChecker:
     def __init__(self, allowed_roles: List[UserRole]):
         self.allowed_roles = allowed_roles
     
-    def __call__(self, user: User = Depends(get_current_user)) -> User:
+    def __call__(self, user: Annotated[User, Depends(get_current_user)]) -> User:
         if user.role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

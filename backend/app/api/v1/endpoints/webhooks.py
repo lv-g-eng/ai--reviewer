@@ -14,7 +14,7 @@ Requirements:
 import hmac
 import hashlib
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Annotated
 from fastapi import APIRouter, Request, Header, HTTPException, status, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -188,7 +188,7 @@ async def get_or_create_pr(
 @router.post("/github")
 async def github_webhook_handler(
     request: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     x_hub_signature_256: Optional[str] = Header(None, alias="X-Hub-Signature-256"),
     x_github_delivery: Optional[str] = Header(None, alias="X-GitHub-Delivery"),
     x_github_event: Optional[str] = Header(None, alias="X-GitHub-Event")

@@ -3,7 +3,7 @@ Repository management API endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from typing import List, Optional, Annotated
 
 from app.database.postgresql import get_db
 from app.services.repository_service import RepositoryService
@@ -29,8 +29,8 @@ router = APIRouter(prefix="/repositories", tags=["repositories"])
 )
 async def add_repository(
     request: AddRepositoryRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)]
 ):
     """
     Add a new GitHub repository as a dependency.
@@ -79,8 +79,8 @@ async def add_repository(
 async def validate_repository(
     repository_url: str = Query(..., description="GitHub repository URL to validate"),
     branch: Optional[str] = Query(None, description="Optional branch to validate"),
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)]
 ):
     """
     Validate a GitHub repository URL without adding it.
@@ -118,8 +118,8 @@ async def validate_repository(
 )
 async def get_repository(
     repository_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)]
 ):
     """Get detailed information about a specific repository"""
     try:
@@ -177,8 +177,8 @@ async def list_repositories(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     status: Optional[str] = Query(None, description="Filter by status"),
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)]
 ):
     """List all repository dependencies with pagination"""
     try:
@@ -238,8 +238,8 @@ async def list_repositories(
 async def update_repository(
     repository_id: str,
     request: RepositoryUpdateRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)]
 ):
     """Update repository configuration and settings"""
     try:
@@ -310,8 +310,8 @@ async def update_repository(
 )
 async def delete_repository(
     repository_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)]
 ):
     """Remove a repository dependency (soft delete by archiving)"""
     try:
@@ -376,8 +376,8 @@ async def delete_repository(
 )
 async def sync_repository(
     repository_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)]
 ):
     """
     Synchronize repository with remote source.

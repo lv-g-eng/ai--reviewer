@@ -235,7 +235,7 @@ async def github_webhook(
     x_hub_signature_256: Optional[str] = Header(None),
     x_github_delivery: Optional[str] = Header(None),
     x_github_event: Optional[str] = Header(None),
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     Receive GitHub webhook events

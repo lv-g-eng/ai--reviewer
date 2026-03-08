@@ -5,7 +5,7 @@ This module provides REST API endpoints for querying and exporting audit logs.
 
 Validates Requirements: 15.6, 15.7
 """
-from typing import Optional, List
+from typing import Optional, List, Annotated
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
@@ -126,8 +126,8 @@ async def query_audit_logs(
     end_date: Optional[datetime] = Query(None, description="Filter by end date (ISO 8601)"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
 ):
     """
     Query audit logs with filters
@@ -191,8 +191,8 @@ async def query_audit_logs(
 )
 async def export_audit_logs(
     export_params: AuditLogExportParams,
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
 ):
     """
     Export audit logs for compliance reporting
@@ -268,8 +268,8 @@ async def export_audit_logs(
     description="Verify the integrity of the audit log hash chain. Requires admin role.",
 )
 async def verify_audit_log_integrity(
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
 ):
     """
     Verify integrity of audit trail hash chain
@@ -305,7 +305,7 @@ async def verify_audit_log_integrity(
     description="Get list of all available audit event types",
 )
 async def get_event_types(
-    current_user: dict = Depends(get_current_user),
+    current_user: Annotated[dict, Depends(get_current_user)],
 ):
     """
     Get list of available audit event types
@@ -330,8 +330,8 @@ async def get_event_types(
 async def get_audit_log_statistics(
     start_date: Optional[datetime] = Query(None, description="Start date for statistics"),
     end_date: Optional[datetime] = Query(None, description="End date for statistics"),
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
 ):
     """
     Get audit log statistics
@@ -454,8 +454,8 @@ class FeatureFlagAuditResponse(BaseModel):
 )
 async def log_feature_flag_change(
     change_log: FeatureFlagChangeLog,
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
 ):
     """
     Log feature flag state change for audit purposes.

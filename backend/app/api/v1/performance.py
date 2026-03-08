@@ -11,7 +11,7 @@ Provides real-time performance metrics and optimization insights:
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Annotated
 import psutil
 import time
 import asyncio
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/performance", tags=["performance"])
 
 @router.get("/metrics")
 async def get_performance_metrics(
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> Dict[str, Any]:
     """Get comprehensive performance metrics"""
     try:
@@ -86,7 +86,7 @@ async def get_performance_metrics(
 @router.get("/database/slow-queries")
 async def get_slow_queries(
     limit: int = 20,
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> Dict[str, Any]:
     """Get slow database queries for optimization"""
     try:
@@ -104,7 +104,7 @@ async def get_slow_queries(
 
 @router.get("/database/indexes")
 async def get_index_recommendations(
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> Dict[str, Any]:
     """Get database index recommendations"""
     try:
@@ -130,7 +130,7 @@ async def get_index_recommendations(
 @router.post("/database/maintenance")
 async def run_database_maintenance(
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> Dict[str, Any]:
     """Run database maintenance tasks"""
     try:
@@ -214,7 +214,7 @@ async def clear_cache(
 
 @router.get("/recommendations")
 async def get_performance_recommendations(
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> Dict[str, Any]:
     """Get AI-powered performance optimization recommendations"""
     try:

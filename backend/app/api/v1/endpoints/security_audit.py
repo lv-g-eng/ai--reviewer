@@ -2,7 +2,7 @@
 Security Audit API Endpoints
 RESTful API for security audit and compliance management
 """
-from typing import List, Optional
+from typing import List, Optional, Annotated
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Depends, Query
@@ -38,7 +38,7 @@ async def create_audit_log(
     metadata: Optional[dict] = None,
     compliance_framework: Optional[str] = None,
     regulatory_requirements: Optional[List[str]] = None,
-    current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """
     Create an audit log entry for security and compliance events
@@ -91,7 +91,7 @@ async def store_scan_results(
     project_id: str,
     commit_sha: str,
     scan_result: SecurityScanResult,
-    current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """
     Store comprehensive security scan results and create audit log
@@ -131,7 +131,7 @@ async def store_scan_results(
 @router.get("/quality-metrics/{project_id}", response_model=ProjectQualityMetrics)
 async def get_quality_metrics(
     project_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """
     Get project quality metrics based on recent security scans
@@ -155,7 +155,7 @@ async def get_quality_metrics(
 @router.get("/quality-grade/{project_id}", response_model=dict)
 async def get_quality_grade(
     project_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """
     Get quality grade and metrics for dashboard display
@@ -184,7 +184,7 @@ async def get_audit_trail(
     developer_id: Optional[str] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
-    current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """
     Get audit trail for a project with filtering options
@@ -221,7 +221,7 @@ async def get_audit_trail(
 async def get_compliance_report(
     project_id: str,
     days_back: int = Query(30, ge=1, le=365),
-    current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """
     Generate a comprehensive security compliance report
@@ -249,7 +249,7 @@ async def get_compliance_report(
 @router.get("/scan-summary/{project_id}", response_model=dict)
 async def get_scan_summary(
     project_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """
     Get summary of recent security scans for a project
@@ -328,7 +328,7 @@ async def get_scan_summary(
 @router.get("/tools/{project_id}", response_model=List[str])
 async def get_used_tools(
     project_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """
     Get list of security scanning tools used for a project
@@ -369,7 +369,7 @@ async def get_used_tools(
 @router.delete("/audit-log/{audit_id}", response_model=dict)
 async def delete_audit_log(
     audit_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """
     Delete an audit log entry (for cleanup or data retention)

@@ -4,7 +4,7 @@ Security Compliance API Endpoints
 Provides REST API endpoints for the Security and Audit Compliance module.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Annotated
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -44,7 +44,7 @@ class ComplianceSummary(BaseModel):
 async def process_audit_report(
     request: AuditRequest,
     background_tasks: BackgroundTasks,
-    service: SecurityComplianceService = Depends(get_security_compliance_service)
+    service: Annotated[SecurityComplianceService, Depends(get_security_compliance_service)]
 ):
     """
     Process npm audit JSON and generate compliance report.
@@ -89,7 +89,7 @@ async def process_audit_report(
 @router.get("/report/{project_id}", response_model=ComplianceReport)
 async def get_compliance_report(
     project_id: str,
-    service: SecurityComplianceService = Depends(get_security_compliance_service)
+    service: Annotated[SecurityComplianceService, Depends(get_security_compliance_service)]
 ):
     """
     Get compliance report for a specific project.
@@ -127,7 +127,7 @@ async def get_compliance_report(
 async def get_vulnerability_trends(
     project_id: str,
     days: int = 30,
-    service: SecurityComplianceService = Depends(get_security_compliance_service)
+    service: Annotated[SecurityComplianceService, Depends(get_security_compliance_service)]
 ):
     """
     Get vulnerability trends for a project over time.
@@ -164,7 +164,7 @@ async def get_vulnerability_trends(
 
 @router.get("/summary", response_model=ComplianceSummary)
 async def get_compliance_summary(
-    service: SecurityComplianceService = Depends(get_security_compliance_service)
+    service: Annotated[SecurityComplianceService, Depends(get_security_compliance_service)]
 ):
     """
     Get compliance summary across all projects.
@@ -199,7 +199,7 @@ async def get_compliance_summary(
 
 @router.get("/projects")
 async def list_projects_with_compliance(
-    service: SecurityComplianceService = Depends(get_security_compliance_service)
+    service: Annotated[SecurityComplianceService, Depends(get_security_compliance_service)]
 ):
     """
     List all projects with their compliance scores.
@@ -229,7 +229,7 @@ async def list_projects_with_compliance(
 @router.delete("/project/{project_id}")
 async def delete_project_compliance_data(
     project_id: str,
-    service: SecurityComplianceService = Depends(get_security_compliance_service)
+    service: Annotated[SecurityComplianceService, Depends(get_security_compliance_service)]
 ):
     """
     Delete compliance data for a specific project.
@@ -259,7 +259,7 @@ async def delete_project_compliance_data(
 async def bulk_process_audit_reports(
     requests: List[AuditRequest],
     background_tasks: BackgroundTasks,
-    service: SecurityComplianceService = Depends(get_security_compliance_service)
+    service: Annotated[SecurityComplianceService, Depends(get_security_compliance_service)]
 ):
     """
     Process multiple audit reports in bulk.
@@ -320,7 +320,7 @@ async def bulk_process_audit_reports(
 @router.post("/example-process")
 async def example_process_audit(
     background_tasks: BackgroundTasks,
-    service: SecurityComplianceService = Depends(get_security_compliance_service)
+    service: Annotated[SecurityComplianceService, Depends(get_security_compliance_service)]
 ):
     """
     Example endpoint to demonstrate audit processing with sample data.

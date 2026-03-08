@@ -155,7 +155,7 @@ async def code_review_webhook(
     x_hub_signature_256: Optional[str] = Header(None, alias="X-Hub-Signature-256"),
     x_github_delivery: Optional[str] = Header(None, alias="X-GitHub-Delivery"),
     x_github_event: Optional[str] = Header(None, alias="X-GitHub-Event"),
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     GitHub webhook endpoint for pull request events.

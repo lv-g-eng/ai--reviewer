@@ -9,7 +9,7 @@ Provides REST API endpoints for:
 
 Validates Requirements: 12.7 (Timeout handling for all external API calls)
 """
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Annotated
 from fastapi import APIRouter, HTTPException, Query, Path
 from pydantic import BaseModel, Field
 
@@ -130,12 +130,11 @@ class WorkerStatsResponse(BaseModel):
 
 @router.get(
     "/{task_id}/status",
-    response_model=TaskStatusResponse,
-    summary="Get task status",
+        summary="Get task status",
     description="Get detailed status of a task including progress, state, and results"
 )
 async def get_status(
-    task_id: str = Path(..., description="Celery task ID")
+    task_id: Annotated[str, Path(..., description="Celery task ID")]
 ) -> TaskStatusResponse:
     """
     Get detailed status of a task
@@ -164,12 +163,11 @@ async def get_status(
 
 @router.get(
     "/{task_id}/progress",
-    response_model=TaskProgressResponse,
-    summary="Get task progress",
+        summary="Get task progress",
     description="Get task progress information including percentage and current stage"
 )
 async def get_progress(
-    task_id: str = Path(..., description="Celery task ID")
+    task_id: Annotated[str, Path(..., description="Celery task ID")]
 ) -> TaskProgressResponse:
     """
     Get task progress information
@@ -193,7 +191,7 @@ async def get_progress(
     description="Get task result (blocking until task completes or timeout)"
 )
 async def get_result(
-    task_id: str = Path(..., description="Celery task ID"),
+    task_id: Annotated[str, Path(..., description="Celery task ID")],
     timeout: Optional[float] = Query(
         None,
         description="Maximum time to wait in seconds (None = wait forever)"
@@ -227,12 +225,11 @@ async def get_result(
 
 @router.post(
     "/{task_id}/revoke",
-    response_model=TaskRevokeResponse,
-    summary="Revoke (cancel) a task",
+        summary="Revoke (cancel) a task",
     description="Cancel a task. Can optionally terminate it immediately."
 )
 async def revoke(
-    task_id: str = Path(..., description="Celery task ID"),
+    task_id: Annotated[str, Path(..., description="Celery task ID")],
     request: TaskRevokeRequest = TaskRevokeRequest()
 ) -> TaskRevokeResponse:
     """
@@ -303,8 +300,7 @@ async def list_scheduled_tasks() -> List[ScheduledTaskInfo]:
 
 @router.get(
     "/workers/stats",
-    response_model=WorkerStatsResponse,
-    summary="Get worker statistics",
+        summary="Get worker statistics",
     description="Get statistics from all Celery workers"
 )
 async def get_stats() -> WorkerStatsResponse:

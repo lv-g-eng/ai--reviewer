@@ -40,7 +40,7 @@ async def get_performance_metrics(
         db_optimizer = DatabaseOptimizer()
         
         # Get database connection pool status
-        pool_status = await db_optimizer.optimize_connection_pool()
+        pool_status = await db_optimizer.optimize_connection_pool(pool_size=10)
         
         # Cache metrics
         cache_stats = cache_manager.get_cache_stats()
@@ -248,7 +248,7 @@ async def get_performance_recommendations(
         
         # Database recommendations
         db_optimizer = DatabaseOptimizer()
-        pool_status = await db_optimizer.optimize_connection_pool()
+        pool_status = await db_optimizer.optimize_connection_pool(pool_size=10)
         
         utilization = float(pool_status.get("pool_utilization", "0%").replace("%", ""))
         if utilization > 80:

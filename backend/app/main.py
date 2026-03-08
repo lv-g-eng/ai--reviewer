@@ -389,7 +389,10 @@ if settings.is_tracing_enabled():
     if tracing_config:
         tracing_config.instrument_fastapi(app)
 
-# CORS middleware (Requirement 8.5)
+# Compression middleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# CORS middleware - must be last in middleware chain (Requirement 8.5)
 # Configure CORS to restrict allowed origins based on environment
 # In production, only allow requests from authorized domains
 app.add_middleware(

@@ -254,7 +254,10 @@ app.add_middleware(
     allowed_hosts=["localhost", "127.0.0.1"] if resilient_settings.ENVIRONMENT == "development" else ["yourdomain.com"]
 )
 
-# CORS middleware with optimized settings
+# Compression middleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# CORS middleware - must be last in middleware chain
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -268,9 +271,6 @@ app.add_middleware(
     allow_headers=["*"],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
-
-# Compression middleware
-app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 # Performance monitoring middleware

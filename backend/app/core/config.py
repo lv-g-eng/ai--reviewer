@@ -292,14 +292,14 @@ class Settings(BaseSettings):
             return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
     @property
-    def celery_broker_url(self) -> str:
+    def celery_broker_url_value(self) -> str:
         """Celery broker URL (Requirement 1.1)"""
         if self.CELERY_BROKER_URL:
             return self.CELERY_BROKER_URL
         return self.redis_url
 
     @property
-    def celery_result_backend(self) -> str:
+    def celery_result_backend_url(self) -> str:
         """Celery result backend URL (Requirement 1.1)"""
         if self.CELERY_RESULT_BACKEND:
             return self.CELERY_RESULT_BACKEND

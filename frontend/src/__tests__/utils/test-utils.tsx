@@ -200,7 +200,7 @@ export const propertyTestHelpers = {
   /**
    * Generate arbitrary API responses
    */
-  apiResponse: <T>(dataArbitrary: fc.Arbitrary<T>) =>
+  apiResponse: <T,>(dataArbitrary: fc.Arbitrary<T>) =>
     fc.record({
       data: dataArbitrary,
       status: fc.constantFrom(200, 201, 400, 401, 403, 404, 500),
@@ -210,7 +210,7 @@ export const propertyTestHelpers = {
   /**
    * Generate arbitrary pagination data
    */
-  paginationData: <T>(itemArbitrary: fc.Arbitrary<T>) =>
+  paginationData: <T,>(itemArbitrary: fc.Arbitrary<T>) =>
     fc.record({
       items: fc.array(itemArbitrary, { minLength: 0, maxLength: 20 }),
       total: fc.nat({ max: 1000 }),
@@ -318,7 +318,7 @@ export const apiTestHelpers = {
   /**
    * Mock successful API response
    */
-  mockSuccessResponse: <T>(data: T) =>
+  mockSuccessResponse: <T,>(data: T) =>
     rest.get('*', (req, res, ctx) => res(ctx.json(data))),
 
   /**

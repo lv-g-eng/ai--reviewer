@@ -4,7 +4,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/api-client-optimized';
+import { apiClient } from '@/lib/api-client';
 import type { LoginFormData, RegisterFormData } from '@/lib/validations/auth';
 
 interface TokenResponse {

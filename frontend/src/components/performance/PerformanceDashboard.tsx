@@ -38,7 +38,7 @@ import {
   RefreshCw,
   Lock
 } from 'lucide-react';
-import { apiClientEnhanced } from '@/lib/api-client-enhanced';
+import { apiClientEnhanced } from '@/lib/api-client';
 import { validatePerformanceDashboardData, type PerformanceDashboardData } from '@/lib/validations/api-schemas';
 import { ErrorHandler } from '@/lib/error-handler';
 import { featureFlagsService } from '@/lib/feature-flags';

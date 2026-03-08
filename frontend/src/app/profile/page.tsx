@@ -29,7 +29,7 @@ import {
   Save,
   Trash2,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api-client-optimized';
+import { apiClient } from '@/lib/api-client';
 
 interface APISettings {
   openrouter_api_key_set: boolean;

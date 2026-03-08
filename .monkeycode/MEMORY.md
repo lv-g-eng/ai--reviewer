@@ -84,3 +84,21 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 生成了优化计划文档和总结报告
   - 识别了三个重复的API客户端实现（共1264行代码可合并）
   - 建议后续工作：合并API客户端、修复其他内存泄漏、继续翻译剩余文件
+
+[前端API客户端统一优化]
+
+- Date: 2026-03-08
+- Context: Agent 在执行项目整体优化任务时完成
+- Category: 代码结构
+- Instructions:
+  - 创建了统一的API客户端 lib/api-client.ts，合并了三个重复实现的功能
+  - 统一客户端包含：智能缓存、请求去重、重试逻辑、熔断器模式、并发控制、性能监控
+  - 更新了所有组件和hooks的导入引用
+  - 修复了TSX文件中的泛型语法问题（使用 `<T,>` 替代 `<T>` 避免JSX解析冲突）
+  - 新旧文件映射：
+    - lib/api-client-optimized.ts -> lib/api-client.ts (统一客户端)
+    - lib/api-client-enhanced.ts -> lib/api-client.ts (统一客户端)
+    - services/ApiClient.ts -> 保留但重新导出统一客户端
+    - services/api.ts -> 保留简单axios实例
+  - 导出别名：apiClient, apiClientEnhanced, optimizedApiClient 用于向后兼容
+

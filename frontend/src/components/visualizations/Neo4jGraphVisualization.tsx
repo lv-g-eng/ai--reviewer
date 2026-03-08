@@ -26,7 +26,7 @@ import {
   Lock
 } from 'lucide-react';
 import ForceGraph2D from 'react-force-graph-2d';
-import { apiClientEnhanced } from '@/lib/api-client-enhanced';
+import { apiClientEnhanced } from '@/lib/api-client';
 import { validateArchitectureAnalysis, type ArchitectureAnalysis } from '@/lib/validations/api-schemas';
 import { ErrorHandler } from '@/lib/error-handler';
 import { featureFlagsService } from '@/lib/feature-flags';

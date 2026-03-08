@@ -12,7 +12,7 @@
  */
 
 import { AxiosError } from 'axios';
-import { ApiError } from './api-client-enhanced';
+import { ApiError } from './api-client';
 
 /**
  * Error types for classification

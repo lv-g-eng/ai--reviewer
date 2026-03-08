@@ -3,7 +3,7 @@
  * Uses optimized API client with caching and retry logic
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client-optimized';
+import { apiClient } from '@/lib/api-client';
 
 export interface Project {
   id: string;

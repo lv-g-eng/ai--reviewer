@@ -17,7 +17,7 @@ import {
   Loader2,
   Lock
 } from 'lucide-react';
-import { apiClientEnhanced } from '@/lib/api-client-enhanced';
+import { apiClientEnhanced } from '@/lib/api-client';
 import { validateArchitectureAnalysis, type ArchitectureAnalysis } from '@/lib/validations/api-schemas';
 import { ErrorHandler } from '@/lib/error-handler';
 import { featureFlagsService } from '@/lib/feature-flags';

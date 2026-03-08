@@ -14,7 +14,7 @@
 import React, { Component } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { LoadingState } from '../components/LoadingState';
-import { getApiClient } from '../services/ApiClient';
+import { getApiClient } from '../lib/api-client';
 import '../styles/responsive.css';
 
 export interface DashboardProps {

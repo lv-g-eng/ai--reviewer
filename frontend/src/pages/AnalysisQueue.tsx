@@ -14,7 +14,7 @@ import React, { Component } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { LoadingState } from '../components/LoadingState';
 import { VirtualList } from '../components/VirtualList';
-import { getApiClient } from '../services/ApiClient';
+import { getApiClient } from '../lib/api-client';
 import { TaskScheduler, ScheduleResult } from '../utils/taskScheduler';
 import { TaskRetryScheduler, RetrySchedule } from '../utils/taskRetryScheduler';
 import '../styles/responsive.css';

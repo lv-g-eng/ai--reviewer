@@ -38,7 +38,7 @@ import {
   Lock
 } from 'lucide-react';
 import ForceGraph2D from 'react-force-graph-2d';
-import { apiClientEnhanced as apiClient } from '@/lib/api-client-enhanced';
+import { apiClientEnhanced as apiClient } from '@/lib/api-client';
 import { 
   validateDependencyGraph, 
   type DependencyGraph,

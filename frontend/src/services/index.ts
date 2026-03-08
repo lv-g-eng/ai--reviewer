@@ -9,5 +9,5 @@ export * from './CacheService';
 export * from './config';
 export * from './ErrorMonitor';
 
-// Re-export with alias to avoid conflict
-export { ApiClient, apiClient as optimizedApiClient } from './ApiClient';
+// Re-export unified API client from lib
+export { apiClient as optimizedApiClient, ApiClient, apiClientEnhanced } from '@/lib/api-client';

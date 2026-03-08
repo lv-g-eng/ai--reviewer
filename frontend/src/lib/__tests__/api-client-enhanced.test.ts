@@ -10,7 +10,7 @@
  * - Response structure
  */
 
-import { ApiClient, ApiClientConfig, ApiResponse } from '../api-client-enhanced';
+import { ApiClient, ApiClientConfig, ApiResponse } from '../api-client';
 
 describe('ApiClient', () => {
   describe('Configuration', () => {

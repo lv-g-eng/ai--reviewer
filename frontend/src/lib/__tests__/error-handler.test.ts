@@ -16,7 +16,7 @@ import {
   logError,
   reportToBackend,
 } from '../error-handler';
-import { ApiError } from '../api-client-enhanced';
+import { ApiError } from '../api-client';
 
 // Mock fetch for backend reporting tests
 global.fetch = jest.fn();

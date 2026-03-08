@@ -6,11 +6,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useProjects, useProject, useSyncProject, useCreateProject, useDeleteProject } from '../useProjects';
-import { apiClient } from '@/lib/api-client-optimized';
+import { apiClient } from '@/lib/api-client';
 import type { ReactNode } from 'react';
 
 // Mock the API client
-jest.mock('@/lib/api-client-optimized', () => ({
+jest.mock('@/lib/api-client', () => ({
   apiClient: {
     get: jest.fn(),
     post: jest.fn(),

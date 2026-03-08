@@ -27,7 +27,7 @@ function LoginForm() {
   const { toast } = useToast()
   const { login, loading, isAuthenticated } = useAuth()
   const [error, setError] = useState<string | null>(null)
-  const returnUrl = searchParams.get('returnUrl') || '/dashboard'
+  const returnUrl = searchParams?.get('returnUrl') || '/dashboard'
 
   // Redirect if already authenticated
   useEffect(() => {

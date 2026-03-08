@@ -34,8 +34,8 @@ export default function BranchArchitecturePage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const branchId = params.branchId as string;
-  const projectId = searchParams.get('project') || '';
+  const branchId = params?.branchId as string || '';
+  const projectId = searchParams?.get('project') || '';
   
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [layoutAlgorithm, setLayoutAlgorithm] = useState('force-directed');

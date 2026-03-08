@@ -49,6 +49,18 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.VIEW_CONFIG,
     Permission.EXPORT_REPORT,
   ],
+  // DEVELOPER: Developer role
+  [Role.DEVELOPER]: [
+    Permission.CREATE_PROJECT,
+    Permission.UPDATE_PROJECT,
+    Permission.VIEW_PROJECT,
+    Permission.VIEW_CONFIG,
+  ],
+  // COMPLIANCE_OFFICER: Compliance officer role
+  [Role.COMPLIANCE_OFFICER]: [
+    Permission.VIEW_PROJECT,
+    Permission.VIEW_CONFIG,
+  ],
   // VISITOR: Read-only grants
   [Role.VISITOR]: [
     Permission.VIEW_PROJECT,

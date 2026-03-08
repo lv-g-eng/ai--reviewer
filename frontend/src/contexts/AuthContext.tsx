@@ -67,6 +67,16 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.VIEW_USERS,
     Permission.VIEW_REVIEWS,
   ],
+  [Role.PROGRAMMER]: [
+    Permission.VIEW_PROJECTS,
+    Permission.CREATE_PROJECT,
+    Permission.MODIFY_PROJECT,
+    Permission.VIEW_REVIEWS,
+  ],
+  [Role.VISITOR]: [
+    Permission.VIEW_PROJECTS,
+    Permission.VIEW_REVIEWS,
+  ],
 };
 
 // Token refresh interval: 20 minutes (tokens expire in 24 hours, refresh well before)

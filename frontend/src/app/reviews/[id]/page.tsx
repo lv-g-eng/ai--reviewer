@@ -40,7 +40,7 @@ export default function PullRequestReviewPage() {
 
   // Mock data - replace with actual API call
   const prData = {
-    id: params.id,
+    id: params?.id,
     number: 123,
     title: 'Add user authentication with JWT tokens',
     status: 'in_review',

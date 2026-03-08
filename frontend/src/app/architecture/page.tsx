@@ -23,7 +23,7 @@ import type { BranchInfo } from '@/hooks/useProjects';
 export default function ArchitecturePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const projectId = searchParams.get('project') || '';
+  const projectId = searchParams?.get('project') || '';
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: branches = [], isLoading } = useProjectBranches(projectId);

@@ -37,7 +37,7 @@ const DependencyGraphVisualization = dynamic(
 );
 
 interface DependencyGraphVisualizationLazyProps {
-  projectId?: string;
+  projectId: string;
   analysisId?: string;
   className?: string;
   websocketUrl?: string;

@@ -71,9 +71,9 @@ function ProjectListSkeleton() {
 interface Project {
   id: string
   name: string
-  description?: string
-  github_repo_url?: string
-  language?: string
+  description?: string | null
+  github_repo_url?: string | null
+  language?: string | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -229,10 +229,10 @@ function ProjectsPageContent() {
 
   // Handle GitHub connection success/error from URL params
   useEffect(() => {
-    const githubConnected = searchParams.get('github_connected')
-    const error = searchParams.get('error')
-    const errorDescription = searchParams.get('error_description')
-    const errorDetail = searchParams.get('error_detail')
+    const githubConnected = searchParams?.get('github_connected')
+    const error = searchParams?.get('error')
+    const errorDescription = searchParams?.get('error_description')
+    const errorDetail = searchParams?.get('error_detail')
 
     if (githubConnected === 'true') {
       console.log('[Projects Page] GitHub connected successfully')
@@ -297,7 +297,7 @@ function ProjectsPageContent() {
 
   // Extract unique languages for filter
   const availableLanguages = useMemo(() => {
-    const languages = new Set(projects.map(p => p.language).filter(Boolean))
+    const languages = new Set(projects.map(p => p.language).filter((lang): lang is string => Boolean(lang)))
     return Array.from(languages).sort()
   }, [projects])
 

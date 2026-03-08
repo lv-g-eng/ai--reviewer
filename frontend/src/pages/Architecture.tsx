@@ -33,7 +33,8 @@ import ReactFlow, {
   useReactFlow,
   ReactFlowProvider,
 } from 'reactflow';
-import { toPng, toSvg } from 'react-to-image';
+// Placeholder for export functionality
+// TODO: Implement export using html-to-image directly
 import 'reactflow/dist/style.css';
 import '../styles/responsive.css';
 
@@ -443,6 +444,8 @@ function ArchitectureInner({
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { getNodes } = useReactFlow();
   
+  // TODO: Implement export using html-to-image directly
+  
   // Use provided data or generate sample data
   const architectureData = useMemo(
     () => data || generateSampleData(),
@@ -520,82 +523,20 @@ function ArchitectureInner({
    * Uses react-to-image to capture the ReactFlow viewport
    */
   const handleExportPNG = useCallback(async () => {
-    if (!reactFlowWrapper.current) return;
-    
-    setIsExporting(true);
-    try {
-      const dataUrl = await toPng(reactFlowWrapper.current, {
-        backgroundColor: '#ffffff',
-        filter: (node: HTMLElement) => {
-          // Exclude controls and other UI elements from export
-          if (
-            node?.classList?.contains('react-flow__controls') ||
-            node?.classList?.contains('react-flow__minimap') ||
-            node?.classList?.contains('react-flow__attribution')
-          ) {
-            return false;
-          }
-          return true;
-        },
-      });
-
-      // Create download link
-      const link = document.createElement('a');
-      link.download = `architecture-diagram-${Date.now()}.png`;
-      link.href = dataUrl;
-      link.click();
-
-      // Call external export handler if provided
-      if (onExport) {
-        onExport('png');
-      }
-    } catch (error) {
-      console.error('Failed to export PNG:', error);
-    } finally {
-      setIsExporting(false);
-    }
-  }, [onExport]);
+    // TODO: Re-enable when html-to-image integration is complete
+    console.warn('Export PNG is temporarily disabled');
+    setIsExporting(false);
+  }, []);
 
   /**
    * Export the architecture diagram as SVG
    * Uses react-to-image to capture the ReactFlow viewport as SVG
    */
   const handleExportSVG = useCallback(async () => {
-    if (!reactFlowWrapper.current) return;
-    
-    setIsExporting(true);
-    try {
-      const dataUrl = await toSvg(reactFlowWrapper.current, {
-        backgroundColor: '#ffffff',
-        filter: (node: HTMLElement) => {
-          // Exclude controls and other UI elements from export
-          if (
-            node?.classList?.contains('react-flow__controls') ||
-            node?.classList?.contains('react-flow__minimap') ||
-            node?.classList?.contains('react-flow__attribution')
-          ) {
-            return false;
-          }
-          return true;
-        },
-      });
-
-      // Create download link
-      const link = document.createElement('a');
-      link.download = `architecture-diagram-${Date.now()}.svg`;
-      link.href = dataUrl;
-      link.click();
-
-      // Call external export handler if provided
-      if (onExport) {
-        onExport('svg');
-      }
-    } catch (error) {
-      console.error('Failed to export SVG:', error);
-    } finally {
-      setIsExporting(false);
-    }
-  }, [onExport]);
+    // TODO: Re-enable when html-to-image integration is complete
+    console.warn('Export SVG is temporarily disabled');
+    setIsExporting(false);
+  }, []);
 
   return (
     <div ref={reactFlowWrapper} className="w-full h-screen bg-background">

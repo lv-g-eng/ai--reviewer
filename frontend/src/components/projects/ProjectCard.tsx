@@ -96,12 +96,12 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
                 <GitBranch className="h-4 w-4" />
                 <a
-                    href={project.github_repo_url}
+                    href={project.github_repo_url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-primary-600 dark:hover:text-primary-400 truncate"
                 >
-                    {project.github_repo_url.replace('https://github.com/', '')}
+                    {project.github_repo_url?.replace('https://github.com/', '') || 'No repository'}
                 </a>
             </div>
 

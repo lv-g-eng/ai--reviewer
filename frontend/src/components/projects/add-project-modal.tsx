@@ -219,7 +219,7 @@ export function AddProjectModal({ open, onClose }: AddProjectModalProps) {
       // Only send name and description to match backend schema
       await createProject.mutateAsync({
         name: data.name,
-        description: data.description || null,
+        description: data.description || undefined,
       })
       
       toast({

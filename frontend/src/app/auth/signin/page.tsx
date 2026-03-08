@@ -21,7 +21,7 @@ function SignInForm() {
   const [authError, setAuthError] = useState('');
   const searchParams = useSearchParams();
   const router = useRouter();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  const callbackUrl = searchParams?.get('callbackUrl') || '/dashboard';
 
   useEffect(() => {
     // Clear any existing auth errors when component mounts

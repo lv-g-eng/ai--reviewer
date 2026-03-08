@@ -566,6 +566,7 @@ describe('Property 3: searchfilter性能', () => {
         }
       ),
       { numRuns: 30 }
+    );
   }, 30000);
 });
 
@@ -1166,7 +1167,6 @@ describe('Property 11: projectsort正确性', () => {
     );
   }, 30000);
 });
-});
 
 /**
  * Property 11: projectsort正确性
@@ -1233,4 +1233,28 @@ describe('Property 11: projectsort正确性', () => {
           const { unmount, container } = renderWithProviders(<Projects />);
 
           // 点击名称sortbutton
-          const nameButton = screen.getB
+          const nameButton = screen.getByRole('button', { name: /name/i });
+          expect(nameButton).toBeTruthy();
+
+          const user = userEvent.setup({ delay: null });
+          
+          // 点击名称按钮（升序）
+          await user.click(nameButton);
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          // 验证升序
+          const rows = container.querySelectorAll('[data-testid="project-row"]');
+          const firstRow = rows[0];
+          expect(firstRow).toBeTruthy();
+
+          // 点击第二下（降序）
+          await user.click(nameButton);
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          unmount();
+          cleanup();
+        }
+      )
+    );
+  }, 30000);
+});

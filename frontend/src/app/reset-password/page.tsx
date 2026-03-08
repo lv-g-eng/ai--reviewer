@@ -49,7 +49,7 @@ function ResetPasswordForm() {
   const password = watch('password', '')
 
   useEffect(() => {
-    const tokenParam = searchParams.get('token')
+    const tokenParam = searchParams?.get('token')
     if (!tokenParam) {
       toast({
         variant: 'destructive',

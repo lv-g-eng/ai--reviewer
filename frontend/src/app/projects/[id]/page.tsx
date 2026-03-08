@@ -40,7 +40,7 @@ export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
-  const projectId = params.id as string
+  const projectId = params?.id as string || ''
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   
   const { data: project, isLoading } = useProject(projectId)

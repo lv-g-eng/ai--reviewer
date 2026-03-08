@@ -34,7 +34,7 @@ const QuickActions = dynamic(() => import('@/components/dashboard/QuickActions')
 })
 
 // API service functions
-const fetchDashboardStats = async (): Promise<DashboardStats> => {
+const fetchDashboardStats = async (): Promise<DashboardMetrics> => {
   const response = await fetch('/api/dashboard/stats', {
     method: 'GET',
     headers: {
@@ -92,7 +92,6 @@ export default function DashboardPage() {
     queryKey: ['dashboard'],
     queryFn: fetchDashboardStats,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
     retry: 3,
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   })

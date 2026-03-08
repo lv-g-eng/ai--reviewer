@@ -47,7 +47,7 @@ export function RouteGuard({
     if (!isAuthenticated) {
       // Store the intended destination for redirect after login
       const returnUrl = pathname !== redirectTo ? pathname : '/dashboard';
-      router.push(`${redirectTo}?returnUrl=${encodeURIComponent(returnUrl)}`);
+      router.push(`${redirectTo}?returnUrl=${encodeURIComponent(returnUrl || '/dashboard')}`);
       return;
     }
 

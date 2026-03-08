@@ -6,6 +6,9 @@ const nextConfig = {
     compress: true,
     generateEtags: true,
 
+    // Exclude test files from pages
+    pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
+
     // Compiler optimizations
     compiler: {
         removeConsole: process.env.NODE_ENV === 'production',
@@ -43,9 +46,8 @@ const nextConfig = {
     
     // Turbopack configuration for Next.js 16+
     turbopack: {
-        // Turbopack is enabled by default in Next.js 16
-        // This empty config acknowledges we're aware of Turbopack
-        // and allows webpack config to coexist
+        // Exclude test files from being treated as pages
+        exclude: ['**/*.test.tsx', '**/*.test.ts', '**/*.spec.tsx', '**/*.spec.ts'],
     },
 
     // Headers for static asset caching (需求 11.2)

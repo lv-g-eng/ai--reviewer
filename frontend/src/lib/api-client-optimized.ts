@@ -45,6 +45,8 @@ class OptimizedAPIClient {
   private pendingRequests = new Map<string, Promise<any>>();
   private metrics: RequestMetrics[] = [];
   private config: Required<APIClientConfig>;
+  private cleanupTimer?: NodeJS.Timeout;
+  private destroyed = false;
 
   constructor(config: APIClientConfig = {}) {
     this.config = {
@@ -126,12 +128,29 @@ class OptimizedAPIClient {
   }
 
   private startCacheCleanup(): void {
-    setInterval(() => {
+    if (this.destroyed) return;
+    
+    this.cleanupTimer = setInterval(() => {
+      if (this.destroyed) {
+        if (this.cleanupTimer) {
+          clearInterval(this.cleanupTimer);
+          this.cleanupTimer = undefined;
+        }
+        return;
+      }
+      
       const now = Date.now();
       for (const [key, entry] of this.cache.entries()) {
         if (now - entry.timestamp > entry.ttl) {
           this.cache.delete(key);
         }
+      }
+      
+      // Limit cache size to prevent memory bloat (max 100 entries)
+      if (this.cache.size > 100) {
+        const entries = Array.from(this.cache.entries());
+        const toDelete = entries.slice(0, entries.length - 100);
+        toDelete.forEach(([key]) => this.cache.delete(key));
       }
     }, 60000); // Clean every minute
   }
@@ -374,6 +393,20 @@ class OptimizedAPIClient {
       
       return false;
     }
+  }
+
+  // Cleanup method to prevent memory leaks
+  destroy(): void {
+    this.destroyed = true;
+    
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = undefined;
+    }
+    
+    this.cache.clear();
+    this.pendingRequests.clear();
+    this.metrics = [];
   }
 }
 

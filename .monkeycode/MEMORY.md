@@ -1,0 +1,86 @@
+# 用户指令记忆
+
+本文件记录了用户的指令、偏好和教导，用于在未来的交互中提供参考。
+
+## 格式
+
+### 用户指令条目
+
+用户指令条目应遵循以下格式：
+
+[用户指令摘要]
+
+- Date: [YYYY-MM-DD]
+- Context: [提及的场景或时间]
+- Instructions:
+  - [用户教导或指示的内容，逐行描述]
+
+### 项目知识条目
+
+Agent 在任务执行过程中发现的条目应遵循以下格式：
+
+[项目知识摘要]
+
+- Date: [YYYY-MM-DD]
+- Context: Agent 在执行 [具体任务描述] 时发现
+- Category: [代码结构|代码模式|代码生成|构建方法|测试方法|依赖关系|环境配置]
+- Instructions:
+  - [具体的知识点，逐行描述]
+
+## 去重策略
+
+- 添加新条目前，检查是否存在相似或相同的指令
+- 若发现重复，跳过新条目或与已有条目合并
+- 合并时，更新上下文或日期信息
+- 这有助于避免冗余条目，保持记忆文件整洁
+
+## 条目
+
+[AI Code Review Platform - 项目架构知识]
+
+- Date: 2026-03-08
+- Context: Agent 在执行代码优化和国际化任务时发现
+- Category: 代码结构
+- Instructions:
+  - 项目采用前后端分离架构：frontend（Next.js 16 + React 19）+ backend（FastAPI + Python）
+  - 前端使用 pnpm 作为包管理器，后端使用 pip-compile 管理依赖
+  - 存在多个重复实现：API客户端（3个）、ErrorBoundary（2个）、CodeDiff（3个）
+  - 后端服务有重复：architectural_drift_detector 和 drift_detector，service_consolidator 和 service_merger
+  - 前端测试使用 Jest，后端测试使用 pytest
+  - 构建命令：前端 `npm run build`，后端无显式构建命令
+
+[AI Code Review Platform - 代码质量问题]
+
+- Date: 2026-03-08
+- Context: Agent 在执行代码优化任务时发现
+- Category: 代码模式
+- Instructions:
+  - 存在超长文件：connection_manager.py (1532行)、error_reporter.py (1291行) 需要拆分
+  - 定时器泄漏风险：api-client-optimized.ts 和 Logger.ts 中的定时器未提供清理方法
+  - 状态管理优化：Pages 组件中多个 useState 应合并为 useReducer
+  - Prism.js 语言组件重复导入，应提取到共享模块
+
+[AI Code Review Platform - 国际化需求]
+
+- Date: 2026-03-08
+- Context: Agent 在执行中英文转换任务时发现
+- Category: 代码模式
+- Instructions:
+  - 前端源码中存在大量中文注释（Dashboard.tsx, PullRequests.tsx 等）
+  - 后端 API 文档使用中文描述（code_review.py, user_settings.py）
+  - UI 组件中可能有中文文本需要国际化
+  - 遵循 GB/T 30269-2013 术语对照表进行翻译
+  - 保持语义精确且英文长度不超过原中文长度
+
+[优化工作执行记录]
+
+- Date: 2026-03-08
+- Context: Agent 执行代码优化和国际化任务
+- Category: 代码生成
+- Instructions:
+  - 已修复 api-client-optimized.ts 的内存泄漏问题，添加了 destroy() 方法和缓存大小限制
+  - 已翻译 Dashboard.tsx 的文件头、接口文档和方法注释为英文
+  - 创建了完整的中英文术语对照表（90+术语，遵循GB/T 30269-2013）
+  - 生成了优化计划文档和总结报告
+  - 识别了三个重复的API客户端实现（共1264行代码可合并）
+  - 建议后续工作：合并API客户端、修复其他内存泄漏、继续翻译剩余文件

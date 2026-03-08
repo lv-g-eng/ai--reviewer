@@ -1,14 +1,14 @@
 /**
- * Dashboard页面component
+ * Dashboard Page Component
  * 
- * feature:
- * - 展示system概览and关键指标
- * - data懒load机制（在component挂载时get，而非import时）
- * - 30sec自动refresh（可config）
- * - useErrorBoundary包裹
- * - cleanup定时器防止内存泄漏
+ * Features:
+ * - Display system overview and key metrics
+ * - Lazy data loading mechanism (fetch on component mount, not on import)
+ * - 30-second auto-refresh (configurable)
+ * - Wrapped with ErrorBoundary
+ * - Clean up timers to prevent memory leaks
  * 
- * verifyRequirement: 1.1, 1.4
+ * Requirements: 1.1, 1.4
  */
 
 import React, { Component } from 'react';
@@ -18,7 +18,7 @@ import { getApiClient } from '../services/ApiClient';
 import '../styles/responsive.css';
 
 export interface DashboardProps {
-  /** datarefresh间隔（ms），默认30sec */
+  /** Data refresh interval (milliseconds), default 30 seconds */
   refreshInterval?: number;
 }
 
@@ -39,8 +39,8 @@ export interface DashboardState {
 }
 
 /**
- * Dashboardclasscomponent
- * 实现懒load、定时refreshand资源cleanup
+ * Dashboard Class Component
+ * Implements lazy loading, scheduled refresh, and resource cleanup
  */
 export class DashboardComponent extends Component<DashboardProps, DashboardState> {
   private refreshTimer: NodeJS.Timeout | null = null;
@@ -49,7 +49,7 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
   private pendingRequests: Set<Promise<void>> = new Set();
 
   static defaultProps: Partial<DashboardProps> = {
-    refreshInterval: 30000, // 默认30sec
+    refreshInterval: 30000, // Default 30 seconds
   };
 
   constructor(props: DashboardProps) {
@@ -63,15 +63,15 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
   }
 
   /**
-   * component挂载后开始data懒load
+   * Start lazy data loading after component mount
    */
   async componentDidMount(): Promise<void> {
     this.mounted = true;
     
-    // 首timesloaddata
+    // Initial data load
     await this.fetchMetrics();
 
-    // set定时refresh
+    // Setup scheduled refresh
     if (this.props.refreshInterval && this.props.refreshInterval > 0) {
       this.refreshTimer = setInterval(() => {
         this.fetchMetrics();
@@ -80,47 +80,47 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
   }
 
   /**
-   * component卸载时cleanup所有资源
-   * 防止内存泄漏
+   * Clean up all resources on component unmount
+   * Prevent memory leaks
    */
   componentWillUnmount(): void {
     this.mounted = false;
     
-    // cleanup定时器
+    // Clean up timer
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
     }
 
-    // cancel所有进行中的request
+    // Cancel all pending requests
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
     }
 
-    // cleanup待handle的request引用
+    // Clear pending request references
     this.pendingRequests.clear();
   }
 
   /**
-   * getDashboard指标data
-   * 确保在500ms内responsedataupdate
+   * Fetch Dashboard metrics data
+   * Ensure data update response within 500ms
    */
   fetchMetrics = async (): Promise<void> => {
-    // 如果component已卸载，不executeupdate
+    // Skip update if component is unmounted
     if (!this.mounted) {
       return;
     }
 
-    // record开始时间以跟踪response性能
+    // 记录开始时间以跟踪响应性能
     const startTime = performance.now();
 
-    // create新的AbortController用于此timesrequest
+    // 创建新的AbortController用于此次请求
     this.abortController = new AbortController();
 
     const requestPromise = (async () => {
       try {
-        // 只在首timesload时showloadingstatus
+        // 只在首次加载时显示loading状态
         if (!this.state.metrics) {
           this.setState({ loading: true, error: null });
         }
@@ -128,10 +128,10 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
         const apiClient = getApiClient();
         const metrics = await apiClient.get<SystemMetrics>('/dashboard/metrics');
 
-        // 计算response时间
+        // 计算响应时间
         const responseTime = performance.now() - startTime;
 
-        // 确保component仍然挂载后再updatestatus
+        // 确保组件仍然挂载后再更新状态
         if (this.mounted) {
           this.setState({
             metrics,
@@ -140,7 +140,7 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
             lastUpdate: new Date(),
           });
 
-          // 在devenvrecordresponse时间以verify性能
+          // 在开发环境记录响应时间以验证性能
           if (process.env.NODE_ENV === 'development') {
             console.log(`Dashboard data refresh completed in ${responseTime.toFixed(2)}ms`);
             if (responseTime > 500) {
@@ -149,12 +149,12 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
           }
         }
       } catch (error) {
-        // 如果是cancelerror，不updatestatus
+        // 如果是取消错误，不更新状态
         if (error instanceof Error && error.name === 'AbortError') {
           return;
         }
 
-        // 确保component仍然挂载后再updatestatus
+        // 确保组件仍然挂载后再更新状态
         if (this.mounted) {
           this.setState({
             loading: false,
@@ -164,26 +164,26 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
       }
     })();
 
-    // 跟踪待handle的request
+    // 跟踪待处理的请求
     this.pendingRequests.add(requestPromise);
 
     try {
       await requestPromise;
     } finally {
-      // cleanup此timesrequest的引用
+      // 清理此次请求的引用
       this.pendingRequests.delete(requestPromise);
     }
   };
 
   /**
-   * 手动refreshdata
+   * 手动刷新数据
    */
   handleRefresh = (): void => {
     this.fetchMetrics();
   };
 
   /**
-   * getsystem健康status的颜色
+   * 获取系统健康状态的颜色
    */
   getHealthColor(health: SystemMetrics['systemHealth']): string {
     switch (health) {
@@ -199,7 +199,7 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
   }
 
   /**
-   * getsystem健康status的文本
+   * 获取系统健康状态的文本
    */
   getHealthText(health: SystemMetrics['systemHealth']): string {
     switch (health) {
@@ -217,7 +217,7 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
   render(): React.ReactNode {
     const { loading, error, metrics, lastUpdate } = this.state;
 
-    // loadstatus
+    // 加载状态
     if (loading && !metrics) {
       return (
         <LoadingState
@@ -229,7 +229,7 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
       );
     }
 
-    // errorstatus
+    // 错误状态
     if (error && !metrics) {
       return (
         <div style={styles.errorContainer}>
@@ -243,7 +243,7 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
       );
     }
 
-    // 主content
+    // 主内容
     return (
       <div style={styles.container}>
         <div style={styles.header}>
@@ -316,7 +316,7 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
           </div>
         )}
 
-        {/* show后台refresherror（不影响已有datashow） */}
+        {/* 显示后台刷新错误（不影响已有数据显示） */}
         {error && metrics && (
           <div style={styles.backgroundErrorBanner}>
             ⚠️ Failed to refresh data: {error.message}
@@ -328,7 +328,7 @@ export class DashboardComponent extends Component<DashboardProps, DashboardState
 }
 
 /**
- * Dashboardcomponent - useErrorBoundary包裹
+ * Dashboard组件 - 使用ErrorBoundary包裹
  */
 export const Dashboard: React.FC<DashboardProps> = (props) => {
   return (
@@ -338,7 +338,7 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
   );
 };
 
-// style定义 - useresponse式设计
+// 样式定义 - 使用响应式设计
 const styles: Record<string, React.CSSProperties> = {
   container: {
     width: '100%',

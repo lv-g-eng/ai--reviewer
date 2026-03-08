@@ -16,7 +16,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { LoadingState } from '../components/LoadingState';
 import dynamic from 'next/dynamic';
-import type { FileDiff, Comment } from '../components/CodeDiff/types';
+import type { FileDiff, Comment } from '../components/CodeDiff';
 import '../styles/responsive.css';
 
 const CodeDiff = dynamic(() => import('../components/CodeDiff').then(mod => ({ default: mod.default })), {

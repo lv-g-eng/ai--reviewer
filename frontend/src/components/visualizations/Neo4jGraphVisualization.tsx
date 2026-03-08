@@ -63,12 +63,13 @@ interface Neo4jGraphVisualizationProps {
  */
 async function fetchNeo4jGraphData(analysisId: string): Promise<ArchitectureAnalysis> {
   try {
+    // apiClientEnhanced.get<T>() returns Promise<T>, not Promise<{data: T}>
     const response = await apiClientEnhanced.get<ArchitectureAnalysis>(
       `/architecture/${analysisId}/neo4j`
     );
-    
+
     // Validate response data
-    const validatedData = validateArchitectureAnalysis(response.data);
+    const validatedData = validateArchitectureAnalysis(response);
     return validatedData;
   } catch (error) {
     // Handle and transform error

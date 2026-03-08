@@ -103,14 +103,15 @@ export default function DependencyGraphVisualization({
     queryKey: ['dependencyGraph', projectId, branchId],
     queryFn: async () => {
       try {
-        const endpoint = branchId 
+        const endpoint = branchId
           ? `/api/v1/dependencies/${projectId}?branch_id=${branchId}`
           : `/api/v1/dependencies/${projectId}`;
-        
+
+        // apiClient (apiClientEnhanced) returns data directly, not wrapped in {data: ...}
         const response = await apiClient.get(endpoint);
-        
+
         // Validate response data
-        const validatedData = validateDependencyGraph(response.data);
+        const validatedData = validateDependencyGraph(response);
         return validatedData;
       } catch (err) {
         const errorInfo = ErrorHandler.handleError(err);

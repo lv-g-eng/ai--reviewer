@@ -559,9 +559,6 @@ export const apiClientEnhanced = apiClient;
 export const optimizedApiClient = apiClient;
 export { UnifiedAPIClient as ApiClient };
 
-// Export types
-export type { RequestMetrics, ApiClientConfig, ApiResponse, ApiError, RequestOptions };
-
 // Utility hooks for React components
 export const useAPIClient = () => {
   return {

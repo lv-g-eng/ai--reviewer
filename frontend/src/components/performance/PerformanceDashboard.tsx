@@ -61,12 +61,13 @@ const COLORS = {
  */
 async function fetchPerformanceMetrics(projectId: string): Promise<PerformanceDashboardData> {
   try {
+    // apiClientEnhanced.get<T>() returns Promise<T>, not Promise<{data: T}>
     const response = await apiClientEnhanced.get<PerformanceDashboardData>(
       `/projects/${projectId}/metrics`
     );
-    
+
     // Validate response data
-    const validatedData = validatePerformanceDashboardData(response.data);
+    const validatedData = validatePerformanceDashboardData(response);
     return validatedData;
   } catch (error) {
     const errorInfo = ErrorHandler.handleError(error);

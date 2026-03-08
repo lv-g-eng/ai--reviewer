@@ -11,7 +11,7 @@ print("=" * 60)
 
 sections = [
     ("1️⃣ API 配置", [
-        "OPENROUTER_API_KEY: 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",
+        "OPENROUTER_API_KEY: <set via environment variable>",
         "LLM_PRIMARY_PROVIDER: openrouter",
         "DEFAULT_LLM_MODEL: anthropic/claude-3-5-sonnet",
         "ENABLE_LLM_ANALYSIS: true"

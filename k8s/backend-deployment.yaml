@@ -64,11 +64,11 @@ spec:
                   key: jwt-secret
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: '512Mi'
+              cpu: '500m'
             limits:
-              memory: "2Gi"
-              cpu: "2000m"
+              memory: '2Gi'
+              cpu: '2000m'
           # Volume mounts for writable directories
           volumeMounts:
             - name: tmp-volume
@@ -94,9 +94,11 @@ spec:
       # Volumes for writable paths (required with readOnlyRootFilesystem)
       volumes:
         - name: tmp-volume
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: 500Mi
         - name: app-logs
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: 100Mi
       imagePullSecrets:
         - name: registry-credentials
 

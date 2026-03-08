@@ -1,13 +1,13 @@
 /**
- * AnalysisQueue页面组件
+ * AnalysisQueue页面component
  * 
- * 功能:
- * - 展示分析任务队列
- * - 使用VirtualList支持50+任务的高性能渲染
- * - 显示任务状态、进度和优先级
- * - 支持任务优先级调整和手动操作
+ * feature:
+ * - 展示analyzetaskqueue
+ * - useVirtualListsupport50+task的高性能render
+ * - showtaskstatus、进度and优先级
+ * - supporttask优先级调整and手动操作
  * 
- * 验证需求: 5.5
+ * verifyRequirement: 5.5
  */
 
 import React, { Component } from 'react';
@@ -20,11 +20,11 @@ import { TaskRetryScheduler, RetrySchedule } from '../utils/taskRetryScheduler';
 import '../styles/responsive.css';
 
 export interface AnalysisQueueProps {
-  /** 数据刷新间隔（毫秒），默认10秒 */
+  /** datarefresh间隔（ms），默认10sec */
   refreshInterval?: number;
   /** VirtualList容器高度（像素），默认600 */
   listHeight?: number;
-  /** 最大并发任务数，默认3 */
+  /** 最大并发task数，默认3 */
   maxConcurrent?: number;
 }
 
@@ -41,7 +41,7 @@ export interface AnalysisTask {
   completedAt?: Date;
   retryCount: number;
   maxRetries: number;
-  estimatedDuration?: number; // 秒
+  estimatedDuration?: number; // sec
   error?: {
     code: string;
     message: string;
@@ -60,8 +60,8 @@ export interface AnalysisQueueState {
 }
 
 /**
- * AnalysisQueue类组件
- * 实现任务队列展示和VirtualList集成
+ * AnalysisQueueclasscomponent
+ * 实现taskqueue展示andVirtualListintegration
  */
 export class AnalysisQueueComponent extends Component<AnalysisQueueProps, AnalysisQueueState> {
   private refreshTimer: NodeJS.Timeout | null = null;
@@ -71,9 +71,9 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   private retryScheduler: TaskRetryScheduler;
 
   static defaultProps: Partial<AnalysisQueueProps> = {
-    refreshInterval: 10000, // 默认10秒
+    refreshInterval: 10000, // 默认10sec
     listHeight: 600,
-    maxConcurrent: 3, // 默认最多3个并发任务
+    maxConcurrent: 3, // 默认最多3item并发task
   };
 
   constructor(props: AnalysisQueueProps) {
@@ -88,26 +88,26 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
       retrySchedules: new Map(),
     };
     
-    // 初始化任务调度器
+    // 初始化task调度器
     this.scheduler = new TaskScheduler({ 
       maxConcurrent: props.maxConcurrent || 3,
     });
 
-    // 初始化重试调度器
+    // 初始化retry调度器
     this.retryScheduler = new TaskRetryScheduler();
     this.retryScheduler.setRetryCallback(this.handleTaskRetry);
   }
 
   /**
-   * 组件挂载后开始数据加载
+   * component挂载后开始dataload
    */
   async componentDidMount(): Promise<void> {
     this.mounted = true;
     
-    // 首次加载数据
+    // 首timesloaddata
     await this.fetchTasks();
 
-    // 设置定时刷新
+    // set定时refresh
     if (this.props.refreshInterval && this.props.refreshInterval > 0) {
       this.refreshTimer = setInterval(() => {
         this.fetchTasks();
@@ -116,29 +116,29 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   }
 
   /**
-   * 组件卸载时清理所有资源
+   * component卸载时cleanup所有资源
    */
   componentWillUnmount(): void {
     this.mounted = false;
     
-    // 清理定时器
+    // cleanup定时器
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
     }
 
-    // 取消所有进行中的请求
+    // cancel所有进行中的request
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
     }
 
-    // 清理所有重试调度
+    // cleanup所有retry调度
     this.retryScheduler.clearAll();
   }
 
   /**
-   * 获取任务队列数据
+   * gettaskqueuedata
    */
   fetchTasks = async (): Promise<void> => {
     if (!this.mounted) {
@@ -148,7 +148,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
     this.abortController = new AbortController();
 
     try {
-      // 只在首次加载时显示loading状态
+      // 只在首timesload时showloadingstatus
       if (this.state.tasks.length === 0) {
         this.setState({ loading: true, error: null });
       }
@@ -157,13 +157,13 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
       const tasks = await apiClient.get<AnalysisTask[]>('/analysis/queue');
 
       if (this.mounted) {
-        // 使用调度器计算调度结果
+        // use调度器计算调度result
         const scheduleResult = this.scheduler.schedule(tasks);
         
-        // 为失败的任务调度重试
+        // 为failure的task调度retry
         this.scheduleRetriesForFailedTasks(tasks);
 
-        // 获取所有重试调度信息
+        // get所有retry调度info
         const retrySchedules = new Map(
           this.retryScheduler.getAllRetrySchedules().map(s => [s.taskId, s])
         );
@@ -178,7 +178,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
         });
       }
     } catch (error) {
-      // 如果是取消错误，不更新状态
+      // 如果是cancelerror，不updatestatus
       if (error instanceof Error && error.name === 'AbortError') {
         return;
       }
@@ -193,37 +193,37 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   };
 
   /**
-   * 手动刷新数据
+   * 手动refreshdata
    */
   handleRefresh = (): void => {
     this.fetchTasks();
   };
 
   /**
-   * 选择任务
+   * 选择task
    */
   handleSelectTask = (taskId: string): void => {
     this.setState({ selectedTaskId: taskId });
   };
 
   /**
-   * 调整任务优先级
-   * 验证需求: 5.3
+   * 调整task优先级
+   * verifyRequirement: 5.3
    */
   handlePriorityChange = async (taskId: string, newPriority: number): Promise<void> => {
     try {
       const apiClient = getApiClient();
       
-      // 调用API更新任务优先级
+      // 调用APIupdatetask优先级
       await apiClient.put(`/analysis/queue/${taskId}/priority`, { priority: newPriority });
       
-      // 立即更新本地状态以提供即时反馈
+      // 立即update本地status以provide即时反馈
       this.setState(prevState => {
         const updatedTasks = prevState.tasks.map(task =>
           task.id === taskId ? { ...task, priority: newPriority } : task
         );
         
-        // 重新计算调度结果
+        // 重新计算调度result
         const scheduleResult = this.scheduler.schedule(updatedTasks);
         
         return {
@@ -232,16 +232,16 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
         };
       });
       
-      // 刷新任务列表以确保与服务器同步
+      // refreshtask列表以确保与service器sync
       await this.fetchTasks();
     } catch (error) {
       console.error('Failed to update task priority:', error);
-      // 可以在这里添加错误提示
+      // 可以在这里adderrorhint
     }
   };
 
   /**
-   * 增加任务优先级
+   * 增加task优先级
    */
   handleIncreasePriority = (taskId: string, currentPriority: number): void => {
     const newPriority = Math.min(10, currentPriority + 1);
@@ -251,7 +251,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   };
 
   /**
-   * 降低任务优先级
+   * 降低task优先级
    */
   handleDecreasePriority = (taskId: string, currentPriority: number): void => {
     const newPriority = Math.max(1, currentPriority - 1);
@@ -261,32 +261,32 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   };
 
   /**
-   * 为失败的任务调度重试
+   * 为failure的task调度retry
    */
   scheduleRetriesForFailedTasks = (tasks: AnalysisTask[]): void => {
     tasks.forEach(task => {
       if (task.status === 'failed' && task.retryCount < task.maxRetries) {
-        // 如果任务还没有被调度重试，则调度它
+        // 如果task还没有被调度retry，则调度它
         if (!this.retryScheduler.isScheduled(task.id)) {
           this.retryScheduler.scheduleRetry(task);
         }
       } else if (task.status !== 'failed') {
-        // 如果任务不再是失败状态，取消重试调度
+        // 如果task不再是failurestatus，cancelretry调度
         this.retryScheduler.cancelRetry(task.id);
       }
     });
   };
 
   /**
-   * 处理任务重试
+   * handletaskretry
    */
   handleTaskRetry = async (taskId: string): Promise<void> => {
     try {
       const apiClient = getApiClient();
-      // 调用API重试任务
+      // 调用APIretrytask
       await apiClient.post(`/analysis/queue/${taskId}/retry`, {});
       
-      // 刷新任务列表
+      // refreshtask列表
       await this.fetchTasks();
     } catch (error) {
       console.error('Failed to retry task:', error);
@@ -294,14 +294,14 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   };
 
   /**
-   * 获取按优先级排序的任务列表（用于显示）
+   * get按优先级sort的task列表（用于show）
    */
   getSortedTasks = (): AnalysisTask[] => {
     return this.scheduler.sortByPriority(this.state.tasks);
   };
 
   /**
-   * 获取任务类型的显示文本
+   * gettasktype的show文本
    */
   getTaskTypeText(type: AnalysisTask['type']): string {
     switch (type) {
@@ -319,7 +319,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   }
 
   /**
-   * 获取任务状态的颜色
+   * gettaskstatus的颜色
    */
   getStatusColor(status: AnalysisTask['status']): string {
     switch (status) {
@@ -339,7 +339,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   }
 
   /**
-   * 获取任务状态的显示文本
+   * gettaskstatus的show文本
    */
   getStatusText(status: AnalysisTask['status']): string {
     switch (status) {
@@ -359,7 +359,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   }
 
   /**
-   * 获取优先级的显示文本
+   * get优先级的show文本
    */
   getPriorityText(priority: number): string {
     if (priority >= 8) return 'Critical';
@@ -369,7 +369,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   }
 
   /**
-   * 获取优先级的颜色
+   * get优先级的颜色
    */
   getPriorityColor(priority: number): string {
     if (priority >= 8) return '#ef4444'; // red
@@ -379,7 +379,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   }
 
   /**
-   * 格式化时间
+   * format化时间
    */
   formatTime(date: Date | undefined): string {
     if (!date) return 'N/A';
@@ -387,7 +387,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   }
 
   /**
-   * 格式化持续时间
+   * format化持续时间
    */
   formatDuration(seconds: number | undefined): string {
     if (!seconds) return 'N/A';
@@ -397,11 +397,11 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   }
 
   /**
-   * 计算任务的预计完成时间
-   * 验证需求: 5.4
+   * 计算task的预计complete时间
+   * verifyRequirement: 5.4
    */
   calculateEstimatedCompletion(task: AnalysisTask): Date | null {
-    // 只有运行中的任务才计算预计完成时间
+    // 只有run中的task才计算预计complete时间
     if (task.status !== 'running') {
       return null;
     }
@@ -415,14 +415,14 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
     const now = Date.now();
     const elapsedSeconds = (now - startTime) / 1000;
 
-    // 如果有进度信息，使用进度计算剩余时间
+    // 如果有进度info，use进度计算剩余时间
     if (task.progress > 0 && task.progress < 100) {
       const estimatedTotalSeconds = (elapsedSeconds / task.progress) * 100;
       const remainingSeconds = estimatedTotalSeconds - elapsedSeconds;
       return new Date(now + remainingSeconds * 1000);
     }
 
-    // 否则使用预计持续时间
+    // 否则use预计持续时间
     const remainingSeconds = task.estimatedDuration - elapsedSeconds;
     if (remainingSeconds > 0) {
       return new Date(now + remainingSeconds * 1000);
@@ -432,7 +432,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   }
 
   /**
-   * 格式化预计完成时间
+   * format化预计complete时间
    */
   formatEstimatedCompletion(estimatedCompletion: Date | null): string {
     if (!estimatedCompletion) {
@@ -450,7 +450,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
 
     const remainingSeconds = Math.floor(remainingMs / 1000);
     
-    // 格式化剩余时间
+    // format化剩余时间
     if (remainingSeconds < 60) {
       return `~${remainingSeconds}s`;
     } else if (remainingSeconds < 3600) {
@@ -464,23 +464,23 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
   }
 
   /**
-   * 渲染单个任务项
+   * render单itemtask项
    */
   renderTaskItem = (task: AnalysisTask): React.ReactNode => {
     const isSelected = this.state.selectedTaskId === task.id;
     const { scheduleResult, retrySchedules } = this.state;
     
-    // 判断任务是否在待执行队列中
+    // 判断task是否在待executequeue中
     const isScheduledToExecute = scheduleResult?.tasksToExecute.some(t => t.id === task.id) || false;
 
-    // 获取重试调度信息
+    // getretry调度info
     const retrySchedule = retrySchedules.get(task.id);
     const retryStatusText = this.retryScheduler.getRetryStatusText(task);
 
-    // 计算预计完成时间
+    // 计算预计complete时间
     const estimatedCompletion = this.calculateEstimatedCompletion(task);
 
-    // 只有pending和failed状态的任务可以调整优先级
+    // 只有pendingandfailedstatus的task可以调整优先级
     const canAdjustPriority = task.status === 'pending' || task.status === 'failed';
 
     return (
@@ -492,7 +492,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
         onClick={() => this.handleSelectTask(task.id)}
         data-testid={`task-item-${task.id}`}
       >
-        {/* 任务头部 */}
+        {/* task头部 */}
         <div style={styles.taskHeader}>
           <div style={styles.taskTitle}>
             <span style={styles.taskName}>{task.name}</span>
@@ -583,7 +583,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
           </div>
         )}
 
-        {/* 进度条和预计完成时间 */}
+        {/* 进度条and预计complete时间 */}
         {task.status === 'running' && (
           <>
             <div style={styles.progressContainer}>
@@ -613,7 +613,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
           </>
         )}
 
-        {/* 重试状态信息 */}
+        {/* retrystatusinfo */}
         {retrySchedule && retryStatusText && (
           <div style={styles.retryInfo}>
             <span style={styles.retryIcon}>🔄</span>
@@ -621,7 +621,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
           </div>
         )}
 
-        {/* 任务详情 */}
+        {/* taskdetail */}
         <div style={styles.taskDetails}>
           <div style={styles.taskDetailItem}>
             <span style={styles.taskDetailLabel}>Created:</span>
@@ -649,7 +649,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
           )}
         </div>
 
-        {/* 错误信息 */}
+        {/* errorinfo */}
         {task.error && (
           <div style={styles.errorInfo}>
             <span style={styles.errorIcon}>⚠️</span>
@@ -664,7 +664,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
     const { loading, error, tasks, lastUpdate, scheduleResult } = this.state;
     const { listHeight } = this.props;
 
-    // 加载状态
+    // loadstatus
     if (loading && tasks.length === 0) {
       return (
         <LoadingState
@@ -676,7 +676,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
       );
     }
 
-    // 错误状态
+    // errorstatus
     if (error && tasks.length === 0) {
       return (
         <div style={styles.errorContainer}>
@@ -690,16 +690,16 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
       );
     }
 
-    // 统计信息
+    // 统计info
     const pendingCount = tasks.filter(t => t.status === 'pending').length;
     const runningCount = tasks.filter(t => t.status === 'running').length;
     const completedCount = tasks.filter(t => t.status === 'completed').length;
     const failedCount = tasks.filter(t => t.status === 'failed').length;
 
-    // 获取按优先级排序的任务列表
+    // get按优先级sort的task列表
     const sortedTasks = this.getSortedTasks();
 
-    // 主内容
+    // 主content
     return (
       <div style={styles.container}>
         <div style={styles.header}>
@@ -740,7 +740,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
           </div>
         </div>
 
-        {/* 调度信息 */}
+        {/* 调度info */}
         {scheduleResult && (
           <div style={styles.scheduleInfo}>
             <div style={styles.scheduleInfoItem}>
@@ -762,7 +762,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
           </div>
         )}
 
-        {/* 任务列表 */}
+        {/* task列表 */}
         <div style={styles.listContainer}>
           <div style={styles.listHeader}>
             <h2 style={styles.listTitle}>Tasks ({tasks.length}) - Sorted by Priority</h2>
@@ -784,7 +784,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
           )}
         </div>
 
-        {/* 显示后台刷新错误 */}
+        {/* show后台refresherror */}
         {error && tasks.length > 0 && (
           <div style={styles.backgroundErrorBanner}>
             ⚠️ Failed to refresh data: {error.message}
@@ -796,7 +796,7 @@ export class AnalysisQueueComponent extends Component<AnalysisQueueProps, Analys
 }
 
 /**
- * AnalysisQueue组件 - 使用ErrorBoundary包裹
+ * AnalysisQueuecomponent - useErrorBoundary包裹
  */
 export const AnalysisQueue: React.FC<AnalysisQueueProps> = (props) => {
   return (
@@ -806,7 +806,7 @@ export const AnalysisQueue: React.FC<AnalysisQueueProps> = (props) => {
   );
 };
 
-// 样式定义
+// style定义
 const styles: Record<string, React.CSSProperties> = {
   container: {
     padding: '24px',

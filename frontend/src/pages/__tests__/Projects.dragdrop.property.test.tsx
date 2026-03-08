@@ -1,16 +1,16 @@
 /**
- * Projects拖拽排序属性测试
+ * Projects拖拽sortpropertytest
  * 
  * Feature: frontend-production-optimization
  * Property 12: 拖拽顺序持久化
  * 
  * **Validates: Requirements 2.1**
  * 
- * 测试覆盖:
- * - 对于任何项目拖拽操作，新的顺序应该立即更新UI并通过API持久化到后端
+ * testCoverage:
+ * - 对于任何project拖拽操作，新的顺序should立即updateUI并通过API持久化到后端
  * 
- * 注意: 此测试验证Projects组件在拖拽排序时的持久化行为。
- * 测试通过模拟拖拽操作并验证API调用来确保顺序被正确持久化。
+ * note: testVerifiesProjectscomponent在拖拽sort时的持久化行为。
+ * test通过模拟拖拽操作并verifyAPI调用来确保顺序被正确持久化。
  */
 
 import fc from 'fast-check';
@@ -129,7 +129,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
     cleanup();
   });
 
-  // 自定义生成器：生成有效的项目列表（确保唯一ID和名称）
+  // customGenerator：generate有效的project列表（确保唯一IDand名称）
   const projectListArbitrary = (minLength: number = 2, maxLength: number = 10) =>
     fc.integer({ min: minLength, max: maxLength }).map((length) =>
       Array.from({ length }, (_, i) =>
@@ -137,14 +137,14 @@ describe('Property 12: 拖拽顺序持久化', () => {
       )
     );
 
-  // 自定义生成器：生成有效的拖拽索引对
+  // customGenerator：generate有效的拖拽索引对
   const dragIndicesArbitrary = (arrayLength: number) =>
     fc.record({
       fromIndex: fc.integer({ min: 0, max: arrayLength - 1 }),
       toIndex: fc.integer({ min: 0, max: arrayLength - 1 }),
     }).filter(({ fromIndex, toIndex }) => fromIndex !== toIndex);
 
-  it('应该在任何拖拽操作后调用API持久化新顺序', async () => {
+  it('shouldBeAt任何拖拽操作后调用API持久化新顺序', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectListArbitrary(3, 8),
@@ -169,7 +169,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
 
           const { unmount } = renderWithProviders(<Projects />);
 
-          // 等待组件渲染完成
+          // waitcomponentrendercomplete
           await waitFor(() => {
             expect(screen.getByText('Projects')).toBeInTheDocument();
           });
@@ -187,17 +187,17 @@ describe('Property 12: 拖拽顺序持久化', () => {
           // 模拟拖拽结束事件
           const dragEndEvent = simulateDragEnd(activeId, overId);
 
-          // 获取DndContext的onDragEnd处理器并调用
-          // 由于我们无法直接访问DndContext，我们验证mutate被调用
+          // getDndContext的onDragEndhandle器并调用
+          // 由于我们无法直接访问DndContext，我们verifymutate被调用
           // 在实际实现中，handleDragEnd会被调用
 
-          // 验证：由于我们无法直接触发DndContext的onDragEnd，
-          // 我们验证组件正确设置了拖拽功能
+          // verify：由于我们无法直接触发DndContext的onDragEnd，
+          // 我们verifycomponent正确set了拖拽feature
           const dragHandles = screen.getAllByRole('generic').filter(
             (el) => el.style.cursor === 'grab' || el.style.cursor === 'grabbing'
           );
 
-          // 验证拖拽手柄存在
+          // verify拖拽手柄存在
           expect(dragHandles.length).toBeGreaterThan(0);
 
           unmount();
@@ -208,7 +208,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
     );
   }, 30000);
 
-  it('应该为重新排序后的每个项目调用updateProject', async () => {
+  it('should为重新sort后的每itemproject调用updateProject', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 3, max: 8 }),
@@ -241,7 +241,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
             expect(screen.getByText('Projects')).toBeInTheDocument();
           });
 
-          // 验证组件渲染了所有项目
+          // verifycomponentrender了所有project
           for (const project of projects) {
             expect(screen.getByText(project.name)).toBeInTheDocument();
           }
@@ -254,7 +254,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
     );
   }, 30000);
 
-  it('应该在拖拽后保持项目数据完整性', async () => {
+  it('shouldBeAt拖拽后保持projectdata完整性', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectListArbitrary(3, 10),
@@ -283,13 +283,13 @@ describe('Property 12: 拖拽顺序持久化', () => {
             expect(screen.getAllByText('Projects')[0]).toBeInTheDocument();
           });
 
-          // 验证项目数量正确
+          // verifyproject数量正确
           const projectCountText = screen.getByText(
             new RegExp(`${projects.length} project`)
           );
           expect(projectCountText).toBeInTheDocument();
 
-          // 验证所有项目都被渲染（通过检查项目数量）
+          // verify所有project都被render（通过checkproject数量）
           const allProjectNames = projects.map(p => p.name);
           for (const name of allProjectNames) {
             expect(screen.getByText(name)).toBeInTheDocument();
@@ -303,7 +303,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
     );
   }, 30000);
 
-  it('应该在拖拽到相同位置时不调用API', async () => {
+  it('shouldBeAt拖拽到相同位置时不调用API', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectListArbitrary(3, 8),
@@ -332,7 +332,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
             expect(screen.getAllByText('Projects')[0]).toBeInTheDocument();
           });
 
-          // 验证组件正确渲染（通过检查第一个项目）
+          // verifycomponent正确render（通过check第一itemproject）
           const firstProjectName = projects[0].name;
           expect(screen.getAllByText(firstProjectName)[0]).toBeInTheDocument();
 
@@ -344,7 +344,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
     );
   }, 30000);
 
-  it('应该在不同大小的项目列表中支持拖拽', async () => {
+  it('shouldBeAt不同大小的project列表中support拖拽', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(2, 5, 10, 20, 50),
@@ -377,13 +377,13 @@ describe('Property 12: 拖拽顺序持久化', () => {
             expect(screen.getAllByText('Projects')[0]).toBeInTheDocument();
           });
 
-          // 验证项目数量显示正确
+          // verifyproject数量show正确
           const projectCountText = screen.getByText(
             new RegExp(`${projectCount} project`)
           );
           expect(projectCountText).toBeInTheDocument();
 
-          // 验证拖拽功能可用（通过检查DndContext是否渲染）
+          // verify拖拽feature可用（通过checkDndContext是否render）
           const projectItems = projects.map(p => screen.getByText(p.name));
           expect(projectItems.length).toBe(projectCount);
 
@@ -395,7 +395,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
     );
   }, 30000);
 
-  it('应该在拖拽后立即更新UI显示新顺序', async () => {
+  it('shouldBeAt拖拽后立即updateUIshow新顺序', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 3, max: 8 }),
@@ -428,7 +428,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
             expect(screen.getByText('Projects')).toBeInTheDocument();
           });
 
-          // 验证初始顺序
+          // verify初始顺序
           const initialProjectNames = projects.map((p) => p.name);
           for (const name of initialProjectNames) {
             expect(screen.getByText(name)).toBeInTheDocument();
@@ -442,7 +442,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
     );
   }, 30000);
 
-  it('应该在拖拽时保持项目选择状态', async () => {
+  it('shouldBeAt拖拽时保持project选择status', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectListArbitrary(3, 8),
@@ -471,7 +471,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
             expect(screen.getByText('Projects')).toBeInTheDocument();
           });
 
-          // 验证复选框存在
+          // verifycheckbox存在
           const checkboxes = screen.getAllByRole('checkbox');
           expect(checkboxes.length).toBeGreaterThan(0);
 
@@ -483,7 +483,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
     );
   }, 30000);
 
-  it('应该在拖拽时显示正确的视觉反馈', async () => {
+  it('shouldBeAt拖拽时show正确的视觉反馈', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectListArbitrary(3, 8),
@@ -512,7 +512,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
             expect(screen.getByText('Projects')).toBeInTheDocument();
           });
 
-          // 验证拖拽手柄存在（三条横线图标）
+          // verify拖拽手柄存在（三条横线图标）
           const allElements = screen.getAllByRole('generic');
           const dragHandles = allElements.filter((el) => {
             const hasGrabCursor = el.style.cursor === 'grab';
@@ -520,7 +520,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
             return hasGrabCursor || hasHorizontalLines;
           });
 
-          // 至少应该有一些拖拽相关的元素
+          // 至少should有一些拖拽相关的元素
           expect(dragHandles.length).toBeGreaterThan(0);
 
           unmount();
@@ -531,7 +531,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
     );
   }, 30000);
 
-  it('应该在拖拽后保持搜索过滤状态', async () => {
+  it('shouldBeAt拖拽后保持searchfilterstatus', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectListArbitrary(5, 10),
@@ -560,7 +560,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
             expect(screen.getByText('Projects')).toBeInTheDocument();
           });
 
-          // 验证搜索框存在
+          // verifysearch框存在
           const searchInput = container.querySelector(
             'input[placeholder*="Search projects"]'
           ) as HTMLInputElement;
@@ -574,7 +574,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
     );
   }, 30000);
 
-  it('应该在拖拽后保持排序设置', async () => {
+  it('shouldBeAt拖拽后保持sortset', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectListArbitrary(3, 8),
@@ -603,7 +603,7 @@ describe('Property 12: 拖拽顺序持久化', () => {
             expect(screen.getByText('Projects')).toBeInTheDocument();
           });
 
-          // 验证排序按钮存在
+          // verifysortbutton存在
           expect(screen.getByText('Sort by:')).toBeInTheDocument();
           expect(screen.getByText('Name')).toBeInTheDocument();
           expect(screen.getByText('Created')).toBeInTheDocument();

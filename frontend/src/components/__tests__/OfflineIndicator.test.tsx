@@ -1,13 +1,13 @@
 /**
- * OfflineIndicator组件单元测试
+ * OfflineIndicatorcomponent单元test
  * 
- * 测试内容:
- * - 在线/离线状态检测
- * - 离线消息显示
+ * testcontent:
+ * - 在线/离线status检测
+ * - 离线消息show
  * - 在线恢复消息
- * - 重试按钮功能
- * - 位置配置
- * - 回调函数触发
+ * - retrybuttonfeature
+ * - 位置config
+ * - 回调function触发
  */
 
 import React from 'react';

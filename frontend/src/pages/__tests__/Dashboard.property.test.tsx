@@ -1,17 +1,17 @@
 /**
- * Dashboard属性测试
+ * Dashboardpropertytest
  * 
  * Feature: frontend-production-optimization
- * Property 1: 页面加载性能保证
+ * Property 1: 页面load性能保证
  * 
  * **Validates: Requirements 1.1**
  * 
- * 测试覆盖:
- * - 对于任何核心页面（Dashboard），首屏渲染时间应该在2秒内完成
+ * testCoverage:
+ * - 对于任何核心页面（Dashboard），首屏render时间shouldBeAt2sec内complete
  * 
- * 注意: 由于Jest/JSDOM环境无法准确模拟真实浏览器的渲染性能，
- * 此属性测试验证组件在各种数据输入下的渲染行为一致性和效率。
- * 真实的页面加载性能应该通过Lighthouse CI或E2E测试验证。
+ * note: 由于Jest/JSDOMenv无法准确模拟真实浏览器的render性能，
+ * 此propertytestverifycomponent在各种datainput下的render行为一致性and效率。
+ * 真实的页面load性能should通过Lighthouse CI或E2Etestverify。
  */
 
 import fc from 'fast-check';
@@ -34,7 +34,7 @@ jest.mock('../../components/LoadingState', () => ({
   ),
 }));
 
-describe('Property 1: 页面加载性能保证', () => {
+describe('Property 1: 页面load性能保证', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -43,11 +43,11 @@ describe('Property 1: 页面加载性能保证', () => {
     cleanup();
   });
 
-  // 自定义生成器：生成系统健康状态
+  // customGenerator：generatesystem健康status
   const systemHealthArbitrary = () =>
     fc.constantFrom('healthy', 'degraded', 'down');
 
-  // 自定义生成器：生成有效的系统指标
+  // customGenerator：generate有效的system指标
   const systemMetricsArbitrary = () =>
     fc.record({
       activeUsers: fc.integer({ min: 0, max: 10000 }),
@@ -58,21 +58,21 @@ describe('Property 1: 页面加载性能保证', () => {
       lastUpdate: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }),
     });
 
-  it('应该在任何有效数据输入下快速完成首屏渲染', async () => {
+  it('shouldBeAt任何有效datainput下快速complete首屏render', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         async (metrics) => {
-          // 模拟快速API响应
+          // 模拟快速APIresponse
           mockApiClient.get.mockResolvedValue(metrics);
 
-          // 记录渲染开始时间
+          // recordrender开始时间
           const startTime = performance.now();
 
-          // 渲染组件
+          // renderComponent
           render(<DashboardComponent />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(
             () => {
               expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
@@ -80,15 +80,15 @@ describe('Property 1: 页面加载性能保证', () => {
             { timeout: 2000 }
           );
 
-          // 计算渲染时间
+          // 计算render时间
           const renderTime = performance.now() - startTime;
 
-          // 验证渲染时间在合理范围内（需求1.1: 2秒内完成首屏渲染）
-          // 在测试环境中，我们使用更宽松的阈值，因为JSDOM不能准确反映真实浏览器性能
-          // 真实的2秒性能目标应该通过Lighthouse CI验证
+          // verifyrender时间在合理范围内（requirement1.1: 2sec内complete首屏render）
+          // 在testenv中，我们use更宽松的threshold，因为JSDOM不能准确反映真实浏览器性能
+          // 真实的2sec性能目标should通过Lighthouse CIverify
           expect(renderTime).toBeLessThan(2000);
 
-          // 验证所有关键指标都被渲染（使用getAllByText处理可能的重复值）
+          // verify所有关键指标都被render（usegetAllByTexthandle可能的duplicatevalue）
           expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           expect(screen.getAllByText(metrics.activeUsers.toString()).length).toBeGreaterThanOrEqual(1);
           expect(screen.getAllByText('Total Projects').length).toBeGreaterThan(0);
@@ -106,7 +106,7 @@ describe('Property 1: 页面加载性能保证', () => {
     );
   });
 
-  it('应该在任何数据输入下正确渲染所有指标', async () => {
+  it('shouldBeAt任何datainput下正确render所有指标', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
@@ -115,24 +115,24 @@ describe('Property 1: 页面加载性能保证', () => {
 
           render(<DashboardComponent />);
 
-          // 等待数据加载
+          // waitDataLoad
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 验证所有指标值正确显示（使用getAllByText处理可能的重复值）
+          // verify所有指标value正确show（usegetAllByTexthandle可能的duplicatevalue）
           const activeUsersText = metrics.activeUsers.toString();
           const totalProjectsText = metrics.totalProjects.toString();
           const pendingPRsText = metrics.pendingPRs.toString();
           const queuedTasksText = metrics.queuedTasks.toString();
 
-          // 验证每个值至少出现一次
+          // verify每itemvalue至少出现一times
           expect(screen.getAllByText(activeUsersText).length).toBeGreaterThanOrEqual(1);
           expect(screen.getAllByText(totalProjectsText).length).toBeGreaterThanOrEqual(1);
           expect(screen.getAllByText(pendingPRsText).length).toBeGreaterThanOrEqual(1);
           expect(screen.getAllByText(queuedTasksText).length).toBeGreaterThanOrEqual(1);
 
-          // 验证系统健康状态正确显示
+          // verifysystem健康status正确show
           const healthText = metrics.systemHealth === 'healthy' ? 'Healthy' :
                             metrics.systemHealth === 'degraded' ? 'Degraded' : 'Down';
           expect(screen.getByText(healthText)).toBeInTheDocument();
@@ -144,7 +144,7 @@ describe('Property 1: 页面加载性能保证', () => {
     );
   });
 
-  it('应该在任何数据输入下正确处理系统健康状态', async () => {
+  it('shouldBeAt任何datainput下正确handlesystem健康status', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 0, max: 10000 }),
@@ -166,12 +166,12 @@ describe('Property 1: 页面加载性能保证', () => {
 
           render(<DashboardComponent />);
 
-          // 等待数据加载
+          // waitDataLoad
           await waitFor(() => {
             expect(screen.getAllByText('System Health').length).toBeGreaterThan(0);
           });
 
-          // 验证健康状态文本正确
+          // verify健康status文本正确
           const expectedHealthText = systemHealth === 'healthy' ? 'Healthy' :
                                     systemHealth === 'degraded' ? 'Degraded' : 'Down';
           expect(screen.getByText(expectedHealthText)).toBeInTheDocument();
@@ -183,7 +183,7 @@ describe('Property 1: 页面加载性能保证', () => {
     );
   });
 
-  it('应该在任何数据输入下正确显示最后更新时间', async () => {
+  it('shouldBeAt任何datainput下正确show最后update时间', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
@@ -192,12 +192,12 @@ describe('Property 1: 页面加载性能保证', () => {
 
           render(<DashboardComponent />);
 
-          // 等待数据加载
+          // waitDataLoad
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 验证最后更新时间显示
+          // verify最后update时间show
           expect(screen.getByText(/Last updated:/)).toBeInTheDocument();
 
           cleanup();
@@ -207,7 +207,7 @@ describe('Property 1: 页面加载性能保证', () => {
     );
   });
 
-  it('应该在任何数据输入下正确处理边界值', async () => {
+  it('shouldBeAt任何datainput下正确handle边界value', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(0, 1, 999, 1000, 9999, 10000),
@@ -229,12 +229,12 @@ describe('Property 1: 页面加载性能保证', () => {
 
           render(<DashboardComponent />);
 
-          // 等待数据加载
+          // waitDataLoad
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 验证边界值正确显示（使用getAllByText处理可能的重复值）
+          // verify边界value正确show（usegetAllByTexthandle可能的duplicatevalue）
           expect(screen.getAllByText(activeUsers.toString()).length).toBeGreaterThanOrEqual(1);
           expect(screen.getAllByText(totalProjects.toString()).length).toBeGreaterThanOrEqual(1);
           expect(screen.getAllByText(pendingPRs.toString()).length).toBeGreaterThanOrEqual(1);
@@ -247,7 +247,7 @@ describe('Property 1: 页面加载性能保证', () => {
     );
   });
 
-  it('应该在任何有效配置下正确调用API端点', async () => {
+  it('shouldBeAt任何有效config下正确调用APIendpoint', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
@@ -256,12 +256,12 @@ describe('Property 1: 页面加载性能保证', () => {
 
           render(<DashboardComponent />);
 
-          // 等待数据加载
+          // waitDataLoad
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 验证API调用使用正确的端点
+          // verifyAPI调用use正确的endpoint
           expect(mockApiClient.get).toHaveBeenCalledWith('/dashboard/metrics');
 
           cleanup();
@@ -271,28 +271,28 @@ describe('Property 1: 页面加载性能保证', () => {
     );
   });
 
-  it('应该在任何数据输入下保持渲染稳定性', async () => {
+  it('shouldBeAt任何datainput下保持render稳定性', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         async (metrics) => {
           mockApiClient.get.mockResolvedValue(metrics);
 
-          // 渲染组件
+          // renderComponent
           render(<DashboardComponent />);
 
-          // 等待数据加载
+          // waitDataLoad
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 验证所有指标都存在（使用getAllByText处理可能的重复值）
+          // verify所有指标都存在（usegetAllByTexthandle可能的duplicatevalue）
           expect(screen.getAllByText(metrics.activeUsers.toString()).length).toBeGreaterThanOrEqual(1);
           expect(screen.getAllByText(metrics.totalProjects.toString()).length).toBeGreaterThanOrEqual(1);
           expect(screen.getAllByText(metrics.pendingPRs.toString()).length).toBeGreaterThanOrEqual(1);
           expect(screen.getAllByText(metrics.queuedTasks.toString()).length).toBeGreaterThanOrEqual(1);
 
-          // 验证健康状态
+          // verify健康status
           const healthText = metrics.systemHealth === 'healthy' ? 'Healthy' :
                             metrics.systemHealth === 'degraded' ? 'Degraded' : 'Down';
           expect(screen.getByText(healthText)).toBeInTheDocument();
@@ -304,7 +304,7 @@ describe('Property 1: 页面加载性能保证', () => {
     );
   });
 
-  it('应该在任何数据输入下正确处理零值', async () => {
+  it('shouldBeAt任何datainput下正确handle零value', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemHealthArbitrary(),
@@ -322,14 +322,14 @@ describe('Property 1: 页面加载性能保证', () => {
 
           render(<DashboardComponent />);
 
-          // 等待数据加载
+          // waitDataLoad
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 验证零值正确显示（应该显示多个"0"）
+          // verify零value正确show（shouldshow多item"0"）
           const zeroElements = screen.getAllByText('0');
-          expect(zeroElements.length).toBeGreaterThanOrEqual(4); // 至少4个指标显示0
+          expect(zeroElements.length).toBeGreaterThanOrEqual(4); // 至少4item指标show0
 
           cleanup();
         }
@@ -338,7 +338,7 @@ describe('Property 1: 页面加载性能保证', () => {
     );
   });
 
-  it('应该在任何数据输入下正确处理最大值', async () => {
+  it('shouldBeAt任何datainput下正确handle最大value', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemHealthArbitrary(),
@@ -356,14 +356,14 @@ describe('Property 1: 页面加载性能保证', () => {
 
           render(<DashboardComponent />);
 
-          // 等待数据加载
+          // waitDataLoad
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 验证最大值正确显示
+          // verify最大value正确show
           expect(screen.getByText('10000')).toBeInTheDocument();
-          expect(screen.getAllByText('1000').length).toBeGreaterThanOrEqual(2); // totalProjects和queuedTasks
+          expect(screen.getAllByText('1000').length).toBeGreaterThanOrEqual(2); // totalProjectsandqueuedTasks
           expect(screen.getByText('500')).toBeInTheDocument();
 
           cleanup();
@@ -373,7 +373,7 @@ describe('Property 1: 页面加载性能保证', () => {
     );
   });
 
-  it('应该在所有健康状态下正确渲染', async () => {
+  it('shouldBeAt所有健康status下正确render', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 0, max: 10000 }),
@@ -397,12 +397,12 @@ describe('Property 1: 页面加载性能保证', () => {
 
             render(<DashboardComponent />);
 
-            // 等待数据加载
+            // waitDataLoad
             await waitFor(() => {
               expect(screen.getAllByText('System Health').length).toBeGreaterThan(0);
             });
 
-            // 验证健康状态文本
+            // verify健康status文本
             const expectedHealthText = systemHealth === 'healthy' ? 'Healthy' :
                                       systemHealth === 'degraded' ? 'Degraded' : 'Down';
             expect(screen.getByText(expectedHealthText)).toBeInTheDocument();
@@ -417,20 +417,20 @@ describe('Property 1: 页面加载性能保证', () => {
 });
 
 /**
- * Property 2: 数据刷新响应性
+ * Property 2: datarefreshresponse性
  * 
  * Feature: frontend-production-optimization
- * Property 2: 数据刷新响应性
+ * Property 2: datarefreshresponse性
  * 
  * **Validates: Requirements 1.2**
  * 
- * 测试覆盖:
- * - 对于任何数据更新事件，UI应该在500毫秒内反映变化
+ * testCoverage:
+ * - 对于任何dataupdate事件，UIshouldBeAt500ms内反映变化
  * 
- * 注意: 此测试验证Dashboard组件在数据更新时的响应性能。
- * 测试通过模拟数据源更新并测量UI更新时间来验证500毫秒的性能目标。
+ * note: testVerifiesDashboardcomponent在dataupdate时的response性能。
+ * test通过模拟data源update并测量UIupdate时间来verify500ms的性能目标。
  */
-describe('Property 2: 数据刷新响应性', () => {
+describe('Property 2: datarefreshresponse性', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -439,11 +439,11 @@ describe('Property 2: 数据刷新响应性', () => {
     cleanup();
   });
 
-  // 自定义生成器：生成系统健康状态
+  // customGenerator：generatesystem健康status
   const systemHealthArbitrary = () =>
     fc.constantFrom('healthy', 'degraded', 'down');
 
-  // 自定义生成器：生成有效的系统指标
+  // customGenerator：generate有效的system指标
   const systemMetricsArbitrary = () =>
     fc.record({
       activeUsers: fc.integer({ min: 0, max: 10000 }),
@@ -454,13 +454,13 @@ describe('Property 2: 数据刷新响应性', () => {
       lastUpdate: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }),
     });
 
-  it('应该在任何数据更新时在500毫秒内刷新UI', async () => {
+  it('shouldBeAt任何dataupdate时在500ms内refreshUI', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         systemMetricsArbitrary(),
         async (initialMetrics, updatedMetrics) => {
-          // 确保初始和更新的数据不同
+          // 确保初始andupdate的data不同
           if (JSON.stringify(initialMetrics) === JSON.stringify(updatedMetrics)) {
             updatedMetrics = {
               ...updatedMetrics,
@@ -468,38 +468,38 @@ describe('Property 2: 数据刷新响应性', () => {
             };
           }
 
-          // 模拟初始数据加载
+          // 模拟初始dataload
           mockApiClient.get.mockResolvedValueOnce(initialMetrics);
 
-          // 渲染组件
+          // renderComponent
           render(<DashboardComponent />);
 
-          // 等待初始数据加载完成
+          // wait初始dataloadcomplete
           await waitFor(() => {
             expect(screen.getAllByText(initialMetrics.activeUsers.toString()).length).toBeGreaterThanOrEqual(1);
           });
 
-          // 模拟数据更新
+          // 模拟dataupdate
           mockApiClient.get.mockResolvedValueOnce(updatedMetrics);
 
-          // 记录更新开始时间
+          // recordupdate开始时间
           const updateStartTime = performance.now();
 
-          // 触发数据刷新（通过点击刷新按钮）
+          // 触发datarefresh（通过点击refreshbutton）
           const refreshButtons = screen.getAllByText(/Refresh/);
           refreshButtons[0].click();
 
-          // 等待UI更新完成 - 检查至少一个指标值已更新
+          // waitUIupdatecomplete - check至少一item指标value已update
           await waitFor(
             () => {
-              // 检查activeUsers是否已更新
+              // checkactiveUsers是否已update
               const activeUsersElements = screen.queryAllByText(updatedMetrics.activeUsers.toString());
               if (activeUsersElements.length > 0) {
                 expect(activeUsersElements.length).toBeGreaterThanOrEqual(1);
                 return;
               }
               
-              // 如果activeUsers没更新，检查其他指标
+              // 如果activeUsers没update，check其他指标
               const totalProjectsElements = screen.queryAllByText(updatedMetrics.totalProjects.toString());
               const pendingPRsElements = screen.queryAllByText(updatedMetrics.pendingPRs.toString());
               const queuedTasksElements = screen.queryAllByText(updatedMetrics.queuedTasks.toString());
@@ -514,10 +514,10 @@ describe('Property 2: 数据刷新响应性', () => {
             { timeout: 500 }
           );
 
-          // 计算UI更新时间
+          // 计算UIupdate时间
           const updateTime = performance.now() - updateStartTime;
 
-          // 验证更新时间在500毫秒内（需求1.2）
+          // verifyupdate时间在500ms内（requirement1.2）
           expect(updateTime).toBeLessThan(500);
 
           cleanup();
@@ -527,13 +527,13 @@ describe('Property 2: 数据刷新响应性', () => {
     );
   });
 
-  it('应该在任何数据更新时正确更新所有指标值', async () => {
+  it('shouldBeAt任何dataupdate时正确update所有指标value', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         systemMetricsArbitrary(),
         async (initialMetrics, updatedMetrics) => {
-          // 确保数据不同
+          // 确保data不同
           if (JSON.stringify(initialMetrics) === JSON.stringify(updatedMetrics)) {
             updatedMetrics = {
               ...updatedMetrics,
@@ -541,7 +541,7 @@ describe('Property 2: 数据刷新响应性', () => {
             };
           }
 
-          // 初始加载
+          // 初始load
           mockApiClient.get.mockResolvedValueOnce(initialMetrics);
           render(<DashboardComponent />);
 
@@ -549,12 +549,12 @@ describe('Property 2: 数据刷新响应性', () => {
             expect(screen.getAllByText(initialMetrics.activeUsers.toString()).length).toBeGreaterThanOrEqual(1);
           });
 
-          // 数据更新
+          // dataupdate
           mockApiClient.get.mockResolvedValueOnce(updatedMetrics);
           const refreshButtons = screen.getAllByText(/Refresh/);
           refreshButtons[0].click();
 
-          // 等待更新完成 - 检查至少一个值已更新
+          // waitupdatecomplete - check至少一itemvalue已update
           await waitFor(() => {
             const hasUpdate = 
               screen.queryAllByText(updatedMetrics.activeUsers.toString()).length > 0 ||
@@ -564,13 +564,13 @@ describe('Property 2: 数据刷新响应性', () => {
             expect(hasUpdate).toBe(true);
           }, { timeout: 500 });
 
-          // 验证至少一个指标已更新（不要求所有指标都能找到，因为有些值可能不存在）
+          // verify至少一item指标已update（不要求所有指标都能找到，因为有些value可能不存在）
           const activeUsersFound = screen.queryAllByText(updatedMetrics.activeUsers.toString()).length > 0;
           const totalProjectsFound = screen.queryAllByText(updatedMetrics.totalProjects.toString()).length > 0;
           const pendingPRsFound = screen.queryAllByText(updatedMetrics.pendingPRs.toString()).length > 0;
           const queuedTasksFound = screen.queryAllByText(updatedMetrics.queuedTasks.toString()).length > 0;
           
-          // 至少有一个指标值被找到
+          // 至少有一item指标value被找到
           expect(activeUsersFound || totalProjectsFound || pendingPRsFound || queuedTasksFound).toBe(true);
 
           cleanup();
@@ -580,7 +580,7 @@ describe('Property 2: 数据刷新响应性', () => {
     );
   });
 
-  it('应该在任何健康状态变化时快速更新UI', async () => {
+  it('shouldBeAt任何健康status变化时快速updateUI', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 0, max: 10000 }),
@@ -590,7 +590,7 @@ describe('Property 2: 数据刷新响应性', () => {
         systemHealthArbitrary(),
         systemHealthArbitrary(),
         async (activeUsers, totalProjects, pendingPRs, queuedTasks, initialHealth, updatedHealth) => {
-          // 确保健康状态不同
+          // 确保健康status不同
           if (initialHealth === updatedHealth) {
             updatedHealth = initialHealth === 'healthy' ? 'degraded' : 'healthy';
           }
@@ -613,7 +613,7 @@ describe('Property 2: 数据刷新响应性', () => {
             lastUpdate: new Date(),
           };
 
-          // 初始加载
+          // 初始load
           mockApiClient.get.mockResolvedValueOnce(initialMetrics);
           render(<DashboardComponent />);
 
@@ -621,19 +621,19 @@ describe('Property 2: 数据刷新响应性', () => {
             expect(screen.getAllByText('System Health').length).toBeGreaterThan(0);
           });
 
-          // 验证初始健康状态
+          // verify初始健康status
           const initialHealthText = initialHealth === 'healthy' ? 'Healthy' :
                                    initialHealth === 'degraded' ? 'Degraded' : 'Down';
           expect(screen.getByText(initialHealthText)).toBeInTheDocument();
 
-          // 数据更新
+          // dataupdate
           mockApiClient.get.mockResolvedValueOnce(updatedMetrics);
           const updateStartTime = performance.now();
           
           const refreshButtons = screen.getAllByText(/Refresh/);
           refreshButtons[0].click();
 
-          // 等待健康状态更新
+          // wait健康statusupdate
           const updatedHealthText = updatedHealth === 'healthy' ? 'Healthy' :
                                    updatedHealth === 'degraded' ? 'Degraded' : 'Down';
           
@@ -643,7 +643,7 @@ describe('Property 2: 数据刷新响应性', () => {
 
           const updateTime = performance.now() - updateStartTime;
 
-          // 验证更新时间在500毫秒内
+          // verifyupdate时间在500ms内
           expect(updateTime).toBeLessThan(500);
 
           cleanup();
@@ -653,14 +653,14 @@ describe('Property 2: 数据刷新响应性', () => {
     );
   });
 
-  it('应该在任何数值变化时快速更新UI', async () => {
+  it('shouldBeAt任何数value变化时快速updateUI', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 0, max: 10000 }),
         fc.integer({ min: 0, max: 10000 }),
         systemHealthArbitrary(),
         async (initialValue, updatedValue, systemHealth) => {
-          // 确保值不同
+          // 确保value不同
           if (initialValue === updatedValue) {
             updatedValue = (initialValue + 1) % 10001;
           }
@@ -683,7 +683,7 @@ describe('Property 2: 数据刷新响应性', () => {
             lastUpdate: new Date(),
           };
 
-          // 初始加载
+          // 初始load
           mockApiClient.get.mockResolvedValueOnce(initialMetrics);
           render(<DashboardComponent />);
 
@@ -691,21 +691,21 @@ describe('Property 2: 数据刷新响应性', () => {
             expect(screen.getAllByText(initialValue.toString()).length).toBeGreaterThanOrEqual(1);
           });
 
-          // 数据更新
+          // dataupdate
           mockApiClient.get.mockResolvedValueOnce(updatedMetrics);
           const updateStartTime = performance.now();
           
           const refreshButtons = screen.getAllByText(/Refresh/);
           refreshButtons[0].click();
 
-          // 等待值更新
+          // waitvalueupdate
           await waitFor(() => {
             expect(screen.getAllByText(updatedValue.toString()).length).toBeGreaterThanOrEqual(1);
           }, { timeout: 500 });
 
           const updateTime = performance.now() - updateStartTime;
 
-          // 验证更新时间在500毫秒内
+          // verifyupdate时间在500ms内
           expect(updateTime).toBeLessThan(500);
 
           cleanup();
@@ -715,12 +715,12 @@ describe('Property 2: 数据刷新响应性', () => {
     );
   });
 
-  it('应该在多次连续更新时保持响应性', async () => {
+  it('shouldBeAt多times连续update时保持response性', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(systemMetricsArbitrary(), { minLength: 2, maxLength: 5 }),
         async (metricsSequence) => {
-          // 初始加载
+          // 初始load
           mockApiClient.get.mockResolvedValueOnce(metricsSequence[0]);
           render(<DashboardComponent />);
 
@@ -728,11 +728,11 @@ describe('Property 2: 数据刷新响应性', () => {
             expect(screen.getAllByText(metricsSequence[0].activeUsers.toString()).length).toBeGreaterThanOrEqual(1);
           });
 
-          // 执行多次更新
+          // execute多timesupdate
           for (let i = 1; i < metricsSequence.length; i++) {
             const currentMetrics = metricsSequence[i];
             
-            // 确保每次数据都不同
+            // 确保每timesdata都不同
             if (JSON.stringify(currentMetrics) === JSON.stringify(metricsSequence[i - 1])) {
               currentMetrics.activeUsers = (currentMetrics.activeUsers + 1) % 10001;
             }
@@ -743,14 +743,14 @@ describe('Property 2: 数据刷新响应性', () => {
             const refreshButtons = screen.getAllByText(/Refresh/);
             refreshButtons[0].click();
 
-            // 等待更新完成
+            // waitupdatecomplete
             await waitFor(() => {
               expect(screen.getAllByText(currentMetrics.activeUsers.toString()).length).toBeGreaterThanOrEqual(1);
             }, { timeout: 500 });
 
             const updateTime = performance.now() - updateStartTime;
 
-            // 验证每次更新都在500毫秒内
+            // verify每timesupdate都在500ms内
             expect(updateTime).toBeLessThan(500);
           }
 
@@ -761,14 +761,14 @@ describe('Property 2: 数据刷新响应性', () => {
     );
   });
 
-  it('应该在边界值变化时快速更新UI', async () => {
+  it('shouldBeAt边界value变化时快速updateUI', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(0, 1, 999, 1000, 9999, 10000),
         fc.constantFrom(0, 1, 999, 1000, 9999, 10000),
         systemHealthArbitrary(),
         async (initialValue, updatedValue, systemHealth) => {
-          // 确保值不同
+          // 确保value不同
           if (initialValue === updatedValue) {
             updatedValue = initialValue === 0 ? 1 : 0;
           }
@@ -791,7 +791,7 @@ describe('Property 2: 数据刷新响应性', () => {
             lastUpdate: new Date(),
           };
 
-          // 初始加载
+          // 初始load
           mockApiClient.get.mockResolvedValueOnce(initialMetrics);
           render(<DashboardComponent />);
 
@@ -799,21 +799,21 @@ describe('Property 2: 数据刷新响应性', () => {
             expect(screen.getAllByText(initialValue.toString()).length).toBeGreaterThanOrEqual(1);
           });
 
-          // 数据更新
+          // dataupdate
           mockApiClient.get.mockResolvedValueOnce(updatedMetrics);
           const updateStartTime = performance.now();
           
           const refreshButtons = screen.getAllByText(/Refresh/);
           refreshButtons[0].click();
 
-          // 等待值更新
+          // waitvalueupdate
           await waitFor(() => {
             expect(screen.getAllByText(updatedValue.toString()).length).toBeGreaterThanOrEqual(1);
           }, { timeout: 500 });
 
           const updateTime = performance.now() - updateStartTime;
 
-          // 验证更新时间在500毫秒内
+          // verifyupdate时间在500ms内
           expect(updateTime).toBeLessThan(500);
 
           cleanup();
@@ -823,13 +823,13 @@ describe('Property 2: 数据刷新响应性', () => {
     );
   });
 
-  it('应该在所有指标同时变化时快速更新UI', async () => {
+  it('shouldBeAt所有指标同时变化时快速updateUI', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         systemMetricsArbitrary(),
         async (initialMetrics, updatedMetrics) => {
-          // 确保所有值都不同
+          // 确保所有value都不同
           if (JSON.stringify(initialMetrics) === JSON.stringify(updatedMetrics)) {
             updatedMetrics = {
               activeUsers: (updatedMetrics.activeUsers + 1) % 10001,
@@ -841,7 +841,7 @@ describe('Property 2: 数据刷新响应性', () => {
             };
           }
 
-          // 初始加载
+          // 初始load
           mockApiClient.get.mockResolvedValueOnce(initialMetrics);
           render(<DashboardComponent />);
 
@@ -849,14 +849,14 @@ describe('Property 2: 数据刷新响应性', () => {
             expect(screen.getAllByText(initialMetrics.activeUsers.toString()).length).toBeGreaterThanOrEqual(1);
           });
 
-          // 数据更新
+          // dataupdate
           mockApiClient.get.mockResolvedValueOnce(updatedMetrics);
           const updateStartTime = performance.now();
           
           const refreshButtons = screen.getAllByText(/Refresh/);
           refreshButtons[0].click();
 
-          // 等待所有值更新
+          // wait所有valueupdate
           await waitFor(() => {
             expect(screen.getAllByText(updatedMetrics.activeUsers.toString()).length).toBeGreaterThanOrEqual(1);
             expect(screen.getAllByText(updatedMetrics.totalProjects.toString()).length).toBeGreaterThanOrEqual(1);
@@ -866,7 +866,7 @@ describe('Property 2: 数据刷新响应性', () => {
 
           const updateTime = performance.now() - updateStartTime;
 
-          // 验证更新时间在500毫秒内
+          // verifyupdate时间在500ms内
           expect(updateTime).toBeLessThan(500);
 
           cleanup();
@@ -876,12 +876,12 @@ describe('Property 2: 数据刷新响应性', () => {
     );
   });
 
-  it('应该在最后更新时间变化时快速更新UI', async () => {
+  it('shouldBeAt最后update时间变化时快速updateUI', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         async (metrics) => {
-          // 初始加载
+          // 初始load
           mockApiClient.get.mockResolvedValueOnce(metrics);
           render(<DashboardComponent />);
 
@@ -889,37 +889,37 @@ describe('Property 2: 数据刷新响应性', () => {
             expect(screen.getAllByText(metrics.activeUsers.toString()).length).toBeGreaterThanOrEqual(1);
           });
 
-          // 获取初始的最后更新时间
+          // get初始的最后update时间
           const initialUpdateTexts = screen.getAllByText(/Last updated:/);
           const initialTime = initialUpdateTexts[0].textContent;
 
-          // 等待足够长的时间以确保时间戳会不同（至少1秒）
+          // wait足够长的时间以确保时间戳会不同（至少1sec）
           await new Promise(resolve => setTimeout(resolve, 1100));
 
-          // 数据更新（相同数据但时间不同）
+          // dataupdate（相同data但时间不同）
           mockApiClient.get.mockResolvedValueOnce(metrics);
           const updateStartTime = performance.now();
           
           const refreshButtons = screen.getAllByText(/Refresh/);
           refreshButtons[0].click();
 
-          // 等待最后更新时间变化
+          // wait最后update时间变化
           await waitFor(() => {
             const currentUpdateTexts = screen.getAllByText(/Last updated:/);
-            // 检查第一个元素的时间是否已更新
+            // check第一item元素的时间是否已update
             const currentTime = currentUpdateTexts[0].textContent;
-            // 时间应该不同（因为我们等待了1秒以上）
+            // 时间should不同（因为我们wait了1sec以上）
             if (currentTime !== initialTime) {
               expect(currentTime).not.toBe(initialTime);
             } else {
-              // 如果时间相同，说明更新还没完成，继续等待
+              // 如果时间相同，descupdate还没complete，继续wait
               throw new Error('Time not updated yet');
             }
           }, { timeout: 500 });
 
           const updateTime = performance.now() - updateStartTime;
 
-          // 验证更新时间在500毫秒内
+          // verifyupdate时间在500ms内
           expect(updateTime).toBeLessThan(500);
 
           cleanup();
@@ -931,20 +931,20 @@ describe('Property 2: 数据刷新响应性', () => {
 });
 
 /**
- * Property 7: 资源清理防止内存泄漏
+ * Property 7: 资源cleanup防止内存泄漏
  * 
  * Feature: frontend-production-optimization
- * Property 7: 资源清理防止内存泄漏
+ * Property 7: 资源cleanup防止内存泄漏
  * 
  * **Validates: Requirements 1.5**
  * 
- * 测试覆盖:
- * - 对于任何组件卸载，所有定时器、订阅和事件监听器应该被正确清理
+ * testCoverage:
+ * - 对于任何component卸载，所有定时器、订阅and事件监听器should被正确cleanup
  * 
- * 注意: 此测试验证Dashboard组件在卸载时正确清理所有资源，防止内存泄漏。
- * 测试通过检查定时器清理、请求取消和状态更新防护来验证资源清理。
+ * note: testVerifiesDashboardcomponent在卸载时正确cleanup所有资源，防止内存泄漏。
+ * test通过check定时器cleanup、requestcancelandstatusupdate防护来verify资源cleanup。
  */
-describe('Property 7: 资源清理防止内存泄漏', () => {
+describe('Property 7: 资源cleanup防止内存泄漏', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -955,11 +955,11 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
     jest.useRealTimers();
   });
 
-  // 自定义生成器：生成系统健康状态
+  // customGenerator：generatesystem健康status
   const systemHealthArbitrary = () =>
     fc.constantFrom('healthy', 'degraded', 'down');
 
-  // 自定义生成器：生成有效的系统指标
+  // customGenerator：generate有效的system指标
   const systemMetricsArbitrary = () =>
     fc.record({
       activeUsers: fc.integer({ min: 0, max: 10000 }),
@@ -970,11 +970,11 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
       lastUpdate: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }),
     });
 
-  // 自定义生成器：生成刷新间隔（毫秒）
+  // customGenerator：generaterefresh间隔（ms）
   const refreshIntervalArbitrary = () =>
-    fc.integer({ min: 1000, max: 60000 }); // 1秒到60秒
+    fc.integer({ min: 1000, max: 60000 }); // 1sec到60sec
 
-  it('应该在任何刷新间隔配置下正确清理定时器', async () => {
+  it('shouldBeAt任何refresh间隔config下正确cleanup定时器', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
@@ -982,22 +982,22 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
         async (metrics, refreshInterval) => {
           mockApiClient.get.mockResolvedValue(metrics);
 
-          // 渲染组件
+          // renderComponent
           const { unmount } = render(<DashboardComponent refreshInterval={refreshInterval} />);
 
-          // 等待组件挂载和初始数据加载
+          // waitcomponent挂载and初始dataload
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 验证定时器已设置
+          // verify定时器已set
           const timerCountBefore = jest.getTimerCount();
           expect(timerCountBefore).toBeGreaterThan(0);
 
-          // 卸载组件
+          // 卸载component
           unmount();
 
-          // 验证所有定时器已清理
+          // verify所有定时器已cleanup
           const timerCountAfter = jest.getTimerCount();
           expect(timerCountAfter).toBe(0);
         }
@@ -1006,35 +1006,35 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
     );
   });
 
-  it('应该在任何数据状态下卸载时不触发状态更新', async () => {
+  it('shouldBeAt任何datastatus下卸载时不触发statusupdate', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         refreshIntervalArbitrary(),
         async (metrics, refreshInterval) => {
-          // 使用真实定时器以便测试异步行为
+          // use真实定时器以便test异步行为
           jest.useRealTimers();
           
-          // 模拟慢速API响应
+          // 模拟慢速APIresponse
           let resolveApiCall: (value: SystemMetrics) => void;
           const apiPromise = new Promise<SystemMetrics>((resolve) => {
             resolveApiCall = resolve;
           });
           mockApiClient.get.mockReturnValue(apiPromise);
 
-          // 渲染组件
+          // renderComponent
           const { unmount } = render(<DashboardComponent refreshInterval={refreshInterval} />);
 
-          // 立即卸载组件（在API响应之前）
+          // 立即卸载component（在APIresponse之前）
           unmount();
 
-          // 现在完成API调用
+          // 现在completeAPI调用
           resolveApiCall!(metrics);
 
-          // 等待一段时间确保没有状态更新尝试
+          // wait一段时间确保没有statusupdate尝试
           await new Promise(resolve => setTimeout(resolve, 50));
 
-          // 如果没有错误抛出，说明组件正确处理了卸载后的状态更新
+          // 如果没有error抛出，desccomponent正确handle了卸载后的statusupdate
           expect(true).toBe(true);
           
           // 恢复假定时器
@@ -1045,7 +1045,7 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
     );
   }, 30000);
 
-  it('应该在任何配置下正确清理多个定时器', async () => {
+  it('shouldBeAt任何config下正确cleanup多item定时器', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
@@ -1053,7 +1053,7 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
         async (metrics, intervals) => {
           mockApiClient.get.mockResolvedValue(metrics);
 
-          // 渲染多个Dashboard实例
+          // render多itemDashboardinstance
           const unmountFunctions: (() => void)[] = [];
           
           for (const interval of intervals) {
@@ -1061,20 +1061,20 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
             unmountFunctions.push(unmount);
           }
 
-          // 等待所有组件挂载
+          // wait所有component挂载
           await waitFor(() => {
             const activeUsersElements = screen.getAllByText('Active Users');
             expect(activeUsersElements.length).toBeGreaterThanOrEqual(intervals.length);
           });
 
-          // 验证定时器已设置
+          // verify定时器已set
           const timerCountBefore = jest.getTimerCount();
           expect(timerCountBefore).toBeGreaterThanOrEqual(intervals.length);
 
-          // 卸载所有组件
+          // 卸载所有component
           unmountFunctions.forEach(unmount => unmount());
 
-          // 验证所有定时器已清理
+          // verify所有定时器已cleanup
           const timerCountAfter = jest.getTimerCount();
           expect(timerCountAfter).toBe(0);
         }
@@ -1083,28 +1083,28 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
     );
   });
 
-  it('应该在任何时间点卸载时正确清理资源', async () => {
+  it('shouldBeAt任何时间点卸载时正确cleanup资源', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         refreshIntervalArbitrary(),
-        fc.integer({ min: 0, max: 5000 }), // 卸载延迟（毫秒）
+        fc.integer({ min: 0, max: 5000 }), // 卸载延迟（ms）
         async (metrics, refreshInterval, unmountDelay) => {
           mockApiClient.get.mockResolvedValue(metrics);
 
-          // 记录初始定时器数量
+          // record初始定时器数量
           const initialTimerCount = jest.getTimerCount();
 
-          // 渲染组件
+          // renderComponent
           const { unmount } = render(<DashboardComponent refreshInterval={refreshInterval} />);
 
-          // 等待指定时间后卸载
+          // wait指定时间后卸载
           jest.advanceTimersByTime(unmountDelay);
 
-          // 卸载组件
+          // 卸载component
           unmount();
 
-          // 验证定时器数量恢复到初始状态
+          // verify定时器数量恢复到初始status
           const timerCountAfter = jest.getTimerCount();
           expect(timerCountAfter).toBe(initialTimerCount);
         }
@@ -1113,29 +1113,29 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
     );
   });
 
-  it('应该在禁用刷新间隔时不创建定时器', async () => {
+  it('shouldBeAt禁用refresh间隔时不create定时器', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         async (metrics) => {
           mockApiClient.get.mockResolvedValue(metrics);
 
-          // 渲染组件，刷新间隔为0（禁用）
+          // renderComponent，refresh间隔为0（禁用）
           const { unmount } = render(<DashboardComponent refreshInterval={0} />);
 
-          // 等待组件挂载和初始数据加载
+          // waitcomponent挂载and初始dataload
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 验证没有定时器被创建
+          // verify没有定时器被create
           const timerCount = jest.getTimerCount();
           expect(timerCount).toBe(0);
 
-          // 卸载组件
+          // 卸载component
           unmount();
 
-          // 验证仍然没有定时器
+          // verify仍然没有定时器
           expect(jest.getTimerCount()).toBe(0);
         }
       ),
@@ -1143,46 +1143,46 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
     );
   });
 
-  it('应该在任何刷新周期中卸载时正确清理', async () => {
+  it('shouldBeAt任何refresh周期中卸载时正确cleanup', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         systemMetricsArbitrary(),
         refreshIntervalArbitrary(),
         async (initialMetrics, updatedMetrics, refreshInterval) => {
-          // 记录初始API调用次数
+          // record初始API调用times数
           const initialCallCount = mockApiClient.get.mock.calls.length;
           
-          // 第一次调用返回初始数据
+          // 第一times调用return初始data
           mockApiClient.get.mockResolvedValueOnce(initialMetrics);
-          // 后续调用返回更新数据
+          // 后续调用returnupdatedata
           mockApiClient.get.mockResolvedValue(updatedMetrics);
 
-          // 渲染组件
+          // renderComponent
           const { unmount } = render(<DashboardComponent refreshInterval={refreshInterval} />);
 
-          // 等待初始数据加载
+          // wait初始dataload
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 记录当前API调用次数
+          // record当前API调用times数
           const callCountAfterMount = mockApiClient.get.mock.calls.length;
 
-          // 推进时间到刷新间隔的一半
+          // 推进时间到refresh间隔的一半
           jest.advanceTimersByTime(refreshInterval / 2);
 
-          // 在刷新周期中间卸载
+          // 在refresh周期中间卸载
           unmount();
 
-          // 验证所有定时器已清理（恢复到初始状态）
+          // verify所有定时器已cleanup（恢复到初始status）
           const initialTimerCount = 0; // 假设初始没有定时器
           expect(jest.getTimerCount()).toBe(initialTimerCount);
 
-          // 推进时间到原本应该刷新的时间点
+          // 推进时间到原本shouldrefresh的时间点
           jest.advanceTimersByTime(refreshInterval / 2 + 1000);
 
-          // 验证没有额外的API调用（因为定时器已清理）
+          // verify没有额外的API调用（因为定时器已cleanup）
           const finalCallCount = mockApiClient.get.mock.calls.length;
           expect(finalCallCount).toBe(callCountAfterMount);
         }
@@ -1191,30 +1191,30 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
     );
   });
 
-  it('应该在快速挂载和卸载时正确清理资源', async () => {
+  it('shouldBeAt快速挂载and卸载时正确cleanup资源', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         refreshIntervalArbitrary(),
-        fc.integer({ min: 2, max: 10 }), // 快速挂载/卸载次数
+        fc.integer({ min: 2, max: 10 }), // 快速挂载/卸载times数
         async (metrics, refreshInterval, iterations) => {
           mockApiClient.get.mockResolvedValue(metrics);
 
-          // 记录初始定时器数量
+          // record初始定时器数量
           const initialTimerCount = jest.getTimerCount();
 
-          // 快速挂载和卸载多次
+          // 快速挂载and卸载多times
           for (let i = 0; i < iterations; i++) {
             const { unmount } = render(<DashboardComponent refreshInterval={refreshInterval} />);
             
             // 立即卸载
             unmount();
 
-            // 验证定时器数量恢复到初始状态
+            // verify定时器数量恢复到初始status
             expect(jest.getTimerCount()).toBe(initialTimerCount);
           }
 
-          // 最终验证没有遗留的定时器
+          // 最终verify没有遗留的定时器
           expect(jest.getTimerCount()).toBe(initialTimerCount);
         }
       ),
@@ -1222,31 +1222,31 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
     );
   });
 
-  it('应该在任何错误状态下卸载时正确清理资源', async () => {
+  it('shouldBeAt任何errorstatus下卸载时正确cleanup资源', async () => {
     await fc.assert(
       fc.asyncProperty(
         refreshIntervalArbitrary(),
-        fc.string({ minLength: 1, maxLength: 100 }), // 错误消息
+        fc.string({ minLength: 1, maxLength: 100 }), // error消息
         async (refreshInterval, errorMessage) => {
-          // 模拟API错误
+          // 模拟APIerror
           mockApiClient.get.mockRejectedValue(new Error(errorMessage));
 
-          // 渲染组件
+          // renderComponent
           const { unmount } = render(<DashboardComponent refreshInterval={refreshInterval} />);
 
-          // 等待错误状态
+          // waiterrorstatus
           await waitFor(() => {
             expect(screen.getByText(/Failed to Load Dashboard/)).toBeInTheDocument();
           });
 
-          // 验证定时器已设置（即使在错误状态下）
+          // verify定时器已set（即使在errorstatus下）
           const timerCountBefore = jest.getTimerCount();
           expect(timerCountBefore).toBeGreaterThan(0);
 
-          // 卸载组件
+          // 卸载component
           unmount();
 
-          // 验证所有定时器已清理
+          // verify所有定时器已cleanup
           expect(jest.getTimerCount()).toBe(0);
         }
       ),
@@ -1254,35 +1254,35 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
     );
   });
 
-  it('应该在任何加载状态下卸载时正确清理资源', async () => {
+  it('shouldBeAt任何loadstatus下卸载时正确cleanup资源', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
         refreshIntervalArbitrary(),
         async (metrics, refreshInterval) => {
-          // 使用真实定时器以便测试异步行为
+          // use真实定时器以便test异步行为
           jest.useRealTimers();
           
-          // 模拟慢速API响应
+          // 模拟慢速APIresponse
           let resolveApiCall: (value: SystemMetrics) => void;
           const apiPromise = new Promise<SystemMetrics>((resolve) => {
             resolveApiCall = resolve;
           });
           mockApiClient.get.mockReturnValue(apiPromise);
 
-          // 渲染组件
+          // renderComponent
           const { unmount } = render(<DashboardComponent refreshInterval={refreshInterval} />);
 
-          // 验证加载状态
+          // verifyloadstatus
           expect(screen.getByTestId('loading-state')).toBeInTheDocument();
 
-          // 在加载状态下卸载
+          // 在loadstatus下卸载
           unmount();
 
-          // 完成API调用（在卸载后）
+          // completeAPI调用（在卸载后）
           resolveApiCall!(metrics);
 
-          // 等待确保没有状态更新错误
+          // wait确保没有statusupdateerror
           await new Promise(resolve => setTimeout(resolve, 50));
 
           expect(true).toBe(true);
@@ -1295,29 +1295,29 @@ describe('Property 7: 资源清理防止内存泄漏', () => {
     );
   }, 30000);
 
-  it('应该在任何刷新间隔配置下正确处理边界值', async () => {
+  it('shouldBeAt任何refresh间隔config下正确handle边界value', async () => {
     await fc.assert(
       fc.asyncProperty(
         systemMetricsArbitrary(),
-        fc.constantFrom(1, 100, 1000, 5000, 10000, 30000, 60000), // 边界刷新间隔
+        fc.constantFrom(1, 100, 1000, 5000, 10000, 30000, 60000), // 边界refresh间隔
         async (metrics, refreshInterval) => {
           mockApiClient.get.mockResolvedValue(metrics);
 
-          // 渲染组件
+          // renderComponent
           const { unmount } = render(<DashboardComponent refreshInterval={refreshInterval} />);
 
-          // 等待组件挂载
+          // waitcomponent挂载
           await waitFor(() => {
             expect(screen.getAllByText('Active Users').length).toBeGreaterThan(0);
           });
 
-          // 验证定时器已设置
+          // verify定时器已set
           expect(jest.getTimerCount()).toBeGreaterThan(0);
 
-          // 卸载组件
+          // 卸载component
           unmount();
 
-          // 验证所有定时器已清理
+          // verify所有定时器已cleanup
           expect(jest.getTimerCount()).toBe(0);
         }
       ),

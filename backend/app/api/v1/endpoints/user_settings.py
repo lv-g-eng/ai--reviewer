@@ -1,7 +1,7 @@
 """
-用户设置 API 端点
+userset API endpoint
 
-管理用户的个人设置，包括 API 密钥配置
+管理user的item人set，包括 API keyconfig
 """
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 class UserAPISettings(BaseModel):
-    """用户 API 设置模型"""
+    """user API set模型"""
     openrouter_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
@@ -26,7 +26,7 @@ class UserAPISettings(BaseModel):
 
 
 class UpdateAPISettingsRequest(BaseModel):
-    """更新 API 设置请求"""
+    """update API setrequest"""
     openrouter_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
@@ -35,7 +35,7 @@ class UpdateAPISettingsRequest(BaseModel):
 
 
 class APISettingsResponse(BaseModel):
-    """API 设置响应"""
+    """API setresponse"""
     openrouter_api_key_set: bool
     openai_api_key_set: bool
     anthropic_api_key_set: bool
@@ -50,11 +50,11 @@ async def get_user_api_settings(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    获取用户的 API 设置
+    getuser的 API set
     
-    返回 API 密钥是否已设置（不返回实际密钥）
+    return API key是否已set（不return实际key）
     """
-    # 获取用户信息
+    # getuserinfo
     result = await db.execute(
         select(User).filter(User.id == current_user.user_id)
     )
@@ -66,7 +66,7 @@ async def get_user_api_settings(
             detail="User not found"
         )
     
-    # 检查用户的 metadata 中是否有 API 设置
+    # checkuser的 metadata 中是否有 API set
     metadata = user.metadata or {}
     api_settings = metadata.get('api_settings', {})
     
@@ -87,11 +87,11 @@ async def update_user_api_settings(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    更新用户的 API 设置
+    updateuser的 API set
     
-    允许用户配置自己的 API 密钥和默认 LLM 提供者
+    allowuserconfig自己的 API keyand默认 LLM provide者
     """
-    # 获取用户信息
+    # getuserinfo
     result = await db.execute(
         select(User).filter(User.id == current_user.user_id)
     )
@@ -103,11 +103,11 @@ async def update_user_api_settings(
             detail="User not found"
         )
     
-    # 获取现有的 metadata
+    # get现有的 metadata
     metadata = user.metadata or {}
     api_settings = metadata.get('api_settings', {})
     
-    # 更新 API 设置
+    # update API set
     if settings.openrouter_api_key is not None:
         if settings.openrouter_api_key.strip():
             api_settings['openrouter_api_key'] = settings.openrouter_api_key.strip()
@@ -138,11 +138,11 @@ async def update_user_api_settings(
         else:
             api_settings.pop('default_llm_model', None)
     
-    # 更新 metadata
+    # update metadata
     metadata['api_settings'] = api_settings
     metadata['updated_at'] = datetime.utcnow().isoformat()
     
-    # 保存到数据库
+    # save到database
     await db.execute(
         update(User)
         .where(User.id == current_user.user_id)
@@ -167,7 +167,7 @@ async def delete_user_api_key(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    删除指定提供者的 API 密钥
+    delete指定provide者的 API key
     
     provider: openrouter, openai, anthropic
     """
@@ -177,7 +177,7 @@ async def delete_user_api_key(
             detail=f"Invalid provider: {provider}. Must be one of: openrouter, openai, anthropic"
         )
     
-    # 获取用户信息
+    # getuserinfo
     result = await db.execute(
         select(User).filter(User.id == current_user.user_id)
     )
@@ -189,19 +189,19 @@ async def delete_user_api_key(
             detail="User not found"
         )
     
-    # 获取现有的 metadata
+    # get现有的 metadata
     metadata = user.metadata or {}
     api_settings = metadata.get('api_settings', {})
     
-    # 删除指定的 API 密钥
+    # delete指定的 API key
     key_name = f'{provider}_api_key'
     api_settings.pop(key_name, None)
     
-    # 更新 metadata
+    # update metadata
     metadata['api_settings'] = api_settings
     metadata['updated_at'] = datetime.utcnow().isoformat()
     
-    # 保存到数据库
+    # save到database
     await db.execute(
         update(User)
         .where(User.id == current_user.user_id)

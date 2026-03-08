@@ -1,5 +1,5 @@
 /**
- * Logger服务单元测试
+ * Loggerservice单元test
  */
 
 import { Logger, LoggerConfig, LogLevel } from '../Logger';
@@ -26,7 +26,7 @@ describe('Logger', () => {
       environment: 'test',
       enableConsole: true,
       batchSize: 10,
-      flushInterval: 60000, // 1分钟，避免测试期间自动刷新
+      flushInterval: 60000, // 1min，避免test期间自动refresh
     };
 
     logger = new Logger(config);
@@ -37,8 +37,8 @@ describe('Logger', () => {
     jest.restoreAllMocks();
   });
 
-  describe('日志级别过滤', () => {
-    it('应该根据环境设置默认日志级别', () => {
+  describe('log级别filter', () => {
+    it('should根据envset默认log级别', () => {
       const devLogger = new Logger({
         level: 'debug',
         environment: 'development',
@@ -55,7 +55,7 @@ describe('Logger', () => {
       prodLogger.destroy();
     });
 
-    it('应该只记录大于等于当前级别的日志', () => {
+    it('should只record大于等于当前级别的log', () => {
       logger.setLevel('warn');
 
       logger.debug('debug message');
@@ -63,16 +63,16 @@ describe('Logger', () => {
       logger.warn('warn message');
       logger.error('error message');
 
-      // debug和info不应该被记录
+      // debugandinfo不should被record
       expect(consoleDebugSpy).not.toHaveBeenCalled();
       expect(consoleInfoSpy).not.toHaveBeenCalled();
 
-      // warn和error应该被记录
+      // warnanderrorshould被record
       expect(consoleWarnSpy).toHaveBeenCalled();
       expect(consoleErrorSpy).toHaveBeenCalled();
     });
 
-    it('应该在生产环境只记录error和warn', () => {
+    it('shouldBeAtprodenv只recorderrorandwarn', () => {
       const prodLogger = new Logger({
         level: 'error',
         environment: 'production',
@@ -84,7 +84,7 @@ describe('Logger', () => {
       prodLogger.warn('warn message');
       prodLogger.error('error message');
 
-      // 只有error应该被记录（warn级别低于error）
+      // 只有errorshould被record（warn级别低于error）
       expect(consoleDebugSpy).not.toHaveBeenCalled();
       expect(consoleInfoSpy).not.toHaveBeenCalled();
       expect(consoleWarnSpy).not.toHaveBeenCalled();
@@ -94,8 +94,8 @@ describe('Logger', () => {
     });
   });
 
-  describe('日志记录方法', () => {
-    it('应该记录debug日志', () => {
+  describe('logrecordmethod', () => {
+    it('shouldrecorddebuglog', () => {
       logger.debug('test debug message', { key: 'value' });
 
       expect(consoleDebugSpy).toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe('Logger', () => {
       expect(call[2]).toEqual({ key: 'value' });
     });
 
-    it('应该记录info日志', () => {
+    it('shouldrecordinfolog', () => {
       logger.info('test info message');
 
       expect(consoleInfoSpy).toHaveBeenCalled();
@@ -112,7 +112,7 @@ describe('Logger', () => {
       expect(call[1]).toBe('test info message');
     });
 
-    it('应该记录warn日志', () => {
+    it('shouldrecordwarnlog', () => {
       logger.warn('test warn message');
 
       expect(consoleWarnSpy).toHaveBeenCalled();
@@ -120,7 +120,7 @@ describe('Logger', () => {
       expect(call[1]).toBe('test warn message');
     });
 
-    it('应该记录error日志并包含错误堆栈', () => {
+    it('shouldrecorderrorlog并containerror堆栈', () => {
       const error = new Error('test error');
       logger.error('test error message', error, { extra: 'data' });
 
@@ -136,8 +136,8 @@ describe('Logger', () => {
     });
   });
 
-  describe('API请求日志', () => {
-    it('应该记录API请求的响应时间和状态码', () => {
+  describe('APIrequestlog', () => {
+    it('shouldrecordAPIrequest的response时间andstatus码', () => {
       logger.logApiRequest('/api/users', 'GET', 250, 200);
 
       expect(consoleLogSpy).toHaveBeenCalled();
@@ -148,7 +148,7 @@ describe('Logger', () => {
       expect(call[0]).toContain('250ms');
     });
 
-    it('应该记录失败的API请求', () => {
+    it('shouldrecordfailure的APIrequest', () => {
       logger.logApiRequest('/api/users', 'POST', 1500, 500, {
         error: 'Internal Server Error',
       });
@@ -160,7 +160,7 @@ describe('Logger', () => {
       expect(call[0]).toContain('1500ms');
     });
 
-    it('应该记录请求和响应大小', () => {
+    it('shouldrecordrequestandresponse大小', () => {
       logger.logApiRequest('/api/data', 'POST', 300, 201, {
         requestSize: 1024,
         responseSize: 2048,
@@ -171,8 +171,8 @@ describe('Logger', () => {
     });
   });
 
-  describe('用户操作日志', () => {
-    it('应该记录用户操作包含用户ID、时间戳和操作类型', () => {
+  describe('user操作log', () => {
+    it('shouldrecorduser操作containuserID、时间戳and操作type', () => {
       logger.logUserAction('button_click', 'user123', {
         buttonId: 'submit-btn',
         page: '/dashboard',
@@ -188,7 +188,7 @@ describe('Logger', () => {
       });
     });
 
-    it('应该记录关键操作', () => {
+    it('shouldrecord关键操作', () => {
       logger.logUserAction('project_delete', 'user456', {
         projectId: 'proj-789',
         projectName: 'Test Project',
@@ -199,11 +199,11 @@ describe('Logger', () => {
     });
   });
 
-  describe('批量日志发送', () => {
-    it('应该在达到批量大小时自动刷新', async () => {
+  describe('批量log发送', () => {
+    it('shouldBeAt达到批量大hour自动refresh', async () => {
       const flushSpy = jest.spyOn(logger, 'flushLogs');
 
-      // 添加10条日志（等于batchSize）
+      // add10条log（等于batchSize）
       for (let i = 0; i < 10; i++) {
         logger.info(`message ${i}`);
       }
@@ -211,7 +211,7 @@ describe('Logger', () => {
       expect(flushSpy).toHaveBeenCalled();
     });
 
-    it('应该清空缓冲区', async () => {
+    it('should清空缓冲区', async () => {
       logger.info('test message 1');
       logger.info('test message 2');
       logger.logApiRequest('/api/test', 'GET', 100, 200);
@@ -227,19 +227,19 @@ describe('Logger', () => {
       expect(buffer.apiLogs).toBe(0);
     });
 
-    it('应该在没有日志时不执行刷新', async () => {
+    it('shouldBeAt没有log时不executerefresh', async () => {
       const result = await logger.flushLogs();
       expect(result).toBeUndefined();
     });
   });
 
-  describe('用户上下文', () => {
-    it('应该设置和获取用户ID', () => {
+  describe('user上下文', () => {
+    it('shouldsetandgetuserID', () => {
       logger.setUserId('user123');
       expect(logger.getUserId()).toBe('user123');
     });
 
-    it('应该在日志中包含用户ID', () => {
+    it('shouldBeAtlog中containuserID', () => {
       logger.setUserId('user456');
       logger.info('test message');
 
@@ -247,7 +247,7 @@ describe('Logger', () => {
       expect(buffer.logs).toBe(1);
     });
 
-    it('应该在API日志中包含用户ID', () => {
+    it('shouldBeAtAPIlog中containuserID', () => {
       logger.setUserId('user789');
       logger.logApiRequest('/api/test', 'GET', 100, 200);
 
@@ -257,7 +257,7 @@ describe('Logger', () => {
   });
 
   describe('缓冲区管理', () => {
-    it('应该返回正确的缓冲区状态', () => {
+    it('shouldreturn正确的缓冲区status', () => {
       logger.info('log 1');
       logger.info('log 2');
       logger.logApiRequest('/api/test', 'GET', 100, 200);
@@ -272,7 +272,7 @@ describe('Logger', () => {
   });
 
   describe('定时器管理', () => {
-    it('应该在销毁时停止定时器并刷新日志', async () => {
+    it('shouldBeAt销毁时stop定时器并refreshlog', async () => {
       logger.info('test message');
 
       const flushSpy = jest.spyOn(logger, 'flushLogs');
@@ -281,9 +281,9 @@ describe('Logger', () => {
       expect(flushSpy).toHaveBeenCalled();
     });
 
-    it('应该能够停止和重启定时器', () => {
+    it('should能够stopandrestart定时器', () => {
       logger.stopFlushTimer();
-      // 定时器已停止，不会自动刷新
+      // 定时器已stop，不会自动refresh
 
       logger.info('test message');
       const buffer = logger.getBufferStatus();
@@ -291,8 +291,8 @@ describe('Logger', () => {
     });
   });
 
-  describe('控制台输出', () => {
-    it('应该在开发环境启用控制台输出', () => {
+  describe('控制台output', () => {
+    it('shouldBeAtdevenv启用控制台output', () => {
       const devLogger = new Logger({
         level: 'debug',
         environment: 'development',
@@ -305,7 +305,7 @@ describe('Logger', () => {
       devLogger.destroy();
     });
 
-    it('应该在生产环境禁用控制台输出', () => {
+    it('shouldBeAtprodenv禁用控制台output', () => {
       const prodLogger = new Logger({
         level: 'error',
         environment: 'production',
@@ -320,27 +320,27 @@ describe('Logger', () => {
   });
 
   describe('边缘情况', () => {
-    it('应该处理没有上下文的日志', () => {
+    it('shouldhandle没有上下文的log', () => {
       logger.info('message without context');
       expect(consoleInfoSpy).toHaveBeenCalled();
     });
 
-    it('应该处理没有错误对象的error日志', () => {
+    it('shouldhandle没有errorobject的errorlog', () => {
       logger.error('error without error object');
       expect(consoleErrorSpy).toHaveBeenCalled();
     });
 
-    it('应该处理空字符串消息', () => {
+    it('shouldhandle空字符串消息', () => {
       logger.info('');
       expect(consoleInfoSpy).toHaveBeenCalled();
     });
 
-    it('应该处理大量日志', () => {
+    it('shouldhandle大量log', () => {
       for (let i = 0; i < 100; i++) {
         logger.info(`message ${i}`);
       }
 
-      // 应该触发多次刷新
+      // should触发多timesrefresh
       const buffer = logger.getBufferStatus();
       expect(buffer.total).toBeLessThan(100);
     });

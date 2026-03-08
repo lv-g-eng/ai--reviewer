@@ -22,12 +22,12 @@ export default function TestCorsPage() {
             
             if (response.ok) {
                 const data = await response.json();
-                setResult(`✅ CORS测试成功！\n响应: ${JSON.stringify(data, null, 2)}`);
+                setResult(`✅ CORStestSuccess！\nresponse: ${JSON.stringify(data, null, 2)}`);
             } else {
-                setResult(`❌ HTTP错误: ${response.status} ${response.statusText}`);
+                setResult(`❌ HTTPerror: ${response.status} ${response.statusText}`);
             }
         } catch (error: any) {
-            setResult(`❌ CORS错误: ${error.message}`);
+            setResult(`❌ CORSerror: ${error.message}`);
         } finally {
             setLoading(false);
         }
@@ -47,12 +47,12 @@ export default function TestCorsPage() {
             
             if (response.ok) {
                 const data = await response.json();
-                setResult(`✅ Health检查成功！\n响应: ${JSON.stringify(data, null, 2)}`);
+                setResult(`✅ Healthchecksuccess！\nresponse: ${JSON.stringify(data, null, 2)}`);
             } else {
-                setResult(`❌ HTTP错误: ${response.status} ${response.statusText}`);
+                setResult(`❌ HTTPerror: ${response.status} ${response.statusText}`);
             }
         } catch (error: any) {
-            setResult(`❌ 请求错误: ${error.message}`);
+            setResult(`❌ requesterror: ${error.message}`);
         } finally {
             setLoading(false);
         }
@@ -62,7 +62,7 @@ export default function TestCorsPage() {
         <div className="container mx-auto p-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>CORS 测试页面</CardTitle>
+                    <CardTitle>CORS test页面</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex space-x-4">
@@ -71,7 +71,7 @@ export default function TestCorsPage() {
                             disabled={loading}
                             variant="default"
                         >
-                            {loading ? '测试中...' : '测试根路径 (/)'}
+                            {loading ? 'test中...' : 'test根path (/)'}
                         </Button>
                         
                         <Button 
@@ -79,13 +79,13 @@ export default function TestCorsPage() {
                             disabled={loading}
                             variant="outline"
                         >
-                            {loading ? '测试中...' : '测试健康检查 (/health)'}
+                            {loading ? 'test中...' : 'test健康check (/health)'}
                         </Button>
                     </div>
                     
                     {result && (
                         <div className="mt-4">
-                            <h3 className="text-lg font-semibold mb-2">测试结果:</h3>
+                            <h3 className="text-lg font-semibold mb-2">testresult:</h3>
                             <pre className="bg-gray-100 p-4 rounded-lg text-sm whitespace-pre-wrap">
                                 {result}
                             </pre>
@@ -93,11 +93,11 @@ export default function TestCorsPage() {
                     )}
                     
                     <div className="mt-6 text-sm text-gray-600">
-                        <h4 className="font-semibold">说明:</h4>
+                        <h4 className="font-semibold">desc:</h4>
                         <ul className="list-disc list-inside mt-2 space-y-1">
-                            <li>这个页面测试前端是否能够成功访问后端API</li>
-                            <li>如果看到CORS错误，说明跨域配置有问题</li>
-                            <li>确保后端服务器在 http://localhost:8000 上运行</li>
+                            <li>这item页面test前端是否能够success访问后端API</li>
+                            <li>如果看到CORSerror，desc跨域config有问题</li>
+                            <li>确保后端service器在 http://localhost:8000 上run</li>
                         </ul>
                     </div>
                 </CardContent>

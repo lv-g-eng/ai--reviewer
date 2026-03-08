@@ -1,12 +1,12 @@
 /**
- * Projects组件单元测试
+ * Projectscomponent单元test
  * 
- * 测试范围:
- * - 项目列表展示
- * - VirtualList集成?00+项目?
- * - 项目选择功能
- * - 加载和错误状?
- * - ErrorBoundary集成
+ * test范围:
+ * - project列表展示
+ * - VirtualListintegration?00+project?
+ * - project选择feature
+ * - loadanderror状?
+ * - ErrorBoundaryintegration
  */
 
 import React from 'react';
@@ -204,7 +204,7 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects enableVirtualScroll={true} />);
 
-      // VirtualList应该被使?
+      // VirtualListshould被使?
       expect(screen.getByTestId('virtual-list')).toBeInTheDocument();
     });
 
@@ -221,7 +221,7 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects enableVirtualScroll={true} />);
 
-      // VirtualList不应该被使用
+      // VirtualList不should被use
       expect(screen.queryByTestId('virtual-list')).not.toBeInTheDocument();
     });
 
@@ -238,7 +238,7 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects enableVirtualScroll={false} />);
 
-      // VirtualList不应该被使用
+      // VirtualList不should被use
       expect(screen.queryByTestId('virtual-list')).not.toBeInTheDocument();
     });
   });
@@ -259,14 +259,14 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 获取第一个项目的checkbox
+      // get第一itemproject的checkbox
       const checkboxes = screen.getAllByRole('checkbox');
       expect(checkboxes[0]).not.toBeChecked();
 
       // 点击checkbox
       await user.click(checkboxes[0]);
 
-      // 验证选中状?
+      // verify选中状?
       expect(checkboxes[0]).toBeChecked();
       expect(screen.getByText('1 selected')).toBeInTheDocument();
     });
@@ -289,7 +289,7 @@ describe('Projects Component', () => {
       await user.click(checkbox);
       expect(checkbox).toBeChecked();
 
-      // 取消选中
+      // cancel选中
       await user.click(checkbox);
       expect(checkbox).not.toBeChecked();
     });
@@ -310,11 +310,11 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 点击"Select All"按钮
+      // 点击"Select All"button
       const selectAllButton = screen.getByRole('button', { name: /select all/i });
       await user.click(selectAllButton);
 
-      // 验证所有项目被选中
+      // verify所有project被选中
       expect(screen.getByText('3 selected')).toBeInTheDocument();
       const checkboxes = screen.getAllByRole('checkbox');
       checkboxes.forEach((checkbox) => {
@@ -342,11 +342,11 @@ describe('Projects Component', () => {
       await user.click(selectAllButton);
       expect(screen.getByText('2 selected')).toBeInTheDocument();
 
-      // 再取消全?
+      // 再cancel全?
       const deselectAllButton = screen.getByRole('button', { name: /deselect all/i });
       await user.click(deselectAllButton);
 
-      // 验证没有项目被选中
+      // verify没有project被选中
       expect(screen.queryByText(/selected/)).not.toBeInTheDocument();
     });
   });
@@ -432,21 +432,21 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 所有项目应该可?
+      // 所有projectshould可?
       expect(screen.getByText('Alpha Project')).toBeInTheDocument();
       expect(screen.getByText('Beta Project')).toBeInTheDocument();
       expect(screen.getByText('Gamma Project')).toBeInTheDocument();
 
-      // 输入搜索?
+      // inputsearch?
       const searchInput = screen.getByPlaceholderText(/search projects/i);
       await user.type(searchInput, 'Alpha');
 
-      // 等待防抖延迟?00毫秒?
+      // wait防抖延迟?00ms?
       await act(async () => {
         jest.advanceTimersByTime(300);
       });
 
-      // 等待React更新
+      // waitReactupdate
       await waitFor(() => {
         expect(screen.getByText('Alpha Project')).toBeInTheDocument();
         expect(screen.queryByText('Beta Project')).not.toBeInTheDocument();
@@ -576,13 +576,13 @@ describe('Projects Component', () => {
 
       const searchInput = screen.getByPlaceholderText(/search projects/i);
       
-      // 清除按钮不应该存?
+      // 清除button不should存?
       expect(screen.queryByLabelText('Clear search')).not.toBeInTheDocument();
 
-      // 输入文本
+      // input文本
       await user.type(searchInput, 'test');
 
-      // 清除按钮应该出现
+      // 清除buttonshould出现
       expect(screen.getByLabelText('Clear search')).toBeInTheDocument();
     });
 
@@ -653,7 +653,7 @@ describe('Projects Component', () => {
       // 初始计数
       expect(screen.getByText('3 projects')).toBeInTheDocument();
 
-      // 搜索
+      // search
       const searchInput = screen.getByPlaceholderText(/search projects/i);
       await user.type(searchInput, 'Alpha');
 
@@ -661,7 +661,7 @@ describe('Projects Component', () => {
         jest.advanceTimersByTime(300);
       });
 
-      // 过滤后的计数
+      // filter后的计数
       await waitFor(() => {
         expect(screen.getByText('1 project of 3')).toBeInTheDocument();
       });
@@ -684,7 +684,7 @@ describe('Projects Component', () => {
 
       const searchInput = screen.getByPlaceholderText(/search projects/i);
 
-      // 快速输入多个字?
+      // 快速input多item字?
       await user.type(searchInput, 'A');
       await act(async () => {
         jest.advanceTimersByTime(100);
@@ -695,16 +695,16 @@ describe('Projects Component', () => {
       });
       await user.type(searchInput, 'p');
 
-      // ?00ms之前，过滤不应该生效
+      // ?00ms之前，filter不should生效
       expect(screen.getByText('Alpha Project')).toBeInTheDocument();
       expect(screen.getByText('Beta Project')).toBeInTheDocument();
 
-      // 等待防抖延迟
+      // wait防抖延迟
       await act(async () => {
         jest.advanceTimersByTime(300);
       });
 
-      // 现在过滤应该生效
+      // 现在filtershould生效
       await waitFor(() => {
         expect(screen.getByText('Alpha Project')).toBeInTheDocument();
         expect(screen.queryByText('Beta Project')).not.toBeInTheDocument();
@@ -765,12 +765,12 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 初始排序：升?
+      // 初始sort：升?
       let projectNames = screen.getAllByRole('heading', { level: 3 });
       expect(projectNames[0]).toHaveTextContent('Alpha Project');
       expect(projectNames[2]).toHaveTextContent('Zebra Project');
 
-      // 点击名称按钮切换为降?
+      // 点击名称button切换为降?
       const nameButton = getSortButton(/Name/i);
       await user.click(nameButton);
 
@@ -778,7 +778,7 @@ describe('Projects Component', () => {
       expect(projectNames[0]).toHaveTextContent('Zebra Project');
       expect(projectNames[2]).toHaveTextContent('Alpha Project');
 
-      // 再次点击切换回升?
+      // 再times点击切换回升?
       await user.click(nameButton);
 
       projectNames = screen.getAllByRole('heading', { level: 3 });
@@ -802,7 +802,7 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 点击创建日期按钮
+      // 点击create日期button
       const createdButton = getSortButton(/Created/i);
       await user.click(createdButton);
 
@@ -828,7 +828,7 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 点击更新日期按钮 - 使用更具体的查询
+      // 点击update日期button - use更具体的query
       const sortButtons = screen.getAllByRole('button', { name: /Updated/i });
       const updatedButton = sortButtons.find(btn => btn.textContent?.includes('Updated') && !btn.getAttribute('aria-roledescription'));
       expect(updatedButton).toBeDefined();
@@ -857,7 +857,7 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 点击状态按?- 使用更具体的查询
+      // 点击status按?- use更具体的query
       const sortButtons = screen.getAllByRole('button', { name: /Status/i });
       const statusButton = sortButtons.find(btn => btn.textContent?.trim() === 'Status' && !btn.getAttribute('aria-roledescription'));
       expect(statusButton).toBeDefined();
@@ -916,11 +916,11 @@ describe('Projects Component', () => {
       const nameButton = getSortButton(/Name/i);
       await user.click(nameButton);
 
-      // 验证降序排序
+      // verify降序sort
       let projectNames = screen.getAllByRole('heading', { level: 3 });
       expect(projectNames[0]).toHaveTextContent('Zebra Alpha');
 
-      // 应用过滤
+      // 应用filter
       const searchInput = screen.getByPlaceholderText(/search projects/i);
       await user.type(searchInput, 'Alpha');
 
@@ -928,7 +928,7 @@ describe('Projects Component', () => {
         jest.advanceTimersByTime(300);
       });
 
-      // 验证过滤后仍保持降序排序
+      // verifyfilter后仍保持降序sort
       await waitFor(() => {
         projectNames = screen.getAllByRole('heading', { level: 3 });
         expect(projectNames.length).toBe(2);
@@ -963,7 +963,7 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 切换名称排序为降?
+      // 切换名称sort为降?
       const nameButton = getSortButton(/Name/i);
       await user.click(nameButton);
       expect(nameButton).toHaveTextContent('↓');
@@ -999,16 +999,16 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 批量操作按钮不应该显示
+      // 批量操作button不shouldshow
       expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Archive/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Add Tag/i })).not.toBeInTheDocument();
 
-      // 选中一个项目
+      // 选中一itemproject
       const checkboxes = screen.getAllByRole('checkbox');
       await user.click(checkboxes[0]);
 
-      // 批量操作按钮应该显示
+      // 批量操作buttonshouldshow
       expect(screen.getByRole('button', { name: /Delete/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Archive/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Add Tag/i })).toBeInTheDocument();
@@ -1039,28 +1039,28 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 选中两个项目
+      // 选中两itemproject
       const checkboxes = screen.getAllByRole('checkbox');
       await user.click(checkboxes[0]);
       await user.click(checkboxes[1]);
 
       expect(screen.getByText('2 selected')).toBeInTheDocument();
 
-      // 点击删除按钮
+      // 点击deletebutton
       const deleteButton = screen.getByRole('button', { name: /Delete/i });
       await user.click(deleteButton);
 
-      // 验证确认对话框
+      // verifyconfirm对话框
       expect(confirmSpy).toHaveBeenCalledWith(
         expect.stringContaining('Are you sure you want to delete 2 projects?')
       );
 
-      // 等待异步操作完成
+      // wait异步操作complete
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledTimes(2);
       });
 
-      // 验证调用参数（软删除：设置为不活跃）
+      // verify调用param（软delete：set为不活跃）
       expect(mockMutateAsync).toHaveBeenCalledWith({
         projectId: '1',
         updates: { is_active: false },
@@ -1070,12 +1070,12 @@ describe('Projects Component', () => {
         updates: { is_active: false },
       });
 
-      // 验证成功提示
+      // verifysuccesshint
       await waitFor(() => {
         expect(alertSpy).toHaveBeenCalledWith('Successfully deleted 2 projects');
       });
 
-      // 验证项目从列表中移除
+      // verifyproject从列表中移除
       await waitFor(() => {
         expect(screen.queryByText('Project 1')).not.toBeInTheDocument();
         expect(screen.queryByText('Project 2')).not.toBeInTheDocument();
@@ -1142,11 +1142,11 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 选中项目
+      // 选中project
       const checkboxes = screen.getAllByRole('checkbox');
       await user.click(checkboxes[0]);
 
-      // 点击归档按钮
+      // 点击归档button
       const archiveButton = screen.getByRole('button', { name: /Archive/i });
       await user.click(archiveButton);
 
@@ -1187,15 +1187,15 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 选中项目
+      // 选中project
       const checkboxes = screen.getAllByRole('checkbox');
       await user.click(checkboxes[0]);
 
-      // 点击添加标签按钮
+      // 点击addtagbutton
       const tagButton = screen.getByRole('button', { name: /Add Tag/i });
       await user.click(tagButton);
 
-      // 验证模态框打开
+      // verify模态框open
       expect(screen.getByText(/Add Tags to 1 Project/i)).toBeInTheDocument();
       expect(screen.getByPlaceholderText(/Enter tags.../i)).toBeInTheDocument();
     });
@@ -1222,29 +1222,29 @@ describe('Projects Component', () => {
 
       renderWithProviders(<Projects />);
 
-      // 选中两个项目
+      // 选中两itemproject
       const checkboxes = screen.getAllByRole('checkbox');
       await user.click(checkboxes[0]);
       await user.click(checkboxes[1]);
 
-      // 打开标签模态框
+      // opentag模态框
       const tagButton = screen.getByRole('button', { name: /Add Tag/i });
       await user.click(tagButton);
 
-      // 输入标签
+      // inputtag
       const tagInput = screen.getByPlaceholderText(/Enter tags.../i);
       await user.type(tagInput, 'frontend, react, typescript');
 
-      // 点击添加按钮
+      // 点击addbutton
       const addButton = screen.getByRole('button', { name: /Add Tags/i });
       await user.click(addButton);
 
-      // 验证API调用
+      // verifyAPI调用
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledTimes(2);
       });
 
-      // 验证标签被添加到description中
+      // verifytag被add到description中
       expect(mockMutateAsync).toHaveBeenCalledWith({
         projectId: '1',
         updates: { description: 'Original description [Tags: frontend, react, typescript]' },
@@ -1290,7 +1290,7 @@ describe('Projects Component', () => {
       const cancelButton = screen.getByRole('button', { name: /Cancel/i });
       await user.click(cancelButton);
 
-      // 验证模态框关闭
+      // verify模态框close
       await waitFor(() => {
         expect(screen.queryByText(/Add Tags to 1 Project/i)).not.toBeInTheDocument();
       });
@@ -1326,7 +1326,7 @@ describe('Projects Component', () => {
         await user.click(modalBackdrop);
       }
 
-      // 验证模态框关闭
+      // verify模态框close
       await waitFor(() => {
         expect(screen.queryByText(/Add Tags to 1 Project/i)).not.toBeInTheDocument();
       });
@@ -1472,15 +1472,15 @@ describe('Projects Component', () => {
       const deleteButton = screen.getByRole('button', { name: /Delete/i });
       await user.click(deleteButton);
 
-      // 验证加载指示器显示
+      // verifyload指示器show
       await waitFor(() => {
         expect(screen.getByText('Processing batch operation...')).toBeInTheDocument();
       });
 
-      // 完成操作
+      // complete操作
       resolvePromise!();
 
-      // 验证加载指示器消失
+      // verifyload指示器消失
       await waitFor(() => {
         expect(screen.queryByText('Processing batch operation...')).not.toBeInTheDocument();
       });

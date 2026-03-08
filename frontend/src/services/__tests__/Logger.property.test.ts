@@ -1,19 +1,19 @@
 /**
- * Logger属性测试
+ * Loggerpropertytest
  * 
  * Feature: frontend-production-optimization
- * Property 37: API请求日志记录
+ * Property 37: APIrequestlogrecord
  * 
  * **Validates: Requirements 9.2**
  * 
- * 测试覆盖:
- * - 对于任何API请求，应该记录包含响应时间和状态码的日志
+ * testCoverage:
+ * - 对于任何APIrequest，shouldrecordcontainresponse时间andstatus码的log
  */
 
 import fc from 'fast-check';
 import { Logger, LoggerConfig, ApiRequestLog, UserActionLog } from '../Logger';
 
-describe('Property 37: API请求日志记录', () => {
+describe('Property 37: APIrequestlogrecord', () => {
   let consoleLogSpy: jest.SpyInstance;
   let consoleDebugSpy: jest.SpyInstance;
 
@@ -27,21 +27,21 @@ describe('Property 37: API请求日志记录', () => {
     consoleDebugSpy.mockRestore();
   });
 
-  // 自定义生成器：生成HTTP方法
+  // customGenerator：generateHTTPmethod
   const httpMethodArbitrary = () =>
     fc.constantFrom('GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS');
 
-  // 自定义生成器：生成HTTP状态码
+  // customGenerator：generateHTTPstatus码
   const httpStatusArbitrary = () =>
     fc.constantFrom(
       200, 201, 204, 301, 302, 304, 400, 401, 403, 404, 422, 429, 500, 502, 503, 504
     );
 
-  // 自定义生成器：生成响应时间（毫秒）
+  // customGenerator：generateresponse时间（ms）
   const durationArbitrary = () =>
     fc.integer({ min: 1, max: 10000 });
 
-  // 自定义生成器：生成URL
+  // customGenerator：generateURL
   const urlArbitrary = () =>
     fc.oneof(
       fc.webUrl(),
@@ -49,7 +49,7 @@ describe('Property 37: API请求日志记录', () => {
       fc.string({ minLength: 1, maxLength: 50 }).map(path => `/v1/${path}`)
     );
 
-  // 自定义生成器：生成Logger配置
+  // customGenerator：generateLoggerconfig
   const loggerConfigArbitrary = () =>
     fc.record({
       level: fc.constantFrom('debug', 'info', 'warn', 'error'),
@@ -59,7 +59,7 @@ describe('Property 37: API请求日志记录', () => {
       flushInterval: fc.integer({ min: 1000, max: 60000 }),
     });
 
-  it('应该为所有API请求记录包含响应时间和状态码的日志', () => {
+  it('should为所有APIrequestrecordcontainresponse时间andstatus码的log', () => {
     fc.assert(
       fc.property(
         loggerConfigArbitrary(),
@@ -68,22 +68,22 @@ describe('Property 37: API请求日志记录', () => {
         durationArbitrary(),
         httpStatusArbitrary(),
         (config, url, method, duration, status) => {
-          // 创建Logger实例
+          // createLoggerinstance
           const logger = new Logger({
             ...config,
-            enableConsole: true, // 强制启用控制台输出以便验证
+            enableConsole: true, // 强制启用控制台output以便verify
           });
 
-          // 记录API请求
+          // recordAPIrequest
           logger.logApiRequest(url, method, duration, status);
 
-          // 获取缓冲区状态
+          // get缓冲区status
           const bufferStatus = logger.getBufferStatus();
 
-          // 验证API日志被添加到缓冲区（需求9.2）
+          // verifyAPIlog被add到缓冲区（requirement9.2）
           expect(bufferStatus.apiLogs).toBeGreaterThan(0);
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -91,7 +91,7 @@ describe('Property 37: API请求日志记录', () => {
     );
   });
 
-  it('应该为所有API请求生成包含必需字段的日志条目', () => {
+  it('should为所有APIrequestgeneratecontain必需field的log条目', () => {
     fc.assert(
       fc.property(
         urlArbitrary(),
@@ -106,16 +106,16 @@ describe('Property 37: API请求日志记录', () => {
             batchSize: 100,
           });
 
-          // 记录API请求
+          // recordAPIrequest
           logger.logApiRequest(url, method, duration, status);
 
-          // 通过反射访问私有缓冲区来验证日志内容
+          // 通过反射访问私有缓冲区来verifylogcontent
           const apiLogBuffer = (logger as any).apiLogBuffer as ApiRequestLog[];
           expect(apiLogBuffer.length).toBeGreaterThan(0);
 
           const lastLog = apiLogBuffer[apiLogBuffer.length - 1];
 
-          // 验证日志包含所有必需字段（需求9.2）
+          // verifylogcontain所有必需field（requirement9.2）
           expect(lastLog).toMatchObject({
             id: expect.stringMatching(/^log_\d+_[a-z0-9]+$/),
             method: method.toUpperCase(),
@@ -125,11 +125,11 @@ describe('Property 37: API请求日志记录', () => {
             timestamp: expect.any(Date),
           });
 
-          // 验证响应时间和状态码被正确记录
+          // verifyresponse时间andstatus码被正确record
           expect(lastLog.duration).toBe(duration);
           expect(lastLog.status).toBe(status);
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -137,7 +137,7 @@ describe('Property 37: API请求日志记录', () => {
     );
   });
 
-  it('应该为所有API请求生成唯一的日志ID', () => {
+  it('should为所有APIrequestgenerate唯一的logID', () => {
     fc.assert(
       fc.property(
         fc.array(
@@ -157,25 +157,25 @@ describe('Property 37: API请求日志记录', () => {
             batchSize: 1000,
           });
 
-          // 记录所有API请求
+          // record所有APIrequest
           requests.forEach(({ url, method, duration, status }) => {
             logger.logApiRequest(url, method, duration, status);
           });
 
-          // 获取所有日志ID
+          // get所有logID
           const apiLogBuffer = (logger as any).apiLogBuffer as ApiRequestLog[];
           const logIds = apiLogBuffer.map(log => log.id);
 
-          // 验证所有ID都是唯一的
+          // verify所有ID都是唯一的
           const uniqueIds = new Set(logIds);
           expect(uniqueIds.size).toBe(logIds.length);
 
-          // 验证所有ID都符合格式
+          // verify所有ID都符合format
           logIds.forEach(id => {
             expect(id).toMatch(/^log_\d+_[a-z0-9]+$/);
           });
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -183,7 +183,7 @@ describe('Property 37: API请求日志记录', () => {
     );
   });
 
-  it('应该正确记录HTTP方法（转换为大写）', () => {
+  it('should正确recordHTTPmethod（转换为大写）', () => {
     fc.assert(
       fc.property(
         urlArbitrary(),
@@ -203,10 +203,10 @@ describe('Property 37: API请求日志记录', () => {
           const apiLogBuffer = (logger as any).apiLogBuffer as ApiRequestLog[];
           const lastLog = apiLogBuffer[apiLogBuffer.length - 1];
 
-          // 验证方法被转换为大写
+          // verifymethod被转换为大写
           expect(lastLog.method).toBe(method.toUpperCase());
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -214,7 +214,7 @@ describe('Property 37: API请求日志记录', () => {
     );
   });
 
-  it('应该在API日志中包含可选的请求和响应大小', () => {
+  it('shouldBeAtAPIlog中contain可选的requestandresponse大小', () => {
     fc.assert(
       fc.property(
         urlArbitrary(),
@@ -239,7 +239,7 @@ describe('Property 37: API请求日志记录', () => {
           const apiLogBuffer = (logger as any).apiLogBuffer as ApiRequestLog[];
           const lastLog = apiLogBuffer[apiLogBuffer.length - 1];
 
-          // 验证可选字段被正确记录
+          // verify可选field被正确record
           if (requestSize !== undefined) {
             expect(lastLog.requestSize).toBe(requestSize);
           }
@@ -247,7 +247,7 @@ describe('Property 37: API请求日志记录', () => {
             expect(lastLog.responseSize).toBe(responseSize);
           }
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -255,7 +255,7 @@ describe('Property 37: API请求日志记录', () => {
     );
   });
 
-  it('应该在API日志中包含错误信息（如果提供）', () => {
+  it('shouldBeAtAPIlog中containerrorinfo（如果provide）', () => {
     fc.assert(
       fc.property(
         urlArbitrary(),
@@ -278,12 +278,12 @@ describe('Property 37: API请求日志记录', () => {
           const apiLogBuffer = (logger as any).apiLogBuffer as ApiRequestLog[];
           const lastLog = apiLogBuffer[apiLogBuffer.length - 1];
 
-          // 验证错误信息被正确记录
+          // verifyerrorinfo被正确record
           if (errorMessage !== undefined) {
             expect(lastLog.error).toBe(errorMessage);
           }
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -291,7 +291,7 @@ describe('Property 37: API请求日志记录', () => {
     );
   });
 
-  it('应该在API日志中包含当前用户ID（如果已设置）', () => {
+  it('shouldBeAtAPIlog中contain当前userID（如果已set）', () => {
     fc.assert(
       fc.property(
         fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: undefined }),
@@ -307,7 +307,7 @@ describe('Property 37: API请求日志记录', () => {
             batchSize: 100,
           });
 
-          // 设置用户ID（如果提供）
+          // setuserID（如果provide）
           if (userId !== undefined) {
             logger.setUserId(userId);
           }
@@ -317,14 +317,14 @@ describe('Property 37: API请求日志记录', () => {
           const apiLogBuffer = (logger as any).apiLogBuffer as ApiRequestLog[];
           const lastLog = apiLogBuffer[apiLogBuffer.length - 1];
 
-          // 验证用户ID被包含在日志中
+          // verifyuserID被contain在log中
           if (userId !== undefined) {
             expect(lastLog.userId).toBe(userId);
           } else {
             expect(lastLog.userId).toBeUndefined();
           }
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -332,7 +332,7 @@ describe('Property 37: API请求日志记录', () => {
     );
   });
 
-  it('应该在达到批量大小时触发日志刷新', () => {
+  it('shouldBeAt达到批量大hour触发logrefresh', () => {
     fc.assert(
       fc.property(
         fc.integer({ min: 5, max: 20 }),
@@ -342,19 +342,19 @@ describe('Property 37: API请求日志记录', () => {
             environment: 'test',
             enableConsole: false,
             batchSize: batchSize,
-            flushInterval: 60000, // 长时间间隔，避免自动刷新
+            flushInterval: 60000, // 长时间间隔，避免自动refresh
           });
 
-          // 记录足够多的API请求以触发刷新
+          // record足够多的APIrequest以触发refresh
           for (let i = 0; i < batchSize; i++) {
             logger.logApiRequest(`/api/test/${i}`, 'GET', 100, 200);
           }
 
-          // 验证缓冲区在达到批量大小后被清空
+          // verify缓冲区在达到批量大小后被清空
           const bufferStatus = logger.getBufferStatus();
           expect(bufferStatus.total).toBeLessThan(batchSize);
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -362,7 +362,7 @@ describe('Property 37: API请求日志记录', () => {
     );
   });
 
-  it('应该为所有API请求记录时间戳', () => {
+  it('should为所有APIrequestrecord时间戳', () => {
     fc.assert(
       fc.property(
         urlArbitrary(),
@@ -384,12 +384,12 @@ describe('Property 37: API请求日志记录', () => {
           const apiLogBuffer = (logger as any).apiLogBuffer as ApiRequestLog[];
           const lastLog = apiLogBuffer[apiLogBuffer.length - 1];
 
-          // 验证时间戳在合理范围内
+          // verify时间戳在合理范围内
           expect(lastLog.timestamp).toBeInstanceOf(Date);
           expect(lastLog.timestamp.getTime()).toBeGreaterThanOrEqual(beforeTimestamp.getTime());
           expect(lastLog.timestamp.getTime()).toBeLessThanOrEqual(afterTimestamp.getTime());
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -397,7 +397,7 @@ describe('Property 37: API请求日志记录', () => {
     );
   });
 
-  it('应该在开发环境中输出API请求日志到控制台', () => {
+  it('shouldBeAtdevenv中outputAPIrequestlog到控制台', () => {
     fc.assert(
       fc.property(
         urlArbitrary(),
@@ -414,10 +414,10 @@ describe('Property 37: API请求日志记录', () => {
 
           logger.logApiRequest(url, method, duration, status);
 
-          // 验证控制台输出被调用
+          // verify控制台output被调用
           expect(consoleLogSpy).toHaveBeenCalled();
 
-          // 验证输出包含关键信息
+          // verifyoutputcontain关键info
           const logCall = consoleLogSpy.mock.calls.find(call => 
             call[0].includes('[API]') && 
             call[0].includes(method.toUpperCase()) &&
@@ -425,7 +425,7 @@ describe('Property 37: API请求日志记录', () => {
           );
           expect(logCall).toBeDefined();
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -436,18 +436,18 @@ describe('Property 37: API请求日志记录', () => {
 
 
 /**
- * Logger属性测试 - 用户操作日志
+ * Loggerpropertytest - user操作log
  * 
  * Feature: frontend-production-optimization
- * Property 38: 用户操作日志记录
+ * Property 38: user操作logrecord
  * 
  * **Validates: Requirements 9.3**
  * 
- * 测试覆盖:
- * - 对于任何关键用户操作，应该记录包含用户ID、时间戳和操作类型的日志
+ * testCoverage:
+ * - 对于任何关键user操作，shouldrecordcontainuserID、时间戳and操作type的log
  */
 
-describe('Property 38: 用户操作日志记录', () => {
+describe('Property 38: user操作logrecord', () => {
   let consoleLogSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -458,7 +458,7 @@ describe('Property 38: 用户操作日志记录', () => {
     consoleLogSpy.mockRestore();
   });
 
-  // 自定义生成器：生成用户ID
+  // customGenerator：generateuserID
   const userIdArbitrary = () =>
     fc.oneof(
       fc.uuid(),
@@ -466,7 +466,7 @@ describe('Property 38: 用户操作日志记录', () => {
       fc.integer({ min: 1, max: 999999 }).map(n => `user_${n}`)
     );
 
-  // 自定义生成器：生成操作类型
+  // customGenerator：generate操作type
   const actionArbitrary = () =>
     fc.oneof(
       fc.constantFrom(
@@ -484,7 +484,7 @@ describe('Property 38: 用户操作日志记录', () => {
       fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0)
     );
 
-  // 自定义生成器：生成操作详情
+  // customGenerator：generate操作detail
   const detailsArbitrary = () =>
     fc.option(
       fc.record({
@@ -496,7 +496,7 @@ describe('Property 38: 用户操作日志记录', () => {
       { nil: undefined }
     );
 
-  it('应该为所有用户操作记录包含用户ID、时间戳和操作类型的日志', () => {
+  it('should为所有user操作recordcontainuserID、时间戳and操作type的log', () => {
     fc.assert(
       fc.property(
         userIdArbitrary(),
@@ -510,16 +510,16 @@ describe('Property 38: 用户操作日志记录', () => {
             batchSize: 100,
           });
 
-          // 记录用户操作
+          // recorduser操作
           logger.logUserAction(action, userId, details);
 
-          // 通过反射访问私有缓冲区来验证日志内容
+          // 通过反射访问私有缓冲区来verifylogcontent
           const userActionBuffer = (logger as any).userActionBuffer as UserActionLog[];
           expect(userActionBuffer.length).toBeGreaterThan(0);
 
           const lastLog = userActionBuffer[userActionBuffer.length - 1];
 
-          // 验证日志包含所有必需字段（需求9.3）
+          // verifylogcontain所有必需field（requirement9.3）
           expect(lastLog).toMatchObject({
             id: expect.stringMatching(/^log_\d+_[a-z0-9]+$/),
             action: action,
@@ -527,17 +527,17 @@ describe('Property 38: 用户操作日志记录', () => {
             timestamp: expect.any(Date),
           });
 
-          // 验证用户ID、时间戳和操作类型被正确记录
+          // verifyuserID、时间戳and操作type被正确record
           expect(lastLog.userId).toBe(userId);
           expect(lastLog.action).toBe(action);
           expect(lastLog.timestamp).toBeInstanceOf(Date);
 
-          // 验证详情被正确记录（如果提供）
+          // verifydetail被正确record（如果provide）
           if (details !== undefined) {
             expect(lastLog.details).toEqual(details);
           }
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -545,7 +545,7 @@ describe('Property 38: 用户操作日志记录', () => {
     );
   });
 
-  it('应该为所有用户操作生成唯一的日志ID', () => {
+  it('should为所有user操作generate唯一的logID', () => {
     fc.assert(
       fc.property(
         fc.array(
@@ -564,25 +564,25 @@ describe('Property 38: 用户操作日志记录', () => {
             batchSize: 1000,
           });
 
-          // 记录所有用户操作
+          // record所有user操作
           userActions.forEach(({ userId, action, details }) => {
             logger.logUserAction(action, userId, details);
           });
 
-          // 获取所有日志ID
+          // get所有logID
           const userActionBuffer = (logger as any).userActionBuffer as UserActionLog[];
           const logIds = userActionBuffer.map(log => log.id);
 
-          // 验证所有ID都是唯一的
+          // verify所有ID都是唯一的
           const uniqueIds = new Set(logIds);
           expect(uniqueIds.size).toBe(logIds.length);
 
-          // 验证所有ID都符合格式
+          // verify所有ID都符合format
           logIds.forEach(id => {
             expect(id).toMatch(/^log_\d+_[a-z0-9]+$/);
           });
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -590,7 +590,7 @@ describe('Property 38: 用户操作日志记录', () => {
     );
   });
 
-  it('应该为所有用户操作记录时间戳', () => {
+  it('should为所有user操作record时间戳', () => {
     fc.assert(
       fc.property(
         userIdArbitrary(),
@@ -611,12 +611,12 @@ describe('Property 38: 用户操作日志记录', () => {
           const userActionBuffer = (logger as any).userActionBuffer as UserActionLog[];
           const lastLog = userActionBuffer[userActionBuffer.length - 1];
 
-          // 验证时间戳在合理范围内
+          // verify时间戳在合理范围内
           expect(lastLog.timestamp).toBeInstanceOf(Date);
           expect(lastLog.timestamp.getTime()).toBeGreaterThanOrEqual(beforeTimestamp.getTime());
           expect(lastLog.timestamp.getTime()).toBeLessThanOrEqual(afterTimestamp.getTime());
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -624,7 +624,7 @@ describe('Property 38: 用户操作日志记录', () => {
     );
   });
 
-  it('应该在用户操作日志中包含当前页面路径', () => {
+  it('shouldBeAtuser操作log中contain当前页面path', () => {
     fc.assert(
       fc.property(
         userIdArbitrary(),
@@ -643,11 +643,11 @@ describe('Property 38: 用户操作日志记录', () => {
           const userActionBuffer = (logger as any).userActionBuffer as UserActionLog[];
           const lastLog = userActionBuffer[userActionBuffer.length - 1];
 
-          // 验证页面路径被记录（在测试环境中可能为空字符串）
+          // verify页面path被record（在testenv中可能为空字符串）
           expect(lastLog.page).toBeDefined();
           expect(typeof lastLog.page).toBe('string');
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -655,7 +655,7 @@ describe('Property 38: 用户操作日志记录', () => {
     );
   });
 
-  it('应该在开发环境中输出用户操作日志到控制台', () => {
+  it('shouldBeAtdevenv中outputuser操作log到控制台', () => {
     fc.assert(
       fc.property(
         userIdArbitrary(),
@@ -671,10 +671,10 @@ describe('Property 38: 用户操作日志记录', () => {
 
           logger.logUserAction(action, userId, details);
 
-          // 验证控制台输出被调用
+          // verify控制台output被调用
           expect(consoleLogSpy).toHaveBeenCalled();
 
-          // 验证输出包含关键信息
+          // verifyoutputcontain关键info
           const logCall = consoleLogSpy.mock.calls.find(call => 
             call[0].includes('[USER ACTION]') && 
             call[0].includes(action) &&
@@ -682,7 +682,7 @@ describe('Property 38: 用户操作日志记录', () => {
           );
           expect(logCall).toBeDefined();
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -690,7 +690,7 @@ describe('Property 38: 用户操作日志记录', () => {
     );
   });
 
-  it('应该在达到批量大小时触发用户操作日志刷新', () => {
+  it('shouldBeAt达到批量大hour触发user操作logrefresh', () => {
     fc.assert(
       fc.property(
         fc.integer({ min: 5, max: 20 }),
@@ -700,19 +700,19 @@ describe('Property 38: 用户操作日志记录', () => {
             environment: 'test',
             enableConsole: false,
             batchSize: batchSize,
-            flushInterval: 60000, // 长时间间隔，避免自动刷新
+            flushInterval: 60000, // 长时间间隔，避免自动refresh
           });
 
-          // 记录足够多的用户操作以触发刷新
+          // record足够多的user操作以触发refresh
           for (let i = 0; i < batchSize; i++) {
             logger.logUserAction(`action_${i}`, `user_${i}`);
           }
 
-          // 验证缓冲区在达到批量大小后被清空
+          // verify缓冲区在达到批量大小后被清空
           const bufferStatus = logger.getBufferStatus();
           expect(bufferStatus.total).toBeLessThan(batchSize);
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -720,13 +720,13 @@ describe('Property 38: 用户操作日志记录', () => {
     );
   });
 
-  it('应该正确处理包含特殊字符的用户ID和操作类型', () => {
+  it('should正确handlecontain特殊字符的userIDand操作type', () => {
     fc.assert(
       fc.property(
         fc.string({ minLength: 1, maxLength: 50 }),
         fc.string({ minLength: 1, maxLength: 100 }),
         (userId, action) => {
-          // 跳过空白字符串
+          // skip空白字符串
           if (userId.trim().length === 0 || action.trim().length === 0) {
             return true;
           }
@@ -743,11 +743,11 @@ describe('Property 38: 用户操作日志记录', () => {
           const userActionBuffer = (logger as any).userActionBuffer as UserActionLog[];
           const lastLog = userActionBuffer[userActionBuffer.length - 1];
 
-          // 验证特殊字符被正确保存
+          // verify特殊字符被正确save
           expect(lastLog.userId).toBe(userId);
           expect(lastLog.action).toBe(action);
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -755,7 +755,7 @@ describe('Property 38: 用户操作日志记录', () => {
     );
   });
 
-  it('应该支持在用户操作日志中包含复杂的详情对象', () => {
+  it('shouldsupport在user操作log中contain复杂的detailobject', () => {
     fc.assert(
       fc.property(
         userIdArbitrary(),
@@ -774,10 +774,10 @@ describe('Property 38: 用户操作日志记录', () => {
           const userActionBuffer = (logger as any).userActionBuffer as UserActionLog[];
           const lastLog = userActionBuffer[userActionBuffer.length - 1];
 
-          // 验证详情对象被正确记录
+          // verifydetailobject被正确record
           expect(lastLog.details).toEqual(details);
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -785,7 +785,7 @@ describe('Property 38: 用户操作日志记录', () => {
     );
   });
 
-  it('应该为不同用户的相同操作创建独立的日志条目', () => {
+  it('should为不同user的相同操作create独立的log条目', () => {
     fc.assert(
       fc.property(
         fc.array(userIdArbitrary(), { minLength: 2, maxLength: 10 }),
@@ -798,23 +798,23 @@ describe('Property 38: 用户操作日志记录', () => {
             batchSize: 1000,
           });
 
-          // 多个用户执行相同操作
+          // 多itemuserexecute相同操作
           userIds.forEach(userId => {
             logger.logUserAction(action, userId);
           });
 
           const userActionBuffer = (logger as any).userActionBuffer as UserActionLog[];
 
-          // 验证为每个用户创建了独立的日志条目
+          // verify为每itemusercreate了独立的log条目
           expect(userActionBuffer.length).toBe(userIds.length);
 
-          // 验证每个日志条目的用户ID正确
+          // verify每itemlog条目的userID正确
           userActionBuffer.forEach((log, index) => {
             expect(log.userId).toBe(userIds[index]);
             expect(log.action).toBe(action);
           });
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),
@@ -822,7 +822,7 @@ describe('Property 38: 用户操作日志记录', () => {
     );
   });
 
-  it('应该在混合日志类型时正确维护用户操作日志缓冲区', () => {
+  it('shouldBeAt混合logtype时正确维护user操作log缓冲区', () => {
     fc.assert(
       fc.property(
         fc.array(
@@ -850,7 +850,7 @@ describe('Property 38: 用户操作日志记录', () => {
             batchSize: 1000,
           });
 
-          // 记录混合类型的日志
+          // record混合type的log
           logs.forEach(log => {
             if (log.type === 'userAction') {
               logger.logUserAction(log.action, log.userId);
@@ -859,12 +859,12 @@ describe('Property 38: 用户操作日志记录', () => {
             }
           });
 
-          // 验证用户操作日志数量正确
+          // verifyuser操作log数量正确
           const userActionBuffer = (logger as any).userActionBuffer as UserActionLog[];
           const expectedUserActionCount = logs.filter(l => l.type === 'userAction').length;
           expect(userActionBuffer.length).toBe(expectedUserActionCount);
 
-          // 验证所有用户操作日志都包含必需字段
+          // verify所有user操作log都contain必需field
           userActionBuffer.forEach(log => {
             expect(log.id).toMatch(/^log_\d+_[a-z0-9]+$/);
             expect(log.userId).toBeDefined();
@@ -872,7 +872,7 @@ describe('Property 38: 用户操作日志记录', () => {
             expect(log.timestamp).toBeInstanceOf(Date);
           });
 
-          // 清理
+          // cleanup
           logger.stopFlushTimer();
         }
       ),

@@ -1,10 +1,10 @@
 /**
- * LoadingState组件单元测试
+ * LoadingStatecomponent单元test
  * 
- * 测试内容:
- * - 不同变体的渲染
- * - 不同大小的渲染
- * - 加载文本显示
+ * testcontent:
+ * - 不同变体的render
+ * - 不同大小的render
+ * - load文本show
  * - 全屏模式
  * - 自定义颜色
  * - 骨架屏行数

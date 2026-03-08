@@ -1,15 +1,15 @@
 /**
- * Projects批量操作属性测试
+ * Projects批量操作propertytest
  * 
  * Feature: frontend-production-optimization
  * Property 13: 批量操作一致性
  * 
  * **Validates: Requirements 2.3**
  * 
- * 测试覆盖:
- * - 对于任何选中的多个项目，批量操作（删除、归档、标签）应该对所有选中项目生效
+ * testCoverage:
+ * - 对于任何选中的多itemproject，批量操作（delete、归档、tag）should对所有选中project生效
  * 
- * 注意: 此测试验证Projects组件的批量操作功能在各种场景下的一致性和正确性。
+ * note: testVerifiesProjectscomponent的批量操作feature在各种场景下的一致性and正确性。
  */
 
 import fc from 'fast-check';
@@ -109,7 +109,7 @@ describe('Property 13: 批量操作一致性', () => {
     cleanup();
   });
 
-  // 自定义生成器：生成项目数组
+  // customGenerator：generateproject数组
   const projectArrayArbitrary = (minLength: number = 3, maxLength: number = 20) =>
     fc.array(
       fc.record({
@@ -123,7 +123,7 @@ describe('Property 13: 批量操作一致性', () => {
       projects.map(p => createProject(p.id, p.name, p.isActive, p.description))
     );
 
-  // 自定义生成器：生成标签字符串
+  // customGenerator：generatetag字符串
   const tagStringArbitrary = () =>
     fc.oneof(
       fc.constantFrom('urgent', 'backend', 'frontend', 'bug-fix', 'feature'),
@@ -132,12 +132,12 @@ describe('Property 13: 批量操作一致性', () => {
         .map(tags => tags.join(', '))
     );
 
-  it('批量删除应该对所有选中的项目生效', async () => {
+  it('批量deleteshould对所有选中的project生效', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(5, 15),
         async (projects) => {
-          // 选择一些项目进行删除
+          // 选择一些project进行delete
           const selectedCount = Math.min(Math.floor(projects.length / 2), 5);
           const selectedIds = new Set(
             projects.slice(0, selectedCount).map(p => p.id)
@@ -155,7 +155,7 @@ describe('Property 13: 批量操作一致性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 选中项目
+          // 选中project
           for (const id of selectedIds) {
             const checkbox = container.querySelector(
               `input[type="checkbox"][data-project-id="${id}"]`
@@ -165,20 +165,20 @@ describe('Property 13: 批量操作一致性', () => {
             }
           }
 
-          // 点击批量删除按钮
+          // 点击批量deletebutton
           const deleteButton = screen.queryByRole('button', { name: /batch delete/i });
           if (deleteButton) {
             await userEvent.click(deleteButton);
 
-            // 等待操作完成
+            // wait操作complete
             await waitFor(() => {
               expect(mutateAsync).toHaveBeenCalled();
             });
 
-            // 验证所有选中的项目都被调用了删除操作
+            // verify所有选中的project都被调用了delete操作
             expect(mutateAsync).toHaveBeenCalledTimes(selectedIds.size);
 
-            // 验证每个选中的项目都被标记为不活跃（软删除）
+            // verify每item选中的project都被标记为不活跃（软delete）
             selectedIds.forEach(id => {
               expect(mutateAsync).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -197,12 +197,12 @@ describe('Property 13: 批量操作一致性', () => {
     );
   }, 30000);
 
-  it('批量归档应该对所有选中的项目生效', async () => {
+  it('批量归档should对所有选中的project生效', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(5, 15),
         async (projects) => {
-          // 选择一些活跃的项目进行归档
+          // 选择一些活跃的project进行归档
           const activeProjects = projects.filter(p => p.is_active);
           if (activeProjects.length === 0) return; // Skip if no active projects
 
@@ -223,7 +223,7 @@ describe('Property 13: 批量操作一致性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 选中项目
+          // 选中project
           for (const id of selectedIds) {
             const checkbox = container.querySelector(
               `input[type="checkbox"][data-project-id="${id}"]`
@@ -233,20 +233,20 @@ describe('Property 13: 批量操作一致性', () => {
             }
           }
 
-          // 点击批量归档按钮
+          // 点击批量归档button
           const archiveButton = screen.queryByRole('button', { name: /batch archive/i });
           if (archiveButton) {
             await userEvent.click(archiveButton);
 
-            // 等待操作完成
+            // wait操作complete
             await waitFor(() => {
               expect(mutateAsync).toHaveBeenCalled();
             });
 
-            // 验证所有选中的项目都被调用了归档操作
+            // verify所有选中的project都被调用了归档操作
             expect(mutateAsync).toHaveBeenCalledTimes(selectedIds.size);
 
-            // 验证每个选中的项目都被标记为不活跃（归档）
+            // verify每item选中的project都被标记为不活跃（归档）
             selectedIds.forEach(id => {
               expect(mutateAsync).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -265,7 +265,7 @@ describe('Property 13: 批量操作一致性', () => {
     );
   }, 30000);
 
-  it('批量添加标签应该对所有选中的项目生效', async () => {
+  it('批量addtagshould对所有选中的project生效', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(5, 15),
@@ -288,7 +288,7 @@ describe('Property 13: 批量操作一致性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 选中项目
+          // 选中project
           for (const id of selectedIds) {
             const checkbox = container.querySelector(
               `input[type="checkbox"][data-project-id="${id}"]`
@@ -298,34 +298,34 @@ describe('Property 13: 批量操作一致性', () => {
             }
           }
 
-          // 点击批量标签按钮
+          // 点击批量tagbutton
           const tagButton = screen.queryByRole('button', { name: /batch tag/i });
           if (tagButton) {
             await userEvent.click(tagButton);
 
-            // 等待标签模态框出现
+            // waittag模态框出现
             await waitFor(() => {
               const tagInput = screen.queryByPlaceholderText(/enter tags/i);
               expect(tagInput).toBeInTheDocument();
             });
 
-            // 输入标签
+            // inputtag
             const tagInput = screen.getByPlaceholderText(/enter tags/i);
             await userEvent.type(tagInput, tagString);
 
-            // 确认添加标签
+            // confirmaddtag
             const confirmButton = screen.getByRole('button', { name: /confirm/i });
             await userEvent.click(confirmButton);
 
-            // 等待操作完成
+            // wait操作complete
             await waitFor(() => {
               expect(mutateAsync).toHaveBeenCalled();
             });
 
-            // 验证所有选中的项目都被调用了标签操作
+            // verify所有选中的project都被调用了tag操作
             expect(mutateAsync).toHaveBeenCalledTimes(selectedIds.size);
 
-            // 验证每个选中的项目都更新了description（包含标签）
+            // verify每item选中的project都update了description（containtag）
             selectedIds.forEach(id => {
               expect(mutateAsync).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -346,7 +346,7 @@ describe('Property 13: 批量操作一致性', () => {
     );
   }, 30000);
 
-  it('批量操作应该在不同项目数量下保持一致性', async () => {
+  it('批量操作shouldBeAt不同project数量下保持一致性', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(3, 10, 20, 50),
@@ -356,7 +356,7 @@ describe('Property 13: 批量操作一致性', () => {
             createProject(`project-${i}`, `Project ${i}`, true)
           );
 
-          // 选择一半的项目
+          // 选择一半的project
           const selectedCount = Math.floor(projectCount / 2);
           const selectedIds = new Set(
             projects.slice(0, selectedCount).map(p => p.id)
@@ -374,7 +374,7 @@ describe('Property 13: 批量操作一致性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 选中项目
+          // 选中project
           for (const id of selectedIds) {
             const checkbox = container.querySelector(
               `input[type="checkbox"][data-project-id="${id}"]`
@@ -384,22 +384,22 @@ describe('Property 13: 批量操作一致性', () => {
             }
           }
 
-          // 执行批量操作
+          // execute批量操作
           const buttonName = operation === 'delete' ? /batch delete/i : /batch archive/i;
           const operationButton = screen.queryByRole('button', { name: buttonName });
           
           if (operationButton) {
             await userEvent.click(operationButton);
 
-            // 等待操作完成
+            // wait操作complete
             await waitFor(() => {
               expect(mutateAsync).toHaveBeenCalled();
             });
 
-            // 验证操作次数等于选中的项目数量
+            // verify操作times数等于选中的project数量
             expect(mutateAsync).toHaveBeenCalledTimes(selectedIds.size);
 
-            // 验证所有调用都是针对选中的项目
+            // verify所有调用都是针对选中的project
             const calledProjectIds = mutateAsync.mock.calls.map(
               call => call[0].projectId
             );
@@ -416,7 +416,7 @@ describe('Property 13: 批量操作一致性', () => {
     );
   }, 30000);
 
-  it('批量操作失败时应该保持数据一致性', async () => {
+  it('批量操作failure时should保持data一致性', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(5, 10),
@@ -426,11 +426,11 @@ describe('Property 13: 批量操作一致性', () => {
             projects.slice(0, selectedCount).map(p => p.id)
           );
 
-          // 模拟部分操作失败
+          // 模拟部分操作failure
           let callCount = 0;
           const mutateAsync = jest.fn().mockImplementation(() => {
             callCount++;
-            // 第二个调用失败
+            // 第二item调用failure
             if (callCount === 2) {
               return Promise.reject(new Error('Network error'));
             }
@@ -447,7 +447,7 @@ describe('Property 13: 批量操作一致性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 选中项目
+          // 选中project
           for (const id of selectedIds) {
             const checkbox = container.querySelector(
               `input[type="checkbox"][data-project-id="${id}"]`
@@ -457,15 +457,15 @@ describe('Property 13: 批量操作一致性', () => {
             }
           }
 
-          // 点击批量删除按钮
+          // 点击批量deletebutton
           const deleteButton = screen.queryByRole('button', { name: /batch delete/i });
           if (deleteButton) {
             await userEvent.click(deleteButton);
 
-            // 等待操作完成（包括失败）
+            // wait操作complete（包括failure）
             await waitFor(
               () => {
-                // 应该显示错误提示
+                // shouldshowerrorhint
                 expect(global.alert).toHaveBeenCalledWith(
                   expect.stringContaining('Failed')
                 );
@@ -473,7 +473,7 @@ describe('Property 13: 批量操作一致性', () => {
               { timeout: 3000 }
             );
 
-            // 验证尝试了所有选中的项目（即使有失败）
+            // verify尝试了所有选中的project（即使有failure）
             expect(mutateAsync).toHaveBeenCalled();
           }
 
@@ -485,7 +485,7 @@ describe('Property 13: 批量操作一致性', () => {
     );
   }, 30000);
 
-  it('空选择时批量操作应该不执行任何操作', async () => {
+  it('空选择时批量操作should不execute任何操作', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(5, 10),
@@ -502,17 +502,17 @@ describe('Property 13: 批量操作一致性', () => {
 
           const { unmount } = renderWithProviders(<Projects />);
 
-          // 不选择任何项目，直接点击批量操作按钮
+          // 不选择任何project，直接点击批量操作button
           const deleteButton = screen.queryByRole('button', { name: /batch delete/i });
           if (deleteButton) {
             await userEvent.click(deleteButton);
 
-            // 等待一小段时间
+            // wait一小段时间
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // 验证没有调用任何更新操作
+            // verify没有调用任何update操作
             expect(mutateAsync).not.toHaveBeenCalled();
-            // 验证没有显示确认对话框
+            // verify没有showconfirm对话框
             expect(global.confirm).not.toHaveBeenCalled();
           }
 
@@ -524,7 +524,7 @@ describe('Property 13: 批量操作一致性', () => {
     );
   }, 30000);
 
-  it('批量操作应该正确处理重复选择', async () => {
+  it('批量操作should正确handleduplicate选择', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(5, 10),
@@ -545,30 +545,30 @@ describe('Property 13: 批量操作一致性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 选中同一个项目多次（模拟用户点击多次）
+          // 选中同一itemproject多times（模拟user点击多times）
           const checkbox = container.querySelector(
             `input[type="checkbox"][data-project-id="${projects[0].id}"]`
           ) as HTMLInputElement;
           
           if (checkbox) {
             await userEvent.click(checkbox); // 选中
-            await userEvent.click(checkbox); // 取消选中
-            await userEvent.click(checkbox); // 再次选中
+            await userEvent.click(checkbox); // cancel选中
+            await userEvent.click(checkbox); // 再times选中
           }
 
-          // 点击批量删除按钮
+          // 点击批量deletebutton
           const deleteButton = screen.queryByRole('button', { name: /batch delete/i });
           if (deleteButton) {
             await userEvent.click(deleteButton);
 
-            // 等待操作完成
+            // wait操作complete
             await waitFor(() => {
               if (mutateAsync.mock.calls.length > 0) {
                 expect(mutateAsync).toHaveBeenCalled();
               }
             });
 
-            // 验证只调用了一次（不会重复操作）
+            // verify只调用了一times（不会duplicate操作）
             if (mutateAsync.mock.calls.length > 0) {
               expect(mutateAsync).toHaveBeenCalledTimes(1);
               expect(mutateAsync).toHaveBeenCalledWith(

@@ -36,7 +36,7 @@ export default function RootLayout({
     return (
         <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
             <head>
-                {/* Critical CSS for first paint optimization (需求 11.5) */}
+                {/* Critical CSS for first paint optimization (requirement 11.5) */}
                 <style
                     dangerouslySetInnerHTML={{
                         __html: `

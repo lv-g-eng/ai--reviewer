@@ -69,12 +69,12 @@ export default function ProjectDetailPage() {
     }
   }
 
-  // 使用真实的 AI 审查数据，如果没有则显示加载状态
+  // useReal AI reviewData，showLoadingIfNone
   const healthMetrics = analytics?.metrics || null
 
   const overallHealth = analytics?.metrics?.overall_health || null
 
-  // 获取详细的分析数据
+  // get详细的analyzedata
   const dependencyStats = analytics?.dependency_stats || { total: 0, circular: 0, outdated: 0, dependency_issues: 0 }
   const performanceMetrics = analytics?.performance_metrics || { avg_build_time: "0m", avg_test_time: "0m", avg_analysis_time: "0m", pr_review_time_avg: "0h" }
   const issueStats = analytics?.issue_stats || { critical: 0, high: 0, medium: 0, low: 0, security: 0, performance: 0, code_style: 0, best_practices: 0, total: 0 }

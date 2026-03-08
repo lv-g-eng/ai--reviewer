@@ -1,12 +1,12 @@
 /**
- * Dashboard组件单元测试
+ * Dashboardcomponent单元test
  * 
- * 测试场景:
- * - 加载状态显示
- * - 错误状态显示和重试
- * - 数据成功加载和显示
- * - 自动刷新机制
- * - 定时器清理防止内存泄漏
+ * test场景:
+ * - loadstatusshow
+ * - errorstatusshowandretry
+ * - datasuccessloadandshow
+ * - 自动refresh机制
+ * - 定时器cleanup防止内存泄漏
  * - ErrorBoundary包裹
  */
 

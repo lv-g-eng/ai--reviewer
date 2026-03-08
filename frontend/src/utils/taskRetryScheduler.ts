@@ -1,40 +1,40 @@
 /**
- * 任务自动重试调度器
+ * taskAutoRetryScheduler
  * 
- * 实现失败任务的自动重试机制
- * - 重试延迟: 5分钟、15分钟、30分钟
- * - 最多重试3次
+ * 实现failuretask的自动retry机制
+ * - retry延迟: 5min、15min、30min
+ * - 最多retry3times
  * 
- * 验证需求: 5.2
+ * verifyRequirement: 5.2
  */
 
 import { AnalysisTask } from '../pages/AnalysisQueue';
 
 /**
- * 重试延迟配置（毫秒）
+ * retry延迟config（ms）
  */
 export const RETRY_DELAYS = [
-  5 * 60 * 1000,  // 5分钟
-  15 * 60 * 1000, // 15分钟
-  30 * 60 * 1000, // 30分钟
+  5 * 60 * 1000,  // 5min
+  15 * 60 * 1000, // 15min
+  30 * 60 * 1000, // 30min
 ];
 
 /**
- * 重试调度信息
+ * retry调度info
  */
 export interface RetrySchedule {
-  /** 任务ID */
+  /** taskID */
   taskId: string;
-  /** 当前重试次数 */
+  /** 当前retrytimes数 */
   retryCount: number;
-  /** 下次重试时间 */
+  /** 下timesretry时间 */
   nextRetryTime: Date;
-  /** 重试延迟（毫秒） */
+  /** retry延迟（ms） */
   retryDelay: number;
 }
 
 /**
- * 任务重试调度器
+ * taskretry调度器
  */
 export class TaskRetryScheduler {
   private retrySchedules: Map<string, RetrySchedule> = new Map();
@@ -42,36 +42,36 @@ export class TaskRetryScheduler {
   private onRetryCallback?: (taskId: string) => void;
 
   /**
-   * 设置重试回调函数
+   * setretry回调function
    * 
-   * @param callback - 当任务需要重试时调用的回调函数
+   * @param callback - 当taskneedretry时调用的回调function
    */
   setRetryCallback(callback: (taskId: string) => void): void {
     this.onRetryCallback = callback;
   }
 
   /**
-   * 调度失败任务的重试
+   * 调度failuretask的retry
    * 
-   * @param task - 失败的任务
-   * @returns 重试调度信息，如果不应该重试则返回null
+   * @param task - failure的task
+   * @returns retry调度info，如果不shouldretry则returnnull
    */
   scheduleRetry(task: AnalysisTask): RetrySchedule | null {
-    // 检查是否已达到最大重试次数
+    // check是否已达到最大retrytimes数
     if (task.retryCount >= task.maxRetries) {
       return null;
     }
 
-    // 检查任务状态是否为失败
+    // checktaskstatus是否为failure
     if (task.status !== 'failed') {
       return null;
     }
 
-    // 计算重试延迟
+    // 计算retry延迟
     const retryDelay = this.getRetryDelay(task.retryCount);
     const nextRetryTime = new Date(Date.now() + retryDelay);
 
-    // 创建重试调度信息
+    // createretry调度info
     const schedule: RetrySchedule = {
       taskId: task.id,
       retryCount: task.retryCount,
@@ -79,13 +79,13 @@ export class TaskRetryScheduler {
       retryDelay,
     };
 
-    // 保存调度信息
+    // save调度info
     this.retrySchedules.set(task.id, schedule);
 
     // 清除旧的定时器（如果存在）
     this.clearRetryTimer(task.id);
 
-    // 设置新的重试定时器
+    // set新的retry定时器
     const timer = setTimeout(() => {
       this.executeRetry(task.id);
     }, retryDelay);
@@ -96,40 +96,40 @@ export class TaskRetryScheduler {
   }
 
   /**
-   * 获取重试延迟
+   * getretry延迟
    * 
-   * @param retryCount - 当前重试次数
-   * @returns 重试延迟（毫秒）
+   * @param retryCount - 当前retrytimes数
+   * @returns retry延迟（ms）
    */
   getRetryDelay(retryCount: number): number {
-    // 使用预定义的重试延迟
+    // use预定义的retry延迟
     if (retryCount < RETRY_DELAYS.length) {
       return RETRY_DELAYS[retryCount];
     }
-    // 如果超出预定义延迟，使用最后一个延迟
+    // 如果超出预定义延迟，use最后一item延迟
     return RETRY_DELAYS[RETRY_DELAYS.length - 1];
   }
 
   /**
-   * 执行重试
+   * executeretry
    * 
-   * @param taskId - 任务ID
+   * @param taskId - taskID
    */
   private executeRetry(taskId: string): void {
-    // 移除调度信息和定时器
+    // 移除调度infoand定时器
     this.retrySchedules.delete(taskId);
     this.retryTimers.delete(taskId);
 
-    // 调用重试回调
+    // 调用retry回调
     if (this.onRetryCallback) {
       this.onRetryCallback(taskId);
     }
   }
 
   /**
-   * 清除任务的重试定时器
+   * 清除task的retry定时器
    * 
-   * @param taskId - 任务ID
+   * @param taskId - taskID
    */
   clearRetryTimer(taskId: string): void {
     const timer = this.retryTimers.get(taskId);
@@ -140,9 +140,9 @@ export class TaskRetryScheduler {
   }
 
   /**
-   * 取消任务的重试调度
+   * canceltask的retry调度
    * 
-   * @param taskId - 任务ID
+   * @param taskId - taskID
    */
   cancelRetry(taskId: string): void {
     this.clearRetryTimer(taskId);
@@ -150,39 +150,39 @@ export class TaskRetryScheduler {
   }
 
   /**
-   * 获取任务的重试调度信息
+   * gettask的retry调度info
    * 
-   * @param taskId - 任务ID
-   * @returns 重试调度信息，如果不存在则返回null
+   * @param taskId - taskID
+   * @returns retry调度info，如果不存在则returnnull
    */
   getRetrySchedule(taskId: string): RetrySchedule | null {
     return this.retrySchedules.get(taskId) || null;
   }
 
   /**
-   * 获取所有重试调度信息
+   * get所有retry调度info
    * 
-   * @returns 所有重试调度信息的数组
+   * @returns 所有retry调度info的数组
    */
   getAllRetrySchedules(): RetrySchedule[] {
     return Array.from(this.retrySchedules.values());
   }
 
   /**
-   * 检查任务是否已调度重试
+   * checktask是否已调度retry
    * 
-   * @param taskId - 任务ID
-   * @returns 是否已调度重试
+   * @param taskId - taskID
+   * @returns 是否已调度retry
    */
   isScheduled(taskId: string): boolean {
     return this.retrySchedules.has(taskId);
   }
 
   /**
-   * 获取距离下次重试的剩余时间
+   * get距离下timesretry的剩余时间
    * 
-   * @param taskId - 任务ID
-   * @returns 剩余时间（毫秒），如果未调度则返回null
+   * @param taskId - taskID
+   * @returns 剩余时间（ms），如果未调度则returnnull
    */
   getTimeUntilRetry(taskId: string): number | null {
     const schedule = this.retrySchedules.get(taskId);
@@ -196,10 +196,10 @@ export class TaskRetryScheduler {
   }
 
   /**
-   * 格式化重试延迟为可读字符串
+   * format化retry延迟为可读字符串
    * 
-   * @param delayMs - 延迟时间（毫秒）
-   * @returns 格式化的字符串
+   * @param delayMs - 延迟时间（ms）
+   * @returns format化的字符串
    */
   formatRetryDelay(delayMs: number): string {
     const minutes = Math.floor(delayMs / (60 * 1000));
@@ -211,7 +211,7 @@ export class TaskRetryScheduler {
   }
 
   /**
-   * 清理所有重试调度
+   * cleanup所有retry调度
    */
   clearAll(): void {
     // 清除所有定时器
@@ -223,10 +223,10 @@ export class TaskRetryScheduler {
   }
 
   /**
-   * 获取重试状态描述
+   * getretrystatus描述
    * 
-   * @param task - 任务
-   * @returns 重试状态描述
+   * @param task - task
+   * @returns retrystatus描述
    */
   getRetryStatusText(task: AnalysisTask): string {
     if (task.status !== 'failed') {
@@ -251,9 +251,9 @@ export class TaskRetryScheduler {
 }
 
 /**
- * 创建任务重试调度器实例
+ * createtaskretry调度器instance
  * 
- * @returns 任务重试调度器实例
+ * @returns taskretry调度器instance
  */
 export function createTaskRetryScheduler(): TaskRetryScheduler {
   return new TaskRetryScheduler();

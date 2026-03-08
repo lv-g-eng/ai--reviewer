@@ -1,23 +1,23 @@
 /**
- * Metrics阈值告警属性测试
+ * Metricsthreshold告警propertytest
  * 
  * Feature: frontend-production-optimization
- * Property 23: 阈值告警显示
+ * Property 23: threshold告警show
  * 
  * **Validates: Requirements 6.5**
  * 
- * 测试覆盖:
- * - 对于任何超过预设阈值的指标值，应该显示警告标识
+ * testCoverage:
+ * - 对于任何超过预设threshold的指标value，shouldshowwarn标识
  * 
- * 注意: 此属性测试验证阈值告警功能的正确性，确保当指标值超过预设阈值时，
- * 系统能够正确显示警告标识（warning或critical）。测试覆盖各种指标值和阈值配置。
+ * note: 此propertytestverifythreshold告警feature的正确性，确保当指标value超过预设threshold时，
+ * system能够正确showwarn标识（warning或critical）。testCoverage各种指标valueandthresholdconfig。
  */
 
 import fc from 'fast-check';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import Metrics from '../Metrics';
 
-describe('Property 23: 阈值告警显示', () => {
+describe('Property 23: threshold告警show', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
@@ -53,16 +53,16 @@ describe('Property 23: 阈值告警显示', () => {
     }
   };
 
-  // 自定义生成器：生成指标ID
+  // customGenerator：generate指标ID
   const metricIdArbitrary = () =>
     fc.constantFrom('performance', 'errorRate', 'responseTime');
 
-  // 自定义生成器：生成时间范围
+  // customGenerator：generate时间范围
   const timeRangeArbitrary = () =>
     fc.constantFrom('day', 'week', 'month');
 
   /**
-   * 辅助函数：根据指标和值确定预期的告警级别
+   * 辅助function：根据指标andvalue确定预期的告警级别
    */
   const getExpectedAlertLevel = (
     metricId: string,
@@ -85,7 +85,7 @@ describe('Property 23: 阈值告警显示', () => {
   };
 
   /**
-   * 辅助函数：生成指定告警级别的值
+   * 辅助function：generate指定告警级别的value
    */
   const generateValueForAlertLevel = (
     metricId: string,
@@ -97,50 +97,50 @@ describe('Property 23: 阈值告警显示', () => {
       // 对于越低越好的指标
       switch (alertLevel) {
         case 'critical':
-          return metric.threshold.critical + Math.random() * 10; // 超过critical阈值
+          return metric.threshold.critical + Math.random() * 10; // 超过criticalthreshold
         case 'warning':
-          return metric.threshold.warning + Math.random() * (metric.threshold.critical - metric.threshold.warning); // 在warning和critical之间
+          return metric.threshold.warning + Math.random() * (metric.threshold.critical - metric.threshold.warning); // 在warningandcritical之间
         case 'normal':
-          return Math.random() * metric.threshold.warning; // 低于warning阈值
+          return Math.random() * metric.threshold.warning; // 低于warningthreshold
       }
     } else {
       // 对于越高越好的指标
       switch (alertLevel) {
         case 'critical':
-          return metric.threshold.critical - Math.random() * 10; // 低于critical阈值
+          return metric.threshold.critical - Math.random() * 10; // 低于criticalthreshold
         case 'warning':
-          return metric.threshold.critical + Math.random() * (metric.threshold.warning - metric.threshold.critical); // 在critical和warning之间
+          return metric.threshold.critical + Math.random() * (metric.threshold.warning - metric.threshold.critical); // 在criticalandwarning之间
         case 'normal':
-          return metric.threshold.warning + Math.random() * 30; // 高于warning阈值
+          return metric.threshold.warning + Math.random() * 30; // 高于warningthreshold
       }
     }
   };
 
   /**
-   * 辅助函数：检查页面上是否显示了预期的告警标识
+   * 辅助function：check页面上是否show了预期的告警标识
    */
   const checkAlertIndicator = async (
     metricName: string,
     expectedLevel: 'normal' | 'warning' | 'critical'
   ): Promise<boolean> => {
     try {
-      // 查找包含指标名称的摘要卡片
+      // 查找contain指标名称的摘要卡片
       const metricCards = screen.getAllByText(metricName);
       
       if (expectedLevel === 'normal') {
-        // 正常状态不应该有告警标识
-        // 检查是否没有Warning或Critical标签
+        // 正常status不should有告警标识
+        // check是否没有Warning或Criticaltag
         const warningLabels = screen.queryAllByText(/warning/i);
         const criticalLabels = screen.queryAllByText(/critical/i);
         
-        // 如果有告警标签，确保它们不在当前指标的卡片中
-        return true; // 简化检查，因为正常状态可能没有明显的标识
+        // 如果有告警tag，确保它们不在当前指标的卡片中
+        return true; // 简化check，因为正常status可能没有明显的标识
       } else if (expectedLevel === 'warning') {
-        // 应该显示Warning标识
+        // shouldshowWarning标识
         const warningElements = screen.queryAllByText(/warning/i);
         return warningElements.length > 0;
       } else {
-        // 应该显示Critical标识
+        // shouldshowCritical标识
         const criticalElements = screen.queryAllByText(/critical/i);
         return criticalElements.length > 0;
       }
@@ -149,7 +149,7 @@ describe('Property 23: 阈值告警显示', () => {
     }
   };
 
-  it('应该为超过warning阈值的指标显示warning告警标识', async () => {
+  it('should为超过warningthreshold的指标showwarning告警标识', async () => {
     await fc.assert(
       fc.asyncProperty(
         metricIdArbitrary(),
@@ -157,27 +157,27 @@ describe('Property 23: 阈值告警显示', () => {
         async (metricId, timeRange) => {
           const metric = metricDefinitions[metricId as keyof typeof metricDefinitions];
           
-          // 生成一个会触发warning的值
+          // generate一item会触发warning的value
           const warningValue = generateValueForAlertLevel(metricId, 'warning');
           
-          // Mock数据生成函数，使其返回warning级别的值
+          // Mockdatageneratefunction，使其returnwarning级别的value
           const originalRandom = Math.random;
           let callCount = 0;
           Math.random = jest.fn(() => {
             callCount++;
-            // 为指定的指标返回warning级别的值
+            // 为指定的指标returnwarning级别的value
             if (metricId === 'performance') {
-              return (warningValue - 75) / 20; // 反推random值
+              return (warningValue - 75) / 20; // inferrandomvalue
             } else if (metricId === 'errorRate') {
-              return warningValue / 5; // 反推random值
+              return warningValue / 5; // inferrandomvalue
             } else {
-              return (warningValue - 100) / 100; // 反推random值
+              return (warningValue - 100) / 100; // inferrandomvalue
             }
           });
 
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getByText(/metrics dashboard/i)).toBeInTheDocument();
           }, { timeout: 5000 });
@@ -185,10 +185,10 @@ describe('Property 23: 阈值告警显示', () => {
           // 恢复Math.random
           Math.random = originalRandom;
 
-          // 验证告警级别
+          // verify告警级别
           const expectedLevel = getExpectedAlertLevel(metricId, warningValue);
           
-          // 如果值确实在warning范围内，检查告警标识
+          // 如果value确实在warning范围内，check告警标识
           if (expectedLevel === 'warning') {
             await waitFor(() => {
               const warningElements = screen.queryAllByText(/warning/i);
@@ -203,7 +203,7 @@ describe('Property 23: 阈值告警显示', () => {
     );
   }, 120000);
 
-  it('应该为超过critical阈值的指标显示critical告警标识', async () => {
+  it('should为超过criticalthreshold的指标showcritical告警标识', async () => {
     await fc.assert(
       fc.asyncProperty(
         metricIdArbitrary(),
@@ -211,25 +211,25 @@ describe('Property 23: 阈值告警显示', () => {
         async (metricId, timeRange) => {
           const metric = metricDefinitions[metricId as keyof typeof metricDefinitions];
           
-          // 生成一个会触发critical的值
+          // generate一item会触发critical的value
           const criticalValue = generateValueForAlertLevel(metricId, 'critical');
           
-          // Mock数据生成函数，使其返回critical级别的值
+          // Mockdatageneratefunction，使其returncritical级别的value
           const originalRandom = Math.random;
           Math.random = jest.fn(() => {
-            // 为指定的指标返回critical级别的值
+            // 为指定的指标returncritical级别的value
             if (metricId === 'performance') {
-              return (criticalValue - 75) / 20; // 反推random值
+              return (criticalValue - 75) / 20; // inferrandomvalue
             } else if (metricId === 'errorRate') {
-              return criticalValue / 5; // 反推random值
+              return criticalValue / 5; // inferrandomvalue
             } else {
-              return (criticalValue - 100) / 100; // 反推random值
+              return (criticalValue - 100) / 100; // inferrandomvalue
             }
           });
 
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getByText(/metrics dashboard/i)).toBeInTheDocument();
           }, { timeout: 5000 });
@@ -237,10 +237,10 @@ describe('Property 23: 阈值告警显示', () => {
           // 恢复Math.random
           Math.random = originalRandom;
 
-          // 验证告警级别
+          // verify告警级别
           const expectedLevel = getExpectedAlertLevel(metricId, criticalValue);
           
-          // 如果值确实在critical范围内，检查告警标识
+          // 如果value确实在critical范围内，check告警标识
           if (expectedLevel === 'critical') {
             await waitFor(() => {
               const criticalElements = screen.queryAllByText(/critical/i);
@@ -255,7 +255,7 @@ describe('Property 23: 阈值告警显示', () => {
     );
   }, 120000);
 
-  it('应该为正常范围内的指标不显示告警标识', async () => {
+  it('should为正常范围内的指标不show告警标识', async () => {
     await fc.assert(
       fc.asyncProperty(
         metricIdArbitrary(),
@@ -263,25 +263,25 @@ describe('Property 23: 阈值告警显示', () => {
         async (metricId, timeRange) => {
           const metric = metricDefinitions[metricId as keyof typeof metricDefinitions];
           
-          // 生成一个正常范围内的值
+          // generate一item正常范围内的value
           const normalValue = generateValueForAlertLevel(metricId, 'normal');
           
-          // Mock数据生成函数，使其返回正常级别的值
+          // Mockdatageneratefunction，使其return正常级别的value
           const originalRandom = Math.random;
           Math.random = jest.fn(() => {
-            // 为指定的指标返回normal级别的值
+            // 为指定的指标returnnormal级别的value
             if (metricId === 'performance') {
-              return (normalValue - 75) / 20; // 反推random值
+              return (normalValue - 75) / 20; // inferrandomvalue
             } else if (metricId === 'errorRate') {
-              return normalValue / 5; // 反推random值
+              return normalValue / 5; // inferrandomvalue
             } else {
-              return (normalValue - 100) / 100; // 反推random值
+              return (normalValue - 100) / 100; // inferrandomvalue
             }
           });
 
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getByText(/metrics dashboard/i)).toBeInTheDocument();
           }, { timeout: 5000 });
@@ -289,10 +289,10 @@ describe('Property 23: 阈值告警显示', () => {
           // 恢复Math.random
           Math.random = originalRandom;
 
-          // 验证告警级别
+          // verify告警级别
           const expectedLevel = getExpectedAlertLevel(metricId, normalValue);
           
-          // 正常状态下，摘要卡片应该存在但不应该有明显的告警边框
+          // 正常status下，摘要卡片should存在但不should有明显的告警边框
           await waitFor(() => {
             const metricCards = screen.getAllByText(metric.name);
             expect(metricCards.length).toBeGreaterThan(0);
@@ -305,7 +305,7 @@ describe('Property 23: 阈值告警显示', () => {
     );
   }, 120000);
 
-  it('应该在摘要卡片中显示阈值配置信息', async () => {
+  it('shouldBeAt摘要卡片中showthresholdconfiginfo', async () => {
     await fc.assert(
       fc.asyncProperty(
         metricIdArbitrary(),
@@ -315,18 +315,18 @@ describe('Property 23: 阈值告警显示', () => {
 
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getByText(/metrics dashboard/i)).toBeInTheDocument();
           }, { timeout: 5000 });
 
-          // 验证阈值信息显示
+          // verifythresholdinfoshow
           await waitFor(() => {
-            // 检查是否显示了Thresholds标签
+            // check是否show了Thresholdstag
             const thresholdLabels = screen.queryAllByText(/thresholds:/i);
             expect(thresholdLabels.length).toBeGreaterThan(0);
 
-            // 检查是否显示了Warning和Critical阈值
+            // check是否show了WarningandCriticalthreshold
             const warningThresholds = screen.queryAllByText(/warning:/i);
             const criticalThresholds = screen.queryAllByText(/critical:/i);
             
@@ -341,7 +341,7 @@ describe('Property 23: 阈值告警显示', () => {
     );
   }, 120000);
 
-  it('应该根据指标类型正确判断告警级别（越高越好 vs 越低越好）', async () => {
+  it('should根据指标type正确判断告警级别（越高越好 vs 越低越好）', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom('performance', 'errorRate', 'responseTime'),
@@ -353,7 +353,7 @@ describe('Property 23: 阈值告警显示', () => {
           // 计算预期的告警级别
           const expectedLevel = getExpectedAlertLevel(metricId, value);
 
-          // Mock数据生成函数
+          // Mockdatageneratefunction
           const originalRandom = Math.random;
           Math.random = jest.fn(() => {
             if (metricId === 'performance') {
@@ -367,7 +367,7 @@ describe('Property 23: 阈值告警显示', () => {
 
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getByText(/metrics dashboard/i)).toBeInTheDocument();
           }, { timeout: 5000 });
@@ -375,7 +375,7 @@ describe('Property 23: 阈值告警显示', () => {
           // 恢复Math.random
           Math.random = originalRandom;
 
-          // 验证告警标识的存在性与预期一致
+          // verify告警标识的存在性与预期一致
           if (expectedLevel === 'warning') {
             await waitFor(() => {
               const warningElements = screen.queryAllByText(/warning/i);
@@ -395,7 +395,7 @@ describe('Property 23: 阈值告警显示', () => {
     );
   }, 120000);
 
-  it('应该在图表中显示阈值参考线（单指标选择时）', async () => {
+  it('shouldBeAt图表中showthreshold参考线（单指标选择时）', async () => {
     await fc.assert(
       fc.asyncProperty(
         metricIdArbitrary(),
@@ -405,22 +405,22 @@ describe('Property 23: 阈值告警显示', () => {
 
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getByText(/metrics dashboard/i)).toBeInTheDocument();
           }, { timeout: 5000 });
 
-          // 默认情况下所有指标都被选中，需要只选择一个指标
-          // 点击Clear按钮只保留一个指标
+          // 默认情况下所有指标都被选中，need只选择一item指标
+          // 点击Clearbutton只保留一item指标
           const clearButton = screen.getByRole('button', { name: /clear/i });
           clearButton.click();
 
-          // 等待UI更新
+          // waitUIupdate
           await waitFor(() => {
             expect(screen.getByText(/1 metric selected/i)).toBeInTheDocument();
           }, { timeout: 2000 });
 
-          // 验证阈值配置信息显示
+          // verifythresholdconfiginfoshow
           await waitFor(() => {
             const thresholdConfig = screen.queryByText(/threshold configuration:/i);
             expect(thresholdConfig).toBeInTheDocument();
@@ -433,7 +433,7 @@ describe('Property 23: 阈值告警显示', () => {
     );
   }, 120000);
 
-  it('应该在告警标识中显示正确的图标和颜色', async () => {
+  it('shouldBeAt告警标识中show正确的图标and颜色', async () => {
     await fc.assert(
       fc.asyncProperty(
         metricIdArbitrary(),
@@ -442,10 +442,10 @@ describe('Property 23: 阈值告警显示', () => {
         async (metricId, alertLevel, timeRange) => {
           const metric = metricDefinitions[metricId as keyof typeof metricDefinitions];
           
-          // 生成对应告警级别的值
+          // generate对应告警级别的value
           const value = generateValueForAlertLevel(metricId, alertLevel);
           
-          // Mock数据生成函数
+          // Mockdatageneratefunction
           const originalRandom = Math.random;
           Math.random = jest.fn(() => {
             if (metricId === 'performance') {
@@ -459,7 +459,7 @@ describe('Property 23: 阈值告警显示', () => {
 
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getByText(/metrics dashboard/i)).toBeInTheDocument();
           }, { timeout: 5000 });
@@ -467,14 +467,14 @@ describe('Property 23: 阈值告警显示', () => {
           // 恢复Math.random
           Math.random = originalRandom;
 
-          // 验证告警标识存在
+          // verify告警标识存在
           const expectedLevel = getExpectedAlertLevel(metricId, value);
           if (expectedLevel === alertLevel) {
             await waitFor(() => {
               const alertElements = screen.queryAllByText(new RegExp(alertLevel, 'i'));
               expect(alertElements.length).toBeGreaterThan(0);
               
-              // 验证SVG图标存在（通过查找svg元素）
+              // verifySVG图标存在（通过查找svg元素）
               const svgElements = document.querySelectorAll('svg');
               expect(svgElements.length).toBeGreaterThan(0);
             }, { timeout: 2000 });
@@ -487,7 +487,7 @@ describe('Property 23: 阈值告警显示', () => {
     );
   }, 120000);
 
-  it('应该在不同时间范围下一致地显示告警标识', async () => {
+  it('shouldBeAt不同时间范围下一致地show告警标识', async () => {
     await fc.assert(
       fc.asyncProperty(
         metricIdArbitrary(),
@@ -497,10 +497,10 @@ describe('Property 23: 阈值告警显示', () => {
 
           const metric = metricDefinitions[metricId as keyof typeof metricDefinitions];
           
-          // 生成一个会触发warning的值
+          // generate一item会触发warning的value
           const warningValue = generateValueForAlertLevel(metricId, 'warning');
           
-          // Mock数据生成函数
+          // Mockdatageneratefunction
           const originalRandom = Math.random;
           Math.random = jest.fn(() => {
             if (metricId === 'performance') {
@@ -512,7 +512,7 @@ describe('Property 23: 阈值告警显示', () => {
             }
           });
 
-          // 第一个时间范围
+          // 第一item时间范围
           render(<Metrics initialTimeRange={timeRange1} />);
 
           await waitFor(() => {
@@ -530,7 +530,7 @@ describe('Property 23: 阈值告警显示', () => {
 
           cleanup();
 
-          // 第二个时间范围
+          // 第二item时间范围
           render(<Metrics initialTimeRange={timeRange2} />);
 
           await waitFor(() => {
@@ -554,7 +554,7 @@ describe('Property 23: 阈值告警显示', () => {
     );
   }, 120000);
 
-  it('应该为自定义仪表板中的指标显示告警标识', async () => {
+  it('should为自定义仪表板中的指标show告警标识', async () => {
     await fc.assert(
       fc.asyncProperty(
         metricIdArbitrary(),
@@ -562,10 +562,10 @@ describe('Property 23: 阈值告警显示', () => {
         async (metricId, timeRange) => {
           const metric = metricDefinitions[metricId as keyof typeof metricDefinitions];
           
-          // 生成一个会触发warning的值
+          // generate一item会触发warning的value
           const warningValue = generateValueForAlertLevel(metricId, 'warning');
           
-          // Mock数据生成函数
+          // Mockdatageneratefunction
           const originalRandom = Math.random;
           Math.random = jest.fn(() => {
             if (metricId === 'performance') {
@@ -579,7 +579,7 @@ describe('Property 23: 阈值告警显示', () => {
 
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getByText(/metrics dashboard/i)).toBeInTheDocument();
           }, { timeout: 5000 });
@@ -587,7 +587,7 @@ describe('Property 23: 阈值告警显示', () => {
           // 恢复Math.random
           Math.random = originalRandom;
 
-          // 验证告警标识存在（即使在默认视图中）
+          // verify告警标识存在（即使在默认视图中）
           const expectedLevel = getExpectedAlertLevel(metricId, warningValue);
           
           if (expectedLevel === 'warning') {

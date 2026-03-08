@@ -1,13 +1,13 @@
 /**
- * ErrorMonitor服务
+ * ErrorMonitorservice
  * 
- * 功能:
- * - 集成Sentry或类似监控服务
- * - 实现错误捕获和上报
- * - 实现错误率监控（5分钟窗口，10%阈值）
+ * feature:
+ * - integrationSentry或class似监控service
+ * - 实现error捕获and上报
+ * - 实现error率监控（5min窗口，10%threshold）
  * - 实现告警触发机制
  * 
- * 验证需求: 9.1, 9.4, 9.5
+ * verifyRequirement: 9.1, 9.4, 9.5
  */
 
 export interface MonitorConfig {
@@ -51,15 +51,15 @@ interface ErrorRateWindow {
 }
 
 /**
- * ErrorMonitor类
- * 负责错误监控、上报和告警
+ * ErrorMonitorclass
+ * 负责error监控、上报and告警
  */
 export class ErrorMonitor {
   private config: MonitorConfig;
   private initialized = false;
   private currentUser?: User;
   private errorRateWindow: ErrorRateWindow;
-  private readonly WINDOW_SIZE = 5 * 60 * 1000; // 5分钟
+  private readonly WINDOW_SIZE = 5 * 60 * 1000; // 5min
   private readonly ERROR_RATE_THRESHOLD = 0.1; // 10%
   private alertCallbacks: Array<(message: string) => void> = [];
 
@@ -74,14 +74,14 @@ export class ErrorMonitor {
   }
 
   /**
-   * 初始化监控服务
+   * 初始化监控service
    */
   initialize(config?: Partial<MonitorConfig>): void {
     if (config) {
       this.config = { ...this.config, ...config };
     }
 
-    // 在生产环境中，这里会初始化Sentry或其他监控服务
+    // 在prodenv中，这里会初始化Sentry或其他监控service
     // if (this.config.dsn && typeof window !== 'undefined') {
     //   Sentry.init({
     //     dsn: this.config.dsn,
@@ -98,7 +98,7 @@ export class ErrorMonitor {
 
     this.initialized = true;
 
-    // 设置全局错误处理器
+    // set全局errorhandle器
     if (typeof window !== 'undefined') {
       window.addEventListener('error', this.handleGlobalError.bind(this));
       window.addEventListener('unhandledrejection', this.handleUnhandledRejection.bind(this));
@@ -106,7 +106,7 @@ export class ErrorMonitor {
   }
 
   /**
-   * 捕获错误并上报
+   * 捕获error并上报
    */
   captureError(error: Error, context: Partial<ErrorContext> = {}): void {
     if (!this.initialized) {
@@ -129,10 +129,10 @@ export class ErrorMonitor {
       : errorReport;
 
     if (!processedReport) {
-      return; // beforeSend返回null表示不上报
+      return; // beforeSendreturnnull表示不上报
     }
 
-    // 在生产环境中，这里会发送到Sentry
+    // 在prodenv中，这里会发送到Sentry
     // if (this.config.dsn) {
     //   Sentry.captureException(error, {
     //     contexts: {
@@ -141,12 +141,12 @@ export class ErrorMonitor {
     //   });
     // }
 
-    // 开发环境下输出到控制台
+    // devenv下output到控制台
     if (this.config.enableDebugMode) {
       console.error('[ErrorMonitor]', processedReport);
     }
 
-    // 更新错误率统计
+    // updateerror率统计
     this.updateErrorRate(true);
   }
 
@@ -159,7 +159,7 @@ export class ErrorMonitor {
       return;
     }
 
-    // 在生产环境中，这里会发送到Sentry
+    // 在prodenv中，这里会发送到Sentry
     // if (this.config.dsn) {
     //   Sentry.captureMessage(message, level);
     // }
@@ -170,7 +170,7 @@ export class ErrorMonitor {
   }
 
   /**
-   * 设置用户上下文
+   * setuser上下文
    */
   setUser(user: User | null): void {
     if (!this.initialized) {
@@ -180,14 +180,14 @@ export class ErrorMonitor {
 
     this.currentUser = user || undefined;
 
-    // 在生产环境中，这里会设置Sentry用户上下文
+    // 在prodenv中，这里会setSentryuser上下文
     // if (this.config.dsn) {
     //   Sentry.setUser(user);
     // }
   }
 
   /**
-   * 记录API请求（用于错误率计算）
+   * recordAPIrequest（用于error率计算）
    */
   recordRequest(success: boolean): void {
     if (!this.initialized) {
@@ -211,7 +211,7 @@ export class ErrorMonitor {
   }
 
   /**
-   * 获取当前错误率
+   * get当前error率
    */
   getErrorRate(): number {
     this.resetWindowIfExpired();
@@ -222,7 +222,7 @@ export class ErrorMonitor {
   }
 
   /**
-   * 获取错误统计
+   * geterror统计
    */
   getErrorStats(): ErrorRateWindow {
     this.resetWindowIfExpired();
@@ -230,7 +230,7 @@ export class ErrorMonitor {
   }
 
   /**
-   * 处理全局错误
+   * handle全局error
    */
   private handleGlobalError(event: ErrorEvent): void {
     const error = event.error || new Error(event.message);
@@ -244,7 +244,7 @@ export class ErrorMonitor {
   }
 
   /**
-   * 处理未捕获的Promise拒绝
+   * handle未捕获的Promise拒绝
    */
   private handleUnhandledRejection(event: PromiseRejectionEvent): void {
     const error = event.reason instanceof Error
@@ -260,7 +260,7 @@ export class ErrorMonitor {
   }
 
   /**
-   * 更新错误率统计
+   * updateerror率统计
    */
   private updateErrorRate(isError: boolean): void {
     this.resetWindowIfExpired();
@@ -274,12 +274,12 @@ export class ErrorMonitor {
   }
 
   /**
-   * 检查错误率是否超过阈值
+   * checkerror率是否超过threshold
    */
   private checkErrorRate(): void {
     const errorRate = this.getErrorRate();
     
-    // 只在错误率超过阈值、有足够样本且未触发过告警时触发
+    // 只在error率超过threshold、有足够样本且未触发过告警时触发
     if (errorRate > this.ERROR_RATE_THRESHOLD && 
         this.errorRateWindow.totalRequests >= 10 &&
         !this.errorRateWindow.alertTriggered) {
@@ -293,7 +293,7 @@ export class ErrorMonitor {
    * 触发告警
    */
   private triggerAlert(message: string): void {
-    // 在生产环境中，这里会发送告警通知（邮件、Slack等）
+    // 在prodenv中，这里会发送告警通知（邮件、Slack等）
     if (this.config.enableDebugMode) {
       console.error('[ErrorMonitor ALERT]', message);
     }
@@ -307,12 +307,12 @@ export class ErrorMonitor {
       }
     });
 
-    // 注意：不立即重置窗口，让调用者可以查询当前错误率
-    // 窗口会在下次检查时自然过期或在5分钟后重置
+    // note：不立即reset窗口，让调用者可以query当前error率
+    // 窗口会在下timescheck时自然过期或在5min后reset
   }
 
   /**
-   * 重置过期的时间窗口
+   * reset过期的时间窗口
    */
   private resetWindowIfExpired(): void {
     const now = Date.now();
@@ -327,7 +327,7 @@ export class ErrorMonitor {
   }
 
   /**
-   * 构建错误上下文
+   * 构建error上下文
    */
   private buildErrorContext(context: Partial<ErrorContext>): ErrorContext {
     return {
@@ -340,7 +340,7 @@ export class ErrorMonitor {
   }
 
   /**
-   * 分类错误类型
+   * 分classerrortype
    */
   private classifyError(error: Error): ErrorReport['type'] {
     const message = error.message.toLowerCase();
@@ -365,14 +365,14 @@ export class ErrorMonitor {
   }
 
   /**
-   * 生成错误ID
+   * generateerrorID
    */
   private generateErrorId(): string {
     return `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 }
 
-// 导出单例实例
+// export单例instance
 let errorMonitorInstance: ErrorMonitor | null = null;
 
 export function getErrorMonitor(config?: MonitorConfig): ErrorMonitor {

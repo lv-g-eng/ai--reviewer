@@ -520,7 +520,7 @@ describe('Property-Based Tests', () => {
   });
 
   /**
-   * Feature: frontend-production-optimization, Property 35: 配置往返一致性
+   * Feature: frontend-production-optimization, Property 35: config往返一致性
    * **Validates: Requirements 20.4**
    * 
    * For any valid Configuration object, performing parse → format → parse again
@@ -663,7 +663,7 @@ describe('Property-Based Tests', () => {
   });
 
   /**
-   * Feature: frontend-production-optimization, Property 36: 配置格式化正确性
+   * Feature: frontend-production-optimization, Property 36: configformat化正确性
    * **Validates: Requirements 20.3**
    * 
    * For any Configuration object, the formatting tool should be able to convert it
@@ -842,7 +842,7 @@ describe('Property-Based Tests', () => {
   });
 
   /**
-   * Feature: frontend-production-optimization, Property 34: 配置解析正确性
+   * Feature: frontend-production-optimization, Property 34: config解析正确性
    * **Validates: Requirements 20.1**
    * 
    * For any valid configuration file, it should be correctly parsed into a Configuration object,

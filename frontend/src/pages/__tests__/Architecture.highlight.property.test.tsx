@@ -1,7 +1,7 @@
 /**
  * Property-based tests for Architecture dependency path highlighting
  * 
- * **Feature: frontend-production-optimization, Property 17: 依赖路径高亮**
+ * **Feature: frontend-production-optimization, Property 17: dependencypath高亮**
  * **Validates: Requirements 4.4**
  * 
  * Tests that when a component is selected, all dependency paths (both upstream

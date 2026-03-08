@@ -1,21 +1,21 @@
 /**
- * Responsive Layout属性测试
+ * Responsive Layoutpropertytest
  * 
  * Feature: frontend-production-optimization
  * Property 32: 视口宽度适配
  * 
  * **Validates: Requirements 15.1**
  * 
- * 测试覆盖:
- * - 对于任何320px到2560px之间的视口宽度，所有页面应该正确显示而不出现水平滚动条或内容溢出
+ * testCoverage:
+ * - 对于任何320px到2560px之间的视口宽度，所有页面should正确show而不出现水平滚动条或content溢出
  * 
- * 注意: 此测试验证Dashboard页面在不同视口宽度下的响应式布局行为。
- * 由于JSDOM环境的限制，此测试主要验证响应式CSS类和容器的正确应用。
- * 真实的视口适配应该通过E2E测试或Lighthouse CI验证。
+ * note: testVerifiesDashboard页面在不同视口宽度下的response式layout行为。
+ * 由于JSDOMenv的限制，此test主要verifyresponse式CSSclassand容器的正确应用。
+ * 真实的视口适配should通过E2Etest或Lighthouse CIverify。
  * 
- * Dashboard作为代表性页面，其响应式行为验证了整个应用的响应式设计模式。
+ * Dashboard作为代表性页面，其response式行为verify了整item应用的response式设计模式。
  * 所有其他页面(Projects, PullRequests, Architecture, AnalysisQueue, Metrics)
- * 都使用相同的响应式CSS框架和设计模式。
+ * 都use相同的response式CSS框架and设计模式。
  */
 
 import fc from 'fast-check';
@@ -144,11 +144,11 @@ describe('Property 32: 视口宽度适配', () => {
     setViewportWidth(1024);
   });
 
-  // 自定义生成器：生成320px到2560px之间的视口宽度
+  // customGenerator：generate320px到2560px之间的视口宽度
   const viewportWidthArbitrary = () =>
     fc.integer({ min: 320, max: 2560 });
 
-  // 自定义生成器：生成常见的断点宽度
+  // customGenerator：generate常见的断点宽度
   const breakpointWidthArbitrary = () =>
     fc.constantFrom(
       320,  // 最小移动设备
@@ -163,15 +163,15 @@ describe('Property 32: 视口宽度适配', () => {
       2560  // 2K
     );
 
-  it('Dashboard应该在任何视口宽度下正确显示而不出现水平滚动条', async () => {
+  it('DashboardshouldBeAt任何视口宽度下正确show而不出现水平滚动条', async () => {
     await fc.assert(
       fc.asyncProperty(
         viewportWidthArbitrary(),
         async (viewportWidth) => {
-          // 设置视口宽度
+          // set视口宽度
           setViewportWidth(viewportWidth);
 
-          // 渲染Dashboard
+          // renderDashboard
           let container: HTMLElement;
           let unmount: () => void;
 
@@ -180,17 +180,17 @@ describe('Property 32: 视口宽度适配', () => {
             container = result.container;
             unmount = result.unmount;
 
-            // 等待渲染完成
+            // waitrendercomplete
             await new Promise(resolve => setTimeout(resolve, 100));
           });
 
-          // 检查是否有水平溢出
+          // check是否有水平溢出
           const hasOverflow = hasHorizontalOverflow(container!);
 
-          // 验证没有水平滚动条或内容溢出
+          // verify没有水平滚动条或content溢出
           expect(hasOverflow).toBe(false);
 
-          // 验证容器宽度不超过视口宽度
+          // verify容器宽度不超过视口宽度
           const containerWidth = container!.getBoundingClientRect().width;
           expect(containerWidth).toBeLessThanOrEqual(viewportWidth);
 
@@ -202,7 +202,7 @@ describe('Property 32: 视口宽度适配', () => {
     );
   }, 60000);
 
-  it('Dashboard应该在常见断点宽度下正确显示', async () => {
+  it('DashboardshouldBeAt常见断点宽度下正确show', async () => {
     await fc.assert(
       fc.asyncProperty(
         breakpointWidthArbitrary(),
@@ -234,7 +234,7 @@ describe('Property 32: 视口宽度适配', () => {
     );
   }, 30000);
 
-  it('Dashboard应该在最小视口宽度(320px)下正确显示', async () => {
+  it('DashboardshouldBeAt最小视口宽度(320px)下正确show', async () => {
     const minWidth = 320;
     setViewportWidth(minWidth);
 
@@ -259,7 +259,7 @@ describe('Property 32: 视口宽度适配', () => {
     cleanup();
   });
 
-  it('Dashboard应该在最大视口宽度(2560px)下正确显示', async () => {
+  it('DashboardshouldBeAt最大视口宽度(2560px)下正确show', async () => {
     const maxWidth = 2560;
     setViewportWidth(maxWidth);
 
@@ -284,7 +284,7 @@ describe('Property 32: 视口宽度适配', () => {
     cleanup();
   });
 
-  it('Dashboard应该在移动设备宽度范围(320px-767px)内正确显示', async () => {
+  it('DashboardshouldBeAt移动设备宽度范围(320px-767px)内正确show', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 320, max: 767 }),
@@ -313,7 +313,7 @@ describe('Property 32: 视口宽度适配', () => {
     );
   }, 30000);
 
-  it('Dashboard应该在平板设备宽度范围(768px-1023px)内正确显示', async () => {
+  it('DashboardshouldBeAt平板设备宽度范围(768px-1023px)内正确show', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 768, max: 1023 }),
@@ -342,7 +342,7 @@ describe('Property 32: 视口宽度适配', () => {
     );
   }, 30000);
 
-  it('Dashboard应该在桌面设备宽度范围(1024px-2560px)内正确显示', async () => {
+  it('DashboardshouldBeAt桌面设备宽度范围(1024px-2560px)内正确show', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 1024, max: 2560 }),
@@ -371,7 +371,7 @@ describe('Property 32: 视口宽度适配', () => {
     );
   }, 30000);
 
-  it('Dashboard应该在视口宽度变化时保持响应性', async () => {
+  it('DashboardshouldBeAt视口宽度变化时保持response性', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(viewportWidthArbitrary(), { minLength: 2, maxLength: 5 }),
@@ -405,7 +405,7 @@ describe('Property 32: 视口宽度适配', () => {
     );
   }, 60000);
 
-  it('Dashboard的图片应该是响应式的', async () => {
+  it('Dashboard的图片should是response式的', async () => {
     await fc.assert(
       fc.asyncProperty(
         viewportWidthArbitrary(),
@@ -423,13 +423,13 @@ describe('Property 32: 视口宽度适配', () => {
             await new Promise(resolve => setTimeout(resolve, 100));
           });
 
-          // 检查所有图片元素
+          // check所有图片元素
           const images = container!.querySelectorAll('img');
           
           images.forEach(img => {
             const width = img.getBoundingClientRect().width;
             
-            // 图片宽度不应该超过视口宽度
+            // 图片宽度不should超过视口宽度
             expect(width).toBeLessThanOrEqual(viewportWidth);
           });
 
@@ -441,7 +441,7 @@ describe('Property 32: 视口宽度适配', () => {
     );
   }, 30000);
 
-  it('Dashboard应该在边界视口宽度下正确显示', async () => {
+  it('DashboardshouldBeAt边界视口宽度下正确show', async () => {
     const boundaryWidths = [320, 321, 767, 768, 1023, 1024, 1439, 1440, 1919, 1920, 2559, 2560];
 
     for (const viewportWidth of boundaryWidths) {
@@ -469,7 +469,7 @@ describe('Property 32: 视口宽度适配', () => {
     }
   });
 
-  it('Dashboard应该正确应用响应式CSS类', async () => {
+  it('Dashboardshould正确应用response式CSSclass', async () => {
     await fc.assert(
       fc.asyncProperty(
         viewportWidthArbitrary(),
@@ -487,11 +487,11 @@ describe('Property 32: 视口宽度适配', () => {
             await new Promise(resolve => setTimeout(resolve, 100));
           });
 
-          // 验证响应式容器存在
+          // verifyresponse式容器存在
           const responsiveElements = container!.querySelectorAll('[class*="responsive"]');
           
-          // 至少应该有一些响应式元素或样式
-          // 这验证了响应式设计的基本结构存在
+          // 至少should有一些response式元素或style
+          // 这verify了response式设计的基本结构存在
           expect(responsiveElements.length >= 0).toBe(true);
 
           unmount!();

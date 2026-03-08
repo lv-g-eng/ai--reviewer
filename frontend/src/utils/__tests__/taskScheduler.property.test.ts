@@ -1,16 +1,16 @@
 /**
- * 任务调度器属性测试
+ * task调度器propertytest
  * 
  * Feature: frontend-production-optimization
- * Property 18: 任务优先级调度
+ * Property 18: task优先级调度
  * 
  * **Validates: Requirements 5.1**
  * 
- * 测试覆盖:
- * - 对于任何任务队列，高优先级任务应该在低优先级任务之前执行（在资源可用的情况下）
+ * testCoverage:
+ * - 对于任何taskqueue，高优先级taskshouldBeAt低优先级task之前execute（在资源可用的情况下）
  * 
- * 注意: 此测试验证TaskScheduler在各种输入条件下的调度正确性。
- * 使用基于属性的测试来确保调度算法在所有可能的任务组合中都能正确工作。
+ * note: testVerifiesTaskScheduler在各种input条件下的调度正确性。
+ * use基于property的test来确保调度算法在所有可能的task组合中都能正确工作。
  */
 
 import fc from 'fast-check';
@@ -18,7 +18,7 @@ import { TaskScheduler, SchedulerConfig } from '../taskScheduler';
 import { AnalysisTask } from '../../pages/AnalysisQueue';
 
 /**
- * 自定义生成器：生成有效的分析任务
+ * customGenerator：generate有效的analyzetask
  */
 function analysisTaskArbitrary(): fc.Arbitrary<AnalysisTask> {
   return fc.record({
@@ -36,14 +36,14 @@ function analysisTaskArbitrary(): fc.Arbitrary<AnalysisTask> {
 }
 
 /**
- * 自定义生成器：生成任务列表
+ * customGenerator：generatetask列表
  */
 function taskListArbitrary(minLength: number = 0, maxLength: number = 20): fc.Arbitrary<AnalysisTask[]> {
   return fc.array(analysisTaskArbitrary(), { minLength, maxLength });
 }
 
 /**
- * 自定义生成器：生成调度器配置
+ * customGenerator：generate调度器config
  */
 function schedulerConfigArbitrary(): fc.Arbitrary<SchedulerConfig> {
   return fc.record({
@@ -52,9 +52,9 @@ function schedulerConfigArbitrary(): fc.Arbitrary<SchedulerConfig> {
   });
 }
 
-describe('Property 18: 任务优先级调度', () => {
-  describe('核心调度属性', () => {
-    it('应该始终按优先级降序返回待执行任务', () => {
+describe('Property 18: task优先级调度', () => {
+  describe('核心调度property', () => {
+    it('should始终按优先级降序return待executetask', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),
@@ -63,16 +63,16 @@ describe('Property 18: 任务优先级调度', () => {
             const scheduler = new TaskScheduler(config);
             const result = scheduler.schedule(tasks);
 
-            // 验证：tasksToExecute应该按优先级降序排列
+            // verify：tasksToExecuteshould按优先级降序排列
             for (let i = 0; i < result.tasksToExecute.length - 1; i++) {
               const current = result.tasksToExecute[i];
               const next = result.tasksToExecute[i + 1];
               
-              // 高优先级应该在前
+              // 高优先级shouldBeAt前
               if (current.priority !== next.priority) {
                 expect(current.priority).toBeGreaterThanOrEqual(next.priority);
               } else {
-                // 优先级相同时，早创建的应该在前（FIFO）
+                // 优先级相同时，早create的shouldBeAt前（FIFO）
                 const currentTime = new Date(current.createdAt).getTime();
                 const nextTime = new Date(next.createdAt).getTime();
                 expect(currentTime).toBeLessThanOrEqual(nextTime);
@@ -84,7 +84,7 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('应该只调度pending状态的任务', () => {
+    it('should只调度pendingstatus的task', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),
@@ -93,12 +93,12 @@ describe('Property 18: 任务优先级调度', () => {
             const scheduler = new TaskScheduler(config);
             const result = scheduler.schedule(tasks);
 
-            // 验证：所有tasksToExecute都应该是pending状态
+            // verify：所有tasksToExecute都should是pendingstatus
             for (const task of result.tasksToExecute) {
               expect(task.status).toBe('pending');
             }
 
-            // 验证：所有waitingTasks都应该是pending状态
+            // verify：所有waitingTasks都should是pendingstatus
             for (const task of result.waitingTasks) {
               expect(task.status).toBe('pending');
             }
@@ -108,7 +108,7 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('应该遵守maxConcurrent限制', () => {
+    it('should遵守maxConcurrent限制', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),
@@ -117,17 +117,17 @@ describe('Property 18: 任务优先级调度', () => {
             const scheduler = new TaskScheduler(config);
             const result = scheduler.schedule(tasks);
 
-            // 计算当前运行的任务数
+            // 计算当前run的task数
             const runningCount = tasks.filter(t => t.status === 'running').length;
             
-            // 验证：tasksToExecute数量不应超过可用槽位
+            // verify：tasksToExecute数量不应超过可用槽位
             const availableSlots = Math.max(0, config.maxConcurrent - runningCount);
             expect(result.tasksToExecute.length).toBeLessThanOrEqual(availableSlots);
             
-            // 验证：runningCount应该正确
+            // verify：runningCountshould正确
             expect(result.runningCount).toBe(runningCount);
             
-            // 验证：availableSlots应该正确
+            // verify：availableSlotsshould正确
             expect(result.availableSlots).toBe(Math.max(0, config.maxConcurrent - runningCount));
           }
         ),
@@ -135,7 +135,7 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('应该在资源不可用时不调度任何任务', () => {
+    it('shouldBeAt资源不可用时不调度任何task', () => {
       fc.assert(
         fc.property(
           fc.integer({ min: 1, max: 10 }),
@@ -149,11 +149,11 @@ describe('Property 18: 任务优先级调度', () => {
             const scheduler = new TaskScheduler(config);
             const result = scheduler.schedule(tasks);
 
-            // 验证：当资源不可用时，不应该调度任何任务
+            // verify：当资源不可用时，不should调度任何task
             expect(result.tasksToExecute).toHaveLength(0);
             expect(result.availableSlots).toBe(0);
             
-            // 验证：所有pending任务都应该在waitingTasks中
+            // verify：所有pendingtask都shouldBeAtwaitingTasks中
             const pendingTasks = tasks.filter(t => t.status === 'pending');
             expect(result.waitingTasks.length).toBe(pendingTasks.length);
           }
@@ -164,13 +164,13 @@ describe('Property 18: 任务优先级调度', () => {
   });
 
   describe('优先级调度正确性', () => {
-    it('应该优先调度高优先级任务', () => {
+    it('should优先调度高优先级task', () => {
       fc.assert(
         fc.property(
           fc.integer({ min: 2, max: 10 }),
           fc.integer({ min: 5, max: 30 }),
           (maxConcurrent, taskCount) => {
-            // 创建具有不同优先级的任务
+            // create具有不同优先级的task
             const tasks: AnalysisTask[] = Array.from({ length: taskCount }, (_, i) => ({
               id: `task-${i}`,
               name: `Task ${i}`,
@@ -179,7 +179,7 @@ describe('Property 18: 任务优先级调度', () => {
               status: 'pending' as const,
               progress: 0,
               projectId: 'project-1',
-              createdAt: new Date(Date.now() + i * 1000), // 确保不同的创建时间
+              createdAt: new Date(Date.now() + i * 1000), // 确保不同的create时间
               retryCount: 0,
               maxRetries: 3,
             }));
@@ -188,7 +188,7 @@ describe('Property 18: 任务优先级调度', () => {
             const result = scheduler.schedule(tasks);
 
             if (result.tasksToExecute.length > 0) {
-              // 验证：第一个待执行任务应该是所有pending任务中优先级最高的
+              // verify：第一item待executetaskshould是所有pendingtask中优先级最高的
               const pendingTasks = tasks.filter(t => t.status === 'pending');
               const maxPriority = Math.max(...pendingTasks.map(t => t.priority));
               
@@ -200,14 +200,14 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('应该在优先级相同时使用FIFO顺序', () => {
+    it('shouldBeAt优先级相同时useFIFO顺序', () => {
       fc.assert(
         fc.property(
           fc.integer({ min: 2, max: 10 }),
           fc.integer({ min: 3, max: 20 }),
           fc.integer({ min: 1, max: 10 }),
           (maxConcurrent, taskCount, samePriority) => {
-            // 创建具有相同优先级但不同创建时间的任务
+            // create具有相同优先级但不同create时间的task
             const now = Date.now();
             const tasks: AnalysisTask[] = Array.from({ length: taskCount }, (_, i) => ({
               id: `task-${i}`,
@@ -217,7 +217,7 @@ describe('Property 18: 任务优先级调度', () => {
               status: 'pending' as const,
               progress: 0,
               projectId: 'project-1',
-              createdAt: new Date(now + i * 1000), // 递增的创建时间
+              createdAt: new Date(now + i * 1000), // 递增的create时间
               retryCount: 0,
               maxRetries: 3,
             }));
@@ -225,7 +225,7 @@ describe('Property 18: 任务优先级调度', () => {
             const scheduler = new TaskScheduler({ maxConcurrent });
             const result = scheduler.schedule(tasks);
 
-            // 验证：相同优先级的任务应该按创建时间排序
+            // verify：相同优先级的taskshould按create时间sort
             for (let i = 0; i < result.tasksToExecute.length - 1; i++) {
               const current = result.tasksToExecute[i];
               const next = result.tasksToExecute[i + 1];
@@ -241,17 +241,17 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('应该在有可用槽位时调度最高优先级的pending任务', () => {
+    it('shouldBeAt有可用槽位时调度最高优先级的pendingtask', () => {
       fc.assert(
         fc.property(
           fc.integer({ min: 1, max: 5 }),
           fc.integer({ min: 0, max: 3 }),
           fc.integer({ min: 1, max: 10 }),
           (maxConcurrent, runningCount, pendingCount) => {
-            // 确保running任务不超过maxConcurrent
+            // 确保runningtask不超过maxConcurrent
             const actualRunningCount = Math.min(runningCount, maxConcurrent);
             
-            // 创建running任务
+            // createrunningtask
             const runningTasks: AnalysisTask[] = Array.from({ length: actualRunningCount }, (_, i) => ({
               id: `running-${i}`,
               name: `Running Task ${i}`,
@@ -265,7 +265,7 @@ describe('Property 18: 任务优先级调度', () => {
               maxRetries: 3,
             }));
 
-            // 创建pending任务
+            // creatependingtask
             const pendingTasks: AnalysisTask[] = Array.from({ length: pendingCount }, (_, i) => ({
               id: `pending-${i}`,
               name: `Pending Task ${i}`,
@@ -286,11 +286,11 @@ describe('Property 18: 任务优先级调度', () => {
             // 计算可用槽位
             const availableSlots = maxConcurrent - actualRunningCount;
             
-            // 验证：调度的任务数应该等于min(availableSlots, pendingCount)
+            // verify：调度的task数should等于min(availableSlots, pendingCount)
             const expectedScheduledCount = Math.min(availableSlots, pendingCount);
             expect(result.tasksToExecute.length).toBe(expectedScheduledCount);
             
-            // 验证：如果有调度的任务，它们应该是最高优先级的
+            // verify：如果有调度的task，它们should是最高优先级的
             if (result.tasksToExecute.length > 0 && pendingTasks.length > 0) {
               const sortedPending = [...pendingTasks].sort((a, b) => {
                 if (a.priority !== b.priority) {
@@ -311,7 +311,7 @@ describe('Property 18: 任务优先级调度', () => {
   });
 
   describe('边界条件', () => {
-    it('应该正确处理空任务列表', () => {
+    it('should正确handle空task列表', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),
@@ -329,13 +329,13 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('应该正确处理所有任务都在运行的情况', () => {
+    it('should正确handle所有task都在run的情况', () => {
       fc.assert(
         fc.property(
           fc.integer({ min: 1, max: 10 }),
           fc.integer({ min: 1, max: 20 }),
           (maxConcurrent, taskCount) => {
-            // 创建所有running状态的任务
+            // create所有runningstatus的task
             const tasks: AnalysisTask[] = Array.from({ length: taskCount }, (_, i) => ({
               id: `task-${i}`,
               name: `Task ${i}`,
@@ -361,13 +361,13 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('应该正确处理所有任务都已完成的情况', () => {
+    it('should正确handle所有task都已complete的情况', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),
           fc.integer({ min: 1, max: 20 }),
           (config, taskCount) => {
-            // 创建所有completed状态的任务
+            // create所有completedstatus的task
             const tasks: AnalysisTask[] = Array.from({ length: taskCount }, (_, i) => ({
               id: `task-${i}`,
               name: `Task ${i}`,
@@ -394,7 +394,7 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('应该正确处理maxConcurrent为1的情况', () => {
+    it('should正确handlemaxConcurrent为1的情况', () => {
       fc.assert(
         fc.property(
           taskListArbitrary(0, 50),
@@ -402,10 +402,10 @@ describe('Property 18: 任务优先级调度', () => {
             const scheduler = new TaskScheduler({ maxConcurrent: 1 });
             const result = scheduler.schedule(tasks);
 
-            // 验证：最多只能调度1个任务
+            // verify：最多只能调度1itemtask
             expect(result.tasksToExecute.length).toBeLessThanOrEqual(1);
             
-            // 验证：如果有pending任务且没有running任务，应该调度1个
+            // verify：如果有pendingtask且没有runningtask，should调度1item
             const pendingCount = tasks.filter(t => t.status === 'pending').length;
             const runningCount = tasks.filter(t => t.status === 'running').length;
             
@@ -419,8 +419,8 @@ describe('Property 18: 任务优先级调度', () => {
     });
   });
 
-  describe('不变量验证', () => {
-    it('tasksToExecute和waitingTasks的总数应该等于pending任务数', () => {
+  describe('不variableverify', () => {
+    it('tasksToExecuteandwaitingTasks的总数should等于pendingtask数', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),
@@ -439,7 +439,7 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('不应该有重复的任务ID在结果中', () => {
+    it('不should有duplicate的taskID在result中', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),
@@ -448,17 +448,17 @@ describe('Property 18: 任务优先级调度', () => {
             const scheduler = new TaskScheduler(config);
             const result = scheduler.schedule(tasks);
 
-            // 验证tasksToExecute中没有重复ID
+            // verifytasksToExecute中没有duplicateID
             const executeIds = result.tasksToExecute.map(t => t.id);
             const uniqueExecuteIds = new Set(executeIds);
             expect(executeIds.length).toBe(uniqueExecuteIds.size);
 
-            // 验证waitingTasks中没有重复ID
+            // verifywaitingTasks中没有duplicateID
             const waitingIds = result.waitingTasks.map(t => t.id);
             const uniqueWaitingIds = new Set(waitingIds);
             expect(waitingIds.length).toBe(uniqueWaitingIds.size);
 
-            // 验证tasksToExecute和waitingTasks之间没有重复ID
+            // verifytasksToExecuteandwaitingTasks之间没有duplicateID
             const allIds = [...executeIds, ...waitingIds];
             const uniqueAllIds = new Set(allIds);
             expect(allIds.length).toBe(uniqueAllIds.size);
@@ -468,7 +468,7 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('sortByPriority应该不改变原数组', () => {
+    it('sortByPriorityshould不改变原数组', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),
@@ -479,7 +479,7 @@ describe('Property 18: 任务优先级调度', () => {
             
             scheduler.sortByPriority(tasks);
             
-            // 验证：原数组的顺序不应该改变
+            // verify：原数组的顺序不should改变
             const afterIds = tasks.map(t => t.id);
             expect(afterIds).toEqual(originalIds);
           }
@@ -488,7 +488,7 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('getNextTask应该返回最高优先级的pending任务或null', () => {
+    it('getNextTaskshouldreturn最高优先级的pendingtask或null', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),
@@ -512,8 +512,8 @@ describe('Property 18: 任务优先级调度', () => {
     });
   });
 
-  describe('配置更新', () => {
-    it('updateConfig应该正确更新配置', () => {
+  describe('configupdate', () => {
+    it('updateConfigshould正确updateconfig', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),
@@ -534,7 +534,7 @@ describe('Property 18: 任务优先级调度', () => {
       );
     });
 
-    it('部分配置更新应该保留未更新的值', () => {
+    it('部分configupdateshould保留未update的value', () => {
       fc.assert(
         fc.property(
           schedulerConfigArbitrary(),

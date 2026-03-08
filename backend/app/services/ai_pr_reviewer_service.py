@@ -39,20 +39,20 @@ class ReviewResponse:
 
 class AIReviewService:
     """
-    AI 代码审查服务
+    AI codereviewservice
     
-    提供基于 AI 的 Pull Request 审查功能，包括：
-    - 架构分析
+    provide基于 AI 的 Pull Request reviewfeature，包括：
+    - architectureanalyze
     - 安全漏洞检测
-    - 代码质量评估
+    - code质量评估
     - 重构建议
     
-    支持用户自定义 API 密钥
+    supportuser自定义 API key
     """
     
     
     async def _get_llm_provider(self):
-        """获取 LLM 提供者实例（延迟加载）"""
+        """get LLM providerInstance（延迟load）"""
         if self.llm_provider is None:
             self.llm_provider = await UserLLMService.get_user_llm_provider(
                 db=self.db,
@@ -73,13 +73,13 @@ class AIReviewService:
         try:
             self.logger.info(f"Starting AI review for PR {request.pr_id}")
             
-            # 获取 LLM 提供者
+            # get LLM provide者
             llm_provider = await self._get_llm_provider()
             
-            # 构建审查提示
+            # 构建reviewhint
             prompt = self._build_review_prompt(request)
             
-            # 调用 LLM 进行审查
+            # 调用 LLM 进行review
             llm_request = LLMRequest(
                 prompt=prompt,
                 system_prompt="You are an expert code reviewer. Analyze the code changes and provide detailed feedback.",
@@ -89,13 +89,13 @@ class AIReviewService:
             
             llm_response = await llm_provider.generate(llm_request)
             
-            # 解析审查结果
+            # 解析reviewresult
             review_result = self._parse_review_result(llm_response.content)
             
-            # 生成报告
+            # generatereport
             report = self._generate_report(review_result)
             
-            # 创建响应
+            # createresponse
             response = ReviewResponse(
                 review_id=self._generate_review_id(),
                 timestamp=datetime.now(),
@@ -126,7 +126,7 @@ class AIReviewService:
             raise
     
     def _build_review_prompt(self, request: ReviewRequest) -> str:
-        """构建审查提示"""
+        """构建reviewhint"""
         prompt = f"""Please review the following code changes:
 
 {request.diff_content}
@@ -146,8 +146,8 @@ Please provide:
         return prompt
     
     def _parse_review_result(self, content: str) -> ReviewResult:
-        """解析 LLM 返回的审查结果"""
-        # 简化的解析逻辑，实际应该更复杂
+        """解析 LLM return的reviewresult"""
+        # 简化的解析逻辑，实际should更复杂
         # Placeholder values for demonstration
         safety_score = 85
         compliance_status = ComplianceStatus.COMPLIANT
@@ -166,7 +166,7 @@ Please provide:
         )
     
     def _generate_report(self, review_result: ReviewResult) -> Dict:
-        """生成审查报告"""
+        """generatereviewreport"""
         return {
             "summary": {
                 "safety_score": review_result.safety_score,
@@ -184,13 +184,13 @@ Please provide:
 
     def __init__(self, db: AsyncSession, user_id: str, llm_provider=None, ai_reviewer=None):
         """
-        初始化 AI 审查服务
+        初始化 AI reviewservice
         
         Args:
-            db: 数据库会话
-            user_id: 用户 ID
-            llm_provider: 可选的 LLM 提供者实例
-            ai_reviewer: 可选的 AIPRReviewer 实例
+            db: dbSession
+            user_id: user ID
+            llm_provider: 可选的 LLM providerInstance
+            ai_reviewer: 可选的 AIPRReviewer instance
         """
         self.db = db
         self.user_id = user_id

@@ -14,7 +14,7 @@ describe('retryWithBackoff', () => {
     jest.useRealTimers();
   });
 
-  describe('成功场景', () => {
+  describe('success场景', () => {
     it('should return result on first successful attempt', async () => {
       const mockFn = jest.fn().mockResolvedValue('success');
 
@@ -54,7 +54,7 @@ describe('retryWithBackoff', () => {
     });
   });
 
-  describe('失败场景', () => {
+  describe('failure场景', () => {
     it('should throw error after max retries', async () => {
       const error = new Error('Persistent failure');
       const mockFn = jest.fn().mockRejectedValue(error);
@@ -122,7 +122,7 @@ describe('retryWithBackoff', () => {
     });
   });
 
-  describe('重试策略', () => {
+  describe('retry策略', () => {
     it('should retry 5xx server errors', async () => {
       const error: any = new Error('Internal Server Error');
       error.response = { status: 500 };
@@ -212,16 +212,16 @@ describe('retryWithBackoff', () => {
       await jest.runAllTimersAsync();
       await promise;
 
-      // 验证延迟时间呈指数增长
-      // 第1次重试: ~1000ms (1000 * 2^0)
-      // 第2次重试: ~2000ms (1000 * 2^1)
-      // 第3次重试: ~4000ms (1000 * 2^2)
+      // verify延迟时间呈指数增长
+      // 第1timesretry: ~1000ms (1000 * 2^0)
+      // 第2timesretry: ~2000ms (1000 * 2^1)
+      // 第3timesretry: ~4000ms (1000 * 2^2)
       const delays = setTimeoutSpy.mock.calls
         .map(call => call[1] as number)
         .filter(delay => delay > 0);
 
       expect(delays.length).toBeGreaterThanOrEqual(3);
-      // 由于有随机抖动，检查延迟在合理范围内
+      // 由于有随机抖动，check延迟在合理范围内
       expect(delays[0]).toBeGreaterThan(800);
       expect(delays[0]).toBeLessThan(1200);
 
@@ -315,7 +315,7 @@ describe('retryWithBackoff', () => {
       expect(result).toBe('success');
       expect(mockFn).toHaveBeenCalledTimes(3);
 
-      // 验证使用了精确的延迟时间
+      // verifyuse了精确的延迟时间
       const delays = setTimeoutSpy.mock.calls
         .map(call => call[1] as number)
         .filter(delay => delay > 0);

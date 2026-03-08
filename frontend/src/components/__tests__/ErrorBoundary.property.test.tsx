@@ -1,13 +1,13 @@
 /**
- * ErrorBoundary属性测试
+ * ErrorBoundarypropertytest
  * 
  * Feature: frontend-production-optimization
- * Property 6: 错误边界捕获
+ * Property 6: error边界捕获
  * 
  * **Validates: Requirements 1.3**
  * 
- * 测试覆盖:
- * - 对于任何组件内发生的错误，ErrorBoundary应该捕获错误并显示降级UI，而不是导致整个应用崩溃
+ * testCoverage:
+ * - 对于任何component内发生的error，ErrorBoundaryshould捕获error并show降级UI，而不是导致整item应用崩溃
  */
 
 import React from 'react';
@@ -16,11 +16,11 @@ import fc from 'fast-check';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { getErrorMonitor, resetErrorMonitor, MonitorConfig } from '../../services/ErrorMonitor';
 
-describe('Property 6: 错误边界捕获', () => {
+describe('Property 6: error边界捕获', () => {
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeAll(() => {
-    // 抑制React的错误日志输出
+    // 抑制React的errorlogoutput
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
@@ -44,7 +44,7 @@ describe('Property 6: 错误边界捕获', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  // 自定义生成器：生成错误消息
+  // customGenerator：generateerror消息
   const errorMessageArbitrary = () =>
     fc.oneof(
       fc.string({ minLength: 1, maxLength: 200 }).filter(s => s.trim().length > 0),
@@ -62,7 +62,7 @@ describe('Property 6: 错误边界捕获', () => {
       )
     );
 
-  // 自定义生成器：生成错误类型
+  // customGenerator：generateerrortype
   const errorTypeArbitrary = () =>
     fc.constantFrom(
       Error,
@@ -72,7 +72,7 @@ describe('Property 6: 错误边界捕获', () => {
       SyntaxError
     );
 
-  // 自定义生成器：生成会抛出错误的组件
+  // customGenerator：generate会抛出error的component
   const throwingComponentArbitrary = () =>
     fc.record({
       errorMessage: errorMessageArbitrary(),
@@ -87,18 +87,18 @@ describe('Property 6: 错误边界捕获', () => {
       ),
     });
 
-  it('应该捕获所有类型的组件错误并显示降级UI', () => {
+  it('should捕获所有type的componenterror并show降级UI', () => {
     fc.assert(
       fc.property(
         throwingComponentArbitrary(),
         ({ errorMessage, ErrorType, componentName }) => {
-          // 创建会抛出特定错误的组件
+          // create会抛出特定error的component
           const ThrowingComponent: React.FC = () => {
             throw new ErrorType(errorMessage);
           };
           ThrowingComponent.displayName = componentName;
 
-          // 渲染包裹在ErrorBoundary中的组件
+          // render包裹在ErrorBoundary中的component
           const { unmount } = render(
             <ErrorBoundary>
               <ThrowingComponent />
@@ -106,18 +106,18 @@ describe('Property 6: 错误边界捕获', () => {
           );
 
           try {
-            // 验证降级UI被显示（需求1.3）
+            // verify降级UI被show（requirement1.3）
             expect(screen.getAllByText(/something went wrong/i)[0]).toBeInTheDocument();
 
-            // 验证原始组件内容没有被渲染
+            // verify原始componentcontent没有被render
             expect(screen.queryByText('Normal content')).not.toBeInTheDocument();
 
-            // 验证错误处理按钮存在
+            // verifyerrorhandlebutton存在
             expect(screen.getAllByText(/try again/i)[0]).toBeInTheDocument();
             expect(screen.getAllByText(/reload page/i)[0]).toBeInTheDocument();
             expect(screen.getAllByText(/report issue/i)[0]).toBeInTheDocument();
           } finally {
-            // 清理DOM
+            // cleanupDOM
             unmount();
           }
         }
@@ -126,7 +126,7 @@ describe('Property 6: 错误边界捕获', () => {
     );
   });
 
-  it('应该为所有捕获的错误上报到ErrorMonitor', () => {
+  it('should为所有捕获的error上报到ErrorMonitor', () => {
     fc.assert(
       fc.property(
         errorMessageArbitrary(),
@@ -135,7 +135,7 @@ describe('Property 6: 错误边界捕获', () => {
           const monitor = getErrorMonitor();
           const captureErrorSpy = jest.spyOn(monitor, 'captureError');
 
-          // 创建会抛出错误的组件
+          // create会抛出error的component
           const ThrowingComponent: React.FC = () => {
             throw new ErrorType(errorMessage);
           };
@@ -147,7 +147,7 @@ describe('Property 6: 错误边界捕获', () => {
           );
 
           try {
-            // 验证错误被上报到ErrorMonitor（需求1.3）
+            // verifyerror被上报到ErrorMonitor（requirement1.3）
             expect(captureErrorSpy).toHaveBeenCalledTimes(1);
             expect(captureErrorSpy).toHaveBeenCalledWith(
               expect.any(ErrorType),
@@ -171,18 +171,18 @@ describe('Property 6: 错误边界捕获', () => {
     );
   });
 
-  it('应该在捕获错误后不影响应用的其他部分', () => {
+  it('shouldBeAt捕获error后不影response用的其他部分', () => {
     fc.assert(
       fc.property(
         errorMessageArbitrary(),
         fc.string({ minLength: 1, maxLength: 50 }).filter(s => s.trim().length > 0),
         (errorMessage, siblingContent) => {
-          // 创建会抛出错误的组件
+          // create会抛出error的component
           const ThrowingComponent: React.FC = () => {
             throw new Error(errorMessage);
           };
 
-          // 渲染包含错误组件和正常组件的应用
+          // rendercontainerrorcomponentand正常component的应用
           const { unmount } = render(
             <div>
               <div data-testid="sibling">{siblingContent}</div>
@@ -193,10 +193,10 @@ describe('Property 6: 错误边界捕获', () => {
           );
 
           try {
-            // 验证降级UI被显示
+            // verify降级UI被show
             expect(screen.getAllByText(/something went wrong/i)[0]).toBeInTheDocument();
 
-            // 验证兄弟组件仍然正常渲染（需求1.3 - 不导致整个应用崩溃）
+            // verify兄弟component仍然正常render（requirement1.3 - 不导致整item应用崩溃）
             const sibling = screen.getByTestId('sibling');
             expect(sibling).toBeInTheDocument();
             expect(sibling.textContent).toBe(siblingContent);
@@ -209,18 +209,18 @@ describe('Property 6: 错误边界捕获', () => {
     );
   });
 
-  it('应该为嵌套的ErrorBoundary正确隔离错误', () => {
+  it('should为嵌套的ErrorBoundary正确隔离error', () => {
     fc.assert(
       fc.property(
         errorMessageArbitrary(),
         fc.string({ minLength: 1, maxLength: 50 }).filter(s => s.trim().length > 0),
         (errorMessage, outerContent) => {
-          // 创建会抛出错误的组件
+          // create会抛出error的component
           const ThrowingComponent: React.FC = () => {
             throw new Error(errorMessage);
           };
 
-          // 渲染嵌套的ErrorBoundary
+          // render嵌套的ErrorBoundary
           const { unmount } = render(
             <ErrorBoundary>
               <div data-testid="outer-content">{outerContent}</div>
@@ -231,10 +231,10 @@ describe('Property 6: 错误边界捕获', () => {
           );
 
           try {
-            // 验证内部ErrorBoundary捕获了错误
+            // verify内部ErrorBoundary捕获了error
             expect(screen.getAllByText(/something went wrong/i)[0]).toBeInTheDocument();
 
-            // 验证外部ErrorBoundary的内容仍然正常显示（需求1.3）
+            // verify外部ErrorBoundary的content仍然正常show（requirement1.3）
             const outerElement = screen.getByTestId('outer-content');
             expect(outerElement).toBeInTheDocument();
             expect(outerElement.textContent).toBe(outerContent);
@@ -247,13 +247,13 @@ describe('Property 6: 错误边界捕获', () => {
     );
   });
 
-  it('应该在渲染生命周期的任何阶段捕获错误', () => {
+  it('shouldBeAtrender生命周期的任何阶段捕获error', () => {
     fc.assert(
       fc.property(
         errorMessageArbitrary(),
         fc.constantFrom('constructor', 'render', 'componentDidMount'),
         (errorMessage, lifecyclePhase) => {
-          // 创建在不同生命周期阶段抛出错误的组件
+          // create在不同生命周期阶段抛出error的component
           class LifecycleErrorComponent extends React.Component<{}, { shouldError: boolean }> {
             constructor(props: {}) {
               super(props);
@@ -284,7 +284,7 @@ describe('Property 6: 错误边界捕获', () => {
           );
 
           try {
-            // 验证错误被捕获并显示降级UI（需求1.3）
+            // verifyerror被捕获并show降级UI（requirement1.3）
             expect(screen.getAllByText(/something went wrong/i)[0]).toBeInTheDocument();
           } finally {
             unmount();
@@ -295,13 +295,13 @@ describe('Property 6: 错误边界捕获', () => {
     );
   });
 
-  it('应该在使用自定义fallback时正确传递错误信息', () => {
+  it('shouldBeAtuse自定义fallback时正确传递errorinfo', () => {
     fc.assert(
       fc.property(
         errorMessageArbitrary(),
         fc.string({ minLength: 1, maxLength: 50 }).filter(s => s.trim().length > 0),
         (errorMessage, customMessage) => {
-          // 创建会抛出错误的组件
+          // create会抛出error的component
           const ThrowingComponent: React.FC = () => {
             throw new Error(errorMessage);
           };
@@ -320,12 +320,12 @@ describe('Property 6: 错误边界捕获', () => {
           );
 
           try {
-            // 验证自定义fallback被显示（需求1.3）
+            // verify自定义fallback被show（requirement1.3）
             const fallbacks = container.querySelectorAll('[data-testid="custom-fallback"]');
             expect(fallbacks.length).toBeGreaterThan(0);
             const fallback = fallbacks[fallbacks.length - 1];
             expect(fallback).toBeInTheDocument();
-            // 验证包含两部分内容
+            // verifycontain两部分content
             expect(fallback.textContent).toContain(customMessage);
             expect(fallback.textContent).toContain(errorMessage);
           } finally {
@@ -337,7 +337,7 @@ describe('Property 6: 错误边界捕获', () => {
     );
   });
 
-  it('应该为所有错误类型提供一致的错误处理', () => {
+  it('should为所有errortypeprovide一致的errorhandle', () => {
     fc.assert(
       fc.property(
         fc.array(
@@ -348,7 +348,7 @@ describe('Property 6: 错误边界捕获', () => {
           { minLength: 1, maxLength: 5 }
         ),
         (errorConfigs) => {
-          // 测试多个不同的错误配置
+          // test多item不同的errorconfig
           errorConfigs.forEach(({ errorMessage, ErrorType }) => {
             const ThrowingComponent: React.FC = () => {
               throw new ErrorType(errorMessage);
@@ -361,11 +361,11 @@ describe('Property 6: 错误边界捕获', () => {
             );
 
             try {
-              // 验证所有错误类型都被一致地处理（需求1.3）
+              // verify所有errortype都被一致地handle（requirement1.3）
               expect(screen.getAllByText(/something went wrong/i)[0]).toBeInTheDocument();
               expect(screen.getAllByText(/try again/i)[0]).toBeInTheDocument();
             } finally {
-              // 清理
+              // cleanup
               unmount();
             }
           });
@@ -375,7 +375,7 @@ describe('Property 6: 错误边界捕获', () => {
     );
   });
 
-  it('应该在错误发生时保持应用状态的完整性', () => {
+  it('shouldBeAterror发生时保持应用status的完整性', () => {
     fc.assert(
       fc.property(
         errorMessageArbitrary(),
@@ -385,12 +385,12 @@ describe('Property 6: 错误边界捕获', () => {
           isActive: fc.boolean(),
         }),
         (errorMessage, appState) => {
-          // 创建会抛出错误的组件
+          // create会抛出error的component
           const ThrowingComponent: React.FC = () => {
             throw new Error(errorMessage);
           };
 
-          // 创建带有状态的应用
+          // create带有status的应用
           const AppWithState: React.FC = () => {
             const [state] = React.useState(appState);
             return (
@@ -408,10 +408,10 @@ describe('Property 6: 错误边界捕获', () => {
           const { unmount } = render(<AppWithState />);
 
           try {
-            // 验证错误被捕获
+            // verifyerror被捕获
             expect(screen.getAllByText(/something went wrong/i)[0]).toBeInTheDocument();
 
-            // 验证应用状态没有被破坏（需求1.3 - 不导致整个应用崩溃）
+            // verify应用status没有被破坏（requirement1.3 - 不导致整item应用崩溃）
             const stateElement = screen.getByTestId('app-state');
             expect(stateElement).toBeInTheDocument();
             expect(stateElement.textContent).toBe(JSON.stringify(appState));
@@ -424,18 +424,18 @@ describe('Property 6: 错误边界捕获', () => {
     );
   });
 
-  it('应该在捕获错误后允许用户继续使用应用的其他功能', () => {
+  it('shouldBeAt捕获error后allowuser继续use应用的其他feature', () => {
     fc.assert(
       fc.property(
         errorMessageArbitrary(),
         fc.array(fc.string({ minLength: 1, maxLength: 30 }).filter(s => s.trim().length > 0), { minLength: 1, maxLength: 5 }),
         (errorMessage, menuItems) => {
-          // 创建会抛出错误的组件
+          // create会抛出error的component
           const ThrowingComponent: React.FC = () => {
             throw new Error(errorMessage);
           };
 
-          // 渲染包含导航菜单和错误组件的应用
+          // rendercontainnavmenuanderrorcomponent的应用
           const { unmount } = render(
             <div>
               <nav data-testid="navigation">
@@ -452,10 +452,10 @@ describe('Property 6: 错误边界捕获', () => {
           );
 
           try {
-            // 验证错误被捕获
+            // verifyerror被捕获
             expect(screen.getAllByText(/something went wrong/i)[0]).toBeInTheDocument();
 
-            // 验证导航菜单仍然可用（需求1.3 - 允许用户继续使用应用的其他部分）
+            // verifynavmenu仍然可用（requirement1.3 - allowuser继续use应用的其他部分）
             expect(screen.getByTestId('navigation')).toBeInTheDocument();
             menuItems.forEach((item, index) => {
               const menuItem = screen.getByTestId(`menu-item-${index}`);
@@ -471,7 +471,7 @@ describe('Property 6: 错误边界捕获', () => {
     );
   });
 
-  it('应该为所有捕获的错误调用onError回调', () => {
+  it('should为所有捕获的error调用onError回调', () => {
     fc.assert(
       fc.property(
         errorMessageArbitrary(),
@@ -479,7 +479,7 @@ describe('Property 6: 错误边界捕获', () => {
         (errorMessage, ErrorType) => {
           const onError = jest.fn();
 
-          // 创建会抛出错误的组件
+          // create会抛出error的component
           const ThrowingComponent: React.FC = () => {
             throw new ErrorType(errorMessage);
           };
@@ -491,7 +491,7 @@ describe('Property 6: 错误边界捕获', () => {
           );
 
           try {
-            // 验证onError回调被调用（需求1.3）
+            // verifyonError回调被调用（requirement1.3）
             expect(onError).toHaveBeenCalledTimes(1);
             expect(onError).toHaveBeenCalledWith(
               expect.any(ErrorType),
@@ -508,15 +508,15 @@ describe('Property 6: 错误边界捕获', () => {
     );
   });
 
-  it('应该在ErrorMonitor未初始化时仍然显示降级UI', () => {
+  it('shouldBeAtErrorMonitor未初始化时仍然show降级UI', () => {
     fc.assert(
       fc.property(
         errorMessageArbitrary(),
         (errorMessage) => {
-          // 重置ErrorMonitor使其未初始化
+          // resetErrorMonitor使其未初始化
           resetErrorMonitor();
 
-          // 创建会抛出错误的组件
+          // create会抛出error的component
           const ThrowingComponent: React.FC = () => {
             throw new Error(errorMessage);
           };
@@ -528,12 +528,12 @@ describe('Property 6: 错误边界捕获', () => {
           );
 
           try {
-            // 验证即使ErrorMonitor未初始化，降级UI仍然显示（需求1.3 - 健壮性）
+            // verify即使ErrorMonitor未初始化，降级UI仍然show（requirement1.3 - 健壮性）
             expect(screen.getAllByText(/something went wrong/i)[0]).toBeInTheDocument();
             expect(screen.getAllByText(/try again/i)[0]).toBeInTheDocument();
           } finally {
             unmount();
-            // 重新初始化ErrorMonitor以供后续测试使用
+            // 重新初始化ErrorMonitor以供后续testuse
             const config: MonitorConfig = {
               environment: 'test',
               enableDebugMode: false,

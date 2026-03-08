@@ -1,15 +1,15 @@
 /**
- * PullRequests审批流程属性测试
+ * PullRequests审批流程propertytest
  * 
  * Feature: frontend-production-optimization
- * Property 15: 审批状态更新
+ * Property 15: 审批statusupdate
  * 
  * **Validates: Requirements 3.4**
  * 
- * 测试覆盖:
- * - 对于任何审批决策提交，Pull Request的审批状态应该更新并触发通知
+ * testCoverage:
+ * - 对于任何审批决策submit，Pull Request的审批statusshouldupdate并触发通知
  * 
- * 注意: 此测试验证PullRequests组件的审批流程功能的正确性。
+ * note: testVerifiesPullRequestscomponent的审批流程feature的正确性。
  */
 
 import React from 'react';
@@ -116,7 +116,7 @@ const createMockPR = (overrides?: Partial<PullRequest>): PullRequest => ({
   ...overrides,
 });
 
-describe('Property 15: 审批状态更新', () => {
+describe('Property 15: 审批statusupdate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     notificationLogs = [];
@@ -126,11 +126,11 @@ describe('Property 15: 审批状态更新', () => {
     cleanup();
   });
 
-  // 自定义生成器：生成审批决策
+  // customGenerator：generate审批决策
   const approvalDecisionArbitrary = () =>
     fc.constantFrom('approved' as const, 'rejected' as const);
 
-  // 自定义生成器：生成可选的评论
+  // customGenerator：generate可选的评论
   const optionalCommentArbitrary = () =>
     fc.option(
       fc.oneof(
@@ -147,7 +147,7 @@ describe('Property 15: 审批状态更新', () => {
       { nil: undefined }
     );
 
-  // 自定义生成器：生成用户
+  // customGenerator：generateuser
   const userArbitrary = () =>
     fc.record({
       id: fc.uuid(),
@@ -156,7 +156,7 @@ describe('Property 15: 审批状态更新', () => {
       role: fc.constantFrom('admin' as const, 'developer' as const, 'viewer' as const),
     });
 
-  // 自定义生成器：生成审批者列表
+  // customGenerator：generate审批者列表
   const approversArbitrary = () =>
     fc.array(
       fc.record({
@@ -168,7 +168,7 @@ describe('Property 15: 审批状态更新', () => {
       { minLength: 0, maxLength: 5 }
     );
 
-  it('应该为任何审批决策更新审批者状态', async () => {
+  it('should为任何审批决策update审批者status', async () => {
     await fc.assert(
       fc.asyncProperty(
         approvalDecisionArbitrary(),
@@ -181,22 +181,22 @@ describe('Property 15: 审批状态更新', () => {
 
           const { unmount, container } = render(<PullRequests initialPRs={[pr]} />);
 
-          // 打开PR详情
+          // openPRdetail
           await userEvent.click(screen.getByText('Test PR'));
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证审批操作区域存在
+          // verify审批操作区域存在
           const submitReviewTitle = screen.getByText('Submit Your Review');
           expect(submitReviewTitle).toBeInTheDocument();
 
-          // 点击审批或拒绝按钮
+          // 点击审批或拒绝button
           const actionButton = decision === 'approved'
             ? screen.getByText('✓ Approve')
             : screen.getByText('✗ Reject');
           await userEvent.click(actionButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 如果有评论，输入评论
+          // 如果有评论，input评论
           if (comment) {
             const textarea = screen.getByPlaceholderText('Add a comment (optional)...');
             await userEvent.clear(textarea);
@@ -204,14 +204,14 @@ describe('Property 15: 审批状态更新', () => {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
 
-          // 提交决策
+          // submit决策
           const submitButton = decision === 'approved'
             ? screen.getByText('Submit Approval')
             : screen.getByText('Submit Rejection');
           await userEvent.click(submitButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证审批者状态已更新
+          // verify审批者status已update
           const approversList = container.querySelector('[data-testid="approvers-list"]');
           if (approversList) {
             const statusText = decision === 'approved' ? '✓ Approved' : '✗ Rejected';
@@ -226,7 +226,7 @@ describe('Property 15: 审批状态更新', () => {
     );
   }, 60000);
 
-  it('应该为任何审批决策触发通知', async () => {
+  it('should为任何审批决策触发通知', async () => {
     await fc.assert(
       fc.asyncProperty(
         approvalDecisionArbitrary(),
@@ -242,23 +242,23 @@ describe('Property 15: 审批状态更新', () => {
             approvers: [],
           });
 
-          // 清空之前的通知日志
+          // 清空之前的通知log
           notificationLogs = [];
 
           const { unmount } = render(<PullRequests initialPRs={[pr]} />);
 
-          // 打开PR详情
+          // openPRdetail
           await userEvent.click(screen.getByText('Test PR'));
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 点击审批或拒绝按钮
+          // 点击审批或拒绝button
           const actionButton = decision === 'approved'
             ? screen.getByText('✓ Approve')
             : screen.getByText('✗ Reject');
           await userEvent.click(actionButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 如果有评论，输入评论
+          // 如果有评论，input评论
           if (comment) {
             const textarea = screen.getByPlaceholderText('Add a comment (optional)...');
             await userEvent.clear(textarea);
@@ -266,17 +266,17 @@ describe('Property 15: 审批状态更新', () => {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
 
-          // 提交决策
+          // submit决策
           const submitButton = decision === 'approved'
             ? screen.getByText('Submit Approval')
             : screen.getByText('Submit Rejection');
           await userEvent.click(submitButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证通知已发送
+          // verify通知已发送
           expect(notificationLogs.length).toBeGreaterThan(0);
 
-          // 验证通知内容
+          // verify通知content
           const notification = notificationLogs[notificationLogs.length - 1];
           expect(notification.prId).toBe(pr.id);
           expect(notification.prTitle).toBe(pr.title);
@@ -295,7 +295,7 @@ describe('Property 15: 审批状态更新', () => {
     );
   }, 60000);
 
-  it('应该根据所有审批者的决策更新PR状态', async () => {
+  it('should根据所有审批者的决策updatePRstatus', async () => {
     await fc.assert(
       fc.asyncProperty(
         approversArbitrary(),
@@ -308,11 +308,11 @@ describe('Property 15: 审批状态更新', () => {
 
           const { unmount, container } = render(<PullRequests initialPRs={[pr]} />);
 
-          // 打开PR详情
+          // openPRdetail
           await userEvent.click(screen.getByText('Test PR'));
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 提交新的审批决策
+          // submit新的审批决策
           const actionButton = newDecision === 'approved'
             ? screen.getByText('✓ Approve')
             : screen.getByText('✗ Reject');
@@ -325,10 +325,10 @@ describe('Property 15: 审批状态更新', () => {
           await userEvent.click(submitButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证PR状态已更新
-          // 如果有任何拒绝，状态应该是rejected
-          // 如果所有审批者都批准，状态应该是approved
-          // 否则状态应该是open
+          // verifyPRstatus已update
+          // 如果有任何拒绝，statusshould是rejected
+          // 如果所有审批者都批准，statusshould是approved
+          // 否则statusshould是open
           const hasRejection = existingApprovers.some(a => a.status === 'rejected') || newDecision === 'rejected';
           const allApproved = !hasRejection && 
             (existingApprovers.every(a => a.status === 'approved') && newDecision === 'approved');
@@ -351,7 +351,7 @@ describe('Property 15: 审批状态更新', () => {
     );
   }, 60000);
 
-  it('应该保留审批者的评论信息', async () => {
+  it('should保留审批者的评论info', async () => {
     await fc.assert(
       fc.asyncProperty(
         approvalDecisionArbitrary(),
@@ -364,31 +364,31 @@ describe('Property 15: 审批状态更新', () => {
 
           const { unmount, container } = render(<PullRequests initialPRs={[pr]} />);
 
-          // 打开PR详情
+          // openPRdetail
           await userEvent.click(screen.getByText('Test PR'));
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 点击审批或拒绝按钮
+          // 点击审批或拒绝button
           const actionButton = decision === 'approved'
             ? screen.getByText('✓ Approve')
             : screen.getByText('✗ Reject');
           await userEvent.click(actionButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 输入评论
+          // input评论
           const textarea = screen.getByPlaceholderText('Add a comment (optional)...');
           await userEvent.clear(textarea);
           await userEvent.type(textarea, comment);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 提交决策
+          // submit决策
           const submitButton = decision === 'approved'
             ? screen.getByText('Submit Approval')
             : screen.getByText('Submit Rejection');
           await userEvent.click(submitButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证评论已保存并显示
+          // verify评论已save并show
           const approversList = container.querySelector('[data-testid="approvers-list"]');
           if (approversList) {
             expect(approversList.textContent).toContain(comment);
@@ -402,7 +402,7 @@ describe('Property 15: 审批状态更新', () => {
     );
   }, 60000);
 
-  it('应该允许同一用户更新其审批决策', async () => {
+  it('shouldallow同一userupdate其审批决策', async () => {
     await fc.assert(
       fc.asyncProperty(
         approvalDecisionArbitrary(),
@@ -423,11 +423,11 @@ describe('Property 15: 审批状态更新', () => {
 
           const { unmount, container } = render(<PullRequests initialPRs={[pr]} />);
 
-          // 打开PR详情
+          // openPRdetail
           await userEvent.click(screen.getByText('Test PR'));
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 提交第一个决策
+          // submit第一item决策
           const firstActionButton = firstDecision === 'approved'
             ? screen.getByText('✓ Approve')
             : screen.getByText('✗ Reject');
@@ -440,7 +440,7 @@ describe('Property 15: 审批状态更新', () => {
           await userEvent.click(firstSubmitButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证第一个决策已应用
+          // verify第一item决策已应用
           const approversList = container.querySelector('[data-testid="approvers-list"]');
           if (approversList) {
             const firstStatusText = firstDecision === 'approved' ? '✓ Approved' : '✗ Rejected';
@@ -455,18 +455,18 @@ describe('Property 15: 审批状态更新', () => {
     );
   }, 60000);
 
-  it('应该在多个审批者的情况下正确更新状态', async () => {
+  it('shouldBeAt多item审批者的情况下正确updatestatus', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(userArbitrary(), { minLength: 2, maxLength: 5 }),
         approvalDecisionArbitrary(),
         async (users, newDecision) => {
-          // 确保用户ID唯一
+          // 确保userID唯一
           const uniqueUsers = users.filter((user, index, self) =>
             index === self.findIndex(u => u.id === user.id)
           );
 
-          if (uniqueUsers.length < 2) return; // 需要至少2个不同的用户
+          if (uniqueUsers.length < 2) return; // need至少2item不同的user
 
           const approvers: Approver[] = uniqueUsers.slice(0, -1).map(user => ({
             user,
@@ -481,11 +481,11 @@ describe('Property 15: 审批状态更新', () => {
 
           const { unmount, container } = render(<PullRequests initialPRs={[pr]} />);
 
-          // 打开PR详情
+          // openPRdetail
           await userEvent.click(screen.getByText('Test PR'));
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证所有审批者都显示
+          // verify所有审批者都show
           const approversList = container.querySelector('[data-testid="approvers-list"]');
           if (approversList) {
             approvers.forEach(approver => {
@@ -493,7 +493,7 @@ describe('Property 15: 审批状态更新', () => {
             });
           }
 
-          // 提交新的审批决策
+          // submit新的审批决策
           const actionButton = newDecision === 'approved'
             ? screen.getByText('✓ Approve')
             : screen.getByText('✗ Reject');
@@ -506,7 +506,7 @@ describe('Property 15: 审批状态更新', () => {
           await userEvent.click(submitButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证新的审批者已添加
+          // verify新的审批者已add
           const updatedApproversList = container.querySelector('[data-testid="approvers-list"]');
           if (updatedApproversList) {
             expect(updatedApproversList.textContent).toContain('Current User');
@@ -520,7 +520,7 @@ describe('Property 15: 审批状态更新', () => {
     );
   }, 60000);
 
-  it('应该在审批决策后更新PR的updatedAt时间戳', async () => {
+  it('shouldBeAt审批决策后updatePR的updatedAt时间戳', async () => {
     await fc.assert(
       fc.asyncProperty(
         approvalDecisionArbitrary(),
@@ -534,14 +534,14 @@ describe('Property 15: 审批状态更新', () => {
 
           const { unmount } = render(<PullRequests initialPRs={[pr]} />);
 
-          // 打开PR详情
+          // openPRdetail
           await userEvent.click(screen.getByText('Test PR'));
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 记录提交前的时间
+          // recordsubmit前的时间
           const beforeSubmit = Date.now();
 
-          // 提交审批决策
+          // submit审批决策
           const actionButton = decision === 'approved'
             ? screen.getByText('✓ Approve')
             : screen.getByText('✗ Reject');
@@ -554,7 +554,7 @@ describe('Property 15: 审批状态更新', () => {
           await userEvent.click(submitButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证通知中包含时间戳
+          // verify通知中contain时间戳
           if (notificationLogs.length > 0) {
             const notification = notificationLogs[notificationLogs.length - 1];
             expect(notification.timestamp).toBeDefined();
@@ -569,7 +569,7 @@ describe('Property 15: 审批状态更新', () => {
     );
   }, 60000);
 
-  it('应该只在PR状态为open时显示审批操作', async () => {
+  it('should只在PRstatus为open时show审批操作', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom('approved' as const, 'rejected' as const, 'merged' as const, 'closed' as const),
@@ -581,11 +581,11 @@ describe('Property 15: 审批状态更新', () => {
 
           const { unmount } = render(<PullRequests initialPRs={[pr]} />);
 
-          // 打开PR详情
+          // openPRdetail
           await userEvent.click(screen.getByText('Test PR'));
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证审批操作不显示（因为PR状态不是open）
+          // verify审批操作不show（因为PRstatus不是open）
           const submitReviewTitle = screen.queryByText('Submit Your Review');
           expect(submitReviewTitle).not.toBeInTheDocument();
 
@@ -597,7 +597,7 @@ describe('Property 15: 审批状态更新', () => {
     );
   }, 60000);
 
-  it('应该在取消审批操作时清除输入', async () => {
+  it('shouldBeAtcancel审批操作时清除input', async () => {
     await fc.assert(
       fc.asyncProperty(
         approvalDecisionArbitrary(),
@@ -610,28 +610,28 @@ describe('Property 15: 审批状态更新', () => {
 
           const { unmount } = render(<PullRequests initialPRs={[pr]} />);
 
-          // 打开PR详情
+          // openPRdetail
           await userEvent.click(screen.getByText('Test PR'));
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 点击审批或拒绝按钮
+          // 点击审批或拒绝button
           const actionButton = decision === 'approved'
             ? screen.getByText('✓ Approve')
             : screen.getByText('✗ Reject');
           await userEvent.click(actionButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 输入评论
+          // input评论
           const textarea = screen.getByPlaceholderText('Add a comment (optional)...');
           await userEvent.type(textarea, comment);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 点击取消按钮
+          // 点击cancelbutton
           const cancelButton = screen.getByText('Cancel');
           await userEvent.click(cancelButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证回到初始状态
+          // verify回到初始status
           expect(screen.getByText('✓ Approve')).toBeInTheDocument();
           expect(screen.getByText('✗ Reject')).toBeInTheDocument();
           expect(screen.queryByPlaceholderText('Add a comment (optional)...')).not.toBeInTheDocument();
@@ -644,7 +644,7 @@ describe('Property 15: 审批状态更新', () => {
     );
   }, 60000);
 
-  it('应该在通知中包含所有相关人员的邮箱', async () => {
+  it('shouldBeAt通知中contain所有相关人员的邮箱', async () => {
     await fc.assert(
       fc.asyncProperty(
         approvalDecisionArbitrary(),
@@ -664,16 +664,16 @@ describe('Property 15: 审批状态更新', () => {
             approvers: [],
           });
 
-          // 清空之前的通知日志
+          // 清空之前的通知log
           notificationLogs = [];
 
           const { unmount } = render(<PullRequests initialPRs={[pr]} />);
 
-          // 打开PR详情
+          // openPRdetail
           await userEvent.click(screen.getByText('Test PR'));
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 提交审批决策
+          // submit审批决策
           const actionButton = decision === 'approved'
             ? screen.getByText('✓ Approve')
             : screen.getByText('✗ Reject');
@@ -686,7 +686,7 @@ describe('Property 15: 审批状态更新', () => {
           await userEvent.click(submitButton);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证通知包含所有相关人员
+          // verify通知contain所有相关人员
           if (notificationLogs.length > 0) {
             const notification = notificationLogs[notificationLogs.length - 1];
             expect(notification.recipients).toContain(author.email);

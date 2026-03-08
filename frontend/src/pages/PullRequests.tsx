@@ -1,13 +1,13 @@
 /**
- * PullRequests页面组件
+ * PullRequests页面component
  * 
- * 功能:
+ * feature:
  * - 展示Pull Request列表
- * - 集成CodeDiff组件显示代码差异
- * - 支持查看PR详情和代码变更
- * - 使用ErrorBoundary包裹
+ * - integrationCodeDiffcomponentshowcode差异
+ * - supportviewPRdetailandcode变更
+ * - useErrorBoundary包裹
  * 
- * 验证需求: 3.1
+ * verifyRequirement: 3.1
  */
 
 'use client';
@@ -164,7 +164,7 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({ onSubmit }) => {
 };
 
 /**
- * PullRequests页面主组件
+ * PullRequests页面主component
  */
 export const PullRequestsComponent: React.FC<PullRequestsProps> = ({ initialPRs = [] }) => {
   const [pullRequests, setPullRequests] = useState<PullRequest[]>(initialPRs);
@@ -665,7 +665,7 @@ export const PullRequestsComponent: React.FC<PullRequestsProps> = ({ initialPRs 
 };
 
 /**
- * PullRequests组件 - 使用ErrorBoundary包裹
+ * PullRequestscomponent - useErrorBoundary包裹
  */
 export const PullRequests: React.FC<PullRequestsProps> = (props) => {
   return (

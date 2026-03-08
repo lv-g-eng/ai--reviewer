@@ -244,21 +244,21 @@ def get_llm_provider(
 
 def get_default_llm_provider(model: Optional[str] = None) -> BaseLLMProvider:
     """
-    获取默认配置的 LLM 提供者
+    get默认config的 LLM provide者
     
-    根据环境变量 DEFAULT_LLM_PROVIDER 自动选择提供者：
-    - openrouter: 使用 OpenRouter (支持多个模型)
-    - openai: 使用 OpenAI
-    - anthropic: 使用 Anthropic
+    根据envvariable DEFAULT_LLM_PROVIDER 自动选择provide者：
+    - openrouter: use OpenRouter (support多item模型)
+    - openai: use OpenAI
+    - anthropic: use Anthropic
     
     Args:
-        model: 可选的模型标识符，如果未提供则使用 DEFAULT_LLM_MODEL
+        model: 可选的模型标识符，如果未provide则use DEFAULT_LLM_MODEL
         
     Returns:
-        配置好的 LLM 提供者实例
+        config好的 LLM providerInstance
         
     Example:
-        >>> # 使用默认配置
+        >>> # use默认config
         >>> provider = get_default_llm_provider()
         >>> 
         >>> # 指定模型

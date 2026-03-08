@@ -1,7 +1,7 @@
 """
-用户 LLM 服务
+user LLM service
 
-根据用户配置动态选择 LLM 提供者和 API 密钥
+根据userconfig动态选择 LLM provide者and API key
 """
 import logging
 from typing import Optional
@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 class UserLLMService:
     """
-    用户 LLM 服务
+    user LLM service
     
-    根据用户配置动态创建 LLM 提供者实例
-    优先级：用户配置 > 系统默认配置
+    根据userconfig动态create LLM providerInstance
+    优先级：userconfig > system默认config
     """
     
     @staticmethod
@@ -32,18 +32,18 @@ class UserLLMService:
         model: Optional[str] = None
     ) -> BaseLLMProvider:
         """
-        获取用户的 LLM 提供者实例
+        getuser的 LLM providerInstance
         
         Args:
-            db: 数据库会话
-            user_id: 用户 ID
-            provider_type: 可选的提供者类型，如果未指定则使用用户默认配置
-            model: 可选的模型名称，如果未指定则使用用户默认配置
+            db: dbSession
+            user_id: user ID
+            provider_type: 可选的provide者type，如果未指定则useuser默认config
+            model: 可选的模型名称，如果未指定则useuser默认config
             
         Returns:
-            配置好的 LLM 提供者实例
+            config好的 LLM providerInstance
         """
-        # 获取用户信息
+        # getuserinfo
         result = await db.execute(
             select(User).filter(User.id == user_id)
         )
@@ -53,19 +53,19 @@ class UserLLMService:
             logger.warning(f"User {user_id} not found, using system default LLM provider")
             return UserLLMService._get_system_default_provider(provider_type, model)
         
-        # 获取用户的 API 设置
+        # getuser的 API set
         metadata = user.metadata or {}
         api_settings = metadata.get('api_settings', {})
         
-        # 确定使用的提供者类型
+        # 确定use的provide者type
         if not provider_type:
             provider_type = api_settings.get('default_llm_provider') or settings.DEFAULT_LLM_PROVIDER
         
-        # 确定使用的模型
+        # 确定use的模型
         if not model:
             model = api_settings.get('default_llm_model') or settings.DEFAULT_LLM_MODEL
         
-        # 获取用户配置的 API 密钥
+        # getuserconfig的 API key
         user_api_key = None
         if provider_type == 'openrouter':
             user_api_key = api_settings.get('openrouter_api_key')
@@ -74,7 +74,7 @@ class UserLLMService:
         elif provider_type == 'anthropic':
             user_api_key = api_settings.get('anthropic_api_key')
         
-        # 如果用户有配置 API 密钥，使用用户的密钥
+        # 如果user有config API key，useuser的key
         if user_api_key:
             logger.info(
                 f"Using user-configured API key for {provider_type}",
@@ -84,7 +84,7 @@ class UserLLMService:
                 provider_type, model, user_api_key
             )
         
-        # 否则使用系统默认配置
+        # 否则usesystem默认config
         logger.info(
             f"Using system default API key for {provider_type}",
             extra={"user_id": user_id, "provider": provider_type}
@@ -98,17 +98,17 @@ class UserLLMService:
         api_key: str
     ) -> BaseLLMProvider:
         """
-        使用指定的 API 密钥创建提供者实例
+        use指定的 API keycreateproviderInstance
         
         Args:
-            provider_type: 提供者类型
+            provider_type: provide者type
             model: 模型名称
-            api_key: API 密钥
+            api_key: API key
             
         Returns:
-            LLM 提供者实例
+            LLM providerInstance
         """
-        # 转换提供者类型
+        # 转换provide者type
         provider_enum = {
             'openrouter': LLMProviderType.OPENROUTER,
             'openai': LLMProviderType.OPENAI,
@@ -118,7 +118,7 @@ class UserLLMService:
         if not provider_enum:
             raise ValueError(f"Unsupported provider type: {provider_type}")
         
-        # 创建提供者实例（不使用缓存，因为每个用户的密钥不同）
+        # createproviderInstance（不usecache，因为每itemuser的key不同）
         return LLMProviderFactory.create_provider(
             provider_type=provider_enum,
             model=model,
@@ -131,19 +131,19 @@ class UserLLMService:
         model: Optional[str] = None
     ) -> BaseLLMProvider:
         """
-        获取系统默认的 LLM 提供者
+        getsystem默认的 LLM provide者
         
         Args:
-            provider_type: 可选的提供者类型
+            provider_type: 可选的provide者type
             model: 可选的模型名称
             
         Returns:
-            LLM 提供者实例
+            LLM providerInstance
         """
         provider_type = provider_type or settings.DEFAULT_LLM_PROVIDER
         model = model or settings.DEFAULT_LLM_MODEL
         
-        # 转换提供者类型
+        # 转换provide者type
         provider_enum = {
             'openrouter': LLMProviderType.OPENROUTER,
             'openai': LLMProviderType.OPENAI,
@@ -153,7 +153,7 @@ class UserLLMService:
         if not provider_enum:
             raise ValueError(f"Unsupported provider type: {provider_type}")
         
-        # 使用工厂创建提供者（使用系统配置的 API 密钥）
+        # use工厂createprovide者（usesystemconfig的 API key）
         return LLMProviderFactory.get_provider(
             provider_type=provider_enum,
             model=model
@@ -165,14 +165,14 @@ class UserLLMService:
         user_id: str
     ) -> dict:
         """
-        获取用户的 API 设置
+        getuser的 API set
         
         Args:
-            db: 数据库会话
-            user_id: 用户 ID
+            db: dbSession
+            user_id: user ID
             
         Returns:
-            用户的 API 设置字典
+            user的 API set字典
         """
         result = await db.execute(
             select(User).filter(User.id == user_id)

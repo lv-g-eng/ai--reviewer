@@ -1,7 +1,7 @@
 """
-项目分析统计 API 端点
+projectanalyze统计 API endpoint
 
-提供项目的 AI 审查数据、架构分析、代码质量指标等
+provideproject的 AI reviewData、architectureanalyze、code质量指标等
 """
 from typing import Annotated, Optional, Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -30,7 +30,7 @@ router = APIRouter()
 
 
 class ProjectMetrics(BaseModel):
-    """项目指标响应模型"""
+    """project指标response模型"""
     code_quality: int
     security_rating: int
     architecture_health: int
@@ -39,7 +39,7 @@ class ProjectMetrics(BaseModel):
 
 
 class ProjectAnalytics(BaseModel):
-    """项目分析数据响应模型"""
+    """projectanalyzedataresponse模型"""
     project_id: str
     metrics: ProjectMetrics
     total_prs: int
@@ -60,21 +60,21 @@ async def get_project_analytics(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    获取项目的 AI 审查分析数据
+    getproject的 AI reviewanalyzedata
     
     包括：
-    - 代码质量指标
+    - code质量指标
     - 安全评级  
-    - 架构健康度
-    - 测试覆盖率
+    - architecture健康度
+    - testCoverage率
     - 问题统计
-    - 依赖分析
+    - dependencyanalyze
     - 性能指标
-    - 最近的审查记录
-    - 趋势分析
+    - 最近的reviewrecord
+    - 趋势analyze
     """
     try:
-        # 使用新的分析服务获取完整的项目分析
+        # use新的analyzeserviceget完整的projectanalyze
         service = ProjectAnalysisService(db)
         analytics = await service.get_complete_project_analytics(project_id)
         return analytics
@@ -136,11 +136,11 @@ async def get_project_issues(
     limit: int = 50
 ):
     """
-    获取项目的所有问题列表
+    getproject的所有问题列表
     
-    可以按严重程度和类别筛选
+    可以按严重程度andclass别筛选
     """
-    # 获取项目的所有 PR
+    # getproject的所有 PR
     pr_result = await db.execute(
         select(PullRequest).filter(PullRequest.project_id == project_id)
     )
@@ -153,7 +153,7 @@ async def get_project_issues(
             'total': 0
         }
     
-    # 构建查询
+    # 构建query
     query = select(ReviewComment).join(CodeReview).filter(
         CodeReview.pull_request_id.in_(pr_ids)
     )
@@ -197,9 +197,9 @@ async def get_project_architecture(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    获取项目的架构分析数据
+    getproject的architectureanalyzedata
     """
-    # 获取项目的所有 PR
+    # getproject的所有 PR
     pr_result = await db.execute(
         select(PullRequest).filter(PullRequest.project_id == project_id)
     )
@@ -214,7 +214,7 @@ async def get_project_architecture(
             'by_severity': {}
         }
     
-    # 获取架构违规
+    # getarchitecture违规
     violations_result = await db.execute(
         select(ArchitectureViolation)
         .join(ArchitectureAnalysis)
@@ -222,7 +222,7 @@ async def get_project_architecture(
     )
     violations = violations_result.scalars().all()
     
-    # 统计违规类型和严重程度
+    # 统计违规typeand严重程度
     by_type = {}
     by_severity = {}
     
@@ -254,7 +254,7 @@ async def get_project_architecture(
 
 # Performance Metrics Models
 class PerformanceMetric(BaseModel):
-    """单个性能指标数据点"""
+    """单item性能指标data点"""
     timestamp: str
     metric_name: str
     value: float = Field(..., ge=0, description="Metric value must be non-negative")
@@ -269,7 +269,7 @@ class TimeRange(BaseModel):
     
     @validator('start', 'end')
     def validate_datetime(cls, v):
-        """验证日期时间格式"""
+        """verify日期时间format"""
         try:
             datetime.fromisoformat(v.replace('Z', '+00:00'))
             return v
@@ -287,7 +287,7 @@ class MetricsCollection(BaseModel):
 
 
 class MetricsAggregations(BaseModel):
-    """性能指标聚合数据"""
+    """性能指标聚合data"""
     avg_response_time: float = Field(..., ge=0, le=10000, description="Average response time in ms (0-10000)")
     p95_response_time: float = Field(..., ge=0, le=10000, description="P95 response time in ms (0-10000)")
     p99_response_time: float = Field(..., ge=0, le=10000, description="P99 response time in ms (0-10000)")
@@ -296,7 +296,7 @@ class MetricsAggregations(BaseModel):
 
 
 class PerformanceDashboardData(BaseModel):
-    """性能仪表板数据响应模型"""
+    """性能仪表板dataresponse模型"""
     api_version: str = "1.0.0"
     project_id: str
     time_range: TimeRange
@@ -319,16 +319,16 @@ async def get_performance_metrics(
     )
 ):
     """
-    获取项目的性能指标数据
+    getproject的性能指标data
     
     包括：
-    - 响应时间 (response_time)
+    - response时间 (response_time)
     - 吞吐量 (throughput)
-    - 错误率 (error_rate)
-    - CPU使用率 (cpu_usage)
-    - 内存使用率 (memory_usage)
+    - error率 (error_rate)
+    - CPUuse率 (cpu_usage)
+    - 内存use率 (memory_usage)
     
-    支持时间范围过滤，默认返回最近7天的数据。
+    support时间范围filter，默认return最近7day的data。
     
     Requirements: 2.4, 3.7
     """
@@ -517,14 +517,14 @@ async def get_project_architecture_analysis(
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    获取项目的AI生成的架构分析，包括优势和建议
+    getproject的AIgenerate的architectureanalyze，包括优势and建议
     """
     try:
-        # 获取项目的基本信息和架构数据
+        # getproject的基本infoandarchitecturedata
         service = ProjectAnalysisService(db)
         analytics = await service.get_complete_project_analytics(project_id)
 
-        # 获取PR和架构违规数据用于AI分析
+        # getPRandarchitecture违规data用于AIanalyze
         pr_result = await db.execute(
             select(PullRequest).filter(PullRequest.project_id == project_id)
         )
@@ -537,7 +537,7 @@ async def get_project_architecture_analysis(
         )
         violations = violations_result.scalars().all()
 
-        # 构建架构数据用于AI分析
+        # 构建architecturedata用于AIanalyze
         architecture_data = {
             "project_id": project_id,
             "total_prs": len(prs),
@@ -548,12 +548,12 @@ async def get_project_architecture_analysis(
             "issue_stats": analytics.get("issue_stats", {}),
         }
 
-        # 使用AI生成架构分析
+        # useAIgeneratearchitectureanalyze
         if llm_service.is_initialized():
             try:
                 ai_insights = await llm_service.generate_architecture_insights(architecture_data)
 
-                # 解析AI响应为结构化数据
+                # 解析AIresponse为结构化data
                 strengths = ai_insights.get("strengths", [])
                 recommendations = ai_insights.get("recommendations", [])
 
@@ -565,9 +565,9 @@ async def get_project_architecture_analysis(
                 }
             except Exception as ai_error:
                 logger.warning(f"AI architecture analysis failed: {ai_error}")
-                # 回退到基于规则的分析
+                # 回退到基于规则的analyze
 
-        # 基于规则的回退分析
+        # 基于规则的回退analyze
         strengths, recommendations = await _generate_rule_based_architecture_analysis(analytics, list(violations))
 
         return {
@@ -579,17 +579,17 @@ async def get_project_architecture_analysis(
 
     except Exception as e:
         logger.error(f"Error generating architecture analysis for project {project_id}: {str(e)}")
-        # 返回默认分析
+        # return默认analyze
         return {
-            "strengths": ["项目结构良好", "代码组织有序"],
-            "recommendations": ["考虑增加更多集成测试", "定期进行代码审查"],
+            "strengths": ["project结构良好", "code组织有序"],
+            "recommendations": ["考虑增加更多integrationtest", "定期进行codereview"],
             "analysis_timestamp": datetime.utcnow().isoformat(),
             "ai_generated": False
         }
 
 
 async def _generate_rule_based_architecture_analysis(analytics: Dict[str, Any], violations: List[Any]) -> tuple:
-    """基于规则生成架构分析"""
+    """基于规则generatearchitectureanalyze"""
     strengths = []
     recommendations = []
 
@@ -597,42 +597,42 @@ async def _generate_rule_based_architecture_analysis(analytics: Dict[str, Any], 
     dependency_stats = analytics.get("dependency_stats", {})
     issue_stats = analytics.get("issue_stats", {})
 
-    # 基于指标添加优势
+    # 基于指标add优势
     if metrics.get("code_quality", 0) > 75:
-        strengths.append("代码质量良好，符合最佳实践")
+        strengths.append("code质量良好，符合最佳实践")
 
     if metrics.get("security_rating", 0) > 80:
         strengths.append("安全性评分较高，风险控制到位")
 
     if metrics.get("architecture_health", 0) > 70:
-        strengths.append("架构健康度良好，设计合理")
+        strengths.append("architecture健康度良好，设计合理")
 
     if metrics.get("test_coverage", 0) > 60:
-        strengths.append("测试覆盖率充足")
+        strengths.append("testCoverage率充足")
 
-    # 基于依赖分析
+    # 基于dependencyanalyze
     if dependency_stats.get("circular", 0) == 0:
-        strengths.append("无循环依赖，架构清晰")
+        strengths.append("无循环dependency，architecture清晰")
 
-    # 基于问题统计添加建议
+    # 基于问题统计add建议
     if issue_stats.get("critical", 0) > 0:
-        recommendations.append("存在严重问题，需要立即修复")
+        recommendations.append("存在严重问题，need立即修复")
 
     if dependency_stats.get("outdated", 0) > 0:
-        recommendations.append("存在过时的依赖，需要更新")
+        recommendations.append("存在过时的dependency，needupdate")
 
     if len(violations) > 0:
-        recommendations.append("存在架构违规，需要审查")
+        recommendations.append("存在architecture违规，needreview")
 
     if metrics.get("test_coverage", 100) < 70:
-        recommendations.append("测试覆盖率不足，建议增加测试")
+        recommendations.append("testCoverage率不足，建议增加test")
 
-    # 默认内容
+    # 默认content
     if not strengths:
-        strengths = ["项目结构合理", "代码组织良好"]
+        strengths = ["project结构合理", "code组织良好"]
 
     if not recommendations:
-        recommendations = ["定期进行代码审查", "保持良好的测试覆盖率"]
+        recommendations = ["定期进行codereview", "保持良好的testCoverage率"]
 
     return strengths, recommendations
 

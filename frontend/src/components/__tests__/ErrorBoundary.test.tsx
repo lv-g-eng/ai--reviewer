@@ -1,14 +1,14 @@
 /**
- * ErrorBoundary单元测试
+ * ErrorBoundary单元test
  * 
- * 测试场景:
- * - 正常渲染子组件
- * - 捕获子组件错误
- * - 显示降级UI
- * - 上报错误到ErrorMonitor
- * - 重置错误状态
- * - 重新加载页面
- * - 报告问题功能
+ * test场景:
+ * - 正常render子component
+ * - 捕获子componenterror
+ * - show降级UI
+ * - 上报error到ErrorMonitor
+ * - reseterrorstatus
+ * - 重新load页面
+ * - report问题feature
  */
 
 import React from 'react';
@@ -16,7 +16,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { getErrorMonitor, resetErrorMonitor, MonitorConfig } from '../../services/ErrorMonitor';
 
-// 创建一个会抛出错误的组件
+// create一item会抛出error的component
 const ThrowError: React.FC<{ shouldThrow?: boolean }> = ({ shouldThrow = true }) => {
   if (shouldThrow) {
     throw new Error('Test error');
@@ -28,7 +28,7 @@ describe('ErrorBoundary', () => {
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    // 抑制React的错误日志输出
+    // 抑制React的errorlogoutput
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     // 初始化ErrorMonitor
@@ -47,7 +47,7 @@ describe('ErrorBoundary', () => {
     resetErrorMonitor();
   });
 
-  describe('正常渲染', () => {
+  describe('正常render', () => {
     it('should render children when no error occurs', () => {
       render(
         <ErrorBoundary>
@@ -70,7 +70,7 @@ describe('ErrorBoundary', () => {
     });
   });
 
-  describe('错误捕获', () => {
+  describe('error捕获', () => {
     it('should catch errors from child components', () => {
       render(
         <ErrorBoundary>
@@ -78,9 +78,9 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      // 应该显示错误UI
+      // shouldshowerrorUI
       expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
-      // 不应该显示正常内容
+      // 不shouldshow正常content
       expect(screen.queryByText('Normal content')).not.toBeInTheDocument();
     });
 
@@ -185,7 +185,7 @@ describe('ErrorBoundary', () => {
     });
   });
 
-  describe('重置功能', () => {
+  describe('resetfeature', () => {
     it('should reset error state when Try Again is clicked', () => {
       let shouldThrow = true;
       
@@ -202,21 +202,21 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      // 确认错误UI显示
+      // confirmerrorUIshow
       expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
 
-      // 点击Try Again并更新状态
+      // 点击Try Again并updatestatus
       shouldThrow = false;
       fireEvent.click(screen.getByText(/try again/i));
 
-      // 重新渲染不抛出错误的组件
+      // 重新render不抛出error的component
       rerender(
         <ErrorBoundary>
           <TestComponent />
         </ErrorBoundary>
       );
 
-      // 应该显示正常内容
+      // shouldshow正常content
       expect(screen.getByText('Normal content')).toBeInTheDocument();
       expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
     });
@@ -236,7 +236,7 @@ describe('ErrorBoundary', () => {
     });
   });
 
-  describe('重新加载功能', () => {
+  describe('重新loadfeature', () => {
     it('should reload page when Reload Page is clicked', () => {
       render(
         <ErrorBoundary>
@@ -256,7 +256,7 @@ describe('ErrorBoundary', () => {
     });
   });
 
-  describe('报告问题功能', () => {
+  describe('report问题feature', () => {
     it('should open mailto link when Report Issue is clicked', () => {
       render(
         <ErrorBoundary>
@@ -288,7 +288,7 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      // 应该仍然显示错误UI
+      // should仍然showerrorUI
       expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
 
       consoleErrorSpy.mockRestore();
@@ -305,7 +305,7 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      // 应该仍然显示错误UI
+      // should仍然showerrorUI
       expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
     });
 
@@ -320,14 +320,14 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      // 点击Try Again不应该崩溃
+      // 点击Try Again不should崩溃
       fireEvent.click(screen.getByText(/try again/i));
 
       expect(onReset).toHaveBeenCalled();
     });
   });
 
-  describe('多个ErrorBoundary嵌套', () => {
+  describe('多itemErrorBoundary嵌套', () => {
     it('should allow nested ErrorBoundaries', () => {
       const OuterFallback = () => <div>Outer error</div>;
       const InnerFallback = () => <div>Inner error</div>;
@@ -341,7 +341,7 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      // 内部ErrorBoundary应该捕获错误
+      // 内部ErrorBoundaryshould捕获error
       expect(screen.getByText('Inner error')).toBeInTheDocument();
       expect(screen.getByText('Outer content')).toBeInTheDocument();
       expect(screen.queryByText('Outer error')).not.toBeInTheDocument();

@@ -1,8 +1,8 @@
 /**
  * Integration tests for ApiClient retry mechanism
  * 
- * 验证需求:
- * - 需求 10.3: API请求失败时使用指数退避策略重试，最多重试3次
+ * verifyRequirement:
+ * - requirement 10.3: APIrequestfailure时use指数退避策略retry，最多retry3times
  */
 
 import { ApiClient, ApiClientConfig } from '../ApiClient';
@@ -20,7 +20,7 @@ describe('ApiClient Retry Integration', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    // 创建mock axios实例
+    // createmock axiosinstance
     mockAxiosInstance = {
       request: jest.fn(),
       interceptors: {
@@ -46,12 +46,12 @@ describe('ApiClient Retry Integration', () => {
     jest.useRealTimers();
   });
 
-  describe('指数退避重试机制', () => {
-    it('应该在网络错误时使用指数退避重试', async () => {
+  describe('指数退避retry机制', () => {
+    it('shouldBeAt网络error时use指数退避retry', async () => {
       const networkError: any = new Error('Network Error');
       networkError.code = 'ECONNABORTED';
 
-      // 前2次失败，第3次成功
+      // 前2timesfailure，第3timessuccess
       mockAxiosInstance.request
         .mockRejectedValueOnce(networkError)
         .mockRejectedValueOnce(networkError)
@@ -59,7 +59,7 @@ describe('ApiClient Retry Integration', () => {
 
       const promise = apiClient.get('/test');
 
-      // 运行所有定时器以完成重试
+      // run所有定时器以completeretry
       await jest.runAllTimersAsync();
 
       const result = await promise;
@@ -68,11 +68,11 @@ describe('ApiClient Retry Integration', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(3);
     });
 
-    it('应该在5xx错误时使用指数退避重试', async () => {
+    it('shouldBeAt5xxerror时use指数退避retry', async () => {
       const serverError: any = new Error('Internal Server Error');
       serverError.response = { status: 500 };
 
-      // 前2次失败，第3次成功
+      // 前2timesfailure，第3timessuccess
       mockAxiosInstance.request
         .mockRejectedValueOnce(serverError)
         .mockRejectedValueOnce(serverError)
@@ -88,7 +88,7 @@ describe('ApiClient Retry Integration', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(3);
     });
 
-    it('应该在429错误时使用指数退避重试', async () => {
+    it('shouldBeAt429error时use指数退避retry', async () => {
       const rateLimitError: any = new Error('Too Many Requests');
       rateLimitError.response = { status: 429 };
 
@@ -106,7 +106,7 @@ describe('ApiClient Retry Integration', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2);
     });
 
-    it('应该在最多重试3次后抛出错误', async () => {
+    it('shouldBeAt最多retry3times后抛出error', async () => {
       const networkError: any = new Error('Persistent Network Error');
       networkError.code = 'ETIMEDOUT';
 
@@ -120,7 +120,7 @@ describe('ApiClient Retry Integration', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(4); // 1 initial + 3 retries
     });
 
-    it('应该不重试4xx客户端错误', async () => {
+    it('should不retry4xx客户端error', async () => {
       const clientError: any = new Error('Bad Request');
       clientError.response = { status: 400 };
 
@@ -134,11 +134,11 @@ describe('ApiClient Retry Integration', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1); // No retries
     });
 
-    it('应该支持自定义重试配置', async () => {
+    it('shouldsupport自定义retryconfig', async () => {
       const customConfig: ApiClientConfig = {
         baseURL: 'http://localhost:8000/api/v1',
         timeout: 30000,
-        maxRetries: 2, // 只重试2次
+        maxRetries: 2, // 只retry2times
         maxConcurrent: 6,
         cacheTimeout: 5 * 60 * 1000,
         retryOptions: {
@@ -164,8 +164,8 @@ describe('ApiClient Retry Integration', () => {
     });
   });
 
-  describe('重试与缓存集成', () => {
-    it('应该在重试成功后缓存结果', async () => {
+  describe('retry与cacheintegration', () => {
+    it('shouldBeAtretrysuccess后cacheresult', async () => {
       const networkError: any = new Error('Network Error');
       networkError.code = 'ECONNABORTED';
 
@@ -173,7 +173,7 @@ describe('ApiClient Retry Integration', () => {
         .mockRejectedValueOnce(networkError)
         .mockResolvedValue({ data: { cached: true } });
 
-      // 第一次请求（会重试）
+      // 第一timesrequest（会retry）
       const promise1 = apiClient.get('/test');
       await jest.runAllTimersAsync();
       const result1 = await promise1;
@@ -181,23 +181,23 @@ describe('ApiClient Retry Integration', () => {
       expect(result1).toEqual({ cached: true });
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2);
 
-      // 第二次请求应该使用缓存
+      // 第二timesrequestshouldusecache
       const result2 = await apiClient.get('/test');
 
       expect(result2).toEqual({ cached: true });
-      expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2); // 没有新请求
+      expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2); // 没有新request
     });
   });
 
-  describe('重试与并发控制集成', () => {
-    it('应该在重试时遵守并发限制', async () => {
+  describe('retry与并发控制integration', () => {
+    it('shouldBeAtretry时遵守并发限制', async () => {
       const networkError: any = new Error('Network Error');
       networkError.code = 'ECONNABORTED';
 
-      // 所有请求都会失败并重试
+      // 所有request都会failure并retry
       mockAxiosInstance.request.mockRejectedValue(networkError);
 
-      // 发起多个请求
+      // 发起多itemrequest
       const promises = [
         apiClient.post('/test1', {}),
         apiClient.post('/test2', {}),
@@ -206,16 +206,16 @@ describe('ApiClient Retry Integration', () => {
 
       await jest.runAllTimersAsync();
 
-      // 所有请求都应该失败
+      // 所有request都shouldfailure
       await expect(Promise.all(promises)).rejects.toThrow();
 
-      // 每个请求应该重试3次（1 initial + 3 retries = 4 calls per request）
+      // 每itemrequestshouldretry3times（1 initial + 3 retries = 4 calls per request）
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(12); // 3 requests * 4 calls
     });
   });
 
   describe('skipRetry选项', () => {
-    it('应该支持跳过重试', async () => {
+    it('shouldsupportskipretry', async () => {
       const networkError: any = new Error('Network Error');
       networkError.code = 'ECONNABORTED';
 

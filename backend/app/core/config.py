@@ -83,7 +83,7 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = Field(default=None, description="Anthropic Claude API key")
     OLLAMA_BASE_URL: Optional[str] = Field(default=None, description="Ollama local LLM base URL")
     
-    # OpenRouter Configuration (支持多模型访问)
+    # OpenRouter Configuration (support多模型访问)
     OPENROUTER_API_KEY: Optional[str] = Field(default=None, description="OpenRouter API key")
     OPENROUTER_BASE_URL: str = Field(default="https://openrouter.ai/api/v1", description="OpenRouter base URL")
     DEFAULT_LLM_PROVIDER: str = Field(default="openai", description="Default LLM provider (openai, anthropic, openrouter, lmstudio)")

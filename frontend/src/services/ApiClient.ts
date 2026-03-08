@@ -1,13 +1,13 @@
 /**
- * ApiClient - 统一的API请求客户端
+ * ApiClient - 统一的APIrequest客户端
  * 
- * 功能:
- * - 支持GET/POST/PUT/DELETE请求
- * - 请求去重机制 (1秒内相同请求合并)
- * - 并发请求限制 (最多6个)
- * - 超时检测和提示 (5秒)
- * - 指数退避重试 (最多3次)
- * - GET请求缓存 (5分钟TTL)
+ * feature:
+ * - supportGET/POST/PUT/DELETErequest
+ * - request去重机制 (1sec内相同request合并)
+ * - 并发request限制 (最多6item)
+ * - timeout检测andhint (5sec)
+ * - 指数退避retry (最多3times)
+ * - GETrequestcache (5minTTL)
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
@@ -18,9 +18,9 @@ export interface ApiClientConfig {
   timeout: number;
   maxRetries: number;
   maxConcurrent: number;
-  cacheTimeout: number; // 缓存有效期（毫秒）
-  deduplicationWindow?: number; // 去重时间窗口（毫秒），默认1000ms
-  retryOptions?: Partial<RetryOptions>; // 自定义重试配置
+  cacheTimeout: number; // cache有效期（ms）
+  deduplicationWindow?: number; // 去重时间窗口（ms），默认1000ms
+  retryOptions?: Partial<RetryOptions>; // 自定义retryconfig
 }
 
 export interface RequestOptions extends AxiosRequestConfig {
@@ -57,7 +57,7 @@ export class ApiClient {
       ...config,
     };
 
-    // 合并默认重试配置和自定义配置
+    // 合并默认retryconfigand自定义config
     this.retryOptions = {
       ...DEFAULT_API_RETRY_OPTIONS,
       maxRetries: config.maxRetries,
@@ -82,10 +82,10 @@ export class ApiClient {
   }
 
   /**
-   * 设置请求和响应拦截器
+   * setrequestandresponse拦截器
    */
   private setupInterceptors(): void {
-    // 请求拦截器 - 添加认证令牌
+    // request拦截器 - addauth令牌
     this.axiosInstance.interceptors.request.use(
       (config) => {
         if (typeof window !== 'undefined') {
@@ -99,12 +99,12 @@ export class ApiClient {
       (error) => Promise.reject(error)
     );
 
-    // 响应拦截器 - 处理通用错误
+    // response拦截器 - handle通用error
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // 处理未授权访问
+          // handle未authorize访问
           if (typeof window !== 'undefined') {
             localStorage.removeItem('token');
             window.location.href = '/login';
@@ -116,12 +116,12 @@ export class ApiClient {
   }
 
   /**
-   * GET请求 - 自动缓存
+   * GETrequest - 自动cache
    */
   async get<T>(url: string, options: RequestOptions = {}): Promise<T> {
     const cacheKey = this.generateCacheKey('GET', url, options.params);
 
-    // 检查缓存
+    // checkcache
     if (!options.skipCache) {
       const cached = this.getFromCache<T>(cacheKey);
       if (cached !== null) {
@@ -129,13 +129,13 @@ export class ApiClient {
       }
     }
 
-    // 请求去重
+    // request去重
     if (!options.skipDeduplication) {
       const deduplicated = await this.deduplicateRequest(cacheKey, () =>
         this.executeRequest<T>('GET', url, undefined, options)
       );
 
-      // 缓存GET请求结果
+      // cacheGETrequestresult
       if (!options.skipCache) {
         this.setCache(cacheKey, deduplicated);
       }
@@ -145,7 +145,7 @@ export class ApiClient {
 
     const result = await this.executeRequest<T>('GET', url, undefined, options);
 
-    // 缓存GET请求结果
+    // cacheGETrequestresult
     if (!options.skipCache) {
       this.setCache(cacheKey, result);
     }
@@ -154,28 +154,28 @@ export class ApiClient {
   }
 
   /**
-   * POST请求 - 不缓存
+   * POSTrequest - 不cache
    */
   async post<T>(url: string, data: any, options: RequestOptions = {}): Promise<T> {
     return this.executeRequest<T>('POST', url, data, options);
   }
 
   /**
-   * PUT请求 - 不缓存
+   * PUTrequest - 不cache
    */
   async put<T>(url: string, data: any, options: RequestOptions = {}): Promise<T> {
     return this.executeRequest<T>('PUT', url, data, options);
   }
 
   /**
-   * DELETE请求 - 不缓存
+   * DELETErequest - 不cache
    */
   async delete<T>(url: string, options: RequestOptions = {}): Promise<T> {
     return this.executeRequest<T>('DELETE', url, undefined, options);
   }
 
   /**
-   * 执行请求 - 包含并发控制、重试和超时处理
+   * executerequest - contain并发控制、retryandtimeouthandle
    */
   private async executeRequest<T>(
     method: string,
@@ -183,7 +183,7 @@ export class ApiClient {
     data?: any,
     options: RequestOptions = {}
   ): Promise<T> {
-    // 并发控制 - 等待直到有可用的并发槽位
+    // 并发控制 - wait直到有可用的并发槽位
     if (this.activeRequests >= this.config.maxConcurrent) {
       await new Promise<void>((resolve) => {
         this.requestQueue.push(resolve);
@@ -195,7 +195,7 @@ export class ApiClient {
 
     try {
       const requestFn = async (): Promise<T> => {
-        // 设置超时监控
+        // settimeout监控
         const timeoutId = this.setupTimeoutWarning(url, options.onTimeout);
 
         try {
@@ -206,34 +206,34 @@ export class ApiClient {
             ...options,
           });
 
-          // 清除超时警告
+          // 清除timeoutwarn
           clearTimeout(timeoutId);
           this.timeoutWarnings.delete(url);
 
           return response.data;
         } catch (error) {
-          // 清除超时警告
+          // 清除timeoutwarn
           clearTimeout(timeoutId);
           this.timeoutWarnings.delete(url);
           throw error;
         }
       };
 
-      // 指数退避重试 - 使用工具函数
+      // 指数退避retry - use工具function
       if (!options.skipRetry) {
         return await retryWithBackoff(requestFn, this.retryOptions);
       }
 
       return await requestFn();
     } finally {
-      // 请求完成（成功或失败），释放槽位
+      // requestcomplete（success或failure），释放槽位
       this.activeRequests--;
       this.processQueue();
     }
   }
 
   /**
-   * 处理请求队列
+   * handlerequestqueue
    */
   private processQueue(): void {
     if (this.requestQueue.length > 0 && this.activeRequests < this.config.maxConcurrent) {
@@ -245,7 +245,7 @@ export class ApiClient {
   }
 
   /**
-   * 请求去重 - 1秒内相同请求合并为单个请求
+   * request去重 - 1sec内相同request合并为单itemrequest
    */
   private async deduplicateRequest<T>(
     key: string,
@@ -254,14 +254,14 @@ export class ApiClient {
     const now = Date.now();
     const pending = this.pendingRequests.get(key);
 
-    // 如果存在未完成的相同请求且在去重窗口内，返回该请求的Promise
+    // 如果存在未complete的相同request且在去重窗口内，return该request的Promise
     if (pending && now - pending.timestamp < this.config.deduplicationWindow!) {
       return pending.promise;
     }
 
-    // 创建新请求
+    // create新request
     const promise = fn().finally(() => {
-      // 请求完成后清理
+      // requestcomplete后cleanup
       this.pendingRequests.delete(key);
     });
 
@@ -271,26 +271,26 @@ export class ApiClient {
   }
 
   /**
-   * 设置超时警告 - 5秒后显示超时提示
+   * settimeoutwarn - 5sec后showtimeouthint
    */
   private setupTimeoutWarning(url: string, onTimeout?: () => void): NodeJS.Timeout {
-    const timeoutDuration = 5000; // 5秒
+    const timeoutDuration = 5000; // 5sec
 
     return setTimeout(() => {
       if (!this.timeoutWarnings.has(url)) {
         this.timeoutWarnings.add(url);
 
-        // 调用自定义超时回调
+        // 调用自定义timeout回调
         if (onTimeout) {
           onTimeout();
         } else {
-          // 默认超时提示
-          console.warn(`API请求超时: ${url} (超过${timeoutDuration / 1000}秒)`);
+          // 默认timeouthint
+          console.warn(`APIrequesttimeout: ${url} (超过${timeoutDuration / 1000}sec)`);
 
-          // 在浏览器环境中显示提示
+          // 在浏览器env中showhint
           if (typeof window !== 'undefined') {
-            // 可以集成到通知系统
-            // 这里简单地使用console.warn，实际应该使用UI通知组件
+            // 可以integration到通知system
+            // 这里简单地useconsole.warn，实际shoulduseUI通知component
           }
         }
       }
@@ -298,7 +298,7 @@ export class ApiClient {
   }
 
   /**
-   * 生成缓存键
+   * generatecache键
    */
   private generateCacheKey(method: string, url: string, params?: any): string {
     const paramsStr = params ? JSON.stringify(params) : '';
@@ -306,7 +306,7 @@ export class ApiClient {
   }
 
   /**
-   * 从缓存获取数据
+   * 从cachegetdata
    */
   private getFromCache<T>(key: string): T | null {
     const entry = this.cache.get(key);
@@ -317,7 +317,7 @@ export class ApiClient {
 
     const now = Date.now();
 
-    // 检查是否过期
+    // check是否过期
     if (now > entry.expiresAt) {
       this.cache.delete(key);
       return null;
@@ -327,7 +327,7 @@ export class ApiClient {
   }
 
   /**
-   * 设置缓存
+   * setcache
    */
   private setCache<T>(key: string, data: T): void {
     const now = Date.now();
@@ -341,7 +341,7 @@ export class ApiClient {
   }
 
   /**
-   * 清除缓存
+   * 清除cache
    */
   clearCache(pattern?: string): void {
     if (!pattern) {
@@ -349,7 +349,7 @@ export class ApiClient {
       return;
     }
 
-    // 清除匹配模式的缓存
+    // 清除匹配模式的cache
     const keys = Array.from(this.cache.keys());
     keys.forEach((key) => {
       if (key.includes(pattern)) {
@@ -359,7 +359,7 @@ export class ApiClient {
   }
 
   /**
-   * 获取缓存统计
+   * getcache统计
    */
   getCacheStats(): { size: number; keys: string[] } {
     return {
@@ -369,42 +369,42 @@ export class ApiClient {
   }
 
   /**
-   * 睡眠函数
+   * 睡眠function
    */
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
-   * 获取当前活跃请求数
+   * get当前活跃request数
    */
   getActiveRequestCount(): number {
     return this.activeRequests;
   }
 
   /**
-   * 获取队列中等待的请求数
+   * getqueue中wait的request数
    */
   getQueuedRequestCount(): number {
     return this.requestQueue.length;
   }
 }
 
-// 创建默认实例的工厂函数
+// create默认instance的工厂function
 export function createDefaultApiClient(): ApiClient {
   const defaultConfig: ApiClientConfig = {
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
     timeout: 30000,
     maxRetries: 3,
     maxConcurrent: 6,
-    cacheTimeout: 5 * 60 * 1000, // 5分钟
-    deduplicationWindow: 1000, // 1秒
+    cacheTimeout: 5 * 60 * 1000, // 5min
+    deduplicationWindow: 1000, // 1sec
   };
 
   return new ApiClient(defaultConfig);
 }
 
-// 默认实例 - 延迟初始化
+// 默认instance - 延迟初始化
 let defaultInstance: ApiClient | null = null;
 
 export function getApiClient(): ApiClient {
@@ -414,7 +414,7 @@ export function getApiClient(): ApiClient {
   return defaultInstance;
 }
 
-// 向后兼容的导出
+// 向后兼容的export
 export const apiClient = new Proxy({} as ApiClient, {
   get(target, prop) {
     return getApiClient()[prop as keyof ApiClient];

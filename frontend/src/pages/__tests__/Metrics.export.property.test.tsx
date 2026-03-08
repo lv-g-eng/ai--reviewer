@@ -1,16 +1,16 @@
 /**
- * Metrics数据导出属性测试
+ * Metricsdataexportpropertytest
  * 
  * Feature: frontend-production-optimization
- * Property 21: 指标数据导出
+ * Property 21: 指标dataexport
  * 
  * **Validates: Requirements 6.2**
  * 
- * 测试覆盖:
- * - 对于任何指标数据，应该能够导出为CSV或JSON格式，且导出的数据与显示的数据一致
+ * testCoverage:
+ * - 对于任何指标data，should能够export为CSV或JSONformat，且export的data与show的data一致
  * 
- * 注意: 此属性测试验证指标数据导出功能的正确性，确保导出的数据与显示的数据完全一致。
- * 测试覆盖CSV和JSON两种导出格式，以及各种指标配置和数据集。
+ * note: 此propertytestverify指标dataexportfeature的正确性，确保export的data与show的data完全一致。
+ * testCoverageCSVandJSON两种exportformat，以及各种指标configanddata集。
  */
 
 import fc from 'fast-check';
@@ -29,7 +29,7 @@ jest.mock('../../services/DashboardService', () => ({
   },
 }));
 
-describe('Property 21: 指标数据导出', () => {
+describe('Property 21: 指标dataexport', () => {
   let mockCreateObjectURL: jest.Mock;
   let mockRevokeObjectURL: jest.Mock;
   let lastExportedBlob: Blob | null = null;
@@ -74,16 +74,16 @@ describe('Property 21: 指标数据导出', () => {
     jest.restoreAllMocks();
   });
 
-  // 自定义生成器：生成时间范围
+  // customGenerator：generate时间范围
   const timeRangeArbitrary = () =>
     fc.constantFrom('day', 'week', 'month');
 
-  // 自定义生成器：生成指标ID
+  // customGenerator：generate指标ID
   const metricIdArbitrary = () =>
     fc.constantFrom('performance', 'errorRate', 'responseTime');
 
   /**
-   * 辅助函数：读取Blob内容
+   * 辅助function：读取Blobcontent
    */
   const readBlobAsText = async (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -95,7 +95,7 @@ describe('Property 21: 指标数据导出', () => {
   };
 
   /**
-   * 辅助函数：解析CSV内容
+   * 辅助function：解析CSVcontent
    */
   const parseCSV = (content: string): Array<Record<string, string>> => {
     const lines = content.trim().split('\n');
@@ -116,39 +116,39 @@ describe('Property 21: 指标数据导出', () => {
     return rows;
   };
 
-  it('应该在任何时间范围下导出CSV格式的数据', async () => {
+  it('shouldBeAt任何时间范围下exportCSVformat的data', async () => {
     await fc.assert(
       fc.asyncProperty(
         timeRangeArbitrary(),
         async (timeRange) => {
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getAllByText(/metrics dashboard/i).length).toBeGreaterThan(0);
           });
 
-          // 点击CSV导出按钮
+          // 点击CSVexportbutton
           const csvButton = screen.getByRole('button', { name: /csv/i });
           fireEvent.click(csvButton);
 
-          // 等待导出完成
+          // waitExportDone
           await waitFor(() => {
             expect(mockCreateObjectURL).toHaveBeenCalled();
           });
 
-          // 验证Blob被创建
+          // verifyBlob被create
           expect(lastExportedBlob).not.toBeNull();
           expect(lastExportedFilename).not.toBeNull();
 
-          // 验证文件类型
+          // verifyfiletype
           expect(lastExportedBlob!.type).toBe('text/csv;charset=utf-8;');
 
-          // 验证文件名包含时间范围
+          // verifyfile名contain时间范围
           expect(lastExportedFilename).toContain(timeRange);
           expect(lastExportedFilename).toMatch(/\.csv$/);
 
-          // 读取并验证CSV内容
+          // 读取并verifyCSVcontent
           const content = await readBlobAsText(lastExportedBlob!);
           expect(content).toContain('Timestamp');
           expect(content).toContain('Label');
@@ -160,39 +160,39 @@ describe('Property 21: 指标数据导出', () => {
     );
   }, 120000);
 
-  it('应该在任何时间范围下导出JSON格式的数据', async () => {
+  it('shouldBeAt任何时间范围下exportJSONformat的data', async () => {
     await fc.assert(
       fc.asyncProperty(
         timeRangeArbitrary(),
         async (timeRange) => {
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getAllByText(/metrics dashboard/i).length).toBeGreaterThan(0);
           });
 
-          // 点击JSON导出按钮
+          // 点击JSONexportbutton
           const jsonButton = screen.getByRole('button', { name: /json/i });
           fireEvent.click(jsonButton);
 
-          // 等待导出完成
+          // waitExportDone
           await waitFor(() => {
             expect(mockCreateObjectURL).toHaveBeenCalled();
           });
 
-          // 验证Blob被创建
+          // verifyBlob被create
           expect(lastExportedBlob).not.toBeNull();
           expect(lastExportedFilename).not.toBeNull();
 
-          // 验证文件类型
+          // verifyfiletype
           expect(lastExportedBlob!.type).toBe('application/json;charset=utf-8;');
 
-          // 验证文件名包含时间范围
+          // verifyfile名contain时间范围
           expect(lastExportedFilename).toContain(timeRange);
           expect(lastExportedFilename).toMatch(/\.json$/);
 
-          // 读取并验证JSON内容
+          // 读取并verifyJSONcontent
           const content = await readBlobAsText(lastExportedBlob!);
           const jsonData = JSON.parse(content);
           expect(jsonData).toHaveProperty('exportDate');
@@ -208,41 +208,41 @@ describe('Property 21: 指标数据导出', () => {
     );
   }, 120000);
 
-  it('应该导出与显示数据一致的CSV内容', async () => {
+  it('shouldexport与showdata一致的CSVcontent', async () => {
     await fc.assert(
       fc.asyncProperty(
         timeRangeArbitrary(),
         async (timeRange) => {
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getAllByText(/metrics dashboard/i).length).toBeGreaterThan(0);
           });
 
-          // 导出CSV
+          // exportCSV
           const csvButton = screen.getByRole('button', { name: /csv/i });
           fireEvent.click(csvButton);
 
-          // 等待导出完成
+          // waitExportDone
           await waitFor(() => {
             expect(mockCreateObjectURL).toHaveBeenCalled();
           });
 
-          // 读取并验证CSV内容
+          // 读取并verifyCSVcontent
           const content = await readBlobAsText(lastExportedBlob!);
           const csvRows = parseCSV(content);
 
-          // 验证数据行数大于0
+          // verifydata行数大于0
           expect(csvRows.length).toBeGreaterThan(0);
 
-          // 验证每行都有timestamp和label
+          // verify每行都有timestampandlabel
           csvRows.forEach(row => {
             expect(row['Timestamp']).toBeDefined();
             expect(row['Label']).toBeDefined();
           });
 
-          // 验证至少包含一个指标列
+          // verify至少contain一item指标列
           const firstRow = csvRows[0];
           const metricColumns = Object.keys(firstRow).filter(
             key => key !== 'Timestamp' && key !== 'Label'
@@ -256,45 +256,45 @@ describe('Property 21: 指标数据导出', () => {
     );
   }, 120000);
 
-  it('应该导出与显示数据一致的JSON内容', async () => {
+  it('shouldexport与showdata一致的JSONcontent', async () => {
     await fc.assert(
       fc.asyncProperty(
         timeRangeArbitrary(),
         async (timeRange) => {
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getAllByText(/metrics dashboard/i).length).toBeGreaterThan(0);
           });
 
-          // 导出JSON
+          // exportJSON
           const jsonButton = screen.getByRole('button', { name: /json/i });
           fireEvent.click(jsonButton);
 
-          // 等待导出完成
+          // waitExportDone
           await waitFor(() => {
             expect(mockCreateObjectURL).toHaveBeenCalled();
           });
 
-          // 读取并验证JSON内容
+          // 读取并verifyJSONcontent
           const content = await readBlobAsText(lastExportedBlob!);
           const jsonData = JSON.parse(content);
 
-          // 验证时间范围匹配
+          // verify时间范围匹配
           expect(jsonData.timeRange).toBe(timeRange);
 
-          // 验证数据数组
+          // verifydata数组
           expect(Array.isArray(jsonData.data)).toBe(true);
           expect(jsonData.data.length).toBeGreaterThan(0);
 
-          // 验证每个数据点都有timestamp
+          // verify每itemdata点都有timestamp
           jsonData.data.forEach((dataPoint: any) => {
             expect(dataPoint.timestamp).toBeDefined();
             expect(dataPoint.label).toBeDefined();
           });
 
-          // 验证指标定义
+          // verify指标定义
           expect(Array.isArray(jsonData.metrics)).toBe(true);
           expect(jsonData.metrics.length).toBeGreaterThan(0);
 
@@ -311,13 +311,13 @@ describe('Property 21: 指标数据导出', () => {
     );
   }, 120000);
 
-  it('应该在自定义仪表板中导出选定的指标', async () => {
+  it('shouldBeAt自定义仪表板中export选定的指标', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(metricIdArbitrary(), { minLength: 1, maxLength: 3 }).map(arr => [...new Set(arr)]),
         timeRangeArbitrary(),
         async (selectedMetrics, timeRange) => {
-          // 创建自定义仪表板
+          // create自定义仪表板
           const mockUser = {
             id: 'user_1',
             name: 'Test User',
@@ -351,7 +351,7 @@ describe('Property 21: 指标数据导出', () => {
 
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getAllByText('Test Dashboard').length).toBeGreaterThan(0);
           });
@@ -364,28 +364,28 @@ describe('Property 21: 指标数据导出', () => {
             expect(screen.getByText(/refresh: 30s/i)).toBeInTheDocument();
           });
 
-          // 导出JSON
+          // exportJSON
           const jsonButton = screen.getByRole('button', { name: /json/i });
           fireEvent.click(jsonButton);
 
-          // 等待导出完成
+          // waitExportDone
           await waitFor(() => {
             expect(mockCreateObjectURL).toHaveBeenCalled();
           });
 
-          // 读取并验证导出的指标与选定的指标一致
+          // 读取并verifyexport的指标与选定的指标一致
           const content = await readBlobAsText(lastExportedBlob!);
           const jsonData = JSON.parse(content);
 
-          // 验证仪表板信息
+          // verify仪表板info
           expect(jsonData.dashboard).toBeDefined();
           expect(jsonData.dashboard.name).toBe('Test Dashboard');
 
-          // 验证导出的指标ID与选定的指标一致
+          // verifyexport的指标ID与选定的指标一致
           const exportedMetricIds = jsonData.metrics.map((m: any) => m.id);
           expect(exportedMetricIds.sort()).toEqual(selectedMetrics.sort());
 
-          // 验证数据点包含选定的指标
+          // verifydata点contain选定的指标
           jsonData.data.forEach((dataPoint: any) => {
             selectedMetrics.forEach(metricId => {
               expect(dataPoint).toHaveProperty(metricId);
@@ -399,33 +399,33 @@ describe('Property 21: 指标数据导出', () => {
     );
   }, 120000);
 
-  it('应该在CSV导出中包含所有指标的正确单位', async () => {
+  it('shouldBeAtCSVexport中contain所有指标的正确单位', async () => {
     await fc.assert(
       fc.asyncProperty(
         timeRangeArbitrary(),
         async (timeRange) => {
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getAllByText(/metrics dashboard/i).length).toBeGreaterThan(0);
           });
 
-          // 导出CSV
+          // exportCSV
           const csvButton = screen.getByRole('button', { name: /csv/i });
           fireEvent.click(csvButton);
 
-          // 等待导出完成
+          // waitExportDone
           await waitFor(() => {
             expect(mockCreateObjectURL).toHaveBeenCalled();
           });
 
-          // 读取并验证CSV头部包含指标名称和单位
+          // 读取并verifyCSV头部contain指标名称and单位
           const content = await readBlobAsText(lastExportedBlob!);
           const lines = content.split('\n');
           const header = lines[0];
 
-          // 验证头部包含指标名称和单位
+          // verify头部contain指标名称and单位
           expect(header).toContain('Performance Score (score)');
           expect(header).toContain('Error Rate (%)');
           expect(header).toContain('Response Time (ms)');
@@ -437,32 +437,32 @@ describe('Property 21: 指标数据导出', () => {
     );
   }, 120000);
 
-  it('应该在JSON导出中包含完整的指标定义', async () => {
+  it('shouldBeAtJSONexport中contain完整的指标定义', async () => {
     await fc.assert(
       fc.asyncProperty(
         timeRangeArbitrary(),
         async (timeRange) => {
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getAllByText(/metrics dashboard/i).length).toBeGreaterThan(0);
           });
 
-          // 导出JSON
+          // exportJSON
           const jsonButton = screen.getByRole('button', { name: /json/i });
           fireEvent.click(jsonButton);
 
-          // 等待导出完成
+          // waitExportDone
           await waitFor(() => {
             expect(mockCreateObjectURL).toHaveBeenCalled();
           });
 
-          // 读取并验证JSON包含完整的指标定义
+          // 读取并verifyJSONcontain完整的指标定义
           const content = await readBlobAsText(lastExportedBlob!);
           const jsonData = JSON.parse(content);
 
-          // 验证每个指标定义包含所有必需字段
+          // verify每item指标定义contain所有必需field
           jsonData.metrics.forEach((metric: any) => {
             expect(metric).toHaveProperty('id');
             expect(metric).toHaveProperty('name');
@@ -479,37 +479,37 @@ describe('Property 21: 指标数据导出', () => {
     );
   }, 120000);
 
-  it('应该在CSV导出中正确格式化数值', async () => {
+  it('shouldBeAtCSVexport中正确format化数value', async () => {
     await fc.assert(
       fc.asyncProperty(
         timeRangeArbitrary(),
         async (timeRange) => {
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getAllByText(/metrics dashboard/i).length).toBeGreaterThan(0);
           });
 
-          // 导出CSV
+          // exportCSV
           const csvButton = screen.getByRole('button', { name: /csv/i });
           fireEvent.click(csvButton);
 
-          // 等待导出完成
+          // waitExportDone
           await waitFor(() => {
             expect(mockCreateObjectURL).toHaveBeenCalled();
           });
 
-          // 读取并验证CSV数值格式
+          // 读取并verifyCSV数valueformat
           const content = await readBlobAsText(lastExportedBlob!);
           const csvRows = parseCSV(content);
 
           csvRows.forEach(row => {
-            // 验证每个指标值都是有效的数字格式（保留2位小数）
+            // verify每item指标value都是有效的数字format（保留2位小数）
             Object.keys(row).forEach(key => {
               if (key !== 'Timestamp' && key !== 'Label') {
                 const value = row[key];
-                // 应该是数字格式的字符串
+                // should是数字format的字符串
                 expect(value).toMatch(/^\d+\.\d{2}$/);
               }
             });
@@ -522,7 +522,7 @@ describe('Property 21: 指标数据导出', () => {
     );
   }, 120000);
 
-  it('应该在JSON导出中包含导出时间戳', async () => {
+  it('shouldBeAtJSONexport中containexport时间戳', async () => {
     await fc.assert(
       fc.asyncProperty(
         timeRangeArbitrary(),
@@ -531,30 +531,30 @@ describe('Property 21: 指标数据导出', () => {
 
           render(<Metrics initialTimeRange={timeRange} />);
 
-          // 等待数据加载完成
+          // waitDataLoaded
           await waitFor(() => {
             expect(screen.getAllByText(/metrics dashboard/i).length).toBeGreaterThan(0);
           });
 
-          // 导出JSON
+          // exportJSON
           const jsonButton = screen.getByRole('button', { name: /json/i });
           fireEvent.click(jsonButton);
 
-          // 等待导出完成
+          // waitExportDone
           await waitFor(() => {
             expect(mockCreateObjectURL).toHaveBeenCalled();
           });
 
           const afterExport = new Date();
 
-          // 读取并验证JSON包含导出时间戳
+          // 读取并verifyJSONcontainexport时间戳
           const content = await readBlobAsText(lastExportedBlob!);
           const jsonData = JSON.parse(content);
 
           expect(jsonData.exportDate).toBeDefined();
           const exportDate = new Date(jsonData.exportDate);
 
-          // 验证导出时间在合理范围内
+          // verifyexport时间在合理范围内
           expect(exportDate.getTime()).toBeGreaterThanOrEqual(beforeExport.getTime());
           expect(exportDate.getTime()).toBeLessThanOrEqual(afterExport.getTime());
 
@@ -565,12 +565,12 @@ describe('Property 21: 指标数据导出', () => {
     );
   }, 120000);
 
-  it('应该确保CSV和JSON导出的数据点数量一致', async () => {
+  it('should确保CSVandJSONexport的data点数量一致', async () => {
     await fc.assert(
       fc.asyncProperty(
         timeRangeArbitrary(),
         async (timeRange) => {
-          // 导出CSV
+          // exportCSV
           render(<Metrics initialTimeRange={timeRange} />);
 
           await waitFor(() => {
@@ -588,7 +588,7 @@ describe('Property 21: 指标数据导出', () => {
           const csvRows = parseCSV(csvContent);
           const csvDataCount = csvRows.length;
 
-          // 清理并重新渲染
+          // cleanup并重新render
           cleanup();
           lastExportedBlob = null;
           mockCreateObjectURL.mockClear();
@@ -599,7 +599,7 @@ describe('Property 21: 指标数据导出', () => {
             expect(screen.getAllByText(/metrics dashboard/i).length).toBeGreaterThan(0);
           });
 
-          // 导出JSON
+          // exportJSON
           const jsonButton = screen.getByRole('button', { name: /json/i });
           fireEvent.click(jsonButton);
 
@@ -611,7 +611,7 @@ describe('Property 21: 指标数据导出', () => {
           const jsonData = JSON.parse(jsonContent);
           const jsonDataCount = jsonData.data.length;
 
-          // 验证数据点数量一致
+          // verifydata点数量一致
           expect(csvDataCount).toBe(jsonDataCount);
 
           cleanup();

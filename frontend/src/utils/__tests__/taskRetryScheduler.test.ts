@@ -1,11 +1,11 @@
 /**
- * 任务重试调度器单元测试
+ * taskretry调度器单元test
  */
 
 import { TaskRetryScheduler, RETRY_DELAYS } from '../taskRetryScheduler';
 import { AnalysisTask } from '../../pages/AnalysisQueue';
 
-// 创建模拟任务
+// create模拟task
 function createMockTask(overrides?: Partial<AnalysisTask>): AnalysisTask {
   return {
     id: 'task-1',
@@ -44,7 +44,7 @@ describe('TaskRetryScheduler', () => {
       expect(schedule).not.toBeNull();
       expect(schedule?.taskId).toBe(task.id);
       expect(schedule?.retryCount).toBe(0);
-      expect(schedule?.retryDelay).toBe(RETRY_DELAYS[0]); // 5分钟
+      expect(schedule?.retryDelay).toBe(RETRY_DELAYS[0]); // 5min
     });
 
     it('should not schedule retry if max retries reached', () => {
@@ -62,17 +62,17 @@ describe('TaskRetryScheduler', () => {
     });
 
     it('should use correct retry delay based on retry count', () => {
-      // 第一次重试 - 5分钟
+      // 第一timesretry - 5min
       const task1 = createMockTask({ retryCount: 0 });
       const schedule1 = scheduler.scheduleRetry(task1);
       expect(schedule1?.retryDelay).toBe(RETRY_DELAYS[0]);
 
-      // 第二次重试 - 15分钟
+      // 第二timesretry - 15min
       const task2 = createMockTask({ id: 'task-2', retryCount: 1 });
       const schedule2 = scheduler.scheduleRetry(task2);
       expect(schedule2?.retryDelay).toBe(RETRY_DELAYS[1]);
 
-      // 第三次重试 - 30分钟
+      // 第三timesretry - 30min
       const task3 = createMockTask({ id: 'task-3', retryCount: 2 });
       const schedule3 = scheduler.scheduleRetry(task3);
       expect(schedule3?.retryDelay).toBe(RETRY_DELAYS[2]);
@@ -85,43 +85,43 @@ describe('TaskRetryScheduler', () => {
       const task = createMockTask({ retryCount: 0 });
       scheduler.scheduleRetry(task);
 
-      // 回调不应该立即被调用
+      // 回调不should立即被调用
       expect(callback).not.toHaveBeenCalled();
 
-      // 快进到重试时间
+      // 快进到retry时间
       jest.advanceTimersByTime(RETRY_DELAYS[0]);
 
-      // 回调应该被调用
+      // 回调should被调用
       expect(callback).toHaveBeenCalledWith(task.id);
     });
 
     it('should replace existing retry schedule', () => {
       const task = createMockTask({ retryCount: 0 });
       
-      // 第一次调度
+      // 第一times调度
       const schedule1 = scheduler.scheduleRetry(task);
       expect(schedule1?.retryDelay).toBe(RETRY_DELAYS[0]);
 
-      // 第二次调度（模拟重试次数增加）
+      // 第二times调度（模拟retrytimes数增加）
       const updatedTask = { ...task, retryCount: 1 };
       const schedule2 = scheduler.scheduleRetry(updatedTask);
       expect(schedule2?.retryDelay).toBe(RETRY_DELAYS[1]);
 
-      // 应该只有一个调度
+      // should只有一item调度
       expect(scheduler.getAllRetrySchedules().length).toBe(1);
     });
   });
 
   describe('getRetryDelay', () => {
     it('should return correct delay for each retry count', () => {
-      expect(scheduler.getRetryDelay(0)).toBe(5 * 60 * 1000); // 5分钟
-      expect(scheduler.getRetryDelay(1)).toBe(15 * 60 * 1000); // 15分钟
-      expect(scheduler.getRetryDelay(2)).toBe(30 * 60 * 1000); // 30分钟
+      expect(scheduler.getRetryDelay(0)).toBe(5 * 60 * 1000); // 5min
+      expect(scheduler.getRetryDelay(1)).toBe(15 * 60 * 1000); // 15min
+      expect(scheduler.getRetryDelay(2)).toBe(30 * 60 * 1000); // 30min
     });
 
     it('should return last delay for retry count beyond defined delays', () => {
-      expect(scheduler.getRetryDelay(3)).toBe(30 * 60 * 1000); // 30分钟
-      expect(scheduler.getRetryDelay(10)).toBe(30 * 60 * 1000); // 30分钟
+      expect(scheduler.getRetryDelay(3)).toBe(30 * 60 * 1000); // 30min
+      expect(scheduler.getRetryDelay(10)).toBe(30 * 60 * 1000); // 30min
     });
   });
 
@@ -133,13 +133,13 @@ describe('TaskRetryScheduler', () => {
       const task = createMockTask({ retryCount: 0 });
       scheduler.scheduleRetry(task);
 
-      // 取消重试
+      // cancelretry
       scheduler.cancelRetry(task.id);
 
       // 快进时间
       jest.advanceTimersByTime(RETRY_DELAYS[0]);
 
-      // 回调不应该被调用
+      // 回调不should被调用
       expect(callback).not.toHaveBeenCalled();
       expect(scheduler.getRetrySchedule(task.id)).toBeNull();
     });
@@ -195,7 +195,7 @@ describe('TaskRetryScheduler', () => {
 
       const timeUntil1 = scheduler.getTimeUntilRetry(task.id);
       
-      // 快进1分钟
+      // 快进1min
       jest.advanceTimersByTime(60 * 1000);
       
       const timeUntil2 = scheduler.getTimeUntilRetry(task.id);
@@ -242,7 +242,7 @@ describe('TaskRetryScheduler', () => {
       const callback = jest.fn();
       scheduler.setRetryCallback(callback);
 
-      // 调度多个任务
+      // 调度多itemtask
       const task1 = createMockTask({ id: 'task-1', retryCount: 0 });
       const task2 = createMockTask({ id: 'task-2', retryCount: 0 });
       scheduler.scheduleRetry(task1);
@@ -250,7 +250,7 @@ describe('TaskRetryScheduler', () => {
 
       expect(scheduler.getAllRetrySchedules().length).toBe(2);
 
-      // 清理所有
+      // cleanup所有
       scheduler.clearAll();
 
       expect(scheduler.getAllRetrySchedules().length).toBe(0);
@@ -258,7 +258,7 @@ describe('TaskRetryScheduler', () => {
       // 快进时间
       jest.advanceTimersByTime(RETRY_DELAYS[0]);
 
-      // 回调不应该被调用
+      // 回调不should被调用
       expect(callback).not.toHaveBeenCalled();
     });
   });
@@ -288,7 +288,7 @@ describe('TaskRetryScheduler', () => {
       const callback = jest.fn();
       scheduler.setRetryCallback(callback);
 
-      // 创建失败的任务
+      // createfailure的task
       const task = createMockTask({ 
         id: 'task-1', 
         status: 'failed', 
@@ -296,37 +296,37 @@ describe('TaskRetryScheduler', () => {
         maxRetries: 3,
       });
 
-      // 第一次重试调度 - 5分钟
+      // 第一timesretry调度 - 5min
       const schedule1 = scheduler.scheduleRetry(task);
       expect(schedule1?.retryDelay).toBe(5 * 60 * 1000);
       expect(scheduler.isScheduled(task.id)).toBe(true);
 
-      // 快进5分钟
+      // 快进5min
       jest.advanceTimersByTime(5 * 60 * 1000);
       expect(callback).toHaveBeenCalledWith(task.id);
       expect(scheduler.isScheduled(task.id)).toBe(false);
 
-      // 第二次重试调度 - 15分钟
+      // 第二timesretry调度 - 15min
       callback.mockClear();
       const task2 = { ...task, retryCount: 1 };
       const schedule2 = scheduler.scheduleRetry(task2);
       expect(schedule2?.retryDelay).toBe(15 * 60 * 1000);
 
-      // 快进15分钟
+      // 快进15min
       jest.advanceTimersByTime(15 * 60 * 1000);
       expect(callback).toHaveBeenCalledWith(task.id);
 
-      // 第三次重试调度 - 30分钟
+      // 第三timesretry调度 - 30min
       callback.mockClear();
       const task3 = { ...task, retryCount: 2 };
       const schedule3 = scheduler.scheduleRetry(task3);
       expect(schedule3?.retryDelay).toBe(30 * 60 * 1000);
 
-      // 快进30分钟
+      // 快进30min
       jest.advanceTimersByTime(30 * 60 * 1000);
       expect(callback).toHaveBeenCalledWith(task.id);
 
-      // 达到最大重试次数，不应该再调度
+      // 达到最大retrytimes数，不should再调度
       const task4 = { ...task, retryCount: 3 };
       const schedule4 = scheduler.scheduleRetry(task4);
       expect(schedule4).toBeNull();

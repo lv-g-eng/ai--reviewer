@@ -1,13 +1,13 @@
 /**
- * ApiClient单元测试
+ * ApiClient单元test
  * 
- * 测试覆盖:
- * - GET/POST/PUT/DELETE请求
- * - 请求去重机制
- * - 并发请求限制
- * - 超时检测
- * - 指数退避重试
- * - GET请求缓存
+ * testCoverage:
+ * - GET/POST/PUT/DELETErequest
+ * - request去重机制
+ * - 并发request限制
+ * - timeout检测
+ * - 指数退避retry
+ * - GETrequestcache
  */
 
 import axios from 'axios';
@@ -47,15 +47,15 @@ describe('ApiClient', () => {
   };
 
   beforeEach(() => {
-    // 重置所有mock
+    // reset所有mock
     jest.clearAllMocks();
     mockAxiosInstance.request.mockReset();
 
     apiClient = new ApiClient(defaultConfig);
   });
 
-  describe('基本HTTP方法', () => {
-    it('应该成功执行GET请求', async () => {
+  describe('基本HTTPmethod', () => {
+    it('shouldsuccessexecuteGETrequest', async () => {
       const mockData = { id: 1, name: 'Test' };
       mockAxiosInstance.request.mockResolvedValue({ data: mockData });
 
@@ -70,7 +70,7 @@ describe('ApiClient', () => {
       expect(result).toEqual(mockData);
     });
 
-    it('应该成功执行POST请求', async () => {
+    it('shouldsuccessexecutePOSTrequest', async () => {
       const mockData = { id: 1, name: 'Created' };
       const postData = { name: 'New Item' };
       mockAxiosInstance.request.mockResolvedValue({ data: mockData });
@@ -87,7 +87,7 @@ describe('ApiClient', () => {
       expect(result).toEqual(mockData);
     });
 
-    it('应该成功执行PUT请求', async () => {
+    it('shouldsuccessexecutePUTrequest', async () => {
       const mockData = { id: 1, name: 'Updated' };
       const putData = { name: 'Updated Item' };
       mockAxiosInstance.request.mockResolvedValue({ data: mockData });
@@ -104,7 +104,7 @@ describe('ApiClient', () => {
       expect(result).toEqual(mockData);
     });
 
-    it('应该成功执行DELETE请求', async () => {
+    it('shouldsuccessexecuteDELETErequest', async () => {
       const mockData = { success: true };
       mockAxiosInstance.request.mockResolvedValue({ data: mockData });
 
@@ -120,35 +120,35 @@ describe('ApiClient', () => {
     });
   });
 
-  describe('GET请求缓存', () => {
-    it('应该缓存GET请求结果', async () => {
+  describe('GETrequestcache', () => {
+    it('shouldcacheGETrequestresult', async () => {
       const mockData = { id: 1, name: 'Test' };
       mockAxiosInstance.request.mockResolvedValue({ data: mockData });
 
-      // 第一次请求
+      // 第一timesrequest
       const result1 = await apiClient.get('/test');
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1);
 
-      // 第二次请求应该使用缓存
+      // 第二timesrequestshouldusecache
       const result2 = await apiClient.get('/test');
-      expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1); // 仍然是1次
+      expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1); // 仍然是1times
       expect(result2).toEqual(result1);
     });
 
-    it('应该支持跳过缓存选项', async () => {
+    it('shouldsupportskipcache选项', async () => {
       const mockData = { id: 1, name: 'Test' };
       mockAxiosInstance.request.mockResolvedValue({ data: mockData });
 
-      // 第一次请求
+      // 第一timesrequest
       await apiClient.get('/test');
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1);
 
-      // 第二次请求跳过缓存
+      // 第二timesrequestskipcache
       await apiClient.get('/test', { skipCache: true });
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2);
     });
 
-    it('应该为不同的URL使用不同的缓存', async () => {
+    it('should为不同的URLuse不同的cache', async () => {
       mockAxiosInstance.request.mockResolvedValue({ data: {} });
 
       await apiClient.get('/test1');
@@ -157,7 +157,7 @@ describe('ApiClient', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2);
     });
 
-    it('应该为不同的查询参数使用不同的缓存', async () => {
+    it('should为不同的queryparamuse不同的cache', async () => {
       mockAxiosInstance.request.mockResolvedValue({ data: {} });
 
       await apiClient.get('/test', { params: { id: 1 } });
@@ -167,12 +167,12 @@ describe('ApiClient', () => {
     });
   });
 
-  describe('请求去重', () => {
-    it('应该在1秒内合并相同的GET请求', async () => {
+  describe('request去重', () => {
+    it('shouldBeAt1sec内合并相同的GETrequest', async () => {
       const mockData = { id: 1, name: 'Test' };
       mockAxiosInstance.request.mockResolvedValue({ data: mockData });
 
-      // 同时发起多个相同请求
+      // 同时发起多item相同request
       const promises = [
         apiClient.get('/test'),
         apiClient.get('/test'),
@@ -181,19 +181,19 @@ describe('ApiClient', () => {
 
       const results = await Promise.all(promises);
 
-      // 应该只发起一次实际请求
+      // should只发起一times实际request
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1);
-      // 所有结果应该相同
+      // 所有resultshould相同
       expect(results[0]).toEqual(mockData);
       expect(results[1]).toEqual(mockData);
       expect(results[2]).toEqual(mockData);
     });
 
-    it('应该支持跳过去重选项', async () => {
+    it('shouldsupportskip去重选项', async () => {
       const mockData = { id: 1, name: 'Test' };
       mockAxiosInstance.request.mockResolvedValue({ data: mockData });
 
-      // 同时发起多个请求，但跳过去重
+      // 同时发起多itemrequest，但skip去重
       const promises = [
         apiClient.get('/test', { skipDeduplication: true, skipCache: true }),
         apiClient.get('/test', { skipDeduplication: true, skipCache: true }),
@@ -201,13 +201,13 @@ describe('ApiClient', () => {
 
       await Promise.all(promises);
 
-      // 应该发起两次请求
+      // should发起两timesrequest
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2);
     });
   });
 
-  describe('并发请求限制', () => {
-    it.skip('应该限制并发请求数量', async () => {
+  describe('并发request限制', () => {
+    it.skip('should限制并发request数量', async () => {
       let requestCount = 0;
 
       mockAxiosInstance.request.mockImplementation(() => {
@@ -215,23 +215,23 @@ describe('ApiClient', () => {
         return Promise.resolve({ data: { count: requestCount } });
       });
 
-      // 发起10个并发请求
+      // 发起10item并发request
       const promises = Array.from({ length: 10 }, (_, i) =>
         apiClient.post(`/test/${i}`, {}, { skipRetry: true })
       );
 
       await Promise.all(promises);
 
-      // 验证所有请求都完成了
+      // verify所有request都complete了
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(10);
       expect(requestCount).toBe(10);
 
-      // 验证并发控制机制存在（通过检查内部状态）
+      // verify并发控制机制存在（通过check内部status）
       expect(apiClient.getActiveRequestCount()).toBe(0);
       expect(apiClient.getQueuedRequestCount()).toBe(0);
     });
 
-    it('应该在请求完成后处理队列中的请求', async () => {
+    it('shouldBeAtrequestcomplete后handlequeue中的request', async () => {
       let requestCount = 0;
 
       mockAxiosInstance.request.mockImplementation(() => {
@@ -239,20 +239,20 @@ describe('ApiClient', () => {
         return Promise.resolve({ data: { count: requestCount } });
       });
 
-      // 发起8个请求
+      // 发起8itemrequest
       const promises = Array.from({ length: 8 }, (_, i) =>
         apiClient.post(`/test/${i}`, {}, { skipRetry: true })
       );
 
       await Promise.all(promises);
 
-      // 所有请求都应该完成
+      // 所有request都shouldcomplete
       expect(requestCount).toBe(8);
     });
   });
 
-  describe('指数退避重试', () => {
-    it('应该在请求失败时重试最多3次', async () => {
+  describe('指数退避retry', () => {
+    it('shouldBeAtrequestfailure时retry最多3times', async () => {
       let attemptCount = 0;
 
       mockAxiosInstance.request.mockImplementation(() => {
@@ -265,21 +265,21 @@ describe('ApiClient', () => {
 
       const result = await apiClient.post('/test', {});
 
-      // 应该尝试4次 (初始 + 3次重试)
+      // should尝试4times (初始 + 3timesretry)
       expect(attemptCount).toBe(4);
       expect(result).toEqual({ success: true });
     });
 
-    it('应该在达到最大重试次数后抛出错误', async () => {
+    it('shouldBeAt达到最大retrytimes数后抛出error', async () => {
       mockAxiosInstance.request.mockRejectedValue(new Error('Network error'));
 
       await expect(apiClient.post('/test', {})).rejects.toThrow('Network error');
 
-      // 应该尝试4次 (初始 + 3次重试)
+      // should尝试4times (初始 + 3timesretry)
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(4);
     });
 
-    it('应该不重试401错误', async () => {
+    it('should不retry401error', async () => {
       mockAxiosInstance.request.mockRejectedValue({
         response: { status: 401 },
       });
@@ -288,11 +288,11 @@ describe('ApiClient', () => {
         response: { status: 401 },
       });
 
-      // 应该只尝试1次
+      // should只尝试1times
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1);
     });
 
-    it('应该不重试403错误', async () => {
+    it('should不retry403error', async () => {
       mockAxiosInstance.request.mockRejectedValue({
         response: { status: 403 },
       });
@@ -304,7 +304,7 @@ describe('ApiClient', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1);
     });
 
-    it('应该不重试404错误', async () => {
+    it('should不retry404error', async () => {
       mockAxiosInstance.request.mockRejectedValue({
         response: { status: 404 },
       });
@@ -316,59 +316,59 @@ describe('ApiClient', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1);
     });
 
-    it('应该支持跳过重试选项', async () => {
+    it('shouldsupportskipretry选项', async () => {
       mockAxiosInstance.request.mockRejectedValue(new Error('Network error'));
 
       await expect(
         apiClient.post('/test', {}, { skipRetry: true })
       ).rejects.toThrow('Network error');
 
-      // 应该只尝试1次
+      // should只尝试1times
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('缓存管理', () => {
-    it('应该能够清除所有缓存', async () => {
+  describe('cache管理', () => {
+    it('should能够清除所有cache', async () => {
       mockAxiosInstance.request.mockResolvedValue({ data: {} });
 
-      // 创建一些缓存
+      // create一些cache
       await apiClient.get('/test1');
       await apiClient.get('/test2');
 
-      // 清除缓存
+      // 清除cache
       apiClient.clearCache();
 
-      // 再次请求应该发起新的请求
+      // 再timesrequestshould发起新的request
       await apiClient.get('/test1');
       await apiClient.get('/test2');
 
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(4);
     });
 
-    it('应该能够清除匹配模式的缓存', async () => {
+    it('should能够清除匹配模式的cache', async () => {
       mockAxiosInstance.request.mockResolvedValue({ data: {} });
 
-      // 创建一些缓存
+      // create一些cache
       await apiClient.get('/users/1');
       await apiClient.get('/users/2');
       await apiClient.get('/posts/1');
 
-      // 清除users相关的缓存
+      // 清除users相关的cache
       apiClient.clearCache('users');
 
-      // users请求应该重新发起，posts请求使用缓存
+      // usersrequestshould重新发起，postsrequestusecache
       await apiClient.get('/users/1');
       await apiClient.get('/users/2');
       await apiClient.get('/posts/1');
 
-      // users: 2次原始 + 2次新请求 = 4次
-      // posts: 1次原始 + 0次新请求 = 1次
-      // 总共: 5次
+      // users: 2times原始 + 2times新request = 4times
+      // posts: 1times原始 + 0times新request = 1times
+      // 总共: 5times
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(5);
     });
 
-    it('应该能够获取缓存统计', async () => {
+    it('should能够getcache统计', async () => {
       mockAxiosInstance.request.mockResolvedValue({ data: {} });
 
       await apiClient.get('/test1');
@@ -381,8 +381,8 @@ describe('ApiClient', () => {
     });
   });
 
-  describe('工具方法', () => {
-    it('应该能够获取当前活跃请求数', async () => {
+  describe('工具method', () => {
+    it('should能够get当前活跃request数', async () => {
       let resolveRequest: any;
       mockAxiosInstance.request.mockImplementation(() => {
         return new Promise((resolve) => {
@@ -392,20 +392,20 @@ describe('ApiClient', () => {
 
       const promise = apiClient.post('/test', {}, { skipRetry: true });
 
-      // 等待一小段时间让请求开始
+      // wait一小段时间让request开始
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      // 请求进行中
+      // request进行中
       expect(apiClient.getActiveRequestCount()).toBe(1);
 
-      // 完成请求
+      // completerequest
       resolveRequest();
       await promise;
 
       expect(apiClient.getActiveRequestCount()).toBe(0);
     });
 
-    it.skip('应该能够获取队列中等待的请求数', async () => {
+    it.skip('should能够getqueue中wait的request数', async () => {
       let resolvers: any[] = [];
       mockAxiosInstance.request.mockImplementation(() => {
         return new Promise((resolve) => {
@@ -413,19 +413,19 @@ describe('ApiClient', () => {
         });
       });
 
-      // 发起7个请求 (超过并发限制6个)
+      // 发起7itemrequest (超过并发限制6item)
       const promises = Array.from({ length: 7 }, (_, i) =>
         apiClient.post(`/test/${i}`, {}, { skipRetry: true })
       );
 
-      // 等待足够长的时间让请求开始并进入队列
+      // wait足够长的时间让request开始并进入queue
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // 应该有1个请求在队列中等待
+      // should有1itemrequest在queue中wait
       const queuedCount = apiClient.getQueuedRequestCount();
       expect(queuedCount).toBeGreaterThanOrEqual(0); // 可能是0或1，取决于时序
 
-      // 完成所有请求
+      // complete所有request
       resolvers.forEach((resolve) => resolve());
       await Promise.all(promises);
 
@@ -434,7 +434,7 @@ describe('ApiClient', () => {
   });
 
   describe('边缘情况', () => {
-    it('应该处理空响应', async () => {
+    it('shouldhandle空response', async () => {
       mockAxiosInstance.request.mockResolvedValue({ data: null });
 
       const result = await apiClient.get('/test');
@@ -442,13 +442,13 @@ describe('ApiClient', () => {
       expect(result).toBeNull();
     });
 
-    it('应该处理网络错误', async () => {
+    it('shouldhandle网络error', async () => {
       mockAxiosInstance.request.mockRejectedValue(new Error('Network Error'));
 
       await expect(apiClient.get('/test')).rejects.toThrow('Network Error');
     });
 
-    it('应该处理超时错误', async () => {
+    it('shouldhandletimeouterror', async () => {
       mockAxiosInstance.request.mockRejectedValue({
         code: 'ECONNABORTED',
         message: 'timeout of 30000ms exceeded',
@@ -459,7 +459,7 @@ describe('ApiClient', () => {
       });
     });
 
-    it('应该处理服务器错误', async () => {
+    it('shouldhandleservice器error', async () => {
       mockAxiosInstance.request.mockRejectedValue({
         response: {
           status: 500,

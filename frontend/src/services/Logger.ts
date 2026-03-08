@@ -1,14 +1,14 @@
 /**
- * Logger服务
+ * Loggerservice
  * 
- * 功能:
- * - 支持不同日志级别 (debug, info, warn, error)
- * - 根据环境设置日志级别（开发：debug，生产：error/warn）
- * - 记录API请求日志（响应时间和状态码）
- * - 记录用户操作日志（用户ID、时间戳和操作类型）
- * - 实现批量日志发送到服务器
+ * feature:
+ * - support不同log级别 (debug, info, warn, error)
+ * - 根据envsetlog级别（dev：debug，prod：error/warn）
+ * - recordAPIrequestlog（response时间andstatus码）
+ * - recorduser操作log（userID、时间戳and操作type）
+ * - 实现批量log发送到service器
  * 
- * 验证需求: 8.4, 9.2, 9.3
+ * verifyRequirement: 8.4, 9.2, 9.3
  */
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -29,7 +29,7 @@ export interface ApiRequestLog {
   method: string;
   url: string;
   status: number;
-  duration: number; // 毫秒
+  duration: number; // ms
   requestSize?: number; // 字节
   responseSize?: number; // 字节
   timestamp: Date;
@@ -50,9 +50,9 @@ export interface LoggerConfig {
   level: LogLevel;
   environment: 'development' | 'test' | 'production';
   enableConsole?: boolean;
-  batchSize?: number; // 批量发送的日志数量
-  flushInterval?: number; // 自动刷新间隔（毫秒）
-  endpoint?: string; // 日志服务器端点
+  batchSize?: number; // 批量发送的log数量
+  flushInterval?: number; // 自动refresh间隔（ms）
+  endpoint?: string; // logservice器endpoint
 }
 
 const LOG_LEVELS: Record<LogLevel, number> = {
@@ -63,8 +63,8 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 };
 
 /**
- * Logger类
- * 负责日志记录、批量发送和级别过滤
+ * Loggerclass
+ * 负责logrecord、批量发送and级别filter
  */
 export class Logger {
   private config: LoggerConfig;
@@ -79,7 +79,7 @@ export class Logger {
     this.config = {
       enableConsole: config.environment === 'development',
       batchSize: 50,
-      flushInterval: 30000, // 30秒
+      flushInterval: 30000, // 30sec
       ...config,
     };
 
@@ -89,66 +89,66 @@ export class Logger {
     this.flushTimer = null;
     this.sessionId = this.generateSessionId();
 
-    // 根据环境设置默认日志级别
+    // 根据envset默认log级别
     if (!config.level) {
       this.config.level = config.environment === 'development' ? 'debug' : 'error';
     }
 
-    // 启动自动刷新定时器
+    // start自动refresh定时器
     this.startFlushTimer();
   }
 
   /**
-   * 设置日志级别
+   * setlog级别
    */
   setLevel(level: LogLevel): void {
     this.config.level = level;
   }
 
   /**
-   * 获取当前日志级别
+   * get当前log级别
    */
   getLevel(): LogLevel {
     return this.config.level;
   }
 
   /**
-   * 设置当前用户ID
+   * set当前userID
    */
   setUserId(userId: string | undefined): void {
     this.currentUserId = userId;
   }
 
   /**
-   * 获取当前用户ID
+   * get当前userID
    */
   getUserId(): string | undefined {
     return this.currentUserId;
   }
 
   /**
-   * Debug级别日志
+   * Debug级别log
    */
   debug(message: string, context?: Record<string, any>): void {
     this.log('debug', message, context);
   }
 
   /**
-   * Info级别日志
+   * Info级别log
    */
   info(message: string, context?: Record<string, any>): void {
     this.log('info', message, context);
   }
 
   /**
-   * Warn级别日志
+   * Warn级别log
    */
   warn(message: string, context?: Record<string, any>): void {
     this.log('warn', message, context);
   }
 
   /**
-   * Error级别日志
+   * Error级别log
    */
   error(message: string, error?: Error, context?: Record<string, any>): void {
     const errorContext = error
@@ -164,7 +164,7 @@ export class Logger {
   }
 
   /**
-   * 记录API请求日志
+   * recordAPIrequestlog
    */
   logApiRequest(
     url: string,
@@ -192,7 +192,7 @@ export class Logger {
 
     this.apiLogBuffer.push(log);
 
-    // 输出到控制台（开发环境）
+    // output到控制台（devenv）
     if (this.config.enableConsole) {
       const statusColor = status >= 400 ? '\x1b[31m' : status >= 300 ? '\x1b[33m' : '\x1b[32m';
       const durationColor = duration > 1000 ? '\x1b[31m' : duration > 500 ? '\x1b[33m' : '\x1b[32m';
@@ -201,12 +201,12 @@ export class Logger {
       );
     }
 
-    // 检查是否需要刷新
+    // check是否needrefresh
     this.checkAndFlush();
   }
 
   /**
-   * 记录用户操作日志
+   * recorduser操作log
    */
   logUserAction(action: string, userId: string, details?: Record<string, any>): void {
     const log: UserActionLog = {
@@ -220,20 +220,20 @@ export class Logger {
 
     this.userActionBuffer.push(log);
 
-    // 输出到控制台（开发环境）
+    // output到控制台（devenv）
     if (this.config.enableConsole) {
       console.log(`[USER ACTION] ${action} by ${userId}`, details || '');
     }
 
-    // 检查是否需要刷新
+    // check是否needrefresh
     this.checkAndFlush();
   }
 
   /**
-   * 通用日志记录方法
+   * 通用logrecordmethod
    */
   private log(level: LogLevel, message: string, context?: Record<string, any>): void {
-    // 检查日志级别
+    // checklog级别
     if (!this.shouldLog(level)) {
       return;
     }
@@ -250,24 +250,24 @@ export class Logger {
 
     this.logBuffer.push(entry);
 
-    // 输出到控制台
+    // output到控制台
     if (this.config.enableConsole) {
       this.logToConsole(entry);
     }
 
-    // 检查是否需要刷新
+    // check是否needrefresh
     this.checkAndFlush();
   }
 
   /**
-   * 检查是否应该记录该级别的日志
+   * check是否shouldrecord该级别的log
    */
   private shouldLog(level: LogLevel): boolean {
     return LOG_LEVELS[level] >= LOG_LEVELS[this.config.level];
   }
 
   /**
-   * 输出日志到控制台
+   * outputlog到控制台
    */
   private logToConsole(entry: LogEntry): void {
     const timestamp = entry.timestamp.toISOString();
@@ -290,7 +290,7 @@ export class Logger {
   }
 
   /**
-   * 检查并刷新日志缓冲区
+   * check并refreshlog缓冲区
    */
   private checkAndFlush(): void {
     const totalLogs =
@@ -302,10 +302,10 @@ export class Logger {
   }
 
   /**
-   * 批量发送日志到服务器
+   * 批量发送log到service器
    */
   async flushLogs(): Promise<void> {
-    // 如果没有日志需要发送，直接返回
+    // 如果没有logneed发送，直接return
     if (
       this.logBuffer.length === 0 &&
       this.apiLogBuffer.length === 0 &&
@@ -323,7 +323,7 @@ export class Logger {
     this.apiLogBuffer = [];
     this.userActionBuffer = [];
 
-    // 如果没有配置端点，只清空缓冲区
+    // 如果没有configendpoint，只清空缓冲区
     if (!this.config.endpoint) {
       if (this.config.enableConsole) {
         console.debug('[Logger] No endpoint configured, logs discarded', {
@@ -336,7 +336,7 @@ export class Logger {
     }
 
     try {
-      // 发送日志到服务器
+      // 发送log到service器
       const payload = {
         logs: logsToSend,
         apiLogs: apiLogsToSend,
@@ -345,7 +345,7 @@ export class Logger {
         timestamp: new Date().toISOString(),
       };
 
-      // 在生产环境中，这里会发送到日志服务器
+      // 在prodenv中，这里会发送到logservice器
       // await fetch(this.config.endpoint, {
       //   method: 'POST',
       //   headers: {
@@ -362,13 +362,13 @@ export class Logger {
         });
       }
     } catch (error) {
-      // 发送失败，记录错误但不重新添加到缓冲区（避免无限循环）
+      // 发送failure，recorderror但不重新add到缓冲区（避免无限循环）
       console.error('[Logger] Failed to flush logs:', error);
     }
   }
 
   /**
-   * 启动自动刷新定时器
+   * start自动refresh定时器
    */
   private startFlushTimer(): void {
     if (this.flushTimer) {
@@ -381,7 +381,7 @@ export class Logger {
   }
 
   /**
-   * 停止自动刷新定时器
+   * stop自动refresh定时器
    */
   stopFlushTimer(): void {
     if (this.flushTimer) {
@@ -391,29 +391,29 @@ export class Logger {
   }
 
   /**
-   * 销毁Logger实例
+   * 销毁Loggerinstance
    */
   async destroy(): Promise<void> {
     this.stopFlushTimer();
-    await this.flushLogs(); // 最后一次刷新
+    await this.flushLogs(); // 最后一timesrefresh
   }
 
   /**
-   * 生成日志ID
+   * generatelogID
    */
   private generateLogId(): string {
     return `log_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   /**
-   * 生成会话ID
+   * generatesessionID
    */
   private generateSessionId(): string {
     return `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   /**
-   * 获取缓冲区状态
+   * get缓冲区status
    */
   getBufferStatus(): {
     logs: number;
@@ -431,7 +431,7 @@ export class Logger {
 }
 
 /**
- * 创建默认Logger实例的工厂函数
+ * create默认Loggerinstance的工厂function
  */
 export function createDefaultLogger(): Logger {
   const environment = (process.env.NODE_ENV as 'development' | 'test' | 'production') || 'development';
@@ -441,14 +441,14 @@ export function createDefaultLogger(): Logger {
     environment,
     enableConsole: environment === 'development',
     batchSize: 50,
-    flushInterval: 30000, // 30秒
+    flushInterval: 30000, // 30sec
     endpoint: process.env.NEXT_PUBLIC_LOG_ENDPOINT,
   };
 
   return new Logger(config);
 }
 
-// 默认实例 - 延迟初始化
+// 默认instance - 延迟初始化
 let defaultInstance: Logger | null = null;
 
 export function getLogger(): Logger {

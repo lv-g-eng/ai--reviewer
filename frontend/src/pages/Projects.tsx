@@ -1,14 +1,14 @@
 /**
- * Projects页面组件
+ * Projects页面component
  * 
- * 功能:
- * - 显示项目列表
- * - 使用VirtualList组件处理100+项目
- * - 支持项目选择和操作
- * - 支持批量删除、归档、标签操作
- * - 集成ErrorBoundary
+ * feature:
+ * - showproject列表
+ * - useVirtualListcomponenthandle100+project
+ * - supportproject选择and操作
+ * - support批量delete、归档、tag操作
+ * - integrationErrorBoundary
  * 
- * 验证需求: 2.3, 2.4
+ * verifyRequirement: 2.3, 2.4
  */
 
 'use client';
@@ -45,7 +45,7 @@ interface ProjectsProps {
 }
 
 /**
- * 项目列表项组件 - 支持拖拽排序
+ * project列表项component - support拖拽sort
  */
 const ProjectListItem: React.FC<{
   project: Project;
@@ -164,7 +164,7 @@ const ProjectListItem: React.FC<{
 };
 
 /**
- * Projects页面主组件
+ * Projects页面主component
  */
 export const Projects: React.FC<ProjectsProps> = ({
   enableVirtualScroll = true,
@@ -182,7 +182,7 @@ export const Projects: React.FC<ProjectsProps> = ({
   const [tagInput, setTagInput] = useState<string>('');
   const [batchOperationInProgress, setBatchOperationInProgress] = useState<boolean>(false);
 
-  // 配置拖拽传感器
+  // config拖拽传感器
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -194,21 +194,21 @@ export const Projects: React.FC<ProjectsProps> = ({
     })
   );
 
-  // 初始化本地项目列表
+  // 初始化本地project列表
   useEffect(() => {
     if (projects) {
       setLocalProjects(projects);
     }
   }, [projects]);
 
-  // 初始化本地项目列表
+  // 初始化本地project列表
   useEffect(() => {
     if (projects) {
       setLocalProjects(projects);
     }
   }, [projects]);
 
-  // 处理拖拽结束
+  // handle拖拽结束
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       const { active, over } = event;
@@ -217,7 +217,7 @@ export const Projects: React.FC<ProjectsProps> = ({
         return;
       }
 
-      // 更新本地顺序
+      // update本地顺序
       setLocalProjects((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
@@ -228,12 +228,12 @@ export const Projects: React.FC<ProjectsProps> = ({
 
         const newItems = arrayMove(items, oldIndex, newIndex);
 
-        // 持久化到后端 - 更新每个项目的display_order字段
-        // 注意：这里假设后端支持display_order字段，如果不支持，可以使用其他方式存储顺序
+        // 持久化到后端 - update每itemproject的display_orderfield
+        // note：这里假设后端supportdisplay_orderfield，如果不support，可以use其他方式存储顺序
         newItems.forEach((item, index) => {
           updateProject.mutate({
             projectId: item.id,
-            updates: { display_order: index } as any, // 使用any因为Project类型可能没有display_order
+            updates: { display_order: index } as any, // useany因为Projecttype可能没有display_order
           });
         });
 
@@ -243,19 +243,19 @@ export const Projects: React.FC<ProjectsProps> = ({
     [updateProject]
   );
 
-  // 防抖搜索 - 300毫秒延迟
+  // 防抖search - 300ms延迟
   useEffect(() => {
     // 清除之前的定时器
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    // 设置新的定时器
+    // set新的定时器
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
     }, 300);
 
-    // 清理函数
+    // cleanupfunction
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -263,34 +263,34 @@ export const Projects: React.FC<ProjectsProps> = ({
     };
   }, [searchQuery]);
 
-  // 处理搜索输入变化
+  // handlesearchinput变化
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   }, []);
 
-  // 清除搜索
+  // 清除search
   const handleClearSearch = useCallback(() => {
     setSearchQuery('');
     setDebouncedSearchQuery('');
   }, []);
 
-  // 过滤项目列表
+  // filterproject列表
   const filteredProjects = useMemo(() => {
     if (!localProjects) return [];
     if (!debouncedSearchQuery.trim()) return localProjects;
 
     const query = debouncedSearchQuery.toLowerCase().trim();
     return localProjects.filter((project) => {
-      // 搜索项目名称
+      // searchproject名称
       if (project.name.toLowerCase().includes(query)) return true;
       
-      // 搜索项目描述
+      // searchproject描述
       if (project.description?.toLowerCase().includes(query)) return true;
       
-      // 搜索编程语言
+      // search编程语言
       if (project.language?.toLowerCase().includes(query)) return true;
       
-      // 搜索状态
+      // searchstatus
       if (project.is_active && 'active'.includes(query)) return true;
       if (!project.is_active && 'inactive'.includes(query)) return true;
       
@@ -298,7 +298,7 @@ export const Projects: React.FC<ProjectsProps> = ({
     });
   }, [localProjects, debouncedSearchQuery]);
 
-  // 排序项目列表
+  // sortproject列表
   const sortedProjects = useMemo(() => {
     if (!filteredProjects || filteredProjects.length === 0) return [];
 
@@ -330,19 +330,19 @@ export const Projects: React.FC<ProjectsProps> = ({
     return sorted;
   }, [filteredProjects, sortBy, sortOrder]);
 
-  // 处理排序变化
+  // handlesort变化
   const handleSortChange = useCallback((newSortBy: typeof sortBy) => {
     if (sortBy === newSortBy) {
-      // 如果点击相同的排序字段，切换排序顺序
+      // 如果点击相同的sortfield，切换sort顺序
       setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
-      // 如果点击不同的排序字段，设置为升序
+      // 如果点击不同的sortfield，set为升序
       setSortBy(newSortBy);
       setSortOrder('asc');
     }
   }, [sortBy]);
 
-  // 切换项目选择状态
+  // 切换project选择status
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -355,7 +355,7 @@ export const Projects: React.FC<ProjectsProps> = ({
     });
   };
 
-  // 全选/取消全选（基于排序后的项目）
+  // 全选/cancel全选（基于sort后的project）
   const handleToggleSelectAll = () => {
     if (!sortedProjects) return;
     
@@ -366,7 +366,7 @@ export const Projects: React.FC<ProjectsProps> = ({
     }
   };
 
-  // 批量删除
+  // 批量delete
   const handleBatchDelete = useCallback(async () => {
     if (selectedIds.size === 0) return;
     
@@ -379,17 +379,17 @@ export const Projects: React.FC<ProjectsProps> = ({
     setBatchOperationInProgress(true);
     
     try {
-      // 删除所有选中的项目
+      // delete所有选中的project
       const deletePromises = Array.from(selectedIds).map((projectId) =>
         updateProject.mutateAsync({
           projectId,
-          updates: { is_active: false } as any, // 软删除：设置为不活跃
+          updates: { is_active: false } as any, // 软delete：set为不活跃
         })
       );
       
       await Promise.all(deletePromises);
       
-      // 从本地状态中移除已删除的项目
+      // 从本地status中移除已delete的project
       setLocalProjects((prev) =>
         prev.filter((project) => !selectedIds.has(project.id))
       );
@@ -419,17 +419,17 @@ export const Projects: React.FC<ProjectsProps> = ({
     setBatchOperationInProgress(true);
     
     try {
-      // 归档所有选中的项目
+      // 归档所有选中的project
       const archivePromises = Array.from(selectedIds).map((projectId) =>
         updateProject.mutateAsync({
           projectId,
-          updates: { is_active: false } as any, // 归档：设置为不活跃
+          updates: { is_active: false } as any, // 归档：set为不活跃
         })
       );
       
       await Promise.all(archivePromises);
       
-      // 更新本地状态
+      // update本地status
       setLocalProjects((prev) =>
         prev.map((project) =>
           selectedIds.has(project.id)
@@ -450,13 +450,13 @@ export const Projects: React.FC<ProjectsProps> = ({
     }
   }, [selectedIds, updateProject]);
 
-  // 批量添加标签
+  // 批量addtag
   const handleBatchTag = useCallback(() => {
     if (selectedIds.size === 0) return;
     setShowTagModal(true);
   }, [selectedIds]);
 
-  // 确认添加标签
+  // confirmaddtag
   const handleConfirmTag = useCallback(async () => {
     if (!tagInput.trim() || selectedIds.size === 0) return;
     
@@ -464,17 +464,17 @@ export const Projects: React.FC<ProjectsProps> = ({
     setShowTagModal(false);
     
     try {
-      // 注意：当前Project类型不包含tags字段
-      // 这里提供一个占位实现，实际应该调用支持tags的API端点
+      // note：当前Projecttype不containtagsfield
+      // 这里provide一item占位实现，实际should调用supporttags的APIendpoint
       // 例如: POST /projects/{id}/tags 或者扩展Project模型
       
-      // 临时实现：使用description字段存储标签信息
-      // 在实际生产环境中，应该扩展后端API支持tags字段
+      // 临时实现：usedescriptionfield存储taginfo
+      // 在实际prodenv中，should扩展后端APIsupporttagsfield
       const tagPromises = Array.from(selectedIds).map((projectId) => {
         const project = localProjects.find((p) => p.id === projectId);
         if (!project) return Promise.resolve();
         
-        // 将标签添加到description中（临时方案）
+        // 将tagadd到description中（临时方案）
         const newTags = tagInput
           .split(',')
           .map((tag) => tag.trim())
@@ -495,7 +495,7 @@ export const Projects: React.FC<ProjectsProps> = ({
       
       await Promise.all(tagPromises);
       
-      // 更新本地状态
+      // update本地status
       setLocalProjects((prev) =>
         prev.map((project) => {
           if (!selectedIds.has(project.id)) return project;
@@ -517,7 +517,7 @@ export const Projects: React.FC<ProjectsProps> = ({
         })
       );
       
-      // 清除选择和输入
+      // 清除选择andinput
       setSelectedIds(new Set());
       setTagInput('');
       
@@ -530,13 +530,13 @@ export const Projects: React.FC<ProjectsProps> = ({
     }
   }, [selectedIds, tagInput, localProjects, updateProject]);
 
-  // 取消添加标签
+  // canceladdtag
   const handleCancelTag = useCallback(() => {
     setShowTagModal(false);
     setTagInput('');
   }, []);
 
-  // 渲染单个项目项
+  // render单itemproject项
   const renderProjectItem = (project: Project, index: number) => {
     return (
       <ProjectListItem
@@ -548,17 +548,17 @@ export const Projects: React.FC<ProjectsProps> = ({
     );
   };
 
-  // 计算是否应该使用虚拟滚动（基于排序后的项目）
+  // 计算是否shoulduse虚拟滚动（基于sort后的project）
   const shouldUseVirtualScroll = useMemo(() => {
     return enableVirtualScroll && sortedProjects && sortedProjects.length > 100;
   }, [enableVirtualScroll, sortedProjects]);
 
-  // 加载状态
+  // loadstatus
   if (isLoading) {
     return <LoadingState text="Loading projects..." />;
   }
 
-  // 错误状态
+  // errorstatus
   if (error) {
     return (
       <div
@@ -583,7 +583,7 @@ export const Projects: React.FC<ProjectsProps> = ({
     );
   }
 
-  // 空状态
+  // 空status
   if (!localProjects || localProjects.length === 0) {
     return (
       <div
@@ -608,7 +608,7 @@ export const Projects: React.FC<ProjectsProps> = ({
     );
   }
 
-  // 搜索无结果状态
+  // search无resultstatus
   const hasSearchResults = sortedProjects.length > 0;
   const isSearching = debouncedSearchQuery.trim().length > 0;
 
@@ -779,7 +779,7 @@ export const Projects: React.FC<ProjectsProps> = ({
               </div>
             </div>
 
-          {/* 排序控制栏 */}
+          {/* sort控制栏 */}
           <div
             style={{
               display: 'flex',
@@ -891,7 +891,7 @@ export const Projects: React.FC<ProjectsProps> = ({
             </button>
           </div>
 
-          {/* 搜索栏 */}
+          {/* search栏 */}
           <div style={{ position: 'relative' }}>
             <input
               type="text"
@@ -944,7 +944,7 @@ export const Projects: React.FC<ProjectsProps> = ({
           </div>
         </div>
 
-        {/* 项目列表 */}
+        {/* project列表 */}
         <div style={{ flex: 1, overflow: 'hidden' }}>
           {!hasSearchResults && isSearching ? (
             <div
@@ -988,8 +988,8 @@ export const Projects: React.FC<ProjectsProps> = ({
               {shouldUseVirtualScroll ? (
                 <VirtualList
                   items={sortedProjects}
-                  height={window.innerHeight - 140} // 减去头部高度（包含搜索栏）
-                  itemHeight={120} // 估计的项目项高度
+                  height={window.innerHeight - 140} // 减去头部高度（containsearch栏）
+                  itemHeight={120} // 估计的project项高度
                   overscan={5}
                   renderItem={renderProjectItem}
                   className="projects-virtual-list"
@@ -1009,7 +1009,7 @@ export const Projects: React.FC<ProjectsProps> = ({
           )}
         </div>
 
-        {/* 标签添加模态框 */}
+        {/* tagadd模态框 */}
         {showTagModal && (
           <div
             style={{
@@ -1120,7 +1120,7 @@ export const Projects: React.FC<ProjectsProps> = ({
           </div>
         )}
 
-        {/* 批量操作加载指示器 */}
+        {/* 批量操作load指示器 */}
         {batchOperationInProgress && (
           <div
             style={{

@@ -1,13 +1,13 @@
 /**
- * LoadingState组件
+ * LoadingStatecomponent
  * 
- * 功能:
- * - 提供统一的加载状态展示
- * - 支持多种加载样式（spinner、skeleton、dots）
- * - 可自定义大小和颜色
- * - 可选加载文本提示
+ * feature:
+ * - provide统一的loadstatus展示
+ * - support多种loadstyle（spinner、skeleton、dots）
+ * - 可自定义大小and颜色
+ * - 可选load文本hint
  * 
- * 验证需求: 12.3
+ * verifyRequirement: 12.3
  */
 
 import React, { CSSProperties } from 'react';
@@ -16,15 +16,15 @@ export type LoadingVariant = 'spinner' | 'skeleton' | 'dots';
 export type LoadingSize = 'small' | 'medium' | 'large';
 
 export interface LoadingStateProps {
-  /** 加载状态变体 */
+  /** loadstatus变体 */
   variant?: LoadingVariant;
   /** 大小 */
   size?: LoadingSize;
-  /** 加载文本 */
+  /** load文本 */
   text?: string;
-  /** 是否全屏显示 */
+  /** 是否全屏show */
   fullscreen?: boolean;
-  /** 自定义类名 */
+  /** 自定义class名 */
   className?: string;
   /** 自定义颜色 */
   color?: string;
@@ -39,7 +39,7 @@ const sizeMap: Record<LoadingSize, number> = {
 };
 
 /**
- * Spinner加载动画
+ * Spinnerload动画
  */
 const Spinner: React.FC<{ size: number; color: string }> = ({ size, color }) => {
   const spinnerStyle: CSSProperties = {
@@ -67,7 +67,7 @@ const Spinner: React.FC<{ size: number; color: string }> = ({ size, color }) => 
 };
 
 /**
- * Dots加载动画
+ * Dotsload动画
  */
 const Dots: React.FC<{ size: number; color: string }> = ({ size, color }) => {
   const dotSize = size / 4;
@@ -153,8 +153,8 @@ const Skeleton: React.FC<{ lines: number; color: string }> = ({ lines, color }) 
 };
 
 /**
- * LoadingState组件
- * 提供统一的加载状态展示
+ * LoadingStatecomponent
+ * provide统一的loadstatus展示
  */
 export const LoadingState: React.FC<LoadingStateProps> = ({
   variant = 'spinner',

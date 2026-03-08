@@ -1,12 +1,12 @@
 /**
- * 任务调度器单元测试
+ * task调度器单元test
  */
 
 import { TaskScheduler, createTaskScheduler, ScheduleResult } from '../taskScheduler';
 import { AnalysisTask } from '../../pages/AnalysisQueue';
 
 /**
- * 创建测试用的任务
+ * createtest用的task
  */
 function createMockTask(overrides: Partial<AnalysisTask>): AnalysisTask {
   return {

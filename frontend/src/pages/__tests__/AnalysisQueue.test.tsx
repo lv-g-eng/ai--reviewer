@@ -1,12 +1,12 @@
 /**
- * AnalysisQueue组件单元测试
+ * AnalysisQueuecomponent单元test
  * 
- * 测试场景:
- * - 组件渲染和数据加载
- * - 任务列表展示
- * - VirtualList集成
- * - 错误状态处理
- * - 资源清理
+ * test场景:
+ * - componentrenderanddataload
+ * - task列表展示
+ * - VirtualListintegration
+ * - errorstatushandle
+ * - 资源cleanup
  */
 
 import React from 'react';
@@ -120,7 +120,7 @@ describe('AnalysisQueue', () => {
     jest.useRealTimers();
   });
 
-  describe('渲染和数据加载', () => {
+  describe('renderanddataload', () => {
     it('should display loading state on initial render', () => {
       mockApiClient.get.mockImplementation(() => new Promise(() => {}));
 
@@ -164,7 +164,7 @@ describe('AnalysisQueue', () => {
     });
   });
 
-  describe('任务列表展示', () => {
+  describe('task列表展示', () => {
     it('should display task details correctly', async () => {
       mockApiClient.get.mockResolvedValue(mockTasks);
 
@@ -174,15 +174,15 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText('Code Analysis Task')).toBeInTheDocument();
       });
 
-      // 检查任务类型
+      // checktasktype
       expect(screen.getByText('Code Analysis')).toBeInTheDocument();
       expect(screen.getAllByText('Security Scan').length).toBeGreaterThan(0);
 
-      // 检查优先级
+      // check优先级
       expect(screen.getAllByText(/Critical \(8\)/).length).toBeGreaterThan(0); // priority 8
       expect(screen.getByText(/Medium \(5\)/)).toBeInTheDocument(); // priority 5
 
-      // 检查状态
+      // checkstatus
       expect(screen.getByText('Running')).toBeInTheDocument();
       expect(screen.getByText('Pending')).toBeInTheDocument();
       expect(screen.getByText('Completed')).toBeInTheDocument();
@@ -220,7 +220,7 @@ describe('AnalysisQueue', () => {
     });
   });
 
-  describe('VirtualList集成', () => {
+  describe('VirtualListintegration', () => {
     it('should use VirtualList for rendering tasks', async () => {
       mockApiClient.get.mockResolvedValue(mockTasks);
 
@@ -240,12 +240,12 @@ describe('AnalysisQueue', () => {
         expect(screen.getByTestId('virtual-list')).toBeInTheDocument();
       });
 
-      // VirtualList应该接收到所有任务
+      // VirtualListshould接收到所有task
       expect(screen.getAllByTestId(/task-item-/).length).toBe(4);
     });
 
     it('should handle large number of tasks efficiently', async () => {
-      // 创建50+个任务
+      // create50+itemtask
       const largeTasks: AnalysisTask[] = Array.from({ length: 60 }, (_, i) => ({
         id: `task-${i}`,
         name: `Task ${i}`,
@@ -267,12 +267,12 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText(/Tasks \(60\)/)).toBeInTheDocument();
       });
 
-      // VirtualList应该渲染所有任务（在mock中）
+      // VirtualListshouldrender所有task（在mock中）
       expect(screen.getAllByTestId(/task-item-/).length).toBe(60);
     });
   });
 
-  describe('交互功能', () => {
+  describe('交互feature', () => {
     it('should allow selecting a task', async () => {
       mockApiClient.get.mockResolvedValue(mockTasks);
 
@@ -285,8 +285,8 @@ describe('AnalysisQueue', () => {
       const taskItem = screen.getByTestId('task-item-task-1');
       await userEvent.click(taskItem);
 
-      // 任务应该被选中（通过样式变化，但在测试中难以验证）
-      // 这里我们只验证点击不会导致错误
+      // taskshould被选中（通过style变化，但在test中难以verify）
+      // 这里我们只verify点击不会导致error
       expect(taskItem).toBeInTheDocument();
     });
 
@@ -302,12 +302,12 @@ describe('AnalysisQueue', () => {
       const refreshButton = screen.getByText('🔄 Refresh');
       await userEvent.click(refreshButton);
 
-      // 应该再次调用API
+      // should再times调用API
       expect(mockApiClient.get).toHaveBeenCalledTimes(2);
     });
   });
 
-  describe('错误处理', () => {
+  describe('errorhandle', () => {
     it('should display error message when fetch fails', async () => {
       const error = new Error('Network error');
       mockApiClient.get.mockRejectedValue(error);
@@ -351,7 +351,7 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText('Code Analysis Task')).toBeInTheDocument();
       });
 
-      // 触发刷新
+      // 触发refresh
       const refreshButton = screen.getByText('🔄 Refresh');
       await userEvent.click(refreshButton);
 
@@ -359,12 +359,12 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText(/Failed to refresh data/)).toBeInTheDocument();
       });
 
-      // 原有数据应该仍然显示
+      // 原有datashould仍然show
       expect(screen.getByText('Code Analysis Task')).toBeInTheDocument();
     });
   });
 
-  describe('空状态', () => {
+  describe('空status', () => {
     it('should display empty state when no tasks', async () => {
       mockApiClient.get.mockResolvedValue([]);
 
@@ -376,7 +376,7 @@ describe('AnalysisQueue', () => {
     });
   });
 
-  describe('自动刷新', () => {
+  describe('自动refresh', () => {
     it('should refresh data at specified interval', async () => {
       mockApiClient.get.mockResolvedValue(mockTasks);
 
@@ -386,14 +386,14 @@ describe('AnalysisQueue', () => {
         expect(mockApiClient.get).toHaveBeenCalledTimes(1);
       });
 
-      // 快进5秒
+      // 快进5sec
       jest.advanceTimersByTime(5000);
 
       await waitFor(() => {
         expect(mockApiClient.get).toHaveBeenCalledTimes(2);
       });
 
-      // 再快进5秒
+      // 再快进5sec
       jest.advanceTimersByTime(5000);
 
       await waitFor(() => {
@@ -413,12 +413,12 @@ describe('AnalysisQueue', () => {
       // 快进时间
       jest.advanceTimersByTime(10000);
 
-      // 不应该再次调用
+      // 不should再times调用
       expect(mockApiClient.get).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('资源清理', () => {
+  describe('资源cleanup', () => {
     it('should clean up timer on unmount', async () => {
       mockApiClient.get.mockResolvedValue(mockTasks);
 
@@ -433,7 +433,7 @@ describe('AnalysisQueue', () => {
       // 快进时间
       jest.advanceTimersByTime(10000);
 
-      // 不应该再次调用（因为组件已卸载）
+      // 不should再times调用（因为component已卸载）
       expect(mockApiClient.get).toHaveBeenCalledTimes(1);
     });
 
@@ -452,25 +452,25 @@ describe('AnalysisQueue', () => {
       // 解析promise
       resolvePromise!(mockTasks);
 
-      // 等待一下确保没有状态更新错误
+      // wait一下确保没有statusupdateerror
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // 如果没有错误，测试通过
+      // 如果没有error，test通过
     });
   });
 
-  describe('ErrorBoundary集成', () => {
+  describe('ErrorBoundaryintegration', () => {
     it('should be wrapped with ErrorBoundary', () => {
       mockApiClient.get.mockResolvedValue(mockTasks);
 
       const { container } = render(<AnalysisQueue />);
 
-      // ErrorBoundary应该包裹组件
+      // ErrorBoundaryshould包裹component
       expect(container).toBeInTheDocument();
     });
   });
 
-  describe('任务优先级调度', () => {
+  describe('task优先级调度', () => {
     it('should display tasks sorted by priority', async () => {
       const unsortedTasks: AnalysisTask[] = [
         {
@@ -519,10 +519,10 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText('Tasks (3) - Sorted by Priority')).toBeInTheDocument();
       });
 
-      // 获取所有任务项
+      // get所有task项
       const taskItems = screen.getAllByTestId(/task-item-/);
       
-      // 验证顺序：高优先级在前
+      // verify顺序：高优先级在前
       expect(taskItems[0]).toHaveAttribute('data-testid', 'task-item-task-high');
       expect(taskItems[1]).toHaveAttribute('data-testid', 'task-item-task-medium');
       expect(taskItems[2]).toHaveAttribute('data-testid', 'task-item-task-low');
@@ -576,7 +576,7 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText('Max Concurrent:')).toBeInTheDocument();
       });
 
-      // 验证调度信息
+      // verify调度info
       expect(screen.getByText('Available Slots:')).toBeInTheDocument();
       expect(screen.getByText('Scheduled to Execute:')).toBeInTheDocument();
       expect(screen.getByText('Waiting:')).toBeInTheDocument();
@@ -667,8 +667,8 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText('Max Concurrent:')).toBeInTheDocument();
       });
 
-      // 应该显示没有可用槽位
-      // 注意：由于我们的mock，实际的数值显示可能需要更精确的选择器
+      // shouldshow没有可用槽位
+      // note：由于我们的mock，实际的数valueshow可能need更精确的选择器
       const scheduleInfo = screen.getByText('Available Slots:').parentElement;
       expect(scheduleInfo).toBeInTheDocument();
     });
@@ -712,13 +712,13 @@ describe('AnalysisQueue', () => {
 
       const taskItems = screen.getAllByTestId(/task-item-/);
       
-      // 相同优先级时，早创建的应该在前
+      // 相同优先级时，早create的shouldBeAt前
       expect(taskItems[0]).toHaveAttribute('data-testid', 'task-item-task-old');
       expect(taskItems[1]).toHaveAttribute('data-testid', 'task-item-task-new');
     });
   });
 
-  describe('任务自动重试机制', () => {
+  describe('task自动retry机制', () => {
     it('should display retry badge for failed tasks with scheduled retry', async () => {
       const failedTask: AnalysisTask = {
         id: 'task-failed',
@@ -746,7 +746,7 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText(/🔄 Retry/)).toBeInTheDocument();
       });
 
-      // 应该显示重试计数
+      // shouldshowretry计数
       expect(screen.getByText('🔄 Retry 2/3')).toBeInTheDocument();
     });
 
@@ -805,7 +805,7 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText('Failed Task')).toBeInTheDocument();
       });
 
-      // 不应该显示重试徽章（已达到最大重试次数）
+      // 不shouldshowretry徽章（已达到最大retrytimes数）
       expect(screen.queryByText(/🔄 Retry/)).not.toBeInTheDocument();
     });
 
@@ -866,13 +866,13 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText('Failed Task')).toBeInTheDocument();
       });
 
-      // 卸载组件
+      // 卸载component
       unmount();
 
-      // 快进时间，确保没有内存泄漏或错误
+      // 快进时间，确保没有内存泄漏或error
       jest.advanceTimersByTime(10 * 60 * 1000);
 
-      // 如果没有错误，测试通过
+      // 如果没有error，test通过
     });
 
     it('should handle multiple failed tasks with different retry counts', async () => {
@@ -938,15 +938,15 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText('Failed Task 1')).toBeInTheDocument();
       });
 
-      // 应该显示不同的重试徽章
+      // shouldshow不同的retry徽章
       expect(screen.getByText('🔄 Retry 1/3')).toBeInTheDocument();
       expect(screen.getByText('🔄 Retry 2/3')).toBeInTheDocument();
-      // task-3 已达到最大重试次数，不应该显示重试徽章
+      // task-3 已达到最大retrytimes数，不shouldshowretry徽章
       expect(screen.queryByText('🔄 Retry 4/3')).not.toBeInTheDocument();
     });
   });
 
-  describe('任务优先级调整', () => {
+  describe('task优先级调整', () => {
     it('should display priority adjustment controls for pending tasks', async () => {
       const pendingTask: AnalysisTask = {
         id: 'task-pending',
@@ -969,7 +969,7 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText('Adjust Priority:')).toBeInTheDocument();
       });
 
-      // 应该显示增加/减少按钮和滑块
+      // shouldshow增加/减少buttonand滑块
       expect(screen.getByTestId('increase-priority-task-pending')).toBeInTheDocument();
       expect(screen.getByTestId('decrease-priority-task-pending')).toBeInTheDocument();
       expect(screen.getByTestId('priority-slider-task-pending')).toBeInTheDocument();
@@ -1083,7 +1083,7 @@ describe('AnalysisQueue', () => {
       const increaseButton = screen.getByTestId('increase-priority-task-pending');
       await userEvent.click(increaseButton);
 
-      // 应该调用API更新优先级
+      // should调用APIupdate优先级
       await waitFor(() => {
         expect(mockApiClient.put).toHaveBeenCalledWith(
           '/analysis/queue/task-pending/priority',
@@ -1119,7 +1119,7 @@ describe('AnalysisQueue', () => {
       const decreaseButton = screen.getByTestId('decrease-priority-task-pending');
       await userEvent.click(decreaseButton);
 
-      // 应该调用API更新优先级
+      // should调用APIupdate优先级
       await waitFor(() => {
         expect(mockApiClient.put).toHaveBeenCalledWith(
           '/analysis/queue/task-pending/priority',
@@ -1154,11 +1154,11 @@ describe('AnalysisQueue', () => {
 
       const slider = screen.getByTestId('priority-slider-task-pending') as HTMLInputElement;
       
-      // 使用fireEvent改变滑块值
+      // usefireEvent改变滑块value
       const { fireEvent } = await import('@testing-library/react');
       fireEvent.change(slider, { target: { value: '8' } });
 
-      // 应该调用API更新优先级
+      // should调用APIupdate优先级
       await waitFor(() => {
         expect(mockApiClient.put).toHaveBeenCalledWith(
           '/analysis/queue/task-pending/priority',
@@ -1276,10 +1276,10 @@ describe('AnalysisQueue', () => {
       await userEvent.click(increaseButton);
       await userEvent.click(increaseButton);
 
-      // 等待队列重新排序
+      // waitqueue重新sort
       await waitFor(() => {
         taskItems = screen.getAllByTestId(/task-item-/);
-        // Task 2 (priority 8) 应该在前，Task 1 (priority 5) 在后
+        // Task 2 (priority 8) shouldBeAt前，Task 1 (priority 5) 在后
         expect(taskItems[0]).toHaveAttribute('data-testid', 'task-item-task-2');
       });
     });
@@ -1333,14 +1333,14 @@ describe('AnalysisQueue', () => {
         expect(screen.getByText('Scheduled to Execute:')).toBeInTheDocument();
       });
 
-      // 初始状态：task-3 (priority 8) 应该被调度执行
+      // 初始status：task-3 (priority 8) should被调度execute
       expect(screen.getAllByText('⏱️ Scheduled').length).toBeGreaterThan(0);
 
       // 增加task-2的优先级到9
       const increaseButton = screen.getByTestId('increase-priority-task-2');
       await userEvent.click(increaseButton);
 
-      // 等待调度结果更新
+      // wait调度resultupdate
       await waitFor(() => {
         expect(mockApiClient.put).toHaveBeenCalled();
       });
@@ -1374,7 +1374,7 @@ describe('AnalysisQueue', () => {
       const increaseButton = screen.getByTestId('increase-priority-task-pending');
       await userEvent.click(increaseButton);
 
-      // 应该记录错误
+      // shouldrecorderror
       await waitFor(() => {
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           'Failed to update task priority:',
@@ -1408,12 +1408,12 @@ describe('AnalysisQueue', () => {
         expect(screen.getByTestId('increase-priority-task-pending')).toBeInTheDocument();
       });
 
-      // 点击增加按钮不应该选中任务
+      // 点击增加button不should选中task
       const increaseButton = screen.getByTestId('increase-priority-task-pending');
       await userEvent.click(increaseButton);
 
-      // 任务项不应该被选中（通过检查是否调用了handleSelectTask）
-      // 这个测试主要验证stopPropagation是否工作
+      // task项不should被选中（通过check是否调用了handleSelectTask）
+      // 这itemtest主要verifystopPropagation是否工作
       expect(mockApiClient.put).toHaveBeenCalled();
     });
 

@@ -50,16 +50,16 @@ api_router.include_router(rbac_users.router, prefix="/rbac/users", tags=["RBAC U
 api_router.include_router(rbac_projects.router, prefix="/rbac/projects", tags=["RBAC Project Management"])
 api_router.include_router(rbac_audit.router, prefix="/rbac/audit", tags=["RBAC Audit Logs"])
 
-# Project Analytics endpoints (AI 审查数据)
+# Project Analytics endpoints (AI reviewData)
 api_router.include_router(project_analytics.router, prefix="/projects", tags=["Project Analytics"])
 
-# Architecture Visualization endpoints (架构可视化)
+# Architecture Visualization endpoints (architecture可视化)
 api_router.include_router(architecture.router, prefix="/architecture", tags=["Architecture Visualization"])
 
-# User Settings endpoints (用户设置)
+# User Settings endpoints (userset)
 api_router.include_router(user_settings.router, prefix="/user/settings", tags=["User Settings"])
 
-# Code Review endpoints (代码审查 - 使用用户 API 配置)
+# Code Review endpoints (codereview - useuser API config)
 api_router.include_router(code_review.router, prefix="/code-review", tags=["Code Review"])
 
 # Audit Logging endpoints

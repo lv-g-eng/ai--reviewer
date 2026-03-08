@@ -1,19 +1,19 @@
 /**
- * ErrorMonitor属性测试
+ * ErrorMonitorpropertytest
  * 
  * Feature: frontend-production-optimization
- * Property 8: 错误监控上报
+ * Property 8: error监控上报
  * 
  * **Validates: Requirements 9.1, 9.4**
  * 
- * 测试覆盖:
- * - 对于任何未捕获的错误，应该将包含完整上下文（用户信息、浏览器信息、页面URL、错误堆栈）的错误报告发送到监控服务
+ * testCoverage:
+ * - 对于任何未捕获的error，should将contain完整上下文（userinfo、浏览器info、页面URL、error堆栈）的errorreport发送到监控service
  */
 
 import fc from 'fast-check';
 import { ErrorMonitor, MonitorConfig, ErrorReport } from '../ErrorMonitor';
 
-describe('Property 8: 错误监控上报', () => {
+describe('Property 8: error监控上报', () => {
   let consoleErrorSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
   let consoleLogSpy: jest.SpyInstance;
@@ -30,7 +30,7 @@ describe('Property 8: 错误监控上报', () => {
     consoleLogSpy.mockRestore();
   });
 
-  // 自定义生成器：生成错误对象
+  // customGenerator：generateerrorobject
   const errorArbitrary = () =>
     fc.record({
       message: fc.string({ minLength: 1, maxLength: 200 }),
@@ -41,7 +41,7 @@ describe('Property 8: 错误监控上报', () => {
       return error;
     });
 
-  // 自定义生成器：生成错误上下文
+  // customGenerator：generateerror上下文
   const errorContextArbitrary = () =>
     fc.record({
       userId: fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: undefined }),
@@ -58,7 +58,7 @@ describe('Property 8: 错误监控上报', () => {
       ),
     });
 
-  // 自定义生成器：生成监控配置
+  // customGenerator：generate监控config
   const monitorConfigArbitrary = () =>
     fc.record({
       environment: fc.constantFrom('development', 'test', 'production'),
@@ -66,34 +66,34 @@ describe('Property 8: 错误监控上报', () => {
       sampleRate: fc.option(fc.double({ min: 0, max: 1 }), { nil: undefined }),
     });
 
-  it('应该为所有错误生成包含完整上下文的错误报告', () => {
+  it('should为所有errorgeneratecontain完整上下文的errorreport', () => {
     fc.assert(
       fc.property(
         monitorConfigArbitrary(),
         errorArbitrary(),
         errorContextArbitrary(),
         (config, error, context) => {
-          // 创建ErrorMonitor实例
+          // createErrorMonitorinstance
           const errorMonitor = new ErrorMonitor({
             ...config,
-            enableDebugMode: true, // 强制启用调试模式以便捕获输出
+            enableDebugMode: true, // 强制启用调试模式以便捕获output
           });
           errorMonitor.initialize();
 
-          // 捕获错误
+          // 捕获error
           errorMonitor.captureError(error, context);
 
-          // 验证错误被记录
+          // verifyerror被record
           expect(consoleErrorSpy).toHaveBeenCalled();
 
-          // 获取记录的错误报告
+          // getrecord的errorreport
           const calls = consoleErrorSpy.mock.calls;
           const lastCall = calls[calls.length - 1];
           expect(lastCall[0]).toBe('[ErrorMonitor]');
 
           const errorReport: ErrorReport = lastCall[1];
 
-          // 验证错误报告包含所有必需字段（需求9.1, 9.4）
+          // verifyerrorreportcontain所有必需field（requirement9.1, 9.4）
           expect(errorReport).toMatchObject({
             id: expect.stringMatching(/^error_\d+_[a-z0-9]+$/),
             type: expect.stringMatching(/^(network|validation|authorization|server|client|unknown)$/),
@@ -102,24 +102,24 @@ describe('Property 8: 错误监控上报', () => {
             timestamp: expect.any(Date),
           });
 
-          // 验证错误上下文包含完整信息（需求9.4）
+          // verifyerror上下文contain完整info（requirement9.4）
           expect(errorReport.context).toMatchObject({
             url: expect.any(String),
             userAgent: expect.any(String),
             timestamp: expect.any(Date),
           });
 
-          // 如果提供了userId，应该包含在上下文中
+          // 如果provide了userId，shouldcontain在上下文中
           if (context.userId) {
             expect(errorReport.context.userId).toBe(context.userId);
           }
 
-          // 如果提供了additionalData，应该包含在上下文中
+          // 如果provide了additionalData，shouldcontain在上下文中
           if (context.additionalData) {
             expect(errorReport.context.additionalData).toEqual(context.additionalData);
           }
 
-          // 验证URL和userAgent被正确设置
+          // verifyURLanduserAgent被正确set
           expect(errorReport.context.url).toBe(context.url);
           expect(errorReport.context.userAgent).toBe(context.userAgent);
         }
@@ -128,7 +128,7 @@ describe('Property 8: 错误监控上报', () => {
     );
   });
 
-  it('应该为所有错误生成唯一的错误ID', () => {
+  it('should为所有errorgenerate唯一的errorID', () => {
     fc.assert(
       fc.property(
         fc.array(errorArbitrary(), { minLength: 2, maxLength: 10 }),
@@ -139,19 +139,19 @@ describe('Property 8: 错误监控上报', () => {
           });
           errorMonitor.initialize();
 
-          // 捕获所有错误
+          // 捕获所有error
           errors.forEach(error => errorMonitor.captureError(error));
 
-          // 获取所有错误ID
+          // get所有errorID
           const errorIds = consoleErrorSpy.mock.calls
             .filter(call => call[0] === '[ErrorMonitor]')
             .map(call => call[1].id);
 
-          // 验证所有ID都是唯一的
+          // verify所有ID都是唯一的
           const uniqueIds = new Set(errorIds);
           expect(uniqueIds.size).toBe(errorIds.length);
 
-          // 验证所有ID都符合格式
+          // verify所有ID都符合format
           errorIds.forEach(id => {
             expect(id).toMatch(/^error_\d+_[a-z0-9]+$/);
           });
@@ -161,7 +161,7 @@ describe('Property 8: 错误监控上报', () => {
     );
   });
 
-  it('应该正确分类所有类型的错误', () => {
+  it('should正确分class所有type的error', () => {
     fc.assert(
       fc.property(
         fc.constantFrom(
@@ -198,7 +198,7 @@ describe('Property 8: 错误监控上报', () => {
     );
   });
 
-  it('应该在设置用户上下文后将用户信息包含在错误报告中', () => {
+  it('shouldBeAtsetuser上下文后将userinfocontain在errorreport中', () => {
     fc.assert(
       fc.property(
         fc.record({
@@ -214,17 +214,17 @@ describe('Property 8: 错误监控上报', () => {
           });
           errorMonitor.initialize();
 
-          // 设置用户上下文
+          // setuser上下文
           errorMonitor.setUser(user);
 
-          // 捕获错误（不提供userId）
+          // 捕获error（不provideuserId）
           errorMonitor.captureError(error);
 
           const calls = consoleErrorSpy.mock.calls;
           const lastCall = calls[calls.length - 1];
           const errorReport: ErrorReport = lastCall[1];
 
-          // 验证用户ID被包含在错误报告中
+          // verifyuserID被contain在errorreport中
           expect(errorReport.context.userId).toBe(user.id);
         }
       ),
@@ -232,7 +232,7 @@ describe('Property 8: 错误监控上报', () => {
     );
   });
 
-  it('应该支持beforeSend钩子修改或过滤错误报告', () => {
+  it('shouldsupportbeforeSend钩子修改或filtererrorreport', () => {
     fc.assert(
       fc.property(
         errorArbitrary(),
@@ -258,11 +258,11 @@ describe('Property 8: 错误监控上报', () => {
           const initialCallCount = consoleErrorSpy.mock.calls.length;
           errorMonitor.captureError(error);
 
-          // 验证beforeSend被调用
+          // verifybeforeSend被调用
           expect(beforeSend).toHaveBeenCalled();
 
           if (shouldReport) {
-            // 应该上报，且消息被修改
+            // should上报，且消息被修改
             expect(consoleErrorSpy).toHaveBeenCalledWith(
               '[ErrorMonitor]',
               expect.objectContaining({
@@ -270,7 +270,7 @@ describe('Property 8: 错误监控上报', () => {
               })
             );
           } else {
-            // 不应该上报
+            // 不should上报
             expect(consoleErrorSpy.mock.calls.length).toBe(initialCallCount);
           }
         }
@@ -279,7 +279,7 @@ describe('Property 8: 错误监控上报', () => {
     );
   });
 
-  it('应该在错误报告中包含完整的错误堆栈', () => {
+  it('shouldBeAterrorreport中contain完整的error堆栈', () => {
     fc.assert(
       fc.property(
         errorArbitrary(),
@@ -296,7 +296,7 @@ describe('Property 8: 错误监控上报', () => {
           const lastCall = calls[calls.length - 1];
           const errorReport: ErrorReport = lastCall[1];
 
-          // 验证堆栈存在且是字符串（需求9.4）
+          // verify堆栈存在且是字符串（requirement9.4）
           if (error.stack) {
             expect(errorReport.stack).toBe(error.stack);
             expect(typeof errorReport.stack).toBe('string');
@@ -307,7 +307,7 @@ describe('Property 8: 错误监控上报', () => {
     );
   });
 
-  it('应该在错误报告中包含浏览器信息（userAgent）', () => {
+  it('shouldBeAterrorreport中contain浏览器info（userAgent）', () => {
     fc.assert(
       fc.property(
         errorArbitrary(),
@@ -325,7 +325,7 @@ describe('Property 8: 错误监控上报', () => {
           const lastCall = calls[calls.length - 1];
           const errorReport: ErrorReport = lastCall[1];
 
-          // 验证浏览器信息被包含（需求9.4）
+          // verify浏览器info被contain（requirement9.4）
           expect(errorReport.context.userAgent).toBe(context.userAgent);
           expect(typeof errorReport.context.userAgent).toBe('string');
           expect(errorReport.context.userAgent.length).toBeGreaterThan(0);
@@ -335,7 +335,7 @@ describe('Property 8: 错误监控上报', () => {
     );
   });
 
-  it('应该在错误报告中包含页面URL', () => {
+  it('shouldBeAterrorreport中contain页面URL', () => {
     fc.assert(
       fc.property(
         errorArbitrary(),
@@ -353,7 +353,7 @@ describe('Property 8: 错误监控上报', () => {
           const lastCall = calls[calls.length - 1];
           const errorReport: ErrorReport = lastCall[1];
 
-          // 验证页面URL被包含（需求9.4）
+          // verify页面URL被contain（requirement9.4）
           expect(errorReport.context.url).toBe(context.url);
           expect(typeof errorReport.context.url).toBe('string');
           expect(errorReport.context.url.length).toBeGreaterThan(0);

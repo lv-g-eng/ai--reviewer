@@ -1,16 +1,16 @@
 ﻿/**
  * Property-based tests for retryWithBackoff utility
  * 
- * **Feature: frontend-production-optimization, Property 9: API请求重试机制**
+ * **Feature: frontend-production-optimization, Property 9: APIrequestretry机制**
  * **Validates: Requirements 5.2, 10.3**
  * 
- * 属性 9: API请求重试机制 - 对于任何失败的API请求，应该使用指数退避策略重试，最多重试3次。
+ * property 9: APIrequestretry机制 - 对于任何failure的APIrequest，shoulduse指数退避策略retry，最多retry3times。
  */
 
 import fc from 'fast-check';
 import { retryWithBackoff, RetryOptions } from '../retryWithBackoff';
 
-describe('Property 9: API请求重试机制', () => {
+describe('Property 9: APIrequestretry机制', () => {
   it('should retry up to maxRetries times for any failing operation', async () => {
     await fc.assert(
       fc.asyncProperty(

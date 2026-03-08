@@ -1,13 +1,13 @@
 /**
- * PullRequests组件单元测试
+ * PullRequestscomponent单元test
  * 
- * 测试场景:
- * - 空状态显示
- * - PR列表渲染
- * - PR详情显示
- * - 代码差异高亮
- * - 状态过滤
- * - 评论功能
+ * test场景:
+ * - 空statusshow
+ * - PR列表render
+ * - PRdetailshow
+ * - code差异高亮
+ * - statusfilter
+ * - 评论feature
  */
 
 import React from 'react';

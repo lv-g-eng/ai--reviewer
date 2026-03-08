@@ -1,16 +1,16 @@
 /**
- * Architecture节点展开属性测试
+ * Architecture节点展开propertytest
  * 
  * Feature: frontend-production-optimization
- * Property 16: 架构节点展开
+ * Property 16: architecture节点展开
  * 
  * **Validates: Requirements 4.2**
  * 
- * 测试覆盖:
- * - 对于任何包含子组件的架构节点，点击后应该展开显示其子组件
+ * testCoverage:
+ * - 对于任何contain子component的architecture节点，点击后should展开show其子component
  * 
- * 注意: 此测试验证Architecture组件在节点展开时的行为。
- * 测试通过模拟节点点击并验证展开状态来确保子组件正确显示。
+ * note: testVerifiesArchitecturecomponent在节点展开时的行为。
+ * test通过模拟节点点击并verify展开status来确保子component正确show。
  */
 
 import fc from 'fast-check';
@@ -73,18 +73,18 @@ jest.mock('reactflow', () => {
   };
 });
 
-describe('Property 16: 架构节点展开', () => {
+describe('Property 16: architecture节点展开', () => {
   afterEach(() => {
     cleanup();
     // Clear all timers and pending promises
     jest.clearAllTimers();
   });
 
-  // 自定义生成器：生成有效的架构节点类型
+  // customGenerator：generate有效的architecture节点type
   const nodeTypeArbitrary = () =>
     fc.constantFrom('service', 'component', 'module', 'database', 'external');
 
-  // 自定义生成器：生成有效的节点指标
+  // customGenerator：generate有效的节点指标
   const metricsArbitrary = () =>
     fc.record({
       responseTime: fc.integer({ min: 1, max: 5000 }),
@@ -92,7 +92,7 @@ describe('Property 16: 架构节点展开', () => {
       throughput: fc.integer({ min: 1, max: 10000 }),
     });
 
-  // 自定义生成器：生成子节点（不包含孙节点，避免过深嵌套）
+  // customGenerator：generate子节点（不contain孙节点，避免过深嵌套）
   const childNodeArbitrary = () =>
     fc.record({
       id: fc.uuid(),
@@ -104,7 +104,7 @@ describe('Property 16: 架构节点展开', () => {
       metrics: fc.option(metricsArbitrary(), { nil: undefined }),
     });
 
-  // 自定义生成器：生成带子节点的父节点
+  // customGenerator：generate带子节点的父节点
   const parentNodeWithChildrenArbitrary = () =>
     fc.record({
       id: fc.uuid(),
@@ -116,7 +116,7 @@ describe('Property 16: 架构节点展开', () => {
       metrics: fc.option(metricsArbitrary(), { nil: undefined }),
     });
 
-  // 自定义生成器：生成没有子节点的节点
+  // customGenerator：generate没有子节点的节点
   const leafNodeArbitrary = () =>
     fc.record({
       id: fc.uuid(),
@@ -128,7 +128,7 @@ describe('Property 16: 架构节点展开', () => {
       metrics: fc.option(metricsArbitrary(), { nil: undefined }),
     });
 
-  it('应该为任何包含子节点的节点显示展开指示器', async () => {
+  it('should为任何contain子节点的节点show展开指示器', async () => {
     await fc.assert(
       fc.asyncProperty(
         parentNodeWithChildrenArbitrary(),
@@ -139,20 +139,20 @@ describe('Property 16: 架构节点展开', () => {
             expect(screen.getByTestId('react-flow-mock')).toBeInTheDocument();
           });
 
-          // 验证父节点存在
+          // verify父节点存在
           const parentNodeElement = screen.getByTestId(`node-${parentNode.id}`);
           expect(parentNodeElement).toBeInTheDocument();
 
-          // 验证节点标记为有子节点
+          // verify节点标记为有子节点
           expect(parentNodeElement.getAttribute('data-has-children')).toBe('true');
 
-          // 验证展开指示器存在
+          // verify展开指示器存在
           const expansionIndicator = screen.getByTestId(
             `expansion-indicator-${parentNode.id}`
           );
           expect(expansionIndicator).toBeInTheDocument();
 
-          // 验证初始状态为未展开
+          // verify初始status为未展开
           expect(parentNodeElement.getAttribute('data-is-expanded')).toBe('false');
           expect(expansionIndicator.textContent).toContain('Click to expand');
 
@@ -164,7 +164,7 @@ describe('Property 16: 架构节点展开', () => {
     );
   }, 60000);
 
-  it('应该在点击包含子节点的节点后展开显示子节点', async () => {
+  it('shouldBeAt点击contain子节点的节点后展开show子节点', async () => {
     await fc.assert(
       fc.asyncProperty(
         parentNodeWithChildrenArbitrary(),
@@ -176,11 +176,11 @@ describe('Property 16: 架构节点展开', () => {
             expect(screen.getByTestId('react-flow-mock')).toBeInTheDocument();
           });
 
-          // 获取父节点元素
+          // get父节点元素
           const parentNodeElement = screen.getByTestId(`node-${parentNode.id}`);
           expect(parentNodeElement).toBeInTheDocument();
 
-          // 验证初始状态：子节点不可见
+          // verify初始status：子节点不可见
           const initialChildNodes = parentNode.children.map((child) =>
             screen.queryByTestId(`node-${child.id}`)
           );
@@ -191,13 +191,13 @@ describe('Property 16: 架构节点展开', () => {
           // 点击父节点展开
           await user.click(parentNodeElement);
 
-          // 等待展开状态更新
+          // wait展开statusupdate
           await waitFor(() => {
             const updatedParentNode = screen.getByTestId(`node-${parentNode.id}`);
             expect(updatedParentNode.getAttribute('data-is-expanded')).toBe('true');
           });
 
-          // 验证展开后：子节点可见
+          // verify展开后：子节点可见
           await waitFor(() => {
             parentNode.children.forEach((child) => {
               const childNode = screen.getByTestId(`node-${child.id}`);
@@ -208,7 +208,7 @@ describe('Property 16: 架构节点展开', () => {
             });
           });
 
-          // 验证展开指示器文本更新
+          // verify展开指示器文本update
           const expansionIndicator = screen.getByTestId(
             `expansion-indicator-${parentNode.id}`
           );
@@ -222,7 +222,7 @@ describe('Property 16: 架构节点展开', () => {
     );
   }, 60000);
 
-  it('应该在再次点击已展开的节点后折叠隐藏子节点', async () => {
+  it('shouldBeAt再times点击已展开的节点后折叠hide子节点', async () => {
     await fc.assert(
       fc.asyncProperty(
         parentNodeWithChildrenArbitrary(),
@@ -236,7 +236,7 @@ describe('Property 16: 架构节点展开', () => {
 
           const parentNodeElement = screen.getByTestId(`node-${parentNode.id}`);
 
-          // 第一次点击：展开
+          // 第一times点击：展开
           await user.click(parentNodeElement);
 
           await waitFor(() => {
@@ -244,14 +244,14 @@ describe('Property 16: 架构节点展开', () => {
             expect(updatedParentNode.getAttribute('data-is-expanded')).toBe('true');
           });
 
-          // 验证子节点可见
+          // verify子节点可见
           await waitFor(() => {
             parentNode.children.forEach((child) => {
               expect(screen.getByTestId(`node-${child.id}`)).toBeInTheDocument();
             });
           });
 
-          // 第二次点击：折叠
+          // 第二times点击：折叠
           await user.click(parentNodeElement);
 
           await waitFor(() => {
@@ -259,14 +259,14 @@ describe('Property 16: 架构节点展开', () => {
             expect(updatedParentNode.getAttribute('data-is-expanded')).toBe('false');
           });
 
-          // 验证子节点不可见
+          // verify子节点不可见
           await waitFor(() => {
             parentNode.children.forEach((child) => {
               expect(screen.queryByTestId(`node-${child.id}`)).not.toBeInTheDocument();
             });
           });
 
-          // 验证展开指示器恢复为展开状态
+          // verify展开指示器恢复为展开status
           const expansionIndicator = screen.getByTestId(
             `expansion-indicator-${parentNode.id}`
           );
@@ -280,7 +280,7 @@ describe('Property 16: 架构节点展开', () => {
     );
   }, 60000);
 
-  it('应该为没有子节点的节点不显示展开指示器', async () => {
+  it('should为没有子节点的节点不show展开指示器', async () => {
     await fc.assert(
       fc.asyncProperty(leafNodeArbitrary(), async (leafNode) => {
         const { unmount } = render(<Architecture data={leafNode} />);
@@ -289,14 +289,14 @@ describe('Property 16: 架构节点展开', () => {
           expect(screen.getByTestId('react-flow-mock')).toBeInTheDocument();
         });
 
-        // 验证叶子节点存在
+        // verify叶子节点存在
         const leafNodeElement = screen.getByTestId(`node-${leafNode.id}`);
         expect(leafNodeElement).toBeInTheDocument();
 
-        // 验证节点标记为没有子节点
+        // verify节点标记为没有子节点
         expect(leafNodeElement.getAttribute('data-has-children')).toBe('false');
 
-        // 验证展开指示器不存在
+        // verify展开指示器不存在
         const expansionIndicator = screen.queryByTestId(
           `expansion-indicator-${leafNode.id}`
         );
@@ -309,7 +309,7 @@ describe('Property 16: 架构节点展开', () => {
     );
   }, 60000);
 
-  it('应该在展开后显示所有子节点的完整信息', async () => {
+  it('shouldBeAt展开后show所有子节点的完整info', async () => {
     await fc.assert(
       fc.asyncProperty(
         parentNodeWithChildrenArbitrary(),
@@ -340,18 +340,18 @@ describe('Property 16: 架构节点展开', () => {
               { timeout: 3000, container }
             );
 
-            // 验证每个子节点的信息完整显示
+            // verify每item子节点的info完整show
             await waitFor(
               () => {
                 parentNode.children.forEach((child) => {
                   const childNode = container.querySelector(`[data-testid="node-${child.id}"]`);
                   expect(childNode).toBeInTheDocument();
 
-                  // 验证子节点名称
+                  // verify子节点名称
                   const childLabel = container.querySelector(`[data-testid="node-label-${child.id}"]`);
                   expect(childLabel?.textContent).toBe(child.name);
 
-                  // 验证子节点的hasChildren属性正确（子节点没有子节点）
+                  // verify子节点的hasChildrenproperty正确（子节点没有子节点）
                   expect(childNode?.getAttribute('data-has-children')).toBe('false');
                 });
               },
@@ -367,12 +367,12 @@ describe('Property 16: 架构节点展开', () => {
     );
   }, 60000);
 
-  it('应该支持多个节点同时展开', async () => {
+  it('shouldsupport多item节点同时展开', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(parentNodeWithChildrenArbitrary(), { minLength: 2, maxLength: 3 }),
         async (nodes) => {
-          // 创建一个根节点包含多个可展开的子节点
+          // create一item根节点contain多item可展开的子节点
           const rootNode: ArchitectureNode = {
             id: fc.sample(fc.uuid(), 1)[0],
             name: 'Root',
@@ -393,7 +393,7 @@ describe('Property 16: 架构节点展开', () => {
               { timeout: 3000, container }
             );
 
-            // 展开第一个节点作为代表性测试
+            // 展开第一item节点作为代表性test
             const firstNode = nodes[0];
             const nodeElement = container.querySelector(`[data-testid="node-${firstNode.id}"]`);
             expect(nodeElement).toBeInTheDocument();
@@ -408,7 +408,7 @@ describe('Property 16: 架构节点展开', () => {
               { timeout: 3000, container }
             );
 
-            // 验证第一个节点的子节点可见
+            // verify第一item节点的子节点可见
             await waitFor(
               () => {
                 firstNode.children.forEach((child) => {
@@ -428,7 +428,7 @@ describe('Property 16: 架构节点展开', () => {
     );
   }, 60000);
 
-  it('应该在展开节点时调用onNodeClick回调', async () => {
+  it('shouldBeAt展开节点时调用onNodeClick回调', async () => {
     await fc.assert(
       fc.asyncProperty(
         parentNodeWithChildrenArbitrary(),
@@ -449,10 +449,10 @@ describe('Property 16: 架构节点展开', () => {
           await user.click(parentNodeElement);
 
           await waitFor(() => {
-            // 验证回调被调用
+            // verify回调被调用
             expect(onNodeClick).toHaveBeenCalled();
 
-            // 验证回调参数包含正确的节点数据
+            // verify回调paramcontain正确的节点data
             const callArg = onNodeClick.mock.calls[0][0];
             expect(callArg.id).toBe(parentNode.id);
             expect(callArg.name).toBe(parentNode.name);
@@ -467,7 +467,7 @@ describe('Property 16: 架构节点展开', () => {
     );
   }, 60000);
 
-  it('应该在不同节点类型上正确处理展开', async () => {
+  it('shouldBeAt不同节点type上正确handle展开', async () => {
     await fc.assert(
       fc.asyncProperty(
         nodeTypeArbitrary(),
@@ -498,7 +498,7 @@ describe('Property 16: 架构节点展开', () => {
             expect(updatedParentNode.getAttribute('data-is-expanded')).toBe('true');
           });
 
-          // 验证子节点可见
+          // verify子节点可见
           await waitFor(() => {
             children.forEach((child) => {
               expect(screen.getByTestId(`node-${child.id}`)).toBeInTheDocument();
@@ -513,7 +513,7 @@ describe('Property 16: 架构节点展开', () => {
     );
   }, 60000);
 
-  it('应该在展开节点时保持节点的其他属性不变', async () => {
+  it('shouldBeAt展开节点时保持节点的其他property不变', async () => {
     await fc.assert(
       fc.asyncProperty(
         parentNodeWithChildrenArbitrary(),
@@ -529,7 +529,7 @@ describe('Property 16: 架构节点展开', () => {
               { timeout: 3000 }
             );
 
-            // 记录展开前的节点信息
+            // record展开前的节点info
             const parentNodeElement = screen.getByTestId(`node-${parentNode.id}`);
             const initialLabel = screen.getByTestId(`node-label-${parentNode.id}`);
             const initialLabelText = initialLabel.textContent;
@@ -545,11 +545,11 @@ describe('Property 16: 架构节点展开', () => {
               { timeout: 3000 }
             );
 
-            // 验证节点标签没有改变
+            // verify节点tag没有改变
             const updatedLabel = screen.getByTestId(`node-label-${parentNode.id}`);
             expect(updatedLabel.textContent).toBe(initialLabelText);
 
-            // 验证节点ID没有改变
+            // verify节点ID没有改变
             const updatedParentNode = screen.getByTestId(`node-${parentNode.id}`);
             expect(updatedParentNode.getAttribute('data-node-id')).toBe(parentNode.id);
           } finally {
@@ -562,7 +562,7 @@ describe('Property 16: 架构节点展开', () => {
     );
   }, 60000);
 
-  it('应该在快速连续点击时正确切换展开状态', async () => {
+  it('shouldBeAt快速连续点击时正确切换展开status', async () => {
     await fc.assert(
       fc.asyncProperty(
         parentNodeWithChildrenArbitrary(),
@@ -581,14 +581,14 @@ describe('Property 16: 架构节点展开', () => {
 
             const parentNodeElement = screen.getByTestId(`node-${parentNode.id}`);
 
-            // 快速连续点击多次
+            // 快速连续点击多times
             for (let i = 0; i < clickCount; i++) {
               await user.click(parentNodeElement);
-              // 短暂等待以允许状态更新
+              // 短暂wait以allowstatusupdate
               await new Promise((resolve) => setTimeout(resolve, 100));
             }
 
-            // 验证最终状态与点击次数的奇偶性一致
+            // verify最终status与点击times数的奇偶性一致
             await waitFor(
               () => {
                 const finalParentNode = screen.getByTestId(`node-${parentNode.id}`);
@@ -597,7 +597,7 @@ describe('Property 16: 架构节点展开', () => {
                   expectedExpanded.toString()
                 );
 
-                // 验证子节点可见性与展开状态一致
+                // verify子节点可见性与展开status一致
                 if (expectedExpanded) {
                   parentNode.children.forEach((child) => {
                     expect(screen.getByTestId(`node-${child.id}`)).toBeInTheDocument();

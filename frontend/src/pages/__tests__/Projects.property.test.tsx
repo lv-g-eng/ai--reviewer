@@ -1,17 +1,17 @@
 /**
- * Projects属性测试
+ * Projectspropertytest
  * 
  * Feature: frontend-production-optimization
- * Property 3: 搜索过滤性能
- * Property 11: 项目排序正确性
+ * Property 3: searchfilter性能
+ * Property 11: projectsort正确性
  * 
  * **Validates: Requirements 2.2, 2.5**
  * 
- * 测试覆盖:
- * - 对于任何搜索输入，过滤结果应该在300毫秒内显示
- * - 对于任何项目列表和排序条件，排序后的列表应该按照指定条件正确排序
+ * testCoverage:
+ * - 对于任何searchinput，filterresultshouldBeAt300ms内show
+ * - 对于任何project列表andsort条件，sort后的列表should按照指定条件正确sort
  * 
- * 注意: 此测试验证Projects组件在搜索过滤时的性能和排序功能的正确性。
+ * note: testVerifiesProjectscomponent在searchfilter时的性能andsortfeature的正确性。
  */
 
 import fc from 'fast-check';
@@ -88,7 +88,7 @@ function createProject(id: string, name: string, language?: string, isActive?: b
   };
 }
 
-describe('Property 3: 搜索过滤性能', () => {
+describe('Property 3: searchfilter性能', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -97,31 +97,31 @@ describe('Property 3: 搜索过滤性能', () => {
     cleanup();
   });
 
-  // 自定义生成器：生成有效的项目名称
+  // customGenerator：generate有效的project名称
   const validProjectNameArbitrary = () =>
     fc.oneof(
       fc.constantFrom('Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta'),
       fc.string({ minLength: 3, maxLength: 30 }).filter(s => s.trim().length >= 3)
     );
 
-  // 自定义生成器：生成编程语言
+  // customGenerator：generate编程语言
   const languageArbitrary = () =>
     fc.constantFrom('TypeScript', 'JavaScript', 'Python', 'Java', 'Go', 'Rust');
 
-  // 自定义生成器：生成有效的搜索查询
+  // customGenerator：generate有效的searchquery
   const validSearchQueryArbitrary = () =>
     fc.oneof(
       fc.constantFrom('Alpha', 'Beta', 'Type', 'Script', 'Python', 'active', 'inactive'),
       fc.string({ minLength: 2, maxLength: 15 }).filter(s => s.trim().length >= 2)
     );
 
-  it('应该在任何搜索输入下在300毫秒内完成过滤', async () => {
+  it('shouldBeAt任何searchinput下在300ms内completefilter', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 20, max: 100 }),
         validSearchQueryArbitrary(),
         async (projectCount, searchQuery) => {
-          // 生成项目列表
+          // generateproject列表
           const projects = Array.from({ length: projectCount }, (_, i) => 
             createProject(
               `project-${i}`,
@@ -151,7 +151,7 @@ describe('Property 3: 搜索过滤性能', () => {
           await new Promise(resolve => setTimeout(resolve, 350));
           const filterTime = performance.now() - filterStartTime;
 
-          // 验证过滤时间在合理范围内（300ms debounce + 200ms buffer for test environment）
+          // verifyfilter时间在合理范围内（300ms debounce + 200ms buffer for test environment）
           // The debounce ensures we don't filter on every keystroke, improving performance
           expect(filterTime).toBeLessThan(550);
 
@@ -163,7 +163,7 @@ describe('Property 3: 搜索过滤性能', () => {
     );
   }, 30000);
 
-  it('应该在不同项目列表大小下保持搜索性能', async () => {
+  it('shouldBeAt不同project列表大小下保持search性能', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(10, 50, 100, 200),
@@ -193,7 +193,7 @@ describe('Property 3: 搜索过滤性能', () => {
 
           const filterTime = performance.now() - searchStartTime;
 
-          // 验证无论项目数量多少，过滤时间都在合理范围内
+          // verify无论project数量多少，filter时间都在合理范围内
           expect(filterTime).toBeLessThan(550);
 
           unmount();
@@ -204,13 +204,13 @@ describe('Property 3: 搜索过滤性能', () => {
     );
   }, 30000);
 
-  it('应该在搜索项目名称时快速过滤', async () => {
+  it('shouldBeAtsearchproject名称时快速filter', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 30, max: 100 }),
         validProjectNameArbitrary(),
         async (projectCount, targetName) => {
-          // 创建项目列表，确保包含目标名称
+          // createproject列表，确保contain目标名称
           const projects = [
             createProject('target', targetName),
             ...Array.from({ length: projectCount - 1 }, (_, i) =>
@@ -240,7 +240,7 @@ describe('Property 3: 搜索过滤性能', () => {
 
           const filterTime = performance.now() - searchStartTime;
 
-          // 验证过滤时间在合理范围内
+          // verifyfilter时间在合理范围内
           expect(filterTime).toBeLessThan(550);
 
           unmount();
@@ -251,7 +251,7 @@ describe('Property 3: 搜索过滤性能', () => {
     );
   }, 30000);
 
-  it('应该在搜索编程语言时快速过滤', async () => {
+  it('shouldBeAtsearch编程语言时快速filter', async () => {
     await fc.assert(
       fc.asyncProperty(
         languageArbitrary(),
@@ -280,7 +280,7 @@ describe('Property 3: 搜索过滤性能', () => {
 
           const filterTime = performance.now() - searchStartTime;
 
-          // 验证过滤时间在合理范围内
+          // verifyfilter时间在合理范围内
           expect(filterTime).toBeLessThan(550);
 
           unmount();
@@ -291,7 +291,7 @@ describe('Property 3: 搜索过滤性能', () => {
     );
   }, 30000);
 
-  it('应该在搜索项目状态时快速过滤', async () => {
+  it('shouldBeAtsearchprojectstatus时快速filter', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom('active', 'inactive'),
@@ -320,7 +320,7 @@ describe('Property 3: 搜索过滤性能', () => {
 
           const filterTime = performance.now() - searchStartTime;
 
-          // 验证过滤时间在合理范围内
+          // verifyfilter时间在合理范围内
           expect(filterTime).toBeLessThan(550);
 
           unmount();
@@ -331,7 +331,7 @@ describe('Property 3: 搜索过滤性能', () => {
     );
   }, 30000);
 
-  it('应该在大小写不敏感搜索时保持性能', async () => {
+  it('shouldBeAt大小写不敏感search时保持性能', async () => {
     await fc.assert(
       fc.asyncProperty(
         validSearchQueryArbitrary(),
@@ -372,7 +372,7 @@ describe('Property 3: 搜索过滤性能', () => {
 
           const filterTime = performance.now() - searchStartTime;
 
-          // 验证过滤时间在合理范围内，无论大小写
+          // verifyfilter时间在合理范围内，无论大小写
           expect(filterTime).toBeLessThan(550);
 
           unmount();
@@ -383,7 +383,7 @@ describe('Property 3: 搜索过滤性能', () => {
     );
   }, 30000);
 
-  it('应该在清除搜索时快速恢复完整列表', async () => {
+  it('shouldBeAt清除search时快速恢复完整列表', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 20, max: 100 }),
@@ -406,11 +406,11 @@ describe('Property 3: 搜索过滤性能', () => {
 
           const user = userEvent.setup({ delay: null });
 
-          // 先输入搜索
+          // 先inputsearch
           await user.type(searchInput, searchQuery);
           await new Promise(resolve => setTimeout(resolve, 350));
 
-          // 清除搜索
+          // 清除search
           const clearStartTime = performance.now();
           
           const clearButton = container.querySelector('button[aria-label="Clear search"]') as HTMLButtonElement;
@@ -422,7 +422,7 @@ describe('Property 3: 搜索过滤性能', () => {
 
           const clearTime = performance.now() - clearStartTime;
 
-          // 验证清除时间在合理范围内
+          // verify清除时间在合理范围内
           expect(clearTime).toBeLessThan(550);
 
           unmount();
@@ -433,7 +433,7 @@ describe('Property 3: 搜索过滤性能', () => {
     );
   }, 30000);
 
-  it('应该在连续搜索时保持性能', async () => {
+  it('shouldBeAt连续search时保持性能', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 30, max: 80 }),
@@ -456,20 +456,20 @@ describe('Property 3: 搜索过滤性能', () => {
 
           const user = userEvent.setup({ delay: null });
 
-          // 执行多次连续搜索
+          // execute多times连续search
           for (const searchQuery of searchQueries) {
-            // 清除之前的搜索
+            // 清除之前的search
             await user.clear(searchInput);
 
             const searchStartTime = performance.now();
 
-            // 输入新的搜索词
+            // input新的search词
             await user.type(searchInput, searchQuery);
             await new Promise(resolve => setTimeout(resolve, 350));
 
             const filterTime = performance.now() - searchStartTime;
 
-            // 验证每次搜索都在合理范围内
+            // verify每timessearch都在合理范围内
             expect(filterTime).toBeLessThan(550);
           }
 
@@ -481,12 +481,12 @@ describe('Property 3: 搜索过滤性能', () => {
     );
   }, 60000);
 
-  it('应该在无匹配结果时快速显示空状态', async () => {
+  it('shouldBeAt无匹配result时快速show空status', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 20, max: 100 }),
         async (projectCount) => {
-          // 使用一个不太可能匹配的搜索词
+          // use一item不太可能匹配的search词
           const searchQuery = 'ZZZZZZZZZZZ';
 
           const projects = Array.from({ length: projectCount }, (_, i) =>
@@ -513,10 +513,10 @@ describe('Property 3: 搜索过滤性能', () => {
 
           const filterTime = performance.now() - searchStartTime;
 
-          // 验证过滤时间在合理范围内
+          // verifyfilter时间在合理范围内
           expect(filterTime).toBeLessThan(550);
 
-          // 验证显示无结果消息
+          // verifyshow无result消息
           const noResultsText = container.textContent?.includes('No projects match your search');
           expect(noResultsText).toBe(true);
 
@@ -528,7 +528,7 @@ describe('Property 3: 搜索过滤性能', () => {
     );
   }, 30000);
 
-  it('应该在大型项目列表中保持搜索性能', async () => {
+  it('shouldBeAt大型project列表中保持search性能', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(100, 200, 300),
@@ -558,7 +558,7 @@ describe('Property 3: 搜索过滤性能', () => {
 
           const filterTime = performance.now() - searchStartTime;
 
-          // 验证即使在大型列表中，过滤时间也在合理范围内
+          // verify即使在大型列表中，filter时间也在合理范围内
           expect(filterTime).toBeLessThan(550);
 
           unmount();
@@ -569,7 +569,7 @@ describe('Property 3: 搜索过滤性能', () => {
   }, 30000);
 });
 
-describe('Property 11: 项目排序正确性', () => {
+describe('Property 11: projectsort正确性', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -578,7 +578,7 @@ describe('Property 11: 项目排序正确性', () => {
     cleanup();
   });
 
-  // 自定义生成器：生成项目数组
+  // customGenerator：generateproject数组
   const projectArrayArbitrary = (minLength: number = 5, maxLength: number = 50) =>
     fc.array(
       fc.record({
@@ -600,14 +600,14 @@ describe('Property 11: 项目排序正确性', () => {
       { minLength, maxLength }
     );
 
-  // 自定义生成器：排序字段
+  // customGenerator：sortfield
   const sortByArbitrary = () =>
     fc.constantFrom('name', 'created_at', 'updated_at', 'is_active');
 
-  // 自定义生成器：排序顺序
+  // customGenerator：sort顺序
   const sortOrderArbitrary = () => fc.constantFrom('asc', 'desc');
 
-  // 辅助函数：验证排序正确性
+  // 辅助function：verifysort正确性
   function verifySortOrder(
     projects: Project[],
     sortBy: 'name' | 'created_at' | 'updated_at' | 'is_active',
@@ -649,7 +649,7 @@ describe('Property 11: 项目排序正确性', () => {
     return true;
   }
 
-  it('应该对任何项目列表按名称正确排序', async () => {
+  it('should对任何project列表按名称正确sort', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(5, 30),
@@ -663,7 +663,7 @@ describe('Property 11: 项目排序正确性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 点击名称排序按钮
+          // 点击名称sortbutton
           const nameButton = Array.from(container.querySelectorAll('button')).find(
             btn => btn.textContent?.includes('Name')
           );
@@ -671,16 +671,16 @@ describe('Property 11: 项目排序正确性', () => {
 
           const user = userEvent.setup({ delay: null });
           
-          // 如果需要降序，点击两次
+          // 如果need降序，点击两times
           await user.click(nameButton!);
           if (sortOrder === 'desc') {
             await user.click(nameButton!);
           }
 
-          // 等待渲染完成
+          // waitrendercomplete
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 获取渲染的项目列表
+          // getrender的project列表
           const projectElements = container.querySelectorAll('[data-testid="virtual-list"] > div, .projects-virtual-list > div > div');
           const renderedProjects: Project[] = [];
 
@@ -694,7 +694,7 @@ describe('Property 11: 项目排序正确性', () => {
             }
           });
 
-          // 验证排序正确性
+          // verifysort正确性
           if (renderedProjects.length > 0) {
             const isSorted = verifySortOrder(renderedProjects, 'name', sortOrder);
             expect(isSorted).toBe(true);
@@ -708,7 +708,7 @@ describe('Property 11: 项目排序正确性', () => {
     );
   }, 30000);
 
-  it('应该对任何项目列表按创建时间正确排序', async () => {
+  it('should对任何project列表按create时间正确sort', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(5, 30),
@@ -722,7 +722,7 @@ describe('Property 11: 项目排序正确性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 点击创建时间排序按钮
+          // 点击create时间sortbutton
           const createdButton = Array.from(container.querySelectorAll('button')).find(
             btn => btn.textContent?.includes('Created')
           );
@@ -737,7 +737,7 @@ describe('Property 11: 项目排序正确性', () => {
 
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 获取渲染的项目列表
+          // getrender的project列表
           const projectElements = container.querySelectorAll('[data-testid="virtual-list"] > div, .projects-virtual-list > div > div');
           const renderedProjects: Project[] = [];
 
@@ -764,7 +764,7 @@ describe('Property 11: 项目排序正确性', () => {
     );
   }, 30000);
 
-  it('应该对任何项目列表按更新时间正确排序', async () => {
+  it('should对任何project列表按update时间正确sort', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(5, 30),
@@ -778,7 +778,7 @@ describe('Property 11: 项目排序正确性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 点击更新时间排序按钮
+          // 点击update时间sortbutton
           const updatedButton = Array.from(container.querySelectorAll('button')).find(
             btn => btn.textContent?.includes('Updated')
           );
@@ -793,7 +793,7 @@ describe('Property 11: 项目排序正确性', () => {
 
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 获取渲染的项目列表
+          // getrender的project列表
           const projectElements = container.querySelectorAll('[data-testid="virtual-list"] > div, .projects-virtual-list > div > div');
           const renderedProjects: Project[] = [];
 
@@ -820,7 +820,7 @@ describe('Property 11: 项目排序正确性', () => {
     );
   }, 30000);
 
-  it('应该对任何项目列表按状态正确排序', async () => {
+  it('should对任何project列表按status正确sort', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(5, 30),
@@ -834,7 +834,7 @@ describe('Property 11: 项目排序正确性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 点击状态排序按钮
+          // 点击statussortbutton
           const statusButton = Array.from(container.querySelectorAll('button')).find(
             btn => btn.textContent?.includes('Status')
           );
@@ -849,7 +849,7 @@ describe('Property 11: 项目排序正确性', () => {
 
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 获取渲染的项目列表
+          // getrender的project列表
           const projectElements = container.querySelectorAll('[data-testid="virtual-list"] > div, .projects-virtual-list > div > div');
           const renderedProjects: Project[] = [];
 
@@ -876,7 +876,7 @@ describe('Property 11: 项目排序正确性', () => {
     );
   }, 30000);
 
-  it('应该在切换排序字段时保持正确的排序顺序', async () => {
+  it('shouldBeAt切换sortfield时保持正确的sort顺序', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(10, 30),
@@ -892,7 +892,7 @@ describe('Property 11: 项目排序正确性', () => {
 
           const user = userEvent.setup({ delay: null });
 
-          // 依次点击不同的排序按钮
+          // 依times点击不同的sortbutton
           for (const sortBy of sortSequence) {
             const buttonText = sortBy === 'name' ? 'Name' :
                               sortBy === 'created_at' ? 'Created' :
@@ -906,7 +906,7 @@ describe('Property 11: 项目排序正确性', () => {
               await user.click(button);
               await new Promise(resolve => setTimeout(resolve, 100));
 
-              // 验证排序正确性
+              // verifysort正确性
               const projectElements = container.querySelectorAll('[data-testid="virtual-list"] > div, .projects-virtual-list > div > div');
               const renderedProjects: Project[] = [];
 
@@ -935,7 +935,7 @@ describe('Property 11: 项目排序正确性', () => {
     );
   }, 60000);
 
-  it('应该在排序后保持项目数据完整性', async () => {
+  it('shouldBeAtsort后保持projectdata完整性', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(10, 30),
@@ -968,7 +968,7 @@ describe('Property 11: 项目排序正确性', () => {
 
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证所有项目都存在（没有丢失或重复）
+          // verify所有project都存在（没有丢失或duplicate）
           const projectElements = container.querySelectorAll('[data-testid="virtual-list"] > div, .projects-virtual-list > div > div');
           const renderedProjectIds = new Set<string>();
 
@@ -982,11 +982,11 @@ describe('Property 11: 项目排序正确性', () => {
             }
           });
 
-          // 验证没有项目丢失（考虑到虚拟滚动可能只渲染部分项目）
-          // 至少应该渲染一些项目
+          // verify没有project丢失（考虑到虚拟滚动可能只render部分project）
+          // 至少shouldrender一些project
           expect(renderedProjectIds.size).toBeGreaterThan(0);
 
-          // 验证没有重复的项目ID
+          // verify没有duplicate的projectID
           const renderedProjectIdsArray = Array.from(renderedProjectIds);
           const uniqueIds = new Set(renderedProjectIdsArray);
           expect(uniqueIds.size).toBe(renderedProjectIdsArray.length);
@@ -999,7 +999,7 @@ describe('Property 11: 项目排序正确性', () => {
     );
   }, 30000);
 
-  it('应该在空列表上正确处理排序', async () => {
+  it('shouldBeAt空列表上正确handlesort', async () => {
     await fc.assert(
       fc.asyncProperty(
         sortByArbitrary(),
@@ -1025,7 +1025,7 @@ describe('Property 11: 项目排序正确性', () => {
             await user.click(button);
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // 验证显示空状态消息
+            // verifyshow空status消息
             const emptyMessage = container.textContent?.includes('No projects found');
             expect(emptyMessage).toBe(true);
           }
@@ -1038,7 +1038,7 @@ describe('Property 11: 项目排序正确性', () => {
     );
   }, 15000);
 
-  it('应该在单个项目列表上正确处理排序', async () => {
+  it('shouldBeAt单itemproject列表上正确handlesort', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(1, 1),
@@ -1065,7 +1065,7 @@ describe('Property 11: 项目排序正确性', () => {
           await user.click(button!);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证项目仍然显示
+          // verifyproject仍然show
           const projectName = container.querySelector('h3')?.textContent;
           expect(projectName).toBe(projects[0].name);
 
@@ -1077,7 +1077,7 @@ describe('Property 11: 项目排序正确性', () => {
     );
   }, 15000);
 
-  it('应该在大型项目列表上保持排序性能', async () => {
+  it('shouldBeAt大型project列表上保持sort性能', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(100, 200),
@@ -1108,7 +1108,7 @@ describe('Property 11: 项目排序正确性', () => {
 
           const sortTime = performance.now() - sortStartTime;
 
-          // 验证排序时间合理（应该很快，即使是大列表）
+          // verifysort时间合理（should很快，即使是大列表）
           expect(sortTime).toBeLessThan(500);
 
           unmount();
@@ -1119,7 +1119,7 @@ describe('Property 11: 项目排序正确性', () => {
     );
   }, 30000);
 
-  it('应该在排序后正确显示排序指示器', async () => {
+  it('shouldBeAtsort后正确showsort指示器', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectArrayArbitrary(10, 30),
@@ -1144,18 +1144,18 @@ describe('Property 11: 项目排序正确性', () => {
 
           const user = userEvent.setup({ delay: null });
           
-          // 点击一次（升序）
+          // 点击一times（升序）
           await user.click(button);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证按钮显示升序指示器
+          // verifybuttonshow升序指示器
           expect(button.textContent).toContain('↑');
 
-          // 点击第二次（降序）
+          // 点击第二times（降序）
           await user.click(button);
           await new Promise(resolve => setTimeout(resolve, 100));
 
-          // 验证按钮显示降序指示器
+          // verifybuttonshow降序指示器
           expect(button.textContent).toContain('↓');
 
           unmount();
@@ -1169,20 +1169,20 @@ describe('Property 11: 项目排序正确性', () => {
 });
 
 /**
- * Property 11: 项目排序正确性
+ * Property 11: projectsort正确性
  * 
  * Feature: frontend-production-optimization
  * 
  * **Validates: Requirements 2.5**
  * 
- * 测试覆盖:
- * - 对于任何项目列表和排序条件（名称、创建时间、更新时间、状态），排序后的列表应该按照指定条件正确排序
+ * testCoverage:
+ * - 对于任何project列表andsort条件（名称、create时间、update时间、status），sort后的列表should按照指定条件正确sort
  * 
- * 注意: 此测试验证Projects组件的排序功能正确性。
- * 测试通过生成随机项目列表并验证排序结果是否符合预期来确保排序算法的正确性。
+ * note: testVerifiesProjectscomponent的sortfeature正确性。
+ * test通过generate随机project列表并verifysortresult是否符合预期来确保sort算法的正确性。
  */
 
-describe('Property 11: 项目排序正确性', () => {
+describe('Property 11: projectsort正确性', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -1191,7 +1191,7 @@ describe('Property 11: 项目排序正确性', () => {
     cleanup();
   });
 
-  // 自定义生成器：生成项目列表
+  // customGenerator：generateproject列表
   const projectListArbitrary = () =>
     fc.array(
       fc.record({
@@ -1210,15 +1210,15 @@ describe('Property 11: 项目排序正确性', () => {
       { minLength: 2, maxLength: 50 }
     );
 
-  // 排序条件生成器
+  // sort条件generate器
   const sortByArbitrary = () =>
     fc.constantFrom('name', 'created_at', 'updated_at', 'is_active');
 
-  // 排序顺序生成器
+  // sort顺序generate器
   const sortOrderArbitrary = () =>
     fc.constantFrom('asc', 'desc');
 
-  it('应该按名称正确排序项目', async () => {
+  it('should按名称正确sortproject', async () => {
     await fc.assert(
       fc.asyncProperty(
         projectListArbitrary(),
@@ -1232,5 +1232,5 @@ describe('Property 11: 项目排序正确性', () => {
 
           const { unmount, container } = renderWithProviders(<Projects />);
 
-          // 点击名称排序按钮
+          // 点击名称sortbutton
           const nameButton = screen.getB

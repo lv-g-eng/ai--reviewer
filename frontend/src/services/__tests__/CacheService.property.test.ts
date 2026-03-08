@@ -1,9 +1,9 @@
 ﻿import * as fc from 'fast-check';
 import { CacheService } from '../CacheService';
 
-describe('Property 24: GET请求缓存', () => {
-  describe('缓存基本属性', () => {
-    it('对于任何键值对，设置后立即获取应该返回相同的数据', () => {
+describe('Property 24: GETrequestcache', () => {
+  describe('cache基本property', () => {
+    it('对于任何键value对，set后立即getshouldreturn相同的data', () => {
       fc.assert(
         fc.property(
           fc.string({ minLength: 1 }),
@@ -19,7 +19,7 @@ describe('Property 24: GET请求缓存', () => {
       );
     });
 
-    it('对于任何键，在5分钟内的重复获取应该返回缓存数据', () => {
+    it('对于任何键，在5min内的duplicategetshouldreturncachedata', () => {
       fc.assert(
         fc.property(
           fc.string({ minLength: 1 }),
@@ -39,7 +39,7 @@ describe('Property 24: GET请求缓存', () => {
       );
     });
 
-    it('对于任何键，在TTL过期后获取应该返回null', async () => {
+    it('对于任何键，在TTL过期后getshouldreturnnull', async () => {
       await fc.assert(
         fc.asyncProperty(
           fc.string({ minLength: 1 }),
@@ -58,8 +58,8 @@ describe('Property 24: GET请求缓存', () => {
     });
   });
 
-  describe('缓存隔离属性', () => {
-    it('对于任何不同的键，缓存应该独立存储数据', () => {
+  describe('cache隔离property', () => {
+    it('对于任何不同的键，cacheshould独立存储data', () => {
       fc.assert(
         fc.property(
           fc.array(
@@ -86,8 +86,8 @@ describe('Property 24: GET请求缓存', () => {
     });
   });
 
-  describe('缓存统计属性', () => {
-    it('对于任何操作序列，命中数和未命中数之和应该等于总请求数', () => {
+  describe('cache统计property', () => {
+    it('对于任何操作序列，命中数and未命中数之andshould等于总request数', () => {
       fc.assert(
         fc.property(
           fc.array(
@@ -117,7 +117,7 @@ describe('Property 24: GET请求缓存', () => {
       );
     });
 
-    it('对于任何缓存状态，命中率应该在0到100之间', () => {
+    it('对于任何cachestatus，命中率shouldBeAt0到100之间', () => {
       fc.assert(
         fc.property(
           fc.array(
@@ -147,8 +147,8 @@ describe('Property 24: GET请求缓存', () => {
     });
   });
 
-  describe('缓存清理属性', () => {
-    it('对于任何缓存状态，clear()应该清空所有缓存', () => {
+  describe('cachecleanupproperty', () => {
+    it('对于任何cachestatus，clear()should清空所有cache', () => {
       fc.assert(
         fc.property(
           fc.array(
@@ -176,7 +176,7 @@ describe('Property 24: GET请求缓存', () => {
       );
     });
 
-    it('对于任何模式，clear(pattern)应该只清除匹配的键', () => {
+    it('对于任何模式，clear(pattern)should只清除匹配的键', () => {
       fc.assert(
         fc.property(
           fc.string({ minLength: 1, maxLength: 5 }),

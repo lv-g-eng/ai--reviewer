@@ -142,7 +142,7 @@ export function useProjectPullRequests(projectId: string, state: string = 'all')
 }
 
 /**
- * Fetch project analytics (AI 审查数据)
+ * Fetch project analytics (AI reviewData)
  */
 export function useProjectAnalytics(projectId: string) {
   return useQuery({

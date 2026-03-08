@@ -1,14 +1,14 @@
 /**
- * CacheService - 请求缓存管理服务
+ * CacheService - requestcache管理service
  * 
- * 功能:
- * - 设置和获取缓存数据
- * - 支持自定义TTL (Time To Live)
- * - 自动过期检查和清理
- * - 缓存统计功能 (命中率、大小等)
- * - 支持模式匹配的缓存清除
+ * feature:
+ * - setandgetcachedata
+ * - support自定义TTL (Time To Live)
+ * - 自动过期checkandcleanup
+ * - cache统计feature (命中率、大小等)
+ * - support模式匹配的cache清除
  * 
- * 默认TTL: 5分钟 (300000ms)
+ * 默认TTL: 5min (300000ms)
  */
 
 export interface CacheEntry<T> {
@@ -39,10 +39,10 @@ export class CacheService {
   }
 
   /**
-   * 设置缓存
-   * @param key 缓存键
-   * @param data 缓存数据
-   * @param ttl 过期时间（毫秒），默认使用构造函数中的defaultTTL
+   * setcache
+   * @param key cache键
+   * @param data cachedata
+   * @param ttl 过期时间（ms），默认use构造function中的defaultTTL
    */
   set<T>(key: string, data: T, ttl?: number): void {
     const now = Date.now();
@@ -58,9 +58,9 @@ export class CacheService {
   }
 
   /**
-   * 获取缓存
-   * @param key 缓存键
-   * @returns 缓存数据，如果不存在或已过期则返回null
+   * getcache
+   * @param key cache键
+   * @returns cachedata，如果不存在或已过期则returnnull
    */
   get<T>(key: string): T | null {
     const entry = this.cache.get(key);
@@ -70,7 +70,7 @@ export class CacheService {
       return null;
     }
 
-    // 检查是否过期
+    // check是否过期
     if (this.isExpired(key)) {
       this.cache.delete(key);
       this.misses++;
@@ -82,9 +82,9 @@ export class CacheService {
   }
 
   /**
-   * 检查缓存是否过期
-   * @param key 缓存键
-   * @returns 如果过期或不存在返回true，否则返回false
+   * checkcache是否过期
+   * @param key cache键
+   * @returns 如果过期或不存在returntrue，否则returnfalse
    */
   isExpired(key: string): boolean {
     const entry = this.cache.get(key);
@@ -98,8 +98,8 @@ export class CacheService {
   }
 
   /**
-   * 清除缓存
-   * @param pattern 可选的模式字符串，如果提供则只清除匹配的键
+   * 清除cache
+   * @param pattern 可选的模式字符串，如果provide则只清除匹配的键
    */
   clear(pattern?: string): void {
     if (!pattern) {
@@ -107,7 +107,7 @@ export class CacheService {
       return;
     }
 
-    // 清除匹配模式的缓存
+    // 清除匹配模式的cache
     const keys = Array.from(this.cache.keys());
     keys.forEach((key) => {
       if (key.includes(pattern)) {
@@ -117,8 +117,8 @@ export class CacheService {
   }
 
   /**
-   * 清理所有过期的缓存条目
-   * @returns 清理的条目数量
+   * cleanup所有过期的cache条目
+   * @returns cleanup的条目数量
    */
   clearExpired(): number {
     const keys = Array.from(this.cache.keys());
@@ -135,8 +135,8 @@ export class CacheService {
   }
 
   /**
-   * 获取缓存统计信息
-   * @returns 缓存统计对象
+   * getcache统计info
+   * @returns cache统计object
    */
   getStats(): CacheStats {
     const totalRequests = this.hits + this.misses;
@@ -152,9 +152,9 @@ export class CacheService {
   }
 
   /**
-   * 检查缓存中是否存在指定的键
-   * @param key 缓存键
-   * @returns 如果存在且未过期返回true，否则返回false
+   * checkcache中是否存在指定的键
+   * @param key cache键
+   * @returns 如果存在且未过期returntrue，否则returnfalse
    */
   has(key: string): boolean {
     if (!this.cache.has(key)) {
@@ -170,7 +170,7 @@ export class CacheService {
   }
 
   /**
-   * 重置统计信息
+   * reset统计info
    */
   resetStats(): void {
     this.hits = 0;
@@ -178,9 +178,9 @@ export class CacheService {
   }
 
   /**
-   * 获取缓存条目的剩余生存时间
-   * @param key 缓存键
-   * @returns 剩余时间（毫秒），如果不存在或已过期返回0
+   * getcache条目的剩余生存时间
+   * @param key cache键
+   * @returns 剩余时间（ms），如果不存在或已过期return0
    */
   getTTL(key: string): number {
     const entry = this.cache.get(key);
@@ -196,10 +196,10 @@ export class CacheService {
   }
 
   /**
-   * 更新缓存条目的过期时间
-   * @param key 缓存键
-   * @param ttl 新的过期时间（毫秒）
-   * @returns 如果更新成功返回true，否则返回false
+   * updatecache条目的过期时间
+   * @param key cache键
+   * @param ttl 新的过期时间（ms）
+   * @returns 如果updatesuccessreturntrue，否则returnfalse
    */
   updateTTL(key: string, ttl: number): boolean {
     const entry = this.cache.get(key);
@@ -216,12 +216,12 @@ export class CacheService {
   }
 }
 
-// 创建默认实例的工厂函数
+// create默认instance的工厂function
 export function createDefaultCacheService(): CacheService {
-  return new CacheService(5 * 60 * 1000); // 5分钟默认TTL
+  return new CacheService(5 * 60 * 1000); // 5min默认TTL
 }
 
-// 默认实例 - 延迟初始化
+// 默认instance - 延迟初始化
 let defaultInstance: CacheService | null = null;
 
 export function getCacheService(): CacheService {

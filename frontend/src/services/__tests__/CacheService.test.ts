@@ -1,11 +1,11 @@
 /**
- * CacheService 单元测试
+ * CacheService 单元test
  * 
- * 测试场景:
- * - 基本的设置和获取功能
- * - TTL过期检查
- * - 缓存清理功能
- * - 统计功能
+ * test场景:
+ * - 基本的setandgetfeature
+ * - TTL过期check
+ * - cachecleanupfeature
+ * - 统计feature
  * - 边缘情况
  */
 
@@ -15,8 +15,8 @@ describe('CacheService', () => {
   let cacheService: CacheService;
 
   beforeEach(() => {
-    // 每个测试使用新的CacheService实例
-    cacheService = new CacheService(5 * 60 * 1000); // 5分钟TTL
+    // 每itemtestuse新的CacheServiceinstance
+    cacheService = new CacheService(5 * 60 * 1000); // 5minTTL
   });
 
   describe('set and get', () => {
@@ -72,7 +72,7 @@ describe('CacheService', () => {
 
     it('should use custom TTL when specified', () => {
       const key = 'test-key';
-      const customTTL = 1000; // 1秒
+      const customTTL = 1000; // 1sec
 
       cacheService.set(key, 'data', customTTL);
 
@@ -87,7 +87,7 @@ describe('CacheService', () => {
 
       cacheService.set(key, 'data', shortTTL);
 
-      // 等待过期
+      // wait过期
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       const result = cacheService.get(key);
@@ -102,7 +102,7 @@ describe('CacheService', () => {
 
       expect(cacheService.isExpired(key)).toBe(false);
 
-      // 等待过期
+      // wait过期
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(cacheService.isExpired(key)).toBe(true);
@@ -114,7 +114,7 @@ describe('CacheService', () => {
 
       cacheService.set(key, 'data', shortTTL);
 
-      // 等待过期
+      // wait过期
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(cacheService.getTTL(key)).toBe(0);
@@ -181,7 +181,7 @@ describe('CacheService', () => {
       cacheService.set('key2', 'data2', 5000); // 5s TTL
       cacheService.set('key3', 'data3', 100); // 100ms TTL
 
-      // 等待部分过期
+      // wait部分过期
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       const clearedCount = cacheService.clearExpired();
@@ -216,7 +216,7 @@ describe('CacheService', () => {
     it('should return false for expired entry', async () => {
       cacheService.set('key', 'data', 100);
 
-      // 等待过期
+      // wait过期
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(cacheService.has('key')).toBe(false);

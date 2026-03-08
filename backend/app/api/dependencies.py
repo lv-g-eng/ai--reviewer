@@ -122,10 +122,13 @@ require_compliance = RoleChecker([UserRole.admin, UserRole.compliance_officer])
 require_manager = RoleChecker([UserRole.admin, UserRole.manager])
 
 
+from typing import Annotated
+
+
 async def check_project_access(
     project_id: str,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> bool:
     """
     Check if user has access to a project

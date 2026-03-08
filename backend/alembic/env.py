@@ -60,9 +60,15 @@ def run_migrations_online() -> None:
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
-    # Create engine directly with psycopg URL to avoid driver detection issues
+    # Create engine from configuration
+    # Database URL should be provided via environment variable
     from sqlalchemy import create_engine
-    database_url = 'postgresql+psycopg://postgres:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6@postgres:5432/ai_code_review'
+    import os
+    
+    database_url = os.environ.get(
+        "DATABASE_URL",
+        "postgresql+psycopg://postgres:password@postgres:5432/ai_code_review"
+    )
 
     connectable = create_engine(
         database_url,

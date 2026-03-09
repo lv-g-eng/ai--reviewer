@@ -10,6 +10,7 @@ from ..database import get_db_session
 from ..services.auth_service import AuthService
 from ..services.audit_service import AuditService
 from ..middleware.auth_middleware import security, AuthMiddleware
+from ..utils import get_client_ip
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
@@ -37,14 +38,6 @@ class RefreshResponse(BaseModel):
     """Token refresh response model."""
     access_token: str
     token_type: str = "bearer"
-
-
-def get_client_ip(request: Request) -> str:
-    """Extract client IP address from request."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "0.0.0.0"
 
 
 @router.post("/login", response_model=LoginResponse)

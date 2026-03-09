@@ -12,6 +12,7 @@ from ..services.auth_service import AuthService
 from ..services.rbac_service import RBACService
 from ..services.audit_service import AuditService
 from ..middleware.auth_middleware import security, AuthMiddleware
+from ..utils import get_client_ip
 
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
@@ -37,14 +38,6 @@ class UserResponse(BaseModel):
     created_at: str
     last_login: Optional[str]
     is_active: bool
-
-
-def get_client_ip(request: Request) -> str:
-    """Extract client IP address from request."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "0.0.0.0"
 
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

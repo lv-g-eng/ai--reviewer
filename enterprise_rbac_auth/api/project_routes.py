@@ -13,6 +13,7 @@ from ..models import User, Project, ProjectAccess, Role, Permission
 from ..services.rbac_service import RBACService
 from ..services.audit_service import AuditService
 from ..middleware.auth_middleware import security, AuthMiddleware
+from ..utils import get_client_ip
 
 
 router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
@@ -43,14 +44,6 @@ class ProjectResponse(BaseModel):
     owner_id: str
     created_at: str
     updated_at: str
-
-
-def get_client_ip(request: Request) -> str:
-    """Extract client IP address from request."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "0.0.0.0"
 
 
 @router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)

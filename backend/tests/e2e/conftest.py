@@ -147,16 +147,13 @@ def mock_cache_service():
 
 
 @pytest.fixture(autouse=True)
-async def cleanup_after_test():
+def cleanup_after_test():
     """
     Cleanup fixture that runs after each test
     
     Ensures test data is cleaned up even if test fails.
     """
     yield
-    
-    # Cleanup code here if needed
-    # For example, close any open connections, clear caches, etc.
 
 
 # Pytest configuration

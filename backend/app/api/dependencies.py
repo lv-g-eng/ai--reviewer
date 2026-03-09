@@ -115,11 +115,11 @@ class RoleChecker:
         return user
 
 
-# Common role checkers
-require_admin = RoleChecker([UserRole.admin])
-require_reviewer = RoleChecker([UserRole.admin, UserRole.reviewer])
-require_compliance = RoleChecker([UserRole.admin, UserRole.compliance_officer])
-require_manager = RoleChecker([UserRole.admin, UserRole.manager])
+# Common role checkers - simplified to single user role
+require_admin = RoleChecker([UserRole.user])
+require_reviewer = RoleChecker([UserRole.user])
+require_compliance = RoleChecker([UserRole.user])
+require_manager = RoleChecker([UserRole.user])
 
 
 from typing import Annotated
@@ -147,8 +147,8 @@ async def check_project_access(
     from app.models import Project, ProjectAccess
     from sqlalchemy import select
     
-    # Admins have access to all projects
-    if user.role == UserRole.admin:
+    # All users have access to all projects
+    if user.role == UserRole.user:
         return True
         
     # Check if user has explicit access to the project

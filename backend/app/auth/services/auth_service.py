@@ -1,7 +1,6 @@
 """
 Authentication service for password hashing, JWT token management, and user authentication.
 """
-import bcrypt
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 import jwt
@@ -10,6 +9,7 @@ from sqlalchemy.orm import Session as DBSession
 
 from app.auth.config import auth_settings
 from app.auth.models import User, Session as SessionModel, Role
+from app.utils.password import hash_password, verify_password
 
 
 class AuthResult:
@@ -80,10 +80,7 @@ class AuthService:
         Returns:
             Hashed password as a string
         """
-        # Generate salt and hash the password
-        salt = bcrypt.gensalt(rounds=auth_settings.bcrypt_rounds)
-        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-        return hashed.decode('utf-8')
+        return hash_password(password)
     
     @staticmethod
     def verify_password(password: str, password_hash: str) -> bool:
@@ -97,13 +94,7 @@ class AuthService:
         Returns:
             True if password matches, False otherwise
         """
-        try:
-            return bcrypt.checkpw(
-                password.encode('utf-8'),
-                password_hash.encode('utf-8')
-            )
-        except Exception:
-            return False
+        return verify_password(password, password_hash)
     
     @staticmethod
     def generate_token(user_id: str, username: str, role: Role) -> str:

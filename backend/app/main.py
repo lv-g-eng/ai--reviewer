@@ -13,7 +13,7 @@ from app.core.config import settings
 from app.core.logging_config import setup_logging, log_request
 from app.api.v1.router import api_router
 from app.api.exception_handlers import register_exception_handlers
-from app.database.postgresql import init_postgres, close_postgres
+from app.database.postgresql import init_postgres, close_postgres, get_db
 from app.database.neo4j_db import init_neo4j, close_neo4j
 from app.database.redis_db import init_redis, close_redis
 
@@ -119,6 +119,37 @@ async def lifespan(app: FastAPI):
         from app.services.llm_service import llm_service
         await llm_service.initialize()
         logger.info("LLM service initialized")
+    
+    # Create default test user if not exists
+    if postgres_available and not testing:
+        try:
+            from sqlalchemy import select
+            from app.models import User, UserRole
+            from app.utils.password import hash_password
+            import uuid
+            
+            async for db in get_db():
+                stmt = select(User).where(User.email == "admin@example.com")
+                result = await db.execute(stmt)
+                existing_user = result.scalar_one_or_none()
+                
+                if not existing_user:
+                    default_user = User(
+                        id=uuid.uuid4(),
+                        email="admin@example.com",
+                        password_hash=hash_password("Admin123!"),
+                        role=UserRole.user,
+                        full_name="Admin User",
+                        is_active=True
+                    )
+                    db.add(default_user)
+                    await db.commit()
+                    logger.info("Default test user created: admin@example.com / Admin123!")
+                else:
+                    logger.info("Default test user already exists")
+                break
+        except Exception as e:
+            logger.warning("Could not create default user: %s", str(e))
     
     # Initialize RBAC authentication system
     try:

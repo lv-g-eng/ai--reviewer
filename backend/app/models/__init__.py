@@ -30,12 +30,8 @@ from app.models.library import (
 
 
 class UserRole(str, enum.Enum):
-    """User role enum"""
-    admin = "admin"
-    developer = "developer"
-    reviewer = "reviewer"
-    compliance_officer = "compliance_officer"
-    manager = "manager"
+    """User role enum - simplified to single user role"""
+    user = "user"
 
 
 class PRStatus(str, enum.Enum):
@@ -63,7 +59,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
-    role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.developer)
+    role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.user)
     full_name = Column(String(255))
     is_active = Column(Boolean, default=True)
     github_token = Column(String(500), nullable=True)

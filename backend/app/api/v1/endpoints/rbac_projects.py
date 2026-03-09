@@ -796,3 +796,125 @@ async def delete_ssh_key(
     )
 
     return MessageResponse(message=f"SSH key '{ssh_key.name}' deleted successfully")
+
+
+# Invite User by Email Models
+class InviteUserRequest(BaseModel):
+    """Invite user to project by email request model."""
+    email: str
+    access_level: str = "read"  # read, write, admin
+
+
+class InviteUserResponse(BaseModel):
+    """Invite user response model."""
+    message: str
+    user_email: str
+    access_level: str
+    project_id: str
+    project_name: str
+
+
+@router.post("/{project_id}/invite", response_model=InviteUserResponse, status_code=status.HTTP_201_CREATED)
+async def invite_user_to_project(
+    project_id: str,
+    invite_data: InviteUserRequest,
+    request: Request,
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Invite a user to project by email.
+    
+    - **email**: Email address of user to invite
+    - **access_level**: Access level (read, write, admin)
+    
+    If the user doesn't exist, they will be registered and added to the project.
+    """
+    from app.models import User, UserRole
+    from app.utils.password import hash_password
+    
+    # Verify project exists
+    result = await db.execute(select(Project).filter(Project.id == project_id))
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    
+    # Verify access level
+    if invite_data.access_level not in ["read", "write", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid access level. Must be 'read', 'write', or 'admin'"
+        )
+    
+    # Find or create user
+    result = await db.execute(select(User).filter(User.email == invite_data.email))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        # Create new user with temporary password (they can reset later)
+        temp_password = f"Welcome{uuid.uuid4().hex[:8]}!"
+        user = User(
+            id=uuid.uuid4(),
+            email=invite_data.email,
+            password_hash=hash_password(temp_password),
+            role=UserRole.user,
+            full_name=invite_data.email.split('@')[0],
+            is_active=True
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+        logger.info(f"Created new user {invite_data.email} via project invitation")
+    
+    # Check if user already has access
+    result = await db.execute(
+        select(ProjectAccess).filter(
+            ProjectAccess.project_id == project_id,
+            ProjectAccess.user_id == user.id,
+            ProjectAccess.revoked_at.is_(None)
+        )
+    )
+    existing_access = result.scalar_one_or_none()
+    
+    if existing_access:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"User {invite_data.email} already has access to this project"
+        )
+    
+    # Grant access
+    access_grant = ProjectAccess(
+        id=uuid.uuid4(),
+        project_id=project_id,
+        user_id=user.id,
+        access_level=invite_data.access_level,
+        granted_by=current_user.user_id
+    )
+    db.add(access_grant)
+    await db.commit()
+    
+    # Log audit event
+    ip_address = request.client.host if request.client else "0.0.0.0"
+    await _log_audit_action(
+        db=db,
+        user_id=current_user.user_id,
+        username=current_user.username,
+        action="INVITE_USER_TO_PROJECT",
+        ip_address=ip_address,
+        success=True,
+        resource_type="ProjectAccess",
+        resource_id=f"{project_id}:{user.id}",
+        user_agent=request.headers.get("user-agent")
+    )
+    
+    return InviteUserResponse(
+        message=f"User {invite_data.email} invited successfully",
+        user_email=invite_data.email,
+        access_level=invite_data.access_level,
+        project_id=project_id,
+        project_name=project.name
+    )

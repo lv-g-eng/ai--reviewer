@@ -105,7 +105,7 @@ class BranchArchitecture(BaseModel):
 async def get_project_branches(
     project_id: str,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get all branches list for a project.
@@ -192,7 +192,7 @@ async def get_branch_architecture(
     project_id: str,
     branch_id: str,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get architecture graph data for a specified branch.
@@ -403,8 +403,8 @@ class DependencyGraphResponse(BaseModel):
 async def get_dependency_graph(
     project_id: str = Path(..., description="Project UUID"),
     branch_id: Optional[str] = None,
-    current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))] = None,
-    db: Annotated[AsyncSession, Depends(get_db)] = None
+    current_user: TokenPayload = Depends(require_project_access(Permission.VIEW_PROJECT)),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get dependency graph data for a project.
@@ -601,8 +601,8 @@ async def get_dependency_graph(
 @router.get("/architecture/{analysis_id}", response_model=ArchitectureAnalysisResponse)
 async def get_architecture_analysis(
     analysis_id: str = Path(..., description="Architecture analysis UUID"),
-    current_user: Annotated[TokenPayload, Depends(get_current_user)] = None,
-    db: Annotated[AsyncSession, Depends(get_db)] = None
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get specified architecture analysis data.

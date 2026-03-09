@@ -46,8 +46,8 @@ class APISettingsResponse(BaseModel):
 
 @router.get("/api-settings", response_model=APISettingsResponse)
 async def get_user_api_settings(
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     getuser的 API set
@@ -83,8 +83,8 @@ async def get_user_api_settings(
 @router.put("/api-settings", response_model=APISettingsResponse)
 async def update_user_api_settings(
     settings: UpdateAPISettingsRequest,
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     updateuser的 API set
@@ -163,8 +163,8 @@ async def update_user_api_settings(
 @router.delete("/api-settings/{provider}", response_model=APISettingsResponse)
 async def delete_user_api_key(
     provider: str,
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     delete指定provide者的 API key

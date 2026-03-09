@@ -61,7 +61,7 @@ class ArchitectureAnalysisRequest(BaseModel):
 @router.post("/analyze-code")
 async def analyze_code(
     request: CodeAnalysisRequest,
-    current_user: Annotated[UserResponse, Depends(get_current_user)],
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """
     Analyze code using local LLM
@@ -88,7 +88,7 @@ async def analyze_code(
 @router.post("/generate")
 async def generate_text(
     request: GenerateRequest,
-    current_user: Annotated[UserResponse, Depends(get_current_user)],
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """
     Generate text using local LLM
@@ -116,7 +116,7 @@ async def generate_text(
 @router.post("/analyze-architecture")
 async def analyze_architecture(
     request: ArchitectureAnalysisRequest,
-    current_user: Annotated[UserResponse, Depends(get_current_user)],
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """
     Analyze system architecture using local LLM
@@ -143,7 +143,7 @@ async def analyze_architecture(
 
 
 @router.get("/models")
-async def list_models(current_user: Annotated[UserResponse, Depends(get_current_user)]):
+async def list_models(current_user: UserResponse = Depends(get_current_user)):
     """
     List available LLM models and their status
     """
@@ -164,7 +164,7 @@ async def list_models(current_user: Annotated[UserResponse, Depends(get_current_
 @router.post("/models/{model_type}/load")
 async def load_model(
     model_type: ModelType,
-    current_user: Annotated[UserResponse, Depends(get_current_user)],
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """
     Load a specific model into memory
@@ -198,7 +198,7 @@ async def load_model(
 @router.post("/models/{model_type}/unload")
 async def unload_model(
     model_type: ModelType,
-    current_user: Annotated[UserResponse, Depends(get_current_user)],
+    current_user: UserResponse = Depends(get_current_user),
 ):
     """
     Unload a model from memory

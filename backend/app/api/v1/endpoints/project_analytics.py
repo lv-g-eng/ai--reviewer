@@ -57,7 +57,7 @@ class ProjectAnalytics(BaseModel):
 async def get_project_analytics(
     project_id: str,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     getproject的 AI reviewanalyzedata
@@ -130,7 +130,7 @@ async def get_project_analytics(
 async def get_project_issues(
     project_id: str,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: AsyncSession = Depends(get_db),
     severity: Optional[str] = None,
     category: Optional[str] = None,
     limit: int = 50
@@ -194,7 +194,7 @@ async def get_project_issues(
 async def get_project_architecture(
     project_id: str,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     getproject的architectureanalyzedata
@@ -308,7 +308,7 @@ class PerformanceDashboardData(BaseModel):
 async def get_performance_metrics(
     project_id: str,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: AsyncSession = Depends(get_db),
     start_time: Optional[str] = Query(
         None,
         description="Start time in ISO 8601 format (e.g., 2024-01-01T00:00:00Z)"
@@ -514,7 +514,7 @@ async def get_performance_metrics(
 async def get_project_architecture_analysis(
     project_id: str,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     getproject的AIgenerate的architectureanalyze，包括优势and建议

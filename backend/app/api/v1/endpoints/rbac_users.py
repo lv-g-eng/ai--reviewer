@@ -60,7 +60,7 @@ async def create_user(
     user_data: CreateUserRequest,
     current_user: Annotated[TokenPayload, Depends(require_permission(Permission.CREATE_USER))],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Create a new user (Admin only).
@@ -132,7 +132,7 @@ async def create_user(
 @router.get("/", response_model=List[UserResponse])
 async def list_users(
     current_user: Annotated[TokenPayload, Depends(require_permission(Permission.VIEW_USER))],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     List all users (Admin only).
@@ -159,7 +159,7 @@ async def list_users(
 async def get_user(
     user_id: str,
     current_user: Annotated[TokenPayload, Depends(require_permission(Permission.VIEW_USER))],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get user details by ID (Admin only).
@@ -191,7 +191,7 @@ async def update_user_role(
     role_data: UpdateUserRoleRequest,
     current_user: Annotated[TokenPayload, Depends(require_role(Role.ADMIN))],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Update user role (Admin only).
@@ -253,7 +253,7 @@ async def delete_user(
     user_id: str,
     current_user: Annotated[TokenPayload, Depends(require_permission(Permission.DELETE_USER))],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Delete user (Admin only).

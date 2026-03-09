@@ -36,7 +36,7 @@ router = APIRouter()
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     user_data: UserRegister,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Register a new user
@@ -94,7 +94,7 @@ async def register(
 async def login(
     credentials: UserLogin,
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Login and get access/refresh tokens
@@ -192,8 +192,8 @@ async def login(
 
 @router.post("/logout", response_model=Message)
 async def logout(
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Logout and blacklist current token
@@ -211,7 +211,7 @@ async def logout(
 async def refresh_token(
     token_data: TokenRefresh,
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Refresh access token using refresh token with token rotation
@@ -372,7 +372,7 @@ async def refresh_token(
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: User = Depends(get_current_user)
 ):
     """
     Get current user information
@@ -383,8 +383,8 @@ async def get_me(
 @router.patch("/password", response_model=Message)
 async def change_password(
     password_data: PasswordChange,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Change user password

@@ -65,7 +65,7 @@ class UserInfoResponse(BaseModel):
 async def login(
     credentials: LoginRequest,
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Authenticate user and return JWT token.
@@ -111,9 +111,9 @@ async def login(
 
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Logout user and invalidate current session.
@@ -157,7 +157,7 @@ async def logout(
 async def refresh_token(
     refresh_data: RefreshRequest,
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Refresh JWT token if it's close to expiration.
@@ -205,7 +205,7 @@ async def refresh_token(
 
 @router.get("/me", response_model=UserInfoResponse)
 async def get_current_user_info(
-    current_user: Annotated[TokenPayload, Depends(get_current_user)]
+    current_user: TokenPayload = Depends(get_current_user)
 ):
     """
     Get current authenticated user information from JWT token.

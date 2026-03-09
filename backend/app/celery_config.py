@@ -22,8 +22,8 @@ from app.core.config import settings
 # Create Celery app with Redis broker and result backend
 celery_app = Celery(
     "ai_code_review",
-    broker=settings.celery_broker_url,
-    backend=settings.celery_result_backend
+    broker=settings.celery_broker_url_value,
+    backend=settings.celery_result_backend_url
 )
 
 # Define task exchanges and queues for priority routing
@@ -36,7 +36,7 @@ celery_app.conf.update(
     # ========================================
     # BROKER SETTINGS (Redis)
     # ========================================
-    broker_url=settings.celery_broker_url,
+    broker_url=settings.celery_broker_url_value,
     broker_connection_retry_on_startup=True,
     broker_connection_retry=True,
     broker_connection_max_retries=10,
@@ -44,7 +44,7 @@ celery_app.conf.update(
     # ========================================
     # RESULT BACKEND SETTINGS (Redis)
     # ========================================
-    result_backend=settings.celery_result_backend,
+    result_backend=settings.celery_result_backend_url,
     result_backend_transport_options={
         'master_name': 'mymaster',  # For Redis Sentinel in production
         'retry_on_timeout': True,

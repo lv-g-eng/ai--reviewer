@@ -54,9 +54,9 @@ class AccountDeletionResponse(BaseModel):
 @router.get("/{user_id}/export", response_model=DataExportResponse)
 async def export_user_data(
     user_id: str,
-    current_user: Annotated[User, Depends(get_current_user)],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Export all user data in JSON format (GDPR compliance).
@@ -237,10 +237,10 @@ async def export_user_data(
 async def delete_user_account(
     user_id: str,
     deletion_request: AccountDeletionRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
     request: Request,
     background_tasks: BackgroundTasks,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Request account deletion (GDPR compliance - Right to be Forgotten).

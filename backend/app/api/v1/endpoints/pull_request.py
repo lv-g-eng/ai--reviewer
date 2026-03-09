@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, Annotated
 
 from app.database.postgresql import get_db
-from app.models import PullRequest, Project
+from app.models import PullRequest, Project, User
 from app.schemas.auth import Message
 from app.api.dependencies import get_current_user, check_project_access
 from app.tasks.pull_request_analysis import analyze_pull_request_sync
@@ -24,9 +24,9 @@ router = APIRouter()
 async def analyze_pull_request_endpoint(
     project_id: str,
     pr_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
-    _: Annotated[bool, Depends(check_project_access)]
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _: bool = Depends(check_project_access)
 ):
     """
     Queue a pull request for asynchronous analysis
@@ -67,7 +67,7 @@ async def analyze_pull_request_endpoint(
 @router.get("/analysis/{task_id}/status")
 async def get_analysis_status(
     task_id: str,
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: User = Depends(get_current_user)
 ):
     """
     Get the status of an analysis task
@@ -107,9 +107,9 @@ async def get_analysis_status(
 async def reanalyze_pull_request(
     project_id: str,
     pr_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
-    _: Annotated[bool, Depends(check_project_access)]
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _: bool = Depends(check_project_access)
 ):
     """
     Re-analyze an existing pull request
@@ -145,9 +145,9 @@ async def reanalyze_pull_request(
 async def analyze_circular_dependencies(
     project_id: str,
     background_tasks: BackgroundTasks,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
-    _: Annotated[bool, Depends(check_project_access)]
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _: bool = Depends(check_project_access)
 ):
     """
     Analyze circular dependencies in a project using AST analysis

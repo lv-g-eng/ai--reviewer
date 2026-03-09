@@ -55,9 +55,9 @@ class ReviewStatusResponse(BaseModel):
 @router.post("/trigger", response_model=ReviewStatusResponse)
 async def trigger_code_review(
     request: TriggerReviewRequest,
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
     background_tasks: BackgroundTasks,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Trigger code review.
@@ -180,8 +180,8 @@ async def perform_review_task(
 @router.get("/{pr_id}/status")
 async def get_review_status(
     pr_id: str = Path(..., description="Pull request UUID"),
-    current_user: Annotated[TokenPayload, Depends(get_current_user)] = None,
-    db: Annotated[AsyncSession, Depends(get_db)] = None
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get review status.
@@ -310,8 +310,8 @@ class CodeReviewResponse(BaseModel):
 @router.get("/{review_id}", response_model=CodeReviewResponse)
 async def get_code_review(
     review_id: str = Path(..., description="Code review UUID"),
-    current_user: Annotated[TokenPayload, Depends(get_current_user)] = None,
-    db: Annotated[AsyncSession, Depends(get_db)] = None
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get code review details.
@@ -457,8 +457,8 @@ async def get_review_comments(
     review_id: str = Path(..., description="Code review UUID"),
     severity: Optional[str] = None,
     category: Optional[str] = None,
-    current_user: Annotated[TokenPayload, Depends(get_current_user)] = None,
-    db: Annotated[AsyncSession, Depends(get_db)] = None
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get comment list for code review.

@@ -52,7 +52,7 @@ def _sanitize_log_input(value: str, max_length: int = 200) -> str:
 router = APIRouter()
 
 
-async def get_library_manager(db: Annotated[AsyncSession, Depends(get_db)]) -> LibraryManager:
+async def get_library_manager(db: AsyncSession = Depends(get_db)) -> LibraryManager:
     """
     Dependency to get LibraryManager instance with database repository.
     
@@ -69,8 +69,8 @@ async def get_library_manager(db: Annotated[AsyncSession, Depends(get_db)]) -> L
 @router.post("/validate", response_model=ValidationResponse)
 async def validate_library(
     request: ValidateLibraryRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
-    library_manager: Annotated[LibraryManager, Depends(get_library_manager)]
+    current_user: User = Depends(get_current_user),
+    library_manager: LibraryManager = Depends(get_library_manager)
 ):
     """
     Validate library URI and fetch metadata.
@@ -180,8 +180,8 @@ async def validate_library(
 @router.post("/install", response_model=InstallationResponse)
 async def install_library(
     request: InstallLibraryRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
-    library_manager: Annotated[LibraryManager, Depends(get_library_manager)]
+    current_user: User = Depends(get_current_user),
+    library_manager: LibraryManager = Depends(get_library_manager)
 ):
     """
     Install a library into the specified project context.
@@ -302,8 +302,8 @@ async def install_library(
 async def search_libraries(
     q: str = Query(..., min_length=1, description="Search query"),
     registry: Optional[str] = Query(None, description="Registry type filter (npm, pypi, maven)"),
-    current_user: Annotated[User, Depends(get_current_user)],
-    library_manager: Annotated[LibraryManager, Depends(get_library_manager)]
+    current_user: User = Depends(get_current_user),
+    library_manager: LibraryManager = Depends(get_library_manager),
 ):
     """
     Search for libraries across package registries.
@@ -408,8 +408,8 @@ async def search_libraries(
 async def list_installed_libraries(
     project_id: str = Query(..., description="Project ID to list libraries for"),
     project_context: Optional[ProjectContext] = Query(None, description="Filter by project context"),
-    current_user: Annotated[User, Depends(get_current_user)],
-    library_manager: Annotated[LibraryManager, Depends(get_library_manager)]
+    current_user: User = Depends(get_current_user),
+    library_manager: LibraryManager = Depends(get_library_manager)
 ):
     """
     List installed libraries for a project.

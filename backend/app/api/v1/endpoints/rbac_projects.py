@@ -186,7 +186,7 @@ async def create_project(
     project_data: CreateProjectRequest,
     current_user: Annotated[TokenPayload, Depends(require_permission(Permission.CREATE_PROJECT))],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Create a new project with GitHub connection options.
@@ -274,8 +274,8 @@ async def create_project(
 
 @router.get("/", response_model=List[ProjectResponse])
 async def list_projects(
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     List all accessible projects for the current user.
@@ -341,7 +341,7 @@ async def list_projects(
 async def get_project(
     project_id: str,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.VIEW_PROJECT))],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get project details by ID.
@@ -378,7 +378,7 @@ async def update_project(
     project_data: UpdateProjectRequest,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.UPDATE_PROJECT))],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Update project (Owner or Admin only).
@@ -442,7 +442,7 @@ async def delete_project(
     project_id: str,
     current_user: Annotated[TokenPayload, Depends(require_project_access(Permission.DELETE_PROJECT))],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Delete project (Owner or Admin only).
@@ -510,9 +510,9 @@ async def delete_project(
 async def grant_project_access(
     project_id: str,
     access_data: GrantAccessRequest,
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Grant user access to project (Owner or Admin only).
@@ -570,9 +570,9 @@ async def grant_project_access(
 async def revoke_project_access(
     project_id: str,
     user_id: str,
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Revoke user access to project (Owner or Admin only).
@@ -636,9 +636,9 @@ class SSHKeyResponse(BaseModel):
 @router.post("/ssh-keys", response_model=SSHKeyResponse, status_code=status.HTTP_201_CREATED)
 async def create_ssh_key(
     key_data: SSHKeyRequest,
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Create a new SSH key for GitHub connections.
@@ -711,8 +711,8 @@ async def create_ssh_key(
 
 @router.get("/ssh-keys", response_model=List[SSHKeyResponse])
 async def list_ssh_keys(
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     List all SSH keys for the current user.
@@ -744,9 +744,9 @@ async def list_ssh_keys(
 @router.delete("/ssh-keys/{key_id}", response_model=MessageResponse)
 async def delete_ssh_key(
     key_id: str,
-    current_user: Annotated[TokenPayload, Depends(get_current_user)],
     request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Delete an SSH key (owner only).

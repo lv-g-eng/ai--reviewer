@@ -40,7 +40,7 @@ class AuditLogResponse(BaseModel):
 @router.get("/logs", response_model=List[AuditLogResponse])
 async def query_audit_logs(
     current_user: Annotated[TokenPayload, Depends(require_permission(Permission.VIEW_USER))],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: AsyncSession = Depends(get_db),
     user_id: Optional[str] = Query(None, description="Filter by user ID"),
     action: Optional[str] = Query(None, description="Filter by action type"),
     start_date: Optional[str] = Query(None, description="Filter by start date (ISO format)"),
@@ -121,7 +121,7 @@ async def query_audit_logs(
 async def get_user_audit_logs(
     user_id: str,
     current_user: Annotated[TokenPayload, Depends(require_permission(Permission.VIEW_USER))],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: AsyncSession = Depends(get_db),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of logs to return")
 ):
     """

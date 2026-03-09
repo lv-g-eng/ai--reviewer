@@ -232,10 +232,10 @@ async def run_architecture_analysis(
 async def github_webhook(
     request: Request,
     background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
     x_hub_signature_256: Optional[str] = Header(None),
     x_github_delivery: Optional[str] = Header(None),
     x_github_event: Optional[str] = Header(None),
-    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     Receive GitHub webhook events
@@ -421,8 +421,8 @@ async def handle_pull_request_event(
 @router.post("/pr/{pr_id}/analyze")
 async def analyze_pull_request(
     pr_id: str,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Manually trigger analysis of a pull request
@@ -463,8 +463,8 @@ async def analyze_pull_request(
 @router.get("/pr/{pr_id}/review")
 async def get_code_review(
     pr_id: str,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get code review results for a pull request
@@ -529,9 +529,9 @@ async def get_code_review(
 @router.post("/projects/{project_id}/sync", response_model=Message)
 async def sync_project(
     project_id: str,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
-    _: Annotated[bool, Depends(check_project_access)]
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    _: bool = Depends(check_project_access)
 ):
     """
     Manually trigger project synchronization with GitHub
@@ -560,9 +560,9 @@ async def sync_project(
 @router.get("/projects/{project_id}/pulls")
 async def list_project_pulls(
     project_id: str,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
-    _: Annotated[bool, Depends(check_project_access)],
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    _: bool = Depends(check_project_access),
     state: str = "open"
 ):
     """
@@ -614,8 +614,8 @@ async def list_project_pulls(
 @router.get("/pulls/{pr_id}/files")
 async def get_pr_files(
     pr_id: str,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get changed files in a pull request
@@ -687,8 +687,8 @@ class GitHubConnectRequest(BaseModel):
 @router.post("/connect")
 async def connect_github(
     request: GitHubConnectRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Connect user's GitHub account using OAuth code
@@ -818,7 +818,7 @@ async def connect_github(
 
 @router.get("/status")
 async def get_github_status(
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: User = Depends(get_current_user)
 ):
     """
     Check if user's GitHub account is connected
@@ -831,7 +831,7 @@ async def get_github_status(
 
 @router.get("/repositories")
 async def get_user_repositories(
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: User = Depends(get_current_user)
 ):
     """
     Get user's GitHub repositories
@@ -896,8 +896,8 @@ async def get_user_repositories(
 
 @router.delete("/disconnect")
 async def disconnect_github(
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Disconnect user's GitHub account

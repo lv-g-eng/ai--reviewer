@@ -1,8 +1,9 @@
-services:
-  # Load environment variables from .env.docker-local
-  env_file:
-    - .env.docker-local
+version: '3.8'
 
+env_file:
+  - .env.docker-local
+
+services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine

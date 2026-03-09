@@ -1,7 +1,7 @@
 """
 Role-Based Access Control (RBAC) dependencies and decorators
 """
-from typing import List
+from typing import List, Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select

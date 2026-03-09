@@ -1,6 +1,5 @@
 -- ================================================
 -- AI Code Review Platform - PostgreSQL Schema
--- Complete database schema with all required tables
 -- ================================================
 
 -- Enable necessary extensions
@@ -13,34 +12,16 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ================================================
 
 -- User roles - simplified to single user role
-CREATE TYPE user_role AS ENUM (
-    'user'
-);
+CREATE TYPE user_role AS ENUM ('user');
 
 -- Pull request status
-CREATE TYPE pr_status AS ENUM (
-    'pending',
-    'analyzing',
-    'reviewed',
-    'approved',
-    'rejected'
-);
+CREATE TYPE pr_status AS ENUM ('pending', 'analyzing', 'reviewed', 'approved', 'rejected');
 
 -- Audit action types
-CREATE TYPE audit_action AS ENUM (
-    'create',
-    'update',
-    'delete',
-    'approve',
-    'reject'
-);
+CREATE TYPE audit_action AS ENUM ('create', 'update', 'delete', 'approve', 'reject');
 
 -- GitHub connection type
-CREATE TYPE github_connection_type AS ENUM (
-    'https',
-    'ssh',
-    'cli'
-);
+CREATE TYPE github_connection_type AS ENUM ('https', 'ssh', 'cli');
 
 -- ================================================
 -- TABLE: users
@@ -59,7 +40,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for users table
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_is_active ON users(is_active);
@@ -86,12 +66,32 @@ CREATE TABLE IF NOT EXISTS projects (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for projects table
 CREATE INDEX idx_projects_owner ON projects(owner_id);
 CREATE INDEX idx_projects_github_url ON projects(github_repo_url);
 CREATE INDEX idx_projects_is_active ON projects(is_active);
 CREATE INDEX idx_projects_name ON projects(name);
 CREATE INDEX idx_projects_created_at ON projects(created_at DESC);
+
+-- ================================================
+-- TABLE: ssh_keys
+-- ================================================
+
+CREATE TABLE IF NOT EXISTS ssh_keys (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    public_key TEXT NOT NULL,
+    private_key TEXT NOT NULL,
+    key_fingerprint VARCHAR(255) UNIQUE NOT NULL,
+    github_username VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_ssh_keys_user ON ssh_keys(user_id);
+CREATE INDEX idx_ssh_keys_fingerprint ON ssh_keys(key_fingerprint);
 
 -- ================================================
 -- TABLE: pull_requests
@@ -117,7 +117,6 @@ CREATE TABLE IF NOT EXISTS pull_requests (
     UNIQUE(project_id, github_pr_number)
 );
 
--- Indexes for pull_requests table
 CREATE INDEX idx_pr_project ON pull_requests(project_id);
 CREATE INDEX idx_pr_github_number ON pull_requests(github_pr_number);
 CREATE INDEX idx_pr_author ON pull_requests(author_id);
@@ -144,13 +143,11 @@ CREATE TABLE IF NOT EXISTS review_results (
     UNIQUE(pull_request_id)
 );
 
--- Indexes for review_results table
 CREATE INDEX idx_review_pr ON review_results(pull_request_id);
 CREATE INDEX idx_review_confidence ON review_results(confidence_score DESC);
 CREATE INDEX idx_review_created_at ON review_results(created_at DESC);
--- JSONB indexes for efficient querying
-CREATE INDEX idx_review_ai_suggestions ON review_results USING GIN (ai_suggestions);
-CREATE INDEX idx_review_security_issues ON review_results USING GIN (security_issues);
+CREATE INDEX idx_review_ai_suggestions ON review_results USING GIN(ai_suggestions);
+CREATE INDEX idx_review_security_issues ON review_results USING GIN(security_issues);
 
 -- ================================================
 -- TABLE: audit_logs
@@ -168,14 +165,12 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for audit_logs table
 CREATE INDEX idx_audit_user ON audit_logs(user_id);
 CREATE INDEX idx_audit_action ON audit_logs(action);
 CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp DESC);
 CREATE INDEX idx_audit_user_timestamp ON audit_logs(user_id, timestamp DESC);
--- JSONB index for changes
-CREATE INDEX idx_audit_changes ON audit_logs USING GIN (changes);
+CREATE INDEX idx_audit_changes ON audit_logs USING GIN(changes);
 
 -- ================================================
 -- TABLE: architectural_baselines
@@ -194,36 +189,13 @@ CREATE TABLE IF NOT EXISTS architectural_baselines (
     UNIQUE(project_id, version)
 );
 
--- Indexes for architectural_baselines table
 CREATE INDEX idx_baseline_project ON architectural_baselines(project_id);
 CREATE INDEX idx_baseline_version ON architectural_baselines(version);
 CREATE INDEX idx_baseline_is_current ON architectural_baselines(is_current);
 CREATE INDEX idx_baseline_created_at ON architectural_baselines(created_at DESC);
 CREATE INDEX idx_baseline_project_current ON architectural_baselines(project_id, is_current);
--- JSONB indexes
-CREATE INDEX idx_baseline_graph ON architectural_baselines USING GIN (graph_snapshot);
-CREATE INDEX idx_baseline_metrics ON architectural_baselines USING GIN (metrics);
-
--- ================================================
--- TABLE: ssh_keys
--- ================================================
-
-CREATE TABLE IF NOT EXISTS ssh_keys (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    public_key TEXT NOT NULL,
-    private_key TEXT NOT NULL,
-    key_fingerprint VARCHAR(255) UNIQUE NOT NULL,
-    github_username VARCHAR(255),
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_used_at TIMESTAMP WITH TIME ZONE
-);
-
-CREATE INDEX idx_ssh_keys_user ON ssh_keys(user_id);
-CREATE INDEX idx_ssh_keys_fingerprint ON ssh_keys(key_fingerprint);
+CREATE INDEX idx_baseline_graph ON architectural_baselines USING GIN(graph_snapshot);
+CREATE INDEX idx_baseline_metrics ON architectural_baselines USING GIN(metrics);
 
 -- ================================================
 -- TABLE: token_blacklist
@@ -314,7 +286,6 @@ CREATE INDEX idx_code_entity_project_type ON code_entities(project_id, entity_ty
 -- TRIGGERS
 -- ================================================
 
--- Trigger function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -323,7 +294,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Apply triggers to tables with updated_at column
 CREATE TRIGGER update_users_updated_at
     BEFORE UPDATE ON users
     FOR EACH ROW
@@ -334,7 +304,16 @@ CREATE TRIGGER update_projects_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Trigger to ensure only one current baseline per project
+CREATE TRIGGER update_ssh_keys_updated_at
+    BEFORE UPDATE ON ssh_keys
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_code_entities_updated_at
+    BEFORE UPDATE ON code_entities
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 CREATE OR REPLACE FUNCTION ensure_single_current_baseline()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -356,7 +335,6 @@ CREATE TRIGGER enforce_single_current_baseline
 -- VIEWS
 -- ================================================
 
--- View for active pull requests with review status
 CREATE OR REPLACE VIEW active_pull_requests AS
 SELECT 
     pr.id,
@@ -381,7 +359,6 @@ LEFT JOIN users u ON pr.author_id = u.id
 LEFT JOIN review_results rr ON pr.id = rr.pull_request_id
 WHERE pr.status IN ('pending', 'analyzing', 'reviewed');
 
--- View for project statistics
 CREATE OR REPLACE VIEW project_statistics AS
 SELECT 
     p.id AS project_id,
@@ -400,7 +377,7 @@ WHERE p.is_active = TRUE
 GROUP BY p.id, p.name;
 
 -- ================================================
--- INITIAL DATA COMMENTS
+-- COMMENTS
 -- ================================================
 
 COMMENT ON TABLE users IS 'User accounts with role-based access control';

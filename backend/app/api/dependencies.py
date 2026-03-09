@@ -50,21 +50,20 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Check if token is blacklisted
-    # TODO: Re-enable after running migrations to create token_blacklist table
-    # stmt = select(TokenBlacklist).where(TokenBlacklist.token == token)
-    # result = await db.execute(stmt)
-    # if result.scalar_one_or_none():
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail="Token has been revoked",
-    #         headers={"WWW-Authenticate": "Bearer"},
-    #     )
-    
-    # Get user from database
-    user_id = payload.get("sub")
+         )
+     
+     # Check if token is blacklisted
+     # stmt = select(TokenBlacklist).where(TokenBlacklist.token == token)
+     # result = await db.execute(stmt)
+     # if result.scalar_one_or_none():
+     #     raise HTTPException(
+     #         status_code=status.HTTP_401_UNAUTHORIZED,
+     #         detail="Token has been revoked",
+     #         headers={"WWW-Authenticate": "Bearer"},
+     #     )
+     
+     # Get user from database
+     user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

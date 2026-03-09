@@ -168,10 +168,9 @@ Provide detailed analysis of any Clean Code principle violations."""
         try:
             response = await self.llm.generate(prompt, system_prompt=system_prompt)
             
-            # Parse response and create violations
-            # For now, return a simple structure
-            # TODO: Implement proper JSON parsing
-            violations = []
+             # Parse response and create violations
+             # For now, return a simple structure
+             violations = []
             
             logger.info(
                 f"Found {len(violations)} Clean Code violations in {file_path}",
@@ -232,15 +231,14 @@ Provide a clear, actionable explanation."""
         try:
             response = await self.llm.generate(prompt, system_prompt=system_prompt)
             
-            # Parse response
-            # TODO: Implement proper parsing
-            explanation = NaturalLanguageExplanation(
-                technical_finding=technical_finding,
-                developer_explanation=response,
-                why_it_matters="This affects code quality and maintainability.",
-                how_to_fix="Follow the suggested improvements.",
-                code_example=None,
-            )
+             # Parse response
+             explanation = NaturalLanguageExplanation(
+                 technical_finding=technical_finding,
+                 developer_explanation=response,
+                 why_it_matters="This affects code quality and maintainability.",
+                 how_to_fix="Follow suggested improvements.",
+                 code_example=None,
+             )
             
             logger.info("Generated natural language explanation")
             

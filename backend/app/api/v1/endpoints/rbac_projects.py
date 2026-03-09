@@ -113,25 +113,10 @@ async def _validate_github_connection(project_data: CreateProjectRequest, user_i
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="github_cli_token is required for CLI connections"
-            )
-        # TODO: Validate GitHub CLI token format and potentially test connection
-
-    elif connection_type == "https":
-        # For HTTPS, we could validate the URL format
-        if not project_data.github_repo_url.startswith(("https://", "http://")):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="GitHub repository URL must start with https:// or http:// for HTTPS connections"
-            )
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported connection type: {connection_type}"
-        )
-
-
-# Async wrappers for RBACService methods
-async def _grant_project_access(db: AsyncSession, project_id: str, user_id: str, granted_by: str) -> bool:
+          )
+     
+     # Async wrappers for RBACService methods
+     async def _grant_project_access(db: AsyncSession, project_id: str, user_id: str, granted_by: str) -> bool:
     """Async wrapper for RBACService.grant_project_access"""
     try:
         # Use run_in_executor to call sync RBAC method

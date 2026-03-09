@@ -17,17 +17,20 @@ Phase 3 成功创建了 **5个通用工具**，为后续重构奠定基础，预
 ### 前端工具 (3个)
 
 #### 1. Logger 工具 ✅
+
 **文件**: `frontend/src/lib/utils/logger.ts`
 **代码行数**: 150行
 **影响范围**: 20+ 文件，50+ 处console调用
 
 **特性**:
+
 - 环境感知 (开发环境显示debug日志)
 - 敏感信息过滤 (密码、token、secret)
 - 模块前缀自动添加
 - 统一日志格式
 
 **使用示例**:
+
 ```typescript
 const logger = createLogger('AuthContext');
 logger.debug('User logged in', { userId: 123 });
@@ -37,24 +40,27 @@ logger.error('Login failed', error);
 ---
 
 #### 2. useAsyncAction Hook ✅
+
 **文件**: `frontend/src/hooks/useAsyncAction.ts`
 **代码行数**: 90行
 **影响范围**: 15+ 文件，20+ 处异步状态管理
 
 **特性**:
+
 - 统一 loading/error 状态管理
 - 自动错误处理
 - 成功回调支持
 - reset 功能
 
 **使用示例**:
+
 ```typescript
 const { execute, loading, error } = useAsyncAction();
 
 const handleSubmit = async () => {
   await execute(
     () => apiClient.post('/api/data', data),
-    (result) => console.log('Success:', result)
+    result => console.log('Success:', result)
   );
 };
 ```
@@ -62,28 +68,28 @@ const handleSubmit = async () => {
 ---
 
 #### 3. useApiCall Hook ✅
+
 **文件**: `frontend/src/hooks/useApiCall.ts`
 **代码行数**: 120行
 **影响范围**: 10+ 文件，15+ 处API调用
 
 **特性**:
+
 - 统一API调用和错误处理
 - 自动toast通知
 - Axios错误提取
 - 自定义错误处理选项
 
 **使用示例**:
+
 ```typescript
 const { execute } = useApiCall();
 
 const handleLogin = async () => {
-  await execute(
-    () => login(email, password),
-    {
-      successMessage: 'Login successful!',
-      onSuccess: (user) => router.push('/dashboard')
-    }
-  );
+  await execute(() => login(email, password), {
+    successMessage: 'Login successful!',
+    onSuccess: user => router.push('/dashboard'),
+  });
 };
 ```
 
@@ -92,17 +98,20 @@ const handleLogin = async () => {
 ### 后端工具 (2个)
 
 #### 4. BaseRepository 基类 ✅
+
 **文件**: `backend/app/core/repository.py`
 **代码行数**: 180行
 **影响范围**: 8+ 个服务类，~200行重复
 
 **特性**:
+
 - 泛型CRUD操作
 - 自动事务管理
 - 统一错误处理
 - 分页和过滤支持
 
 **使用示例**:
+
 ```python
 class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
     async def get_by_email(self, email: str) -> Optional[User]:
@@ -115,17 +124,20 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
 ---
 
 #### 5. with_audit_log 装饰器 ✅
+
 **文件**: `backend/app/core/decorators.py`
 **代码行数**: 130行
 **影响范围**: 10+ 个endpoint，~150行重复
 
 **特性**:
+
 - 自动审计日志记录
 - IP地址提取
 - 资源类型自动识别
 - 异步和同步版本
 
 **使用示例**:
+
 ```python
 @with_audit_log("user.create")
 async def create_user(db: AsyncSession, user_data: UserCreate, user_id: str):
@@ -141,25 +153,25 @@ async def create_user(db: AsyncSession, user_data: UserCreate, user_id: str):
 
 ### 代码量
 
-| 工具 | 代码行数 | 文档行数 | 总计 |
-|------|---------|---------|------|
-| Logger | 150 | 30 | 180 |
-| useAsyncAction | 90 | 50 | 140 |
-| useApiCall | 120 | 60 | 180 |
-| BaseRepository | 180 | 40 | 220 |
-| with_audit_log | 130 | 40 | 170 |
-| **总计** | **670** | **220** | **890** |
+| 工具           | 代码行数 | 文档行数 | 总计    |
+| -------------- | -------- | -------- | ------- |
+| Logger         | 150      | 30       | 180     |
+| useAsyncAction | 90       | 50       | 140     |
+| useApiCall     | 120      | 60       | 180     |
+| BaseRepository | 180      | 40       | 220     |
+| with_audit_log | 130      | 40       | 170     |
+| **总计**       | **670**  | **220**  | **890** |
 
 ### 预期减少重复代码
 
-| 模式 | 当前重复 | 使用工具后 | 减少 |
-|------|---------|-----------|------|
-| API错误处理+Toast | ~150行 | ~15行 | 135行 |
-| 异步状态管理 | ~200行 | ~20行 | 180行 |
-| Console日志 | ~100行 | ~20行 | 80行 |
-| 数据库CRUD | ~200行 | ~30行 | 170行 |
-| 审计日志 | ~150行 | ~20行 | 130行 |
-| **总计** | **~800行** | **~105行** | **~695行** |
+| 模式              | 当前重复   | 使用工具后 | 减少       |
+| ----------------- | ---------- | ---------- | ---------- |
+| API错误处理+Toast | ~150行     | ~15行      | 135行      |
+| 异步状态管理      | ~200行     | ~20行      | 180行      |
+| Console日志       | ~100行     | ~20行      | 80行       |
+| 数据库CRUD        | ~200行     | ~30行      | 170行      |
+| 审计日志          | ~150行     | ~20行      | 130行      |
+| **总计**          | **~800行** | **~105行** | **~695行** |
 
 **实际影响**: 考虑到多次使用，预计减少 **1,500+ 行重复代码**
 
@@ -168,6 +180,7 @@ async def create_user(db: AsyncSession, user_data: UserCreate, user_id: str):
 ## ✅ 验证检查清单
 
 ### 前端工具
+
 - [x] TypeScript类型完整
 - [x] JSDoc注释完善
 - [x] 导出正确的类型
@@ -175,6 +188,7 @@ async def create_user(db: AsyncSession, user_data: UserCreate, user_id: str):
 - [ ] 实际使用验证 (待Phase 4)
 
 ### 后端工具
+
 - [x] Python类型注解完整
 - [x] Docstring完善
 - [x] 异步支持

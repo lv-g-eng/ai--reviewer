@@ -828,10 +828,9 @@ async def invite_user_to_project(
     - **email**: Email address of user to invite
     - **access_level**: Access level (read, write, admin)
     
-    If the user doesn't exist, they will be registered and added to the project.
+    If the user already has access to the project, returns an error.
     """
-    from app.models import User, UserRole
-    from app.utils.password import hash_password
+    from app.models import User
     
     # Verify project exists
     result = await db.execute(select(Project).filter(Project.id == project_id))
@@ -850,25 +849,15 @@ async def invite_user_to_project(
             detail="Invalid access level. Must be 'read', 'write', or 'admin'"
         )
     
-    # Find or create user
+    # Find user by email - must exist
     result = await db.execute(select(User).filter(User.email == invite_data.email))
     user = result.scalar_one_or_none()
     
     if not user:
-        # Create new user with temporary password (they can reset later)
-        temp_password = f"Welcome{uuid.uuid4().hex[:8]}!"
-        user = User(
-            id=uuid.uuid4(),
-            email=invite_data.email,
-            password_hash=hash_password(temp_password),
-            role=UserRole.user,
-            full_name=invite_data.email.split('@')[0],
-            is_active=True
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found. Please check the email address."
         )
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
-        logger.info(f"Created new user {invite_data.email} via project invitation")
     
     # Check if user already has access
     result = await db.execute(

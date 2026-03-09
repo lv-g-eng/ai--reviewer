@@ -92,6 +92,10 @@ jobs:
           pip install ruff
           ruff check app/ --ignore E501 --ignore F401 || true
 
+      - name: Run Tech Debt Monitor
+        run: |
+          python3 scripts/tech_debt_monitor.py
+
       - name: Run tests
         working-directory: ./backend
         env:

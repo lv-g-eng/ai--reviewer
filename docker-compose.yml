@@ -14,18 +14,13 @@ services:
       - ./backend/database/init_scripts:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - ai_review_network
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1'
 
   # pgAdmin 4 - Database Management Interface
   pgadmin:

@@ -34,14 +34,15 @@ import {
   Trash2
 } from 'lucide-react'
 import { useProject, useProjectPullRequests, useDeleteProject, useProjectAnalytics, useProjectArchitectureAnalysis } from '@/hooks/useProjects'
+import { useApiCall } from '@/hooks/useApiCall'
 import HealthMetrics from '@/components/projects/HealthMetrics'
 
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { toast } = useToast()
   const projectId = params?.id as string || ''
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const { execute } = useApiCall()
   
   const { data: project, isLoading } = useProject(projectId)
   const { data: pullRequestsData = [] } = useProjectPullRequests(projectId)
@@ -51,22 +52,14 @@ export default function ProjectDetailPage() {
   const deleteProject = useDeleteProject()
 
   const handleDeleteProject = async () => {
-    try {
-      await deleteProject.mutateAsync(projectId)
-      toast({
-        title: 'Success',
-        description: 'Project deleted successfully',
-      })
-      router.push('/projects')
-    } catch (error: any) {
-      console.error('Delete project error:', error)
-      const errorMessage = error?.response?.data?.detail || error?.message || 'Failed to delete project'
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      })
-    }
+    await execute(
+      () => deleteProject.mutateAsync(projectId),
+      {
+        successMessage: 'Project deleted successfully',
+        errorMessage: 'Failed to delete project',
+        onSuccess: () => router.push('/projects')
+      }
+    )
   }
 
   // useReal AI reviewData，showLoadingIfNone

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -84,17 +82,17 @@ services:
 
   # Neo4j Graph Database
   neo4j:
-    image: neo4j:5.15-community
+    image: neo4j:5.19-community
     container_name: ai_review_neo4j
     environment:
       NEO4J_AUTH: neo4j/neo4j123
       NEO4J_PLUGINS: '["apoc"]'
       NEO4J_dbms_security_procedures_unrestricted: apoc.*
       # Memory optimization (Neo4j 5.x uses server.memory.* instead of dbms.memory.*)
-      # Minimal settings for systems with limited available RAM
-      NEO4J_server_memory_heap_initial__size: 64M
-      NEO4J_server_memory_heap_max__size: 128M
-      NEO4J_server_memory_pagecache_size: 64M
+      # Increased memory for stable operation
+      NEO4J_server_memory_heap_initial__size: 256M
+      NEO4J_server_memory_heap_max__size: 512M
+      NEO4J_server_memory_pagecache_size: 128M
     ports:
       - '7474:7474' # Browser interface
       - '7687:7687' # Bolt protocol

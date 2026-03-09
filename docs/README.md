@@ -1,232 +1,103 @@
-# AI-Based Quality Check Platform - Documentation
+# AI-Based Quality Check Platform - Documentation Index
 
-**Last Updated**: January 21, 2026
-
-Welcome to the documentation hub for the AI-Based Quality Check Platform. This index helps you quickly find the information you need.
+**Last Updated**: 2026-03-09
 
 ---
 
-## 🚀 Quick Start
+## 📋 Table of Contents
 
-New to the project? Start here:
+### 1. Getting Started
 
-1. **[Quick Start Guide](../QUICK_START.md)** - Get up and running in 5 minutes
-2. **[Quick Reference](../QUICK_REFERENCE.md)** - Common commands and workflows
-3. **[Troubleshooting](../TROUBLESHOOTING.md)** - Fix common issues
+| Document                                          | Description             |
+| ------------------------------------------------- | ----------------------- |
+| [README.md](../README.md)                         | Project overview (root) |
+| [QUICK_START.md](../QUICK_START.md)               | Quick start guide       |
+| [QUICK_START_DOCKER.md](../QUICK_START_DOCKER.md) | Docker setup            |
 
----
+### 2. Architecture & Design
 
-## 📚 Documentation Categories
+| Document                                                       | Description                  |
+| -------------------------------------------------------------- | ---------------------------- |
+| [ARCHITECTURE.md](./ARCHITECTURE.md)                           | System architecture overview |
+| [AI_MODULE_ARCHITECTURE.md](./AI_MODULE_ARCHITECTURE.md)       | AI module design (CN)        |
+| [AI_MODULE_ARCHITECTURE_EN.md](./AI_MODULE_ARCHITECTURE_EN.md) | AI module design (EN)        |
+| [SRS-UseCases-Detailed.md](./SRS-UseCases-Detailed.md)         | Use cases & requirements     |
 
-### Getting Started
+### 3. Security & Compliance
 
-| Document | Description |
-|----------|-------------|
-| [Installation Guide](INSTALLATION.md) | Detailed installation instructions |
-| [Development Guide](DEVELOPMENT.md) | Development environment setup |
-| [Quick Reference](../QUICK_REFERENCE.md) | Command cheat sheet |
+| Document                                                             | Description           |
+| -------------------------------------------------------------------- | --------------------- |
+| [SECURITY_PROCEDURES.md](./SECURITY_PROCEDURES.md)                   | Security guidelines   |
+| [SDD-Security-Deployment.md](./SDD-Security-Deployment.md)           | Security deployment   |
+| [RBAC_ROLES.md](./RBAC_ROLES.md)                                     | RBAC role definitions |
+| [RBAC_MIGRATION_GUIDE.md](./RBAC_MIGRATION_GUIDE.md)                 | RBAC migration        |
+| [RBAC_QUICK_REFERENCE.md](./RBAC_QUICK_REFERENCE.md)                 | RBAC quick reference  |
+| [SSL_CERTIFICATE_SETUP.md](./SSL_CERTIFICATE_SETUP.md)               | SSL/TLS setup         |
+| [USER_GITHUB_CONNECTION_GUIDE.md](./USER_GITHUB_CONNECTION_GUIDE.md) | GitHub integration    |
 
-### Features & Guides
+### 4. Operations & Maintenance
 
-| Document | Description |
-|----------|-------------|
-| [AI PR Reviewer](AI_PR_REVIEWER_GUIDE.md) | Automated code review with AI |
-| [AI Self-Healing](AI_SELF_HEALING_GUIDE.md) | Automated error detection and fixing |
-| [LLM Integration](LLM_INTEGRATION_GUIDE.md) | Local LLM setup and configuration |
-| [LLM Quick Start](LLM_QUICK_START.md) | Fast LLM setup guide |
+| Document                                                             | Description          |
+| -------------------------------------------------------------------- | -------------------- |
+| [OPERATIONS_RUNBOOK.md](./OPERATIONS_RUNBOOK.md)                     | Operations runbook   |
+| [PRODUCTION_ENVIRONMENT_SETUP.md](./PRODUCTION_ENVIRONMENT_SETUP.md) | Production setup     |
+| [IMPROVEMENTS_ROADMAP.md](./IMPROVEMENTS_ROADMAP.md)                 | Improvement roadmap  |
+| [IMPROVEMENTS_SUMMARY.md](./IMPROVEMENTS_SUMMARY.md)                 | Improvements summary |
+| [BUG_PRIORITIZATION.md](./BUG_PRIORITIZATION.md)                     | Bug prioritization   |
 
-### Security
+### 5. User Guides
 
-| Document | Description |
-|----------|-------------|
-| [Security Overview](SECURITY.md) | Security best practices |
-| [Security Compliance](SECURITY_COMPLIANCE_IMPLEMENTATION.md) | Implementation details |
-| [Secrets Management](SECRETS_MIGRATION_GUIDE.md) | Managing secrets safely |
-| [Secrets Cleanup](SECRETS_CLEANUP_GUIDE.md) | Removing secrets from git history |
+| Document                                             | Description          |
+| ---------------------------------------------------- | -------------------- |
+| [USER_GUIDE.md](./USER_GUIDE.md)                     | End user guide       |
+| [PPT_Content_Document.md](./PPT_Content_Document.md) | Presentation content |
 
-### Operations & Maintenance
+### 6. Subdirectories
 
-| Document | Description |
-|----------|-------------|
-| [NPM Management](npm-management.md) | **NEW** - Complete npm guide (cache, audit, updates) |
-| [Phase 3 Implementation](PHASE_3_IMPLEMENTATION.md) | System optimization and operations |
+| Directory                        | Description            |
+| -------------------------------- | ---------------------- |
+| [api/](./api/)                   | API documentation      |
+| [architecture/](./architecture/) | Architecture documents |
+| [deployment/](./deployment/)     | Deployment guides      |
+| [diagram/](./diagram/)           | Architecture diagrams  |
+| [guides/](./guides/)             | Feature guides         |
+| [integration/](./integration/)   | Integration guides     |
+| [security/](./security/)         | Security details       |
+| [supplements/](./supplements/)   | Supplementary docs     |
 
-### Reports & Archives
+### 7. Archive (Historical)
 
-| Document | Description |
-|----------|-------------|
-| [Implementation Report](IMPLEMENTATION_REPORT.md) | Complete implementation status |
-| [Compliance Fixes](COMPLIANCE_FIXES_SUMMARY.md) | Security compliance summary |
-| [Infrastructure Compliance](INFRASTRUCTURE_COMPLIANCE_FIXES.md) | Infrastructure security fixes |
-| [Vulnerability Categorization](CRITICAL_VULNERABILITY_CATEGORIZATION.md) | Vulnerability assessment |
+| Directory                                | Description                    |
+| ---------------------------------------- | ------------------------------ |
+| [archive/](./archive/)                   | Historical implementation docs |
+| [archive/analysis/](./archive/analysis/) | Analysis reports               |
+| [archive/planning/](./archive/planning/) | Planning documents             |
+| [archive/merged/](./archive/merged/)     | Merged legacy docs             |
+| [archived/](./archived/)                 | Archived checkpoints           |
 
----
-
-## 🗂️ Documentation Structure
-
-```
-docs/
-├── README.md (this file)           # Documentation index
-│
-├── Getting Started/
-│   ├── INSTALLATION.md             # Installation guide
-│   └── DEVELOPMENT.md              # Development setup
-│
-├── Features/
-│   ├── AI_PR_REVIEWER_GUIDE.md     # AI code review
-│   ├── AI_SELF_HEALING_GUIDE.md    # Self-healing system
-│   ├── LLM_INTEGRATION_GUIDE.md    # LLM integration
-│   └── LLM_QUICK_START.md          # LLM quick setup
-│
-├── Security/
-│   ├── SECURITY.md                 # Security overview
-│   ├── SECURITY_COMPLIANCE_IMPLEMENTATION.md
-│   ├── SECRETS_MIGRATION_GUIDE.md  # Secrets management
-│   └── SECRETS_CLEANUP_GUIDE.md    # Secrets cleanup
-│
-├── Operations/
-│   ├── npm-management.md           # NPM complete guide
-│   └── PHASE_3_IMPLEMENTATION.md   # Operations guide
-│
-├── Reports/
-│   ├── IMPLEMENTATION_REPORT.md
-│   ├── COMPLIANCE_FIXES_SUMMARY.md
-│   ├── INFRASTRUCTURE_COMPLIANCE_FIXES.md
-│   └── CRITICAL_VULNERABILITY_CATEGORIZATION.md
-│
-└── archive/                        # Archived documentation
-    ├── operations/                 # Old NPM guides
-    └── security-reports/           # Old security reports
-```
+> ⚠️ **Note**: Archive directories contain historical documents for reference. Current documentation is in sections 1-6 above.
 
 ---
 
-## 🔍 Find What You Need
+## 🚦 Quick Navigation
 
-### By Task
-
-**I want to...**
-
-- **Start the project** → [Quick Start Guide](../QUICK_START.md)
-- **Understand architecture** → [README.md](../README.md)
-- **Fix an error** → [Troubleshooting](../TROUBLESHOOTING.md)
-- **Set up LLM** → [LLM Quick Start](LLM_QUICK_START.md)
-- **Manage npm** → [NPM Management](npm-management.md)
-- **Review security** → [Security Overview](SECURITY.md)
-- **Deploy to production** → [Installation Guide](INSTALLATION.md)
-
-### By Role
-
-**Frontend Developer:**
-- [Development Guide](DEVELOPMENT.md)
-- [NPM Management](npm-management.md)
-- [Troubleshooting](../TROUBLESHOOTING.md)
-
-**Backend Developer:**
-- [Development Guide](DEVELOPMENT.md)
-- [LLM Integration](LLM_INTEGRATION_GUIDE.md)
-- [Security Overview](SECURITY.md)
-
-**DevOps Engineer:**
-- [Installation Guide](INSTALLATION.md)
-- [Phase 3 Implementation](PHASE_3_IMPLEMENTATION.md)
-- [Security Compliance](SECURITY_COMPLIANCE_IMPLEMENTATION.md)
-
-**Security Engineer:**
-- [Security Overview](SECURITY.md)
-- [Secrets Management](SECRETS_MIGRATION_GUIDE.md)
-- [Compliance Fixes](COMPLIANCE_FIXES_SUMMARY.md)
+| Need                  | Go To                             |
+| --------------------- | --------------------------------- |
+| Start developing      | `QUICK_START.md` (root)           |
+| Production deployment | `PRODUCTION_ENVIRONMENT_SETUP.md` |
+| Security info         | `SECURITY_PROCEDURES.md`          |
+| API reference         | `api/` directory                  |
+| Architecture          | `ARCHITECTURE.md`                 |
+| RBAC setup            | `RBAC_MIGRATION_GUIDE.md`         |
 
 ---
 
-## 📝 Documentation Standards
+## 📊 Documentation Stats
 
-All documentation follows these principles:
-
-- **Clear and concise** - Easy to understand language
-- **Step-by-step** - Actionable instructions
-- **Code examples** - Working code snippets
-- **Troubleshooting** - Common issues and solutions
-- **Up-to-date** - Regular updates with dates
+- **Total Markdown Files**: 94+
+- **Categories**: 9 main sections
+- **Languages**: English, Chinese (中文)
 
 ---
 
-## 🤝 Contributing to Documentation
-
-When adding or updating documentation:
-
-1. **Place it in the right category**
-2. **Update this index**
-3. **Follow existing format**
-4. **Include examples**
-5. **Add troubleshooting section**
-6. **Update the "Last Updated" date**
-
-### Documentation Template
-
-```markdown
-# Document Title
-
-**Last Updated**: YYYY-MM-DD
-
-Brief description of what this document covers.
-
-## Table of Contents
-- [Section 1](#section-1)
-- [Section 2](#section-2)
-
-## Section 1
-Content...
-
-## Troubleshooting
-Common issues...
-
-## Additional Resources
-- [Link 1](url)
-- [Link 2](url)
-```
-
----
-
-## 📞 Getting Help
-
-If you can't find what you need:
-
-1. **Check [Troubleshooting](../TROUBLESHOOTING.md)**
-2. **Search this documentation**
-3. **Review service-specific READMEs**
-4. **Check implementation summaries**
-5. **Ask in team chat**
-6. **Create GitHub issue**
-
----
-
-## 🔄 Recent Updates
-
-**January 21, 2026:**
-- ✅ Created consolidated [NPM Management Guide](npm-management.md)
-- ✅ Archived old NPM documentation
-- ✅ Reorganized documentation structure
-- ✅ Updated this index
-
-**January 20, 2026:**
-- ✅ Added AI PR Reviewer guide
-- ✅ Updated security documentation
-- ✅ Added LLM quick start guide
-
----
-
-## 📦 Archived Documentation
-
-Older or superseded documentation is archived in `docs/archive/`:
-
-- **operations/** - Old NPM guides (replaced by npm-management.md)
-- **security-reports/** - Historical security reports
-
-To access archived docs, see `docs/archive/` directory.
-
----
-
-**Need something specific? Use Ctrl+F to search this page!**
-
-For the main project overview, see [README.md](../README.md)
+_For contribute guidelines, see root `CONTRIBUTING.md`_

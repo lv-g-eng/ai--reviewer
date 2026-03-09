@@ -2,9 +2,100 @@
 
 AI驱动的代码审查平台，提供智能代码分析、架构审查和合规性检查。
 
-## 快速开始
+---
 
-### 前置要求
+## 📋 Table of Contents
+
+### 1. Quick Start (快速开始)
+
+| Document                                                 | Description      |
+| -------------------------------------------------------- | ---------------- |
+| [QUICK_START.md](./QUICK_START.md)                       | 快速开始指南     |
+| [QUICK_START_DOCKER.md](./QUICK_START_DOCKER.md)         | Docker 安装      |
+| [QUICK_START_PRODUCTION.md](./QUICK_START_PRODUCTION.md) | 生产环境快速开始 |
+
+### 2. Development (开发)
+
+| Document                                                 | Description  |
+| -------------------------------------------------------- | ------------ |
+| [CODING_STANDARDS.md](./CODING_STANDARDS.md)             | 编码规范     |
+| [TROUBLESHOOTING_GUIDE.md](./TROUBLESHOOTING_GUIDE.md)   | 故障排查指南 |
+| [TECHNICAL_DEBT_TRACKER.md](./TECHNICAL_DEBT_TRACKER.md) | 技术债追踪   |
+
+### 3. Deployment (部署)
+
+| Document                                                                     | Description  |
+| ---------------------------------------------------------------------------- | ------------ |
+| [DEPLOYMENT.md](./DEPLOYMENT.md)                                             | 部署指南     |
+| [PRODUCTION_DEPLOYMENT_CHECKLIST.md](./PRODUCTION_DEPLOYMENT_CHECKLIST.md)   | 生产部署清单 |
+| [QUICK_START_PRODUCTION_MIGRATION.md](./QUICK_START_PRODUCTION_MIGRATION.md) | 迁移指南     |
+
+### 4. Project Reports (项目报告)
+
+| Document                                                                               | Description  |
+| -------------------------------------------------------------------------------------- | ------------ |
+| [PROJECT_OPTIMIZATION_FINAL_SUMMARY.md](./PROJECT_OPTIMIZATION_FINAL_SUMMARY.md)       | 优化总结     |
+| [PROJECT_OPTIMIZATION_COMPLETE_SUMMARY.md](./PROJECT_OPTIMIZATION_COMPLETE_SUMMARY.md) | 完整优化报告 |
+| [CLEANUP_COMPLETE_SUMMARY.md](./CLEANUP_COMPLETE_SUMMARY.md)                           | 清理总结     |
+
+### 5. Additional (其他文档)
+
+| Document                                                                         | Description  |
+| -------------------------------------------------------------------------------- | ------------ |
+| [DOCUMENTATION_CONSOLIDATION_REPORT.md](./DOCUMENTATION_CONSOLIDATION_REPORT.md) | 文档整合报告 |
+| [TRANSFER_OF_KNOWLEDGE.md](./TRANSFER_OF_KNOWLEDGE.md)                           | 知识转移     |
+| [HANDOFF_SUMMARY.md](./HANDOFF_SUMMARY.md)                                       | 交接总结     |
+
+---
+
+## 🚀 Quick Links (快速链接)
+
+| 需求         | 前往                                                   |
+| ------------ | ------------------------------------------------------ |
+| 新开发者入门 | `QUICK_START.md`                                       |
+| 生产部署     | `DEPLOYMENT.md` + `PRODUCTION_DEPLOYMENT_CHECKLIST.md` |
+| 编码规范     | `CODING_STANDARDS.md`                                  |
+| 故障排查     | `TROUBLESHOOTING_GUIDE.md`                             |
+| 架构详情     | `docs/ARCHITECTURE.md`                                 |
+| API 文档     | `docs/api/`                                            |
+| 安全指南     | `docs/SECURITY_PROCEDURES.md`                          |
+
+---
+
+## 📁 Documentation Structure (文档结构)
+
+```
+├── Root (当前目录)
+│   ├── QUICK_START.md          # 主要快速开始
+│   ├── DEPLOYMENT.md          # 部署指南
+│   ├── CODING_STANDARDS.md    # 编码规范
+│   └── ...
+│
+├── docs/                       # 详细文档
+│   ├── ARCHITECTURE.md         # 系统架构
+│   ├── SECURITY_PROCEDURES.md  # 安全指南
+│   ├── OPERATIONS_RUNBOOK.md   # 运维手册
+│   ├── api/                    # API 文档
+│   ├── architecture/            # 架构文档
+│   ├── security/               # 安全详情
+│   └── ...
+│
+└── backend/                    # 后端源码
+```
+
+---
+
+## 📊 Stats (统计)
+
+| 指标                 | 数量 |
+| -------------------- | ---- |
+| 根目录 Markdown 文件 | 24   |
+| docs 目录文件        | 94+  |
+| 总文档数             | 118+ |
+
+---
+
+## 前置要求
 
 - Node.js 18+
 - Python 3.11+
@@ -12,123 +103,8 @@ AI驱动的代码审查平台，提供智能代码分析、架构审查和合规
 - Redis 7+
 - Neo4j 5+
 
-### 安装步骤
+---
 
-1. **克隆仓库**
+## 安装步骤
 
-```bash
-git clone <repository-url>
-cd ai-code-review-platform
-```
-
-2. **配置环境变量**
-
-```bash
-# 复制环境变量模板
-cp .env.template .env
-cp frontend/.env.example frontend/.env.local
-
-# 编辑 .env 文件，填入数据库凭据
-# 编辑 frontend/.env.local 文件
-```
-
-3. **启动服务**
-
-```bash
-# 使用 Docker Compose
-docker-compose up -d
-
-# 或手动启动
-# 后端
-cd backend
-pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
-
-# 前端
-cd frontend
-npm install
-npm run dev
-```
-
-4. **访问应用**
-
-- 前端: http://localhost:3000
-- 后端 API: http://localhost:8000
-- API 文档: http://localhost:8000/docs
-
-### 默认凭据
-
-系统提供5种角色的测试账号，所有账号的默认密码都是：`Admin123!`
-
-| 角色       | 用户名     | 权限说明             |
-| ---------- | ---------- | -------------------- |
-| ADMIN      | admin      | 完全系统控制权限     |
-| MANAGER    | manager    | 项目监督和ROI管理    |
-| REVIEWER   | reviewer   | 代码审查和分析报告   |
-| PROGRAMMER | programmer | 创建和管理自己的项目 |
-| VISITOR    | visitor    | 只读访问权限         |
-
-⚠️ **安全提示：** 生产环境中请立即修改这些默认密码！
-
-详细的角色权限说明请参考：[RBAC角色文档](docs/RBAC_ROLES.md)
-
-## 主要功能
-
-- ✅ AI 驱动的代码审查
-- ✅ Pull Request 自动分析
-- ✅ 架构合规性检查
-- ✅ 安全漏洞扫描
-- ✅ 实时协作
-- ✅ GitHub 集成
-- ✅ 5级角色权限控制 (RBAC)
-
-## 文档
-
-### 📚 统一文档索引
-
-- **[📖 文档总索引](.monkeycode/docs/INDEX.md)** - 完整的文档导航和索引（推荐从这里开始）
-- **[🏗️ 系统架构](.monkeycode/docs/ARCHITECTURE.md)** - 系统架构设计和技术栈
-- **[🔧 API接口文档](.monkeycode/docs/INTERFACES.md)** - 统一的API接口索引
-- **[💻 开发者指南](.monkeycode/docs/DEVELOPER_GUIDE.md)** - 完整的开发指南和规范
-
-### 🚀 快速开始
-
-- **[快速开始指南](QUICK_START.md)** - Docker快速启动
-- **[快速开始（生产）](QUICK_START_PRODUCTION.md)** - 生产环境部署
-- **[快速开始（Docker）](QUICK_START_DOCKER.md)** - Docker部署详细说明
-
-### 📖 详细文档
-
-- **[用户指南](docs/USER_GUIDE.md)** - 用户使用手册
-- **[部署指南](DEPLOYMENT.md)** - 完整部署流程
-- **[运维手册](docs/OPERATIONS_RUNBOOK.md)** - 日常运维操作
-- **[RBAC角色说明](docs/RBAC_ROLES.md)** - 5级角色权限体系详解
-- **[RBAC迁移指南](docs/RBAC_MIGRATION_GUIDE.md)** - RBAC迁移步骤
-- **[API文档](docs/api/API_DOCUMENTATION.md)** - 完整API参考
-
-### 📁 历史文档
-
-- **[文档归档索引](.monkeycode/docs/archive/INDEX.md)** - 历史文档导航
-- **[优化总结](PROJECT_OPTIMIZATION_SUMMARY.md)** - 项目优化总览
-- **[生产环境迁移](PRODUCTION_MIGRATION_SUMMARY.md)** - 生产环境迁移记录
-
-## 技术栈
-
-**前端:**
-
-- Next.js 14
-- React 19
-- TypeScript
-- TailwindCSS
-
-**后端:**
-
-- FastAPI
-- Python 3.11
-- PostgreSQL
-- Redis
-- Neo4j
-
-## 许可证
-
-MIT License
+详细安装步骤见 [QUICK_START.md](./QUICK_START.md)

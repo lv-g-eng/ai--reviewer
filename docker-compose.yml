@@ -147,11 +147,10 @@ services:
       - GITHUB_CALLBACK_URL=${GITHUB_CALLBACK_URL}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
-    ports:
-      - '8000:8000'
     volumes:
       - ./backend/logs:/app/logs
       - ./backend/app:/app/app:ro
+    user: 'root'
     depends_on:
       postgres:
         condition: service_healthy

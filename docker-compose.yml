@@ -6,9 +6,9 @@ services:
     image: postgres:16-alpine
     container_name: ai_review_postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: ai_code_review
       # Performance optimization
       POSTGRES_SHARED_BUFFERS: 256MB
       POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
@@ -20,7 +20,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/database/init_scripts:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER}']
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -40,7 +40,7 @@ services:
     container_name: ai_review_pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}
+      PGADMIN_DEFAULT_PASSWORD: postgres123
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - '5050:80'
@@ -87,7 +87,7 @@ services:
     image: neo4j:5.15-community
     container_name: ai_review_neo4j
     environment:
-      NEO4J_AUTH: ${NEO4J_AUTH}
+      NEO4J_AUTH: neo4j/neo4j123
       NEO4J_PLUGINS: '["apoc"]'
       NEO4J_dbms_security_procedures_unrestricted: apoc.*
       # Memory optimization (Neo4j 5.x uses server.memory.* instead of dbms.memory.*)
@@ -123,23 +123,23 @@ services:
       dockerfile: Dockerfile
     container_name: ai_review_backend
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/ai_code_review
       - REDIS_URL=redis://redis:6379/${REDIS_DB}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=
       - REDIS_DB=${REDIS_DB}
-      - NEO4J_URI=${NEO4J_URI}
-      - NEO4J_USER=${NEO4J_USER}
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=neo4j123
       - JWT_SECRET=${JWT_SECRET}
       - SECRET_KEY=${SECRET_KEY}
       - LOG_LEVEL=${LOG_LEVEL}
       - ENVIRONMENT=${ENVIRONMENT}
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_DB=ai_code_review
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
@@ -176,18 +176,18 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/ai_code_review
       - REDIS_URL=redis://redis:6379/${REDIS_DB}
-      - NEO4J_URI=${NEO4J_URI}
-      - NEO4J_USER=${NEO4J_USER}
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=neo4j123
       - JWT_SECRET=${JWT_SECRET}
       - SECRET_KEY=${SECRET_KEY}
       - LOG_LEVEL=${LOG_LEVEL}
       - ENVIRONMENT=${ENVIRONMENT}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_DB=ai_code_review
     depends_on:
       - backend
       - redis
@@ -212,18 +212,18 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/ai_code_review
       - REDIS_URL=redis://redis:6379/${REDIS_DB}
-      - NEO4J_URI=${NEO4J_URI}
-      - NEO4J_USER=${NEO4J_USER}
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=neo4j123
       - JWT_SECRET=${JWT_SECRET}
       - SECRET_KEY=${SECRET_KEY}
       - LOG_LEVEL=${LOG_LEVEL}
       - ENVIRONMENT=${ENVIRONMENT}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_DB=ai_code_review
     depends_on:
       - redis
       - postgres

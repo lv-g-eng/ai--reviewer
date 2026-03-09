@@ -26,6 +26,7 @@ from app.api.dependencies import get_current_user
 from app.services.redis_cache_service import get_cache_service
 from app.utils.error_sanitizer import get_generic_auth_error, get_generic_password_error
 from app.services.audit_service import AuditService
+from app.services.account_lockout_service import AccountLockoutService
 
 logger = logging.getLogger(__name__)
 
@@ -124,10 +125,49 @@ async def login(
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     
+    # Check account lockout first (if user exists)
+    if user:
+        cache = await get_cache_service()
+        lockout_service = AccountLockoutService(cache.redis)
+        is_locked, unlock_time = await lockout_service.is_account_locked(user.id)
+        
+        if is_locked:
+            logger.warning(f"Login attempt for locked account: {credentials.email}")
+            await AuditService.log_auth_failure(
+                db=db,
+                email=credentials.email,
+                ip_address=client_ip,
+                user_agent=request.headers.get("User-Agent"),
+                failure_reason="Account locked",
+                user_id=user.id
+            )
+            
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Account locked. Please try again after {unlock_time.strftime('%Y-%m-%d %H:%M:%S UTC') if unlock_time else 'later'}"
+            )
+    
     # Use generic error message to prevent user enumeration (Requirement 2.5)
     # Don't reveal whether email exists or password is wrong
     if not user or not verify_password(credentials.password, user.password_hash):
         logger.warning(f"Failed login attempt for email: {credentials.email} from IP: {client_ip}")
+        
+        # Record failed attempt if user exists
+        if user:
+            cache = await get_cache_service()
+            lockout_service = AccountLockoutService(cache.redis)
+            should_lock, lockout_time = await lockout_service.record_failed_attempt(user.id)
+            
+            if should_lock:
+                # Log account lockout
+                await AuditService.log_auth_failure(
+                    db=db,
+                    email=credentials.email,
+                    ip_address=client_ip,
+                    user_agent=request.headers.get("User-Agent"),
+                    failure_reason="Account locked due to too many failed attempts",
+                    user_id=user.id
+                )
         
         # Log authentication failure to audit log (Requirement 8.8)
         await AuditService.log_auth_failure(
@@ -181,6 +221,10 @@ async def login(
         "logged_in_at": datetime.now(timezone.utc).isoformat()
     }
     await cache.set_session(str(user.id), session_data)
+    
+    # Reset failed login attempts on successful login
+    lockout_service = AccountLockoutService(cache.redis)
+    await lockout_service.reset_attempts(user.id)
     
     logger.info(f"Successful login for user: {user.email}")
     

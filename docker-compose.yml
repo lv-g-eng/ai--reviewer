@@ -88,11 +88,10 @@ services:
       NEO4J_AUTH: neo4j/neo4j123
       NEO4J_PLUGINS: '["apoc"]'
       NEO4J_dbms_security_procedures_unrestricted: apoc.*
-      # Memory optimization (Neo4j 5.x uses server.memory.* instead of dbms.memory.*)
-      # Increased memory for stable operation
-      NEO4J_server_memory_heap_initial__size: 256M
-      NEO4J_server_memory_heap_max__size: 512M
-      NEO4J_server_memory_pagecache_size: 128M
+      # Memory optimization - reduced for limited RAM systems
+      NEO4J_server_memory_heap_initial__size: 128M
+      NEO4J_server_memory_heap_max__size: 256M
+      NEO4J_server_memory_pagecache_size: 64M
     ports:
       - '7474:7474' # Browser interface
       - '7687:7687' # Bolt protocol

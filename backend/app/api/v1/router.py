@@ -26,6 +26,7 @@ from app.api.v1.endpoints import (
     user_settings,
     code_review,
     errors,
+    monitoring,
 )
 from app.api.v1 import repositories
 
@@ -73,3 +74,6 @@ api_router.include_router(metrics.router, tags=["Metrics"])
 
 # Client Error Reporting endpoint (Requirement 7.4)
 api_router.include_router(errors.router, tags=["Error Reporting"])
+
+# Monitoring endpoints
+api_router.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])

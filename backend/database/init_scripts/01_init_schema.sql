@@ -12,13 +12,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ENUMS
 -- ================================================
 
--- User roles
+-- User roles - simplified to single user role
 CREATE TYPE user_role AS ENUM (
-    'admin',
-    'developer',
-    'reviewer',
-    'compliance_officer',
-    'manager'
+    'user'
 );
 
 -- Pull request status
@@ -39,6 +35,13 @@ CREATE TYPE audit_action AS ENUM (
     'reject'
 );
 
+-- GitHub connection type
+CREATE TYPE github_connection_type AS ENUM (
+    'https',
+    'ssh',
+    'cli'
+);
+
 -- ================================================
 -- TABLE: users
 -- ================================================
@@ -47,9 +50,11 @@ CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role user_role NOT NULL DEFAULT 'developer',
+    role user_role NOT NULL DEFAULT 'user',
     full_name VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
+    github_token VARCHAR(500),
+    github_username VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -59,6 +64,7 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_is_active ON users(is_active);
 CREATE INDEX idx_users_created_at ON users(created_at DESC);
+CREATE INDEX idx_users_github_username ON users(github_username);
 
 -- ================================================
 -- TABLE: projects
@@ -70,6 +76,9 @@ CREATE TABLE IF NOT EXISTS projects (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     github_repo_url VARCHAR(500) UNIQUE,
+    github_connection_type github_connection_type DEFAULT 'https',
+    github_ssh_key_id UUID REFERENCES ssh_keys(id),
+    github_cli_token VARCHAR(500),
     github_webhook_secret VARCHAR(255),
     language VARCHAR(50),
     is_active BOOLEAN DEFAULT TRUE,
@@ -194,6 +203,112 @@ CREATE INDEX idx_baseline_project_current ON architectural_baselines(project_id,
 -- JSONB indexes
 CREATE INDEX idx_baseline_graph ON architectural_baselines USING GIN (graph_snapshot);
 CREATE INDEX idx_baseline_metrics ON architectural_baselines USING GIN (metrics);
+
+-- ================================================
+-- TABLE: ssh_keys
+-- ================================================
+
+CREATE TABLE IF NOT EXISTS ssh_keys (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    public_key TEXT NOT NULL,
+    private_key TEXT NOT NULL,
+    key_fingerprint VARCHAR(255) UNIQUE NOT NULL,
+    github_username VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_ssh_keys_user ON ssh_keys(user_id);
+CREATE INDEX idx_ssh_keys_fingerprint ON ssh_keys(key_fingerprint);
+
+-- ================================================
+-- TABLE: token_blacklist
+-- ================================================
+
+CREATE TABLE IF NOT EXISTS token_blacklist (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    token VARCHAR(500) UNIQUE NOT NULL,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    blacklisted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE INDEX idx_token_blacklist_token ON token_blacklist(token);
+CREATE INDEX idx_token_blacklist_user ON token_blacklist(user_id);
+CREATE INDEX idx_token_blacklist_expires ON token_blacklist(expires_at);
+
+-- ================================================
+-- TABLE: project_accesses
+-- ================================================
+
+CREATE TABLE IF NOT EXISTS project_accesses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    access_level VARCHAR(50) NOT NULL DEFAULT 'read',
+    granted_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    granted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    revoked_at TIMESTAMP WITH TIME ZONE,
+    UNIQUE(project_id, user_id)
+);
+
+CREATE INDEX idx_project_accesses_project ON project_accesses(project_id);
+CREATE INDEX idx_project_accesses_user ON project_accesses(user_id);
+
+-- ================================================
+-- TABLE: sessions
+-- ================================================
+
+CREATE TABLE IF NOT EXISTS sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_jti VARCHAR(255) UNIQUE NOT NULL,
+    ip_address INET,
+    user_agent TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_activity TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+CREATE INDEX idx_sessions_user ON sessions(user_id);
+CREATE INDEX idx_sessions_token_jti ON sessions(token_jti);
+CREATE INDEX idx_sessions_expires ON sessions(expires_at);
+CREATE INDEX idx_sessions_is_active ON sessions(is_active);
+
+-- ================================================
+-- TABLE: code_entities
+-- ================================================
+
+CREATE TABLE IF NOT EXISTS code_entities (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    pull_request_id UUID REFERENCES pull_requests(id) ON DELETE CASCADE,
+    entity_type VARCHAR(50) NOT NULL,
+    name VARCHAR(500) NOT NULL,
+    qualified_name VARCHAR(1000) NOT NULL,
+    file_path VARCHAR(1000) NOT NULL,
+    start_line INTEGER NOT NULL,
+    end_line INTEGER NOT NULL,
+    complexity INTEGER,
+    parameters JSONB,
+    return_type VARCHAR(255),
+    docstring TEXT,
+    entity_metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_code_entities_project ON code_entities(project_id);
+CREATE INDEX idx_code_entities_pull_request ON code_entities(pull_request_id);
+CREATE INDEX idx_code_entities_entity_type ON code_entities(entity_type);
+CREATE INDEX idx_code_entities_name ON code_entities(name);
+CREATE INDEX idx_code_entities_file_path ON code_entities(file_path);
+CREATE INDEX idx_code_entity_project_type ON code_entities(project_id, entity_type);
 
 -- ================================================
 -- TRIGGERS

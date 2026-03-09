@@ -357,7 +357,7 @@ class LLMFineTuner:
                 if "confidence" in predicted:
                     confidence_scores.append(predicted["confidence"])
                     
-            except:
+            except Exception:
                 continue
         
         return {
@@ -384,7 +384,7 @@ class LLMFineTuner:
                     max_tokens=1000
                 )
                 return response.content[0].text
-        except:
+        except Exception:
             return ""
 
 

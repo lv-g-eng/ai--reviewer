@@ -14,6 +14,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronRight, MessageSquare, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 // Types
 export interface DiffLine {
@@ -259,10 +260,11 @@ export default function CodeDiff({
       const highlighted = typeof window !== 'undefined' 
         ? await loadPrismAndHighlight(line.content, language)
         : simpleHighlight(line.content);
+      const sanitizedHtml = DOMPurify.sanitize(highlighted);
       return (
         <code
           className="whitespace-pre"
-          dangerouslySetInnerHTML={{ __html: highlighted }}
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
       );
     },

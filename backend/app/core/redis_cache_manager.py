@@ -329,8 +329,8 @@ async def warm_analytics_cache():
     async with get_db() as db:
         optimizer = DatabaseOptimizer()
         # Cache analytics for active projects
-        for project_id in range(1, 11):  # Top 10 projects
+        for project_id in range(1, 11):
             try:
                 await optimizer.get_project_analytics(db, project_id)
-            except:
-                pass  # Skip if project doesn't exist
+            except Exception as e:
+                logger.debug(f"Skipping project {project_id}: {e}")

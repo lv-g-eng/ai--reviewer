@@ -149,7 +149,7 @@ export function AddProjectModal({ open, onClose }: AddProjectModalProps) {
     
     const redirectUri = encodeURIComponent(`${window.location.origin}/api/github/callback`)
     const scope = 'repo,read:user'
-    const state = Math.random().toString(36).substring(7) // CSRF protection
+    const state = crypto.randomUUID()
     
     console.log('[Connect GitHub] Redirect URI:', redirectUri)
     console.log('[Connect GitHub] State:', state)

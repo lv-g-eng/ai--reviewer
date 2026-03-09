@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import {
   LineChart,
   Line,
@@ -114,8 +115,7 @@ const Metrics: React.FC<MetricsProps> = ({
   ];
 
   const [timeRange, setTimeRange] = useState<TimeRange>(initialTimeRange);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { execute, loading, error } = useAsyncAction<any[]>();
   const [metricsData, setMetricsData] = useState<any[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(
     metrics.map(m => m.id) // Initially all metrics are selected
@@ -292,24 +292,16 @@ const Metrics: React.FC<MetricsProps> = ({
    */
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const data = generateMockData(timeRange);
-        setMetricsData(data);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to load metrics'));
-      } finally {
-        setLoading(false);
-      }
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return generateMockData(timeRange);
     };
 
-    loadData();
-  }, [timeRange]);
+    execute(loadData).then(data => {
+      if (data) {
+        setMetricsData(data);
+      }
+    });
+  }, [timeRange, execute]);
 
   /**
    * Load custom dashboards

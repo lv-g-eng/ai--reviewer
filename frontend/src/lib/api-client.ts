@@ -20,6 +20,9 @@
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import axiosRetry, { exponentialDelay } from 'axios-retry';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('APIClient');
 
 // ============================================
 // Types and Interfaces
@@ -190,10 +193,10 @@ class UnifiedAPIClient {
         );
       },
       onRetry: (retryCount, error, requestConfig) => {
-        console.warn(
-          `[API Client] Retry attempt ${retryCount} for ${requestConfig.method?.toUpperCase()} ${requestConfig.url}`,
-          { error: error.message, status: error.response?.status }
-        );
+        logger.warn(`Retry attempt ${retryCount} for ${requestConfig.method?.toUpperCase()} ${requestConfig.url}`, {
+          error: error.message,
+          status: error.response?.status
+        });
       },
     });
   }
@@ -283,7 +286,7 @@ class UnifiedAPIClient {
 
     // Log slow requests
     if (duration > 2000) {
-      console.warn(`Slow API request: ${metric.method} ${metric.url} took ${duration}ms`);
+      logger.warn(`Slow API request: ${metric.method} ${metric.url} took ${duration}ms`);
     }
   }
 
@@ -291,7 +294,7 @@ class UnifiedAPIClient {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
       sessionStorage.removeItem('auth_token');
-      console.warn('[API Client] Authentication expired, redirecting to login...');
+      logger.warn('Authentication expired, redirecting to login');
       window.location.href = '/auth/signin';
     }
   }
@@ -299,7 +302,7 @@ class UnifiedAPIClient {
   private handleRateLimitError(error: AxiosError): void {
     const retryAfter = error.response?.headers?.['retry-after'];
     if (retryAfter) {
-      console.warn(`Rate limited. Retry after ${retryAfter} seconds`);
+      logger.warn(`Rate limited. Retry after ${retryAfter} seconds`);
     }
   }
 
@@ -481,9 +484,9 @@ class UnifiedAPIClient {
     const warmingPromises = endpoints.map(async (endpoint) => {
       try {
         await this.get(endpoint);
-        console.log(`Cache warmed for ${endpoint}`);
+        logger.debug(`Cache warmed for ${endpoint}`);
       } catch (error) {
-        console.warn(`Failed to warm cache for ${endpoint}:`, error);
+        logger.warn(`Failed to warm cache for ${endpoint}`, error);
       }
     });
 

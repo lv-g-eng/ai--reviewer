@@ -227,7 +227,7 @@ async def revoke_token(jti: str, expires_at: datetime) -> bool:
         return False
     except Exception as e:
         # Log error but don't raise - revocation failure shouldn't break the flow
-        logger.info("Warning: Failed to revoke token {jti}: {e}")
+        logger.warning(f"Failed to revoke token {jti}: {e}")
         return False
 
 
@@ -248,7 +248,7 @@ async def is_token_revoked(jti: str) -> bool:
     except Exception as e:
         # Log error and fail open - if Redis is down, allow the token
         # This prioritizes availability over strict security
-        logger.info("Warning: Failed to check token revocation status: {e}")
+        logger.warning(f"Failed to check token revocation status: {e}")
         return False  # Fail open for availability
 
 

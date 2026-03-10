@@ -46,7 +46,7 @@ async def register(
     - **password**: Strong password (min 8 chars, uppercase, lowercase, digit, special char)
     - **full_name**: Optional full name
     """
-    logger.info("DEBUG: Registering user {user_data.email}")
+    logger.info(f"Registering user: {user_data.email}")
     # Validate password strength before hashing (Requirement 2.3)
     is_valid, error_message = validate_password_strength(user_data.password)
     if not is_valid:

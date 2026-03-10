@@ -28,7 +28,8 @@ from app.services.llm import (
 # Sample code for analysis
 SAMPLE_CODE_QUALITY = """
 def authenticate_user(username, password):
-    # TODO: Add input validation
+    # NOTE: This is intentionally vulnerable code for demonstration purposes
+    # In production, use parameterized queries and input validation
     user = db.query("SELECT * FROM users WHERE username='" + username + "'")
     if user and user.password == password:
         return user

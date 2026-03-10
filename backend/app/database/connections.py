@@ -6,6 +6,7 @@ using the unified DatabaseConnection interface.
 """
 from typing import Optional
 import asyncio
+import logging
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
 from neo4j import AsyncGraphDatabase, AsyncDriver
 import redis.asyncio as redis
@@ -13,6 +14,8 @@ from sqlalchemy import text
 
 from app.core.config import settings
 from .connection_factory import DatabaseConnection, DatabaseType
+
+logger = logging.getLogger(__name__)
 
 
 class PostgreSQLConnection(DatabaseConnection[AsyncEngine]):
@@ -64,7 +67,8 @@ class PostgreSQLConnection(DatabaseConnection[AsyncEngine]):
             async with self._client.begin() as conn:
                 result = await conn.execute(text("SELECT 1"))
                 return result.scalar() == 1
-        except Exception:
+        except Exception as e:
+            logger.warning(f"PostgreSQL health check failed: {e}")
             return False
     
     async def _close_client(self):
@@ -146,7 +150,8 @@ class Neo4jConnection(DatabaseConnection[AsyncDriver]):
                 result = await session.run("RETURN 1 AS num")
                 record = await result.single()
                 return record["num"] == 1
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Neo4j health check failed: {e}")
             return False
     
     async def _close_client(self):
@@ -224,7 +229,8 @@ class RedisConnection(DatabaseConnection[redis.Redis]):
         try:
             await self._client.ping()
             return True
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Redis health check failed: {e}")
             return False
     
     async def _close_client(self):

@@ -71,12 +71,13 @@ async def init_neo4j():
         try:
             await neo4j_driver.verify_connectivity()
             return
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Neo4j existing driver connectivity check failed: {e}")
             # Driver exists but connection failed, recreate it
             try:
                 await neo4j_driver.close()
-            except Exception:
-                pass  # Ignore close errors
+            except Exception as close_error:
+                logger.warning(f"Error closing Neo4j driver: {close_error}")
             neo4j_driver = None
 
     try:

@@ -92,7 +92,7 @@ class AuditService:
         except Exception as e:
             # Graceful degradation - log error but don't fail the operation
             await db.rollback()
-            logger.info("Failed to create audit log: {e}")
+            logger.warning(f"Failed to create audit log: {e}")
             raise
     
     @staticmethod

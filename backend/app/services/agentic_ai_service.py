@@ -419,9 +419,10 @@ Provide practical refactoring suggestions with effort and risk estimates."""
         try:
             response = await self.llm.generate(prompt, system_prompt=system_prompt)
             
-            # Parse response
-            # TODO: Implement proper parsing
+            # Parse response - extract structured suggestions from LLM response
+            # NOTE: Need to implement JSON/text parsing based on LLM output format
             suggestions = []
+            # TODO: Implement proper parsing logic to extract code quality suggestions from response
             
             logger.info(
                 f"Generated {len(suggestions)} refactoring suggestions for {file_path}",

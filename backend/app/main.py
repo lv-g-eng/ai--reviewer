@@ -238,18 +238,18 @@ async def lifespan(app: FastAPI):
     if not testing:
         try:
             await close_postgres()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Error closing PostgreSQL: {e}")
         
         try:
             await close_neo4j()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Error closing Neo4j: {e}")
         
         try:
             await close_redis()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Error closing Redis: {e}")
     
     logger.info("Shutdown complete")
 

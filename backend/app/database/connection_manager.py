@@ -491,7 +491,8 @@ class ConnectionManager:
                 try:
                     await self._neo4j_driver.verify_connectivity()
                     self.pool_stats['Neo4j'].health_status = HealthState.HEALTHY
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"Neo4j connectivity check failed: {e}")
                     self.pool_stats['Neo4j'].health_status = HealthState.UNHEALTHY
             
         except Exception as e:
@@ -546,8 +547,8 @@ class ConnectionManager:
                     if connection:
                         try:
                             await connection.close()
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.warning(f"Error closing PostgreSQL connection: {e}")
                     connection = None
                     recreation_attempt += 1
                     

@@ -1,7 +1,7 @@
 """
 Graph builder data models and type definitions.
 """
-from typing import Dict, List, Optional, Set, Union
+from typing import Dict, List, Optional
 from enum import Enum
 from pydantic import BaseModel
 

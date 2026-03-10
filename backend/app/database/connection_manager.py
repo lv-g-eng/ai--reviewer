@@ -10,8 +10,7 @@ Validates Requirements: 4.1, 4.2, 4.3, 4.5, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
 import logging
 import asyncio
 import time
-from dataclasses import dataclass, field
-from typing import Dict, Optional, Any, List
+from typing import Dict, Optional, Any
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 from weakref import WeakSet
@@ -23,126 +22,18 @@ from app.core.config import settings
 from app.core.error_reporter import ErrorReporter
 from app.database.models import (
     DatabaseConfig, 
-    RetryConfig, 
     HealthStatus, 
     HealthState,
-    ConnectionStatus as ModelConnectionStatus,
-    ErrorType,
-    DatabaseError,
     create_database_config_from_settings
 )
 from app.database.retry_manager import RetryManager, OperationType
 from app.database.postgresql_client import PostgreSQLClient
 from app.database.neo4j_client import Neo4jClient
+from app.database.connection_status import ConnectionStatus
+from app.database.pool_configuration import PoolConfiguration, PoolStats
+from app.database.pool_monitor import PoolMonitor
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class ConnectionStatus:
-    """Status of a database connection"""
-    service: str  # "PostgreSQL", "Neo4j", "Redis"
-    is_connected: bool
-    error: Optional[str] = None
-    response_time_ms: float = 0.0
-    is_critical: bool = True
-    retry_count: int = 0
-    last_attempt: Optional[datetime] = None
-    pool_stats: Optional[Dict[str, Any]] = None
-    
-    def __str__(self) -> str:
-        """String representation of connection status"""
-        if self.is_connected:
-            pool_info = ""
-            if self.pool_stats:
-                pool_info = f" [Pool: {self.pool_stats.get('active', 0)}/{self.pool_stats.get('max_size', 0)}]"
-            return f"{self.service} ✅ ({self.response_time_ms:.0f}ms){pool_info}"
-        else:
-            error_msg = self.error if self.error else "Unknown error"
-            retry_info = f" (retry {self.retry_count})" if self.retry_count > 0 else ""
-            return f"{self.service} ❌ ({error_msg}){retry_info}"
-
-
-@dataclass
-class PoolConfiguration:
-    """Configuration for database connection pools"""
-    min_size: int = 5
-    max_size: int = 20
-    connection_timeout: float = 30.0
-    command_timeout: float = 30.0
-    max_queries: int = 50000
-    max_inactive_connection_lifetime: float = 300.0
-    pool_recycle_time: float = 3600.0  # 1 hour
-    health_check_interval: float = 60.0  # 1 minute
-    
-    def __post_init__(self):
-        """Validate pool configuration"""
-        if self.min_size < 0:
-            raise ValueError("min_size must be non-negative")
-        if self.max_size <= 0:
-            raise ValueError("max_size must be positive")
-        if self.max_size < self.min_size:
-            raise ValueError("max_size must be >= min_size")
-        if self.connection_timeout <= 0:
-            raise ValueError("connection_timeout must be positive")
-
-
-@dataclass
-class PoolStats:
-    """Statistics for connection pool monitoring"""
-    service: str
-    size: int = 0
-    freesize: int = 0
-    max_size: int = 0
-    min_size: int = 0
-    active_connections: int = 0
-    idle_connections: int = 0
-    total_connections_created: int = 0
-    total_connections_closed: int = 0
-    pool_hits: int = 0
-    pool_misses: int = 0
-    connection_timeouts: int = 0
-    failed_connections: int = 0
-    last_updated: datetime = field(default_factory=datetime.now)
-    health_status: HealthState = HealthState.UNKNOWN
-    
-    def update_from_asyncpg_pool(self, pool: asyncpg.Pool):
-        """Update stats from asyncpg pool"""
-        self.size = pool.get_size()
-        self.freesize = pool.get_idle_size()
-        self.active_connections = self.size - self.freesize
-        self.idle_connections = self.freesize
-        self.last_updated = datetime.now()
-        
-        # Determine health status based on pool utilization
-        utilization = self.active_connections / self.max_size if self.max_size > 0 else 0
-        if utilization < 0.7:
-            self.health_status = HealthState.HEALTHY
-        elif utilization < 0.9:
-            self.health_status = HealthState.DEGRADED
-        else:
-            self.health_status = HealthState.UNHEALTHY
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for serialization"""
-        return {
-            'service': self.service,
-            'size': self.size,
-            'freesize': self.freesize,
-            'max_size': self.max_size,
-            'min_size': self.min_size,
-            'active_connections': self.active_connections,
-            'idle_connections': self.idle_connections,
-            'total_connections_created': self.total_connections_created,
-            'total_connections_closed': self.total_connections_closed,
-            'pool_hits': self.pool_hits,
-            'pool_misses': self.pool_misses,
-            'connection_timeouts': self.connection_timeouts,
-            'failed_connections': self.failed_connections,
-            'last_updated': self.last_updated.isoformat(),
-            'health_status': self.health_status.value,
-            'utilization_percent': round((self.active_connections / self.max_size * 100) if self.max_size > 0 else 0, 1)
-        }
 
 
 class ConnectionManager:
@@ -209,6 +100,9 @@ class ConnectionManager:
             )
         }
         
+        # Pool monitor for health checking and recovery
+        self.pool_monitor = PoolMonitor(self)
+        
         # Connection management
         self._pool_lock = asyncio.Lock()
         self._active_connections: WeakSet = WeakSet()
@@ -241,7 +135,7 @@ class ConnectionManager:
                 await self._initialize_neo4j_driver()
                 
                 # Start background tasks
-                await self._start_background_tasks()
+                await self.pool_monitor.start_monitoring()
                 
                 self._initialized = True
                 logger.info("✅ Enhanced connection pools initialized successfully")

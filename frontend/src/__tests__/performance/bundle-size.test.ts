@@ -147,7 +147,6 @@ describe('Bundle Size Performance Tests', () => {
         file.includes('architecture-graph') ||
         file.includes('neo4j-graph') ||
         file.includes('d3') ||
-        file.includes('force-graph') ||
         file.includes('reactflow')
     );
 

@@ -9,7 +9,7 @@ Validates Requirements: 1.1
 import hmac
 import hashlib
 import logging
-from typing import Dict, Any, Optional, Annotated
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Request, Header, HTTPException, status, Depends, BackgroundTasks
@@ -20,7 +20,6 @@ from sqlalchemy import select
 from app.database.postgresql import get_db
 from app.models import Project
 from app.models.code_review import PullRequest, PRStatus
-from app.schemas.code_review import WebhookEvent, PREventPayload
 from app.services.redis_cache_service import get_cache_service
 from app.shared.exceptions import ValidationException
 

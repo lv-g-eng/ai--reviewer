@@ -333,7 +333,8 @@ This analysis was generated using:
 
             prs = response.json()
             return prs[0]['number'] if prs else None
-        except:
+        except (requests.RequestException, KeyError, IndexError) as e:
+            # Return None if API call fails
             return None
 
     def run_self_healing(self, pr_number: Optional[int] = None,

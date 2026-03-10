@@ -11,7 +11,7 @@ Metrics collected:
 - Error count by type (counter)
 - Custom business metrics (counter, gauge)
 """
-from prometheus_client import Counter, Histogram, Gauge, Summary, CollectorRegistry, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import Counter, Histogram, Gauge, CollectorRegistry, generate_latest, CONTENT_TYPE_LATEST
 from typing import Optional
 import time
 

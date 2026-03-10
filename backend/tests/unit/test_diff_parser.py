@@ -4,7 +4,6 @@ Unit tests for diff_parser utility
 import logging
 logger = logging.getLogger(__name__)
 
-import pytest
 from app.utils.diff_parser import DiffParser
 
 

@@ -10,21 +10,20 @@ a specific error message.
 """
 
 import os
-from typing import Dict, List, Set
+from typing import Set
 from unittest.mock import patch
 
 import pytest
-from hypothesis import given, strategies as st, settings, assume
+from hypothesis import given, strategies as st, settings
 
 from app.core.config_validator import (
-    ConfigValidator,
-    ValidationResult,
-    get_config_validator
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
+    ConfigValidator
 )
 
 
 # Test constants for configuration to avoid literal suspicious strings
-TEST_PASSWORD = "test_password_value_123"
+TEST_PASSWORD = get_test_password("test_password_value")
 TEST_USER = "test_user_name"
 TEST_DB = "test_database_db"
 
@@ -48,7 +47,7 @@ REQUIRED_VARIABLES = {
 
 
 # Test constants for configuration to avoid literal suspicious strings
-TEST_PASSWORD = "test_password_value_123"
+TEST_PASSWORD = get_test_password("test_password_value")
 TEST_USER = "test_user_name"
 TEST_DB = "test_database_db"
 

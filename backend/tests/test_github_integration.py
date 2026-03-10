@@ -17,7 +17,6 @@ import hmac
 import hashlib
 from unittest.mock import AsyncMock, patch, MagicMock
 from httpx import AsyncClient
-from datetime import datetime, timezone
 
 from app.main import app
 from app.models import Project, PullRequest, PRStatus

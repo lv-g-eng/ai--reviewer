@@ -13,20 +13,17 @@ import asyncio
 import json
 import time
 from functools import wraps
-from typing import Any, Dict, List, Optional, Callable, Union
-from datetime import datetime, timedelta, timezone
-import redis
+from typing import Any, Dict, List, Callable, Union
+from datetime import datetime, timezone
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload
-from fastapi import Request, Response
-from fastapi.responses import JSONResponse
+from sqlalchemy.orm import selectinload
+from fastapi import Request
 import gzip
 import logging
 
 from app.database.postgresql import get_db
 from app.database.redis_db import get_redis
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +161,7 @@ class DatabaseOptimizer:
         Optimized query to get projects with all relations in a single query
         Prevents N+1 query problems
         """
-        from app.models import Project, Review, Library
+        from app.models import Project
         
         # Use selectinload to eagerly load relations
         query = (

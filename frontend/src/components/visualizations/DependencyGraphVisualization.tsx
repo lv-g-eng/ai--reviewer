@@ -37,7 +37,18 @@ import {
   Info,
   Lock
 } from 'lucide-react';
-import ForceGraph2D from 'react-force-graph-2d';
+import ReactFlow, {
+  Node,
+  Edge,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+  ConnectionMode,
+  MarkerType,
+  Panel,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
 import { apiClientEnhanced as apiClient } from '@/lib/api-client';
 import { 
   validateDependencyGraph, 

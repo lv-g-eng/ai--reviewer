@@ -11,9 +11,7 @@ from sqlalchemy import (
     Integer,
     DateTime,
     ForeignKey,
-    JSON,
     Enum,
-    Boolean,
     func
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB

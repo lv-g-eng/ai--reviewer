@@ -8,14 +8,11 @@ Validates Requirements 13.6
 """
 import pytest
 from httpx import AsyncClient
-from unittest.mock import AsyncMock, patch
-from datetime import datetime, timezone, timedelta
-import json
+from datetime import timedelta
 
-from app.main import app
 from app.models import User
 from app.utils.password import hash_password
-from app.utils.jwt import create_access_token, create_refresh_token, decode_token
+from app.utils.jwt import create_access_token, create_refresh_token
 
 
 class TestCompleteAuthenticationFlow:

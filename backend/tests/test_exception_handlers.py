@@ -7,13 +7,9 @@ Validates Requirements: 2.5, 12.1, 12.2, 12.3
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
-from fastapi.responses import JSONResponse
 
 from app.api.exception_handlers import (
     register_exception_handlers,
-    service_exception_handler,
-    validation_exception_handler,
-    global_exception_handler,
     get_request_context,
     create_error_response,
 )
@@ -1148,7 +1144,7 @@ class TestValidationErrorHandling:
     
     def test_pydantic_validation_error_format(self, client):
         """Test Pydantic validation errors are formatted correctly"""
-        from pydantic import BaseModel, Field, validator
+        from pydantic import BaseModel, Field
         
         class TestModel(BaseModel):
             email: str = Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")

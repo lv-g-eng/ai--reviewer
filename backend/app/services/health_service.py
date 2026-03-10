@@ -9,6 +9,7 @@ Validates Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6
 
 import logging
 import time
+import asyncio
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from typing import Dict, Optional
@@ -134,29 +135,66 @@ class HealthService:
         logger.info("Checking application health...")
         start_time = time.time()
         
-        # Check database connections (includes response times)
-        db_status = await self.connection_manager.verify_all()
+        # Check database connections with timeout protection
+        try:
+            db_status = await asyncio.wait_for(
+                self.connection_manager.verify_all(), 
+                timeout=10.0
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Database health check timeout")
+            db_status = {}
+        except Exception as e:
+            logger.error("Database health check failed: %s", str(e))
+            db_status = {}
         
         databases = {}
-        all_critical_connected = True
+        postgres_connected = False
         any_connected = False
         
-        for service_name, status in db_status.items():
-            # Include response times and error messages for each dependency
-            databases[service_name] = DatabaseHealth(
-                name=service_name,
-                is_connected=status.is_connected,
-                response_time_ms=status.response_time_ms,  # Response time included
-                error=status.error  # Error message included when dependency fails
+        # Always include PostgreSQL status (critical)
+        postgres_status = None
+        if "PostgreSQL" in db_status:
+            postgres_status = db_status["PostgreSQL"]
+            databases["PostgreSQL"] = DatabaseHealth(
+                name="PostgreSQL",
+                is_connected=postgres_status.is_connected,
+                response_time_ms=postgres_status.response_time_ms,
+                error=postgres_status.error
             )
-            
-            # Record dependency status metric
-            set_dependency_status(service_name, status.is_connected)
-            
-            if status.is_connected:
+            postgres_connected = postgres_status.is_connected
+            if postgres_connected:
                 any_connected = True
-            elif status.is_critical:
-                all_critical_connected = False
+        else:
+            databases["PostgreSQL"] = DatabaseHealth(
+                name="PostgreSQL",
+                is_connected=False,
+                error="Health check timeout or unavailable"
+            )
+        
+        # Optional services (Neo4j, Redis) - don't affect critical status
+        for service_name in ["Neo4j", "Redis"]:
+            if service_name in db_status:
+                status = db_status[service_name]
+                databases[service_name] = DatabaseHealth(
+                    name=service_name,
+                    is_connected=status.is_connected,
+                    response_time_ms=status.response_time_ms,
+                    error=status.error
+                )
+                if status.is_connected:
+                    any_connected = True
+                    
+                # Record dependency status metric
+                set_dependency_status(service_name, status.is_connected)
+            else:
+                databases[service_name] = DatabaseHealth(
+                    name=service_name,
+                    is_connected=False,
+                    error="Service unavailable"
+                )
+                # Record dependency status metric
+                set_dependency_status(service_name, False)
         
         # Check services
         services = {}
@@ -182,7 +220,8 @@ class HealthService:
             set_dependency_status("LLM", llm_available)
         
         # Determine overall health status
-        if all_critical_connected and any_connected:
+        # 只要PostgreSQL连接成功，就认为是健康的（Redis和Neo4j是可选的）
+        if postgres_connected:
             health_status = HealthStatus.HEALTHY
         elif any_connected:
             health_status = HealthStatus.DEGRADED

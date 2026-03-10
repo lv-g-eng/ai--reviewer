@@ -308,7 +308,8 @@ class SmokeTestRunner:
         try:
             data = response.json()
             return True, data
-        except:
+        except (requests.RequestException, ValueError) as e:
+            # Return success with no data if parsing fails
             return True, None
     
     def _print_summary(self):

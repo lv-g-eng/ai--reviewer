@@ -1,7 +1,6 @@
 """
 Slow query monitoring service for PostgreSQL
 """
-import time
 import logging
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta

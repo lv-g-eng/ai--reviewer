@@ -10,13 +10,10 @@
     python check_production_readiness.py --export json
 """
 
-import os
 import sys
 import json
-import subprocess
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
 from datetime import datetime
 
 class Colors:

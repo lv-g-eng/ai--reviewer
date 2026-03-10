@@ -8,10 +8,10 @@ from app.utils.password import (
     hash_password,
     verify_password,
     validate_password_strength,
-    validate_password_config,
-    pwd_context
+    validate_password_config
 )
 from app.core.config import settings
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
 
 
 class TestBcryptConfiguration:
@@ -26,7 +26,7 @@ class TestBcryptConfiguration:
         """Test that pwd_context uses the configured bcrypt rounds"""
         # Verify the rounds are configured by hashing a password
         # and checking the rounds in the resulting hash
-        test_password = "TestPassword123!"
+        test_password = get_test_password("test_password")
         hashed = hash_password(test_password)
         
         # Bcrypt hash format: $2b$rounds$salt+hash
@@ -57,7 +57,7 @@ class TestPasswordHashing:
     
     def test_hash_password_creates_valid_hash(self):
         """Test that hash_password creates a valid bcrypt hash"""
-        password = "TestPassword123!"
+        password = get_test_password("test_password")
         hashed = hash_password(password)
         
         # Bcrypt hash should start with $2b$ (or $2a$/$2y$)
@@ -69,7 +69,7 @@ class TestPasswordHashing:
     
     def test_hash_password_different_salts(self):
         """Test that hashing the same password twice produces different hashes"""
-        password = "TestPassword123!"
+        password = get_test_password("test_password")
         hash1 = hash_password(password)
         hash2 = hash_password(password)
         
@@ -78,7 +78,7 @@ class TestPasswordHashing:
     
     def test_verify_password_correct(self):
         """Test that verify_password returns True for correct password"""
-        password = "TestPassword123!"
+        password = get_test_password("test_password")
         hashed = hash_password(password)
         
         assert verify_password(password, hashed) is True, \
@@ -86,8 +86,8 @@ class TestPasswordHashing:
     
     def test_verify_password_incorrect(self):
         """Test that verify_password returns False for incorrect password"""
-        password = "TestPassword123!"
-        wrong_password = "WrongPassword123!"
+        password = get_test_password("test_password")
+        wrong_password = get_test_password("wrong_password")
         hashed = hash_password(password)
         
         assert verify_password(wrong_password, hashed) is False, \
@@ -95,7 +95,7 @@ class TestPasswordHashing:
     
     def test_verify_password_handles_invalid_hash(self):
         """Test that verify_password handles invalid hash gracefully"""
-        password = "TestPassword123!"
+        password = get_test_password("test_password")
         invalid_hash = "not_a_valid_hash"
         
         # Should return False, not raise an exception
@@ -118,7 +118,7 @@ class TestPasswordHashing:
     
     def test_hash_password_with_unicode(self):
         """Test hashing passwords with unicode characters"""
-        password = "Пароль123!"  # Russian characters
+        password = get_test_password("unicode_password")  # Russian characters
         hashed = hash_password(password)
         
         assert verify_password(password, hashed) is True, \
@@ -158,7 +158,7 @@ class TestPasswordStrengthValidation:
     
     def test_password_no_uppercase(self):
         """Test that passwords without uppercase letters fail"""
-        password = "testpass123!"
+        password = get_test_password("testpass")
         is_valid, message = validate_password_strength(password)
         
         assert is_valid is False, "Password without uppercase should fail"
@@ -167,7 +167,7 @@ class TestPasswordStrengthValidation:
     
     def test_password_no_lowercase(self):
         """Test that passwords without lowercase letters fail"""
-        password = "TESTPASS123!"
+        password = get_test_password("testpass_upper")
         is_valid, message = validate_password_strength(password)
         
         assert is_valid is False, "Password without lowercase should fail"
@@ -176,7 +176,7 @@ class TestPasswordStrengthValidation:
     
     def test_password_no_digit(self):
         """Test that passwords without digits fail"""
-        password = "TestPassword!"
+        password = get_test_password("test_no_digit")
         is_valid, message = validate_password_strength(password)
         
         assert is_valid is False, "Password without digit should fail"
@@ -185,7 +185,7 @@ class TestPasswordStrengthValidation:
     
     def test_password_no_special_character(self):
         """Test that passwords without special characters fail"""
-        password = "TestPassword123"
+        password = get_test_password("test_no_special")
         is_valid, message = validate_password_strength(password)
         
         assert is_valid is False, "Password without special character should fail"
@@ -194,7 +194,7 @@ class TestPasswordStrengthValidation:
     
     def test_password_edge_case_exactly_8_chars(self):
         """Test password with exactly 8 characters"""
-        password = "Test123!"
+        password = get_test_password("test_short")
         is_valid, message = validate_password_strength(password)
         
         assert is_valid is True, "8-character password meeting all requirements should pass"
@@ -220,7 +220,7 @@ class TestPasswordSecurity:
         # but we can verify that passlib's verify method is used,
         # which implements constant-time comparison
         
-        password = "TestPassword123!"
+        password = get_test_password("test_password")
         hashed = hash_password(password)
         
         # Both correct and incorrect passwords should complete
@@ -233,7 +233,7 @@ class TestPasswordSecurity:
     
     def test_no_plaintext_in_hash(self):
         """Test that plaintext password is not present in hash"""
-        password = "TestPassword123!"
+        password = get_test_password("test_password")
         hashed = hash_password(password)
         
         # Password should not appear in the hash
@@ -266,7 +266,7 @@ class TestPasswordConfigurationIntegration:
     def test_settings_bcrypt_rounds_used(self):
         """Test that settings.BCRYPT_ROUNDS is actually used"""
         # Hash a password and verify the rounds in the hash match settings
-        password = "TestPassword123!"
+        password = get_test_password("test_password")
         hashed = hash_password(password)
         
         # Extract rounds from hash

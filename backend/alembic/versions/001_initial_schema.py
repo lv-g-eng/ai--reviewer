@@ -25,7 +25,7 @@ USERS_ID = 'users.id'
 def upgrade() -> None:
     # Create custom ENUM types
     user_role_enum = postgresql.ENUM(
-        'admin', 'developer', 'reviewer', 'compliance_officer', 'manager',
+        'user',
         name='user_role',
         create_type=False
     )

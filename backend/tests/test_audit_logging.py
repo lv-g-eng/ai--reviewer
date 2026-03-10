@@ -15,10 +15,9 @@ import pytest
 import pytest_asyncio
 import uuid
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import select, update, delete
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import ProgrammingError
 
 from app.services.audit_logging_service import (
     AuditLoggingService,

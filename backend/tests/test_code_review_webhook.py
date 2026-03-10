@@ -9,9 +9,7 @@ import pytest
 import hmac
 import hashlib
 import json
-from datetime import datetime
-from unittest.mock import Mock, patch, AsyncMock
-from fastapi import HTTPException
+from unittest.mock import Mock, patch
 
 from app.api.v1.endpoints.code_review_webhook import (
     verify_webhook_signature,

@@ -6,17 +6,12 @@ calculates complexity metrics, and identifies dependencies between entities.
 
 Implements Requirement 1.2: AST parsing and entity extraction
 """
-from typing import List, Dict, Optional, Set, Tuple
-from pathlib import Path
+from typing import List, Dict, Optional
 
 from app.services.parsers.factory import ParserFactory
 from app.services.optimized_parser import OptimizedParser
 from app.schemas.ast_models import (
     ParsedFile,
-    ModuleNode,
-    ClassNode,
-    FunctionNode,
-    ImportNode,
     DependencyGraph,
     DependencyEdge
 )

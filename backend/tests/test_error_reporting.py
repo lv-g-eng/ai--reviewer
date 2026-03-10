@@ -6,7 +6,6 @@ Tests error classification, masking, statistics, and reporting.
 
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import Mock, patch
 
 from app.core.error_reporting import (
     DatabaseErrorCategory,
@@ -15,7 +14,6 @@ from app.core.error_reporting import (
     ErrorStatistics,
     ErrorStatisticsManager,
     mask_sensitive_data,
-    MASKING_RULES,
 )
 
 

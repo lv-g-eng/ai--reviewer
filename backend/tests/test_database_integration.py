@@ -7,8 +7,6 @@ Validates Requirements 13.4, 13.5, 5.8, 13.10
 **Validates: Requirements 13.4, 13.5, 5.8, 13.10**
 """
 import pytest
-import asyncio
-from typing import AsyncGenerator
 from datetime import datetime, timezone
 import json
 

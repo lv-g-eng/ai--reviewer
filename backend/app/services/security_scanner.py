@@ -12,16 +12,12 @@ from dataclasses import dataclass, asdict
 
 from app.services.secure_code_analyzer import (
     SecureCodeAnalyzer,
-    AnalysisResult,
     SecurityIssue,
     AnalysisRisk
 )
 from app.services.standards_classifier import (
-    StandardsClassifier,
-    ClassifiedFinding,
     get_standards_classifier
 )
-from app.shared.standards import OWASPVulnerability
 
 logger = logging.getLogger(__name__)
 

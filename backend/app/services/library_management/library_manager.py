@@ -7,10 +7,8 @@ dependency resolver, package installer, and library repository) to provide a uni
 interface for library validation, installation, search, and management.
 """
 
-import asyncio
 import logging
-from typing import List, Optional, Dict, Any
-from datetime import datetime
+from typing import List, Optional
 
 from app.services.library_management.uri_parser import URIParser
 from app.services.library_management.metadata_fetcher import (
@@ -20,8 +18,7 @@ from app.services.library_management.metadata_fetcher import (
     PackageNotFoundError
 )
 from app.services.library_management.context_detector import (
-    ContextDetector,
-    ContextDetectionError
+    ContextDetector
 )
 from app.services.library_management.dependency_resolver import (
     DependencyResolver,
@@ -42,9 +39,7 @@ from app.schemas.library import (
     ValidationResult,
     InstallationResult,
     LibrarySearchResult,
-    InstalledLibrary,
-    LibraryMetadata,
-    ParsedURI
+    InstalledLibrary
 )
 from app.models.library import RegistryType, ProjectContext
 

@@ -19,7 +19,7 @@ Validates Requirements: 18.2
 import json
 import os
 import sys
-from typing import Dict, List, Optional
+from typing import Dict, List
 import argparse
 
 try:

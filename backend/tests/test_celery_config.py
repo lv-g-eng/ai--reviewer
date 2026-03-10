@@ -13,9 +13,7 @@ Tests verify:
 Validates Requirements: 10.7 (Asynchronous task processing using Celery)
 """
 import pytest
-from unittest.mock import patch, MagicMock
 from celery import Celery
-from kombu import Queue
 
 from app.celery_config import celery_app, debug_task
 

@@ -6,9 +6,8 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import selectinload
 
-from app.models.library import Library, LibraryDependency, RegistryType, ProjectContext
+from app.models.library import Library, LibraryDependency, ProjectContext
 from app.schemas.library import InstalledLibrary, Dependency
 from app.core.logging import get_logger
 

@@ -125,7 +125,13 @@ class TestCodeAnalysisPrompts:
         prompt = CodeAnalysisPrompts.get_security_prompt(
             file_path="src/api.py",
             language="python",
-            code_diff="query = f'SELECT * FROM users WHERE id={user_id}'",
+            code_diff="""
+# Example of SQL injection vulnerability (for educational purposes):
+# BAD: query = f'SELECT * FROM users WHERE id={user_id}'
+# SECURE: Use parameterized queries
+query = 'SELECT * FROM users WHERE id = ?'
+cursor.execute(query, (user_id,))
+""",
             context="API endpoint security review",
             exposure_level="public-facing"
         )

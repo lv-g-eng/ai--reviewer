@@ -5,22 +5,17 @@ This component handles the actual execution of service merging operations,
 including functionality preservation validation and reference updating.
 """
 
-import asyncio
 import json
 import logging
-import os
 import shutil
-import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Any
+from typing import Dict, List, Optional, Any
 import re
-import ast
-from collections import defaultdict
 
 from .service_consolidator import (
-    ConsolidationPlan, MergeResult, ServiceFunction, ServiceDependency
+    ConsolidationPlan, MergeResult, ServiceFunction
 )
 
 logger = logging.getLogger(__name__)

@@ -7,18 +7,15 @@ import tempfile
 import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
 
 from app.services.library_management.package_installer import (
     PackageInstaller,
     FileManager,
     CommandExecutor,
-    PackageInstallerError,
     FileOperationError,
-    CommandExecutionError,
-    InstallationVerificationError
+    CommandExecutionError
 )
-from app.schemas.library import LibraryMetadata, Dependency, InstallationResult
+from app.schemas.library import LibraryMetadata, Dependency
 from app.models.library import RegistryType, ProjectContext
 
 

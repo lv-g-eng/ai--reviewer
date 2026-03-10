@@ -8,7 +8,6 @@ Validates Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7
 """
 
 import logging
-import sys
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 from enum import Enum

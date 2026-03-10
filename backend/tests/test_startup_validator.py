@@ -12,8 +12,7 @@ Validates Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7
 """
 
 import pytest
-import os
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import patch, AsyncMock
 from app.core.startup_validator import (
     StartupValidator,
     ValidationError,

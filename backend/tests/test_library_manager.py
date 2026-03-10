@@ -3,14 +3,12 @@ Unit tests for Library Manager Orchestrator Service
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime
 
 from app.services.library_management.library_manager import (
     LibraryManager,
     LibraryManagerError,
-    ValidationError,
-    InstallationError,
     SearchError
 )
 from app.services.library_management.uri_parser import URIParser

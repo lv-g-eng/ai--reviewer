@@ -1,31 +1,8 @@
 """
 Enums for the Enterprise RBAC Authentication System.
 """
-from enum import Enum
-
-
-class Role(str, Enum):
-    """User roles in the system."""
-    ADMIN = "admin"
-    MANAGER = "manager"
-    REVIEWER = "reviewer"
-    PROGRAMMER = "developer"
-    VISITOR = "visitor"
-
-
-class Permission(str, Enum):
-    """Permissions that can be granted to roles."""
-    CREATE_USER = "CREATE_USER"
-    DELETE_USER = "DELETE_USER"
-    UPDATE_USER = "UPDATE_USER"
-    VIEW_USER = "VIEW_USER"
-    CREATE_PROJECT = "CREATE_PROJECT"
-    DELETE_PROJECT = "DELETE_PROJECT"
-    UPDATE_PROJECT = "UPDATE_PROJECT"
-    VIEW_PROJECT = "VIEW_PROJECT"
-    MODIFY_CONFIG = "MODIFY_CONFIG"
-    VIEW_CONFIG = "VIEW_CONFIG"
-    EXPORT_REPORT = "EXPORT_REPORT"
+# Import consolidated enums from common library
+from common.shared.enums import Role, Permission
 
 
 # Role-Permission Mapping

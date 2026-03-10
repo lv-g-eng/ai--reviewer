@@ -127,7 +127,6 @@ def with_audit_log_sync(action: str, resource_type: Optional[str] = None) -> Cal
             
             if db and user_id:
                 try:
-                    from app.models.audit_log import AuditLog
                     
                     audit_entry = AuditLog(
                         user_id=user_id,

@@ -13,18 +13,15 @@ It implements:
 - Functionality preservation validation
 """
 
-import asyncio
 import json
 import logging
-import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Any
+from typing import Dict, List, Optional, Set, Any
 import ast
 import re
-import subprocess
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)

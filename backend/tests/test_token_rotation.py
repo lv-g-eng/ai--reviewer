@@ -6,8 +6,7 @@ Validates Requirements 5.1, 5.2, 5.5
 import pytest
 import json
 from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi import HTTPException
+from unittest.mock import AsyncMock, patch
 
 from app.utils.jwt import (
     create_refresh_token,

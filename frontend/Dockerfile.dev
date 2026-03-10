@@ -1,0 +1,35 @@
+# Development Dockerfile for Next.js with Hot Reload
+# 开发环境 Dockerfile - 支持热重载和快速迭代
+
+FROM node:25-alpine3.21
+
+# 安装开发工具
+RUN apk add --no-cache libc6-compat curl git
+
+WORKDIR /app
+
+# 复制 package 文件
+COPY package.json package-lock.json* ./
+
+# 安装所有依赖（包括 devDependencies）
+RUN npm ci --legacy-peer-deps && \
+    npm cache clean --force
+
+# 复制源代码
+COPY . .
+
+# 设置环境变量
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME="0.0.0.0"
+
+# 暴露端口
+EXPOSE 3000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:3000/api/health || exit 1
+
+# 启动开发服务器（支持热重载）
+CMD ["npm", "run", "dev"]

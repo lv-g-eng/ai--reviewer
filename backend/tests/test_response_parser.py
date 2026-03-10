@@ -6,7 +6,6 @@ Tests parsing of LLM responses into structured review comments.
 Validates Requirements: 1.4
 """
 
-import pytest
 from app.services.llm.response_parser import (
     Severity,
     ReviewComment,

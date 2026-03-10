@@ -12,11 +12,7 @@ Validates Requirements: 1.3, 1.4, 8.2, 8.3
 import pytest
 from hypothesis import given, strategies as st, settings, HealthCheck
 
-from app.services.standards_classifier import StandardsClassifier, ClassifiedFinding
-from app.shared.standards import (
-    ISO25010CharacteristicType,
-    StandardsMapper,
-)
+from app.services.standards_classifier import StandardsClassifier
 
 
 # Strategy for generating finding categories

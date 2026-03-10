@@ -4,15 +4,15 @@ GitHub webhook and integration endpoints
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List, Dict, Any, Annotated
+from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 import logging
 
 from app.database.postgresql import get_db
-from app.models import Project, PullRequest, User, PRStatus, ReviewResult, ArchitecturalBaseline, CodeReview, ReviewComment, ArchitectureAnalysis
+from app.models import Project, PullRequest, User, PRStatus, CodeReview, ReviewComment, ArchitectureAnalysis
 from app.schemas.auth import Message
-from app.schemas.code_review import CodeReviewResult, ReviewComment as ReviewCommentSchema, ReviewSeverity
-from app.schemas.architecture import ArchitectureReport, ArchitectureViolation
+from app.schemas.code_review import ReviewSeverity
+from app.schemas.architecture import ArchitectureViolation
 from app.services.github_client import get_github_client
 from app.services.code_reviewer import CodeReviewer
 from app.services.architecture_analyzer import ArchitectureAnalyzer

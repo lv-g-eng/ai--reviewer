@@ -7,7 +7,7 @@ Validates Requirements: 10.6
 """
 
 from enum import Enum
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from celery import Task
 
 

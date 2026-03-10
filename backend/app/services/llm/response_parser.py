@@ -11,18 +11,8 @@ import re
 import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, asdict
-from enum import Enum
-
-
-logger = logging.getLogger(__name__)
-
-
-class Severity(str, Enum):
-    """Issue severity levels"""
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
+# Import consolidated enums from common library
+from common.shared.enums import Severity
     INFO = "info"  # For informational comments
     
     @classmethod

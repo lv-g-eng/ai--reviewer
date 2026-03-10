@@ -2,14 +2,13 @@
 Property-based tests for Library Repository Service
 """
 import pytest
-import pytest_asyncio
 from datetime import datetime, timezone, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 from hypothesis import given, strategies as st, assume, settings, HealthCheck
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.library_management.library_repository import LibraryRepository
-from app.models.library import Library, RegistryType, ProjectContext
+from app.models.library import RegistryType, ProjectContext
 from app.schemas.library import InstalledLibrary, Dependency
 
 

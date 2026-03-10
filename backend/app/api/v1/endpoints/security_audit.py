@@ -2,19 +2,15 @@
 Security Audit API Endpoints
 RESTful API for security audit and compliance management
 """
-from typing import List, Optional, Annotated
+from typing import List, Optional
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Depends, Query
-from fastapi.responses import JSONResponse
 
 from app.core.dependencies import get_current_user
 from app.schemas.security_models import (
     SecurityScanResult,
-    AuditLogEntry,
-    ProjectQualityMetrics,
-    QualityGrade,
-    ScanTool
+    ProjectQualityMetrics
 )
 from app.services.security_audit_service import SecurityAuditService
 from app.models.user import User

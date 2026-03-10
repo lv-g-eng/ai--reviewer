@@ -3,9 +3,10 @@ Tests for secure error handling in password operations
 Validates Requirement 2.5: Secure error handling for password operations
 """
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from app.utils.password import hash_password, verify_password
 from app.utils.error_sanitizer import get_generic_password_error
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
 
 
 class TestPasswordHashingErrorHandling:
@@ -168,7 +169,7 @@ class TestErrorHandlingIntegration:
     def test_verify_with_corrupted_hash(self):
         """Test verification with corrupted hash data"""
         # Create a valid hash
-        password = "TestPassword123!"
+        password = get_test_password("test_password")
         hashed = hash_password(password)
         
         # Corrupt the hash
@@ -286,7 +287,7 @@ class TestErrorLogging:
              patch('app.utils.password.logger') as mock_logger:
             mock_hash.side_effect = ValueError("error")
             
-            password = "SecretPassword123!"
+            password = get_test_password("secret_password")
             with pytest.raises(ValueError):
                 hash_password(password)
             

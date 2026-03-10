@@ -127,6 +127,8 @@ temp/
 .pytest_cache/
 .hypothesis/
 __pycache__/
+.mypy_cache/
+.ruff_cache/
 
 # Backup directories
 .consolidation_backups/

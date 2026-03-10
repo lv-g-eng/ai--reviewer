@@ -19,11 +19,10 @@ from app.database.connection_manager import (
     ConnectionStatus,
     get_connection_manager,
 )
-from app.core.config import settings
 
 
 # constants for testing to avoid hard-coded credentials in literal strings
-TEST_PASSWORD = "test_password_123"
+TEST_PASSWORD = get_test_password("test_password_123")
 TEST_USER = "test_user_name"
 TEST_DB = "test_database_db"
 
@@ -463,6 +462,7 @@ class TestConnectionManagerGlobal:
         """Test that get_connection_manager creates instance"""
         # Reset global instance
         import app.database.connection_manager as cm_module
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
         cm_module._connection_manager = None
         
         manager = get_connection_manager()

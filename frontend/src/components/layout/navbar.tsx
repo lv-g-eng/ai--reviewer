@@ -32,11 +32,11 @@ export function Navbar() {
       await signOut({ redirect: false })
       
       // Redirect to login page
-      window.location.href = '/auth/signin'
+      window.location.href = '/login'
     } catch (error) {
       console.error('Logout error:', error)
       // Force redirect even on error
-      window.location.href = '/auth/signin'
+      window.location.href = '/login'
     }
   }
 

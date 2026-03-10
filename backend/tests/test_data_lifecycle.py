@@ -11,9 +11,8 @@ Tests cover:
 Validates Requirements: 11.1, 11.8
 """
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock
 from datetime import datetime, timezone, timedelta
-import uuid
 
 from app.services.data_lifecycle_service import DataLifecycleService, DataRetentionPolicy
 

@@ -5,7 +5,7 @@ Implements data export and account deletion functionality.
 Validates Requirements: 11.5, 11.6, 11.7, 15.10
 """
 from datetime import datetime, timezone, timedelta
-from typing import Annotated, Dict, Any, Optional
+from typing import Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy import select, text

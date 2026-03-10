@@ -17,14 +17,9 @@ logger = logging.getLogger(__name__)
 import pytest
 import tempfile
 import os
-from pathlib import Path
 
 from app.services.parsers.python_parser import PythonASTParser
-from app.services.parsers.javascript_parser import JavaScriptParser
-from app.services.parsers.java_parser import JavaParser
-from app.services.parsers.go_parser import GoParser
 from app.services.parsers.factory import ParserFactory
-from app.schemas.ast_models import ParsedFile, ModuleNode
 
 
 class TestPythonParserValidCode:

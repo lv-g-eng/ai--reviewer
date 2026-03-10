@@ -5,8 +5,7 @@ Implements caching strategies for the AI code review platform
 import json
 import hashlib
 import logging
-from typing import Any, Optional, Dict, List
-from datetime import timedelta
+from typing import Any, Optional, Dict
 import redis.asyncio as redis
 
 from app.database.redis_db import get_redis

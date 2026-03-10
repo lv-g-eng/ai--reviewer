@@ -14,14 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, List, Any, Optional, Annotated
 import psutil
 import time
-import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from app.database.postgresql import get_db
 from app.database.optimizations import DatabaseOptimizer
-from app.core.redis_cache_manager import cache_manager
+from app.shared.cache_manager import CacheManager
 from app.core.performance_optimizer import performance_optimizer
-from app.core.config import settings
 
 router = APIRouter(prefix="/performance", tags=["performance"])
 
@@ -85,8 +83,8 @@ async def get_performance_metrics(
 
 @router.get("/database/slow-queries")
 async def get_slow_queries(
-    limit: int = 20,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
+    limit: int = 20
 ) -> Dict[str, Any]:
     """Get slow database queries for optimization"""
     try:
@@ -171,7 +169,7 @@ async def warm_cache(
 ) -> Dict[str, Any]:
     """Warm cache with frequently accessed data"""
     try:
-        from app.core.redis_cache_manager import warm_project_cache, warm_library_cache, warm_analytics_cache
+        from app.shared.cache_manager import warm_project_cache, warm_library_cache, warm_analytics_cache
         
         warm_functions = [warm_project_cache, warm_library_cache, warm_analytics_cache]
         

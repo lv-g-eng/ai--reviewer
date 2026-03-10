@@ -4,7 +4,7 @@ Configuration loading utilities.
 This module provides reusable configuration loading functions following the DRY principle.
 """
 import os
-from typing import Optional, Any, TypeVar, Type
+from typing import Optional, TypeVar
 import logging
 
 logger = logging.getLogger(__name__)

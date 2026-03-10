@@ -7,7 +7,6 @@ Validates Requirements: 1.4, 2.3
 
 import logging
 from typing import Optional, Dict
-from enum import Enum
 
 from app.core.config import settings
 from .base import BaseLLMProvider, LLMProviderType

@@ -128,10 +128,11 @@ FEW_SHOT_EXAMPLES = """
 ## Example 1: Security Issue
 
 ```python
-# Bad Code
+# Bad Code (FIXED)
 user_input = request.GET['username']
-query = f"SELECT * FROM users WHERE username = '{user_input}'"
-cursor.execute(query)
+# SECURE: Use parameterized query to prevent SQL injection
+query = "SELECT * FROM users WHERE username = ?"
+cursor.execute(query, (user_input,))
 ```
 
 **Issue**:

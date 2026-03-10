@@ -225,7 +225,6 @@ class AIReasoningEngine:
         """
         from app.services.neo4j_ast_service import Neo4jASTService
         from app.database.neo4j_db import get_neo4j_driver
-        from app.database.postgresql import get_db
         from app.models import PullRequest, Project
         from sqlalchemy import select
 

@@ -10,14 +10,9 @@ Tests the complete workflow:
 Validates Requirements: 1.1, 1.2, 1.3, 1.4, 1.5
 """
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from datetime import datetime, timezone
+from unittest.mock import Mock, AsyncMock, patch
 
 from app.tasks.pull_request_analysis import (
-    parse_pull_request_files,
-    build_dependency_graph,
-    analyze_with_llm,
-    post_review_comments,
     analyze_pull_request_workflow
 )
 

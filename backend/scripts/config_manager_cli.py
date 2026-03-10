@@ -17,7 +17,6 @@ Validates Requirements: 1.1, 1.2, 1.3, 1.4, 1.5
 """
 
 import argparse
-import json
 import logging
 import sys
 import time

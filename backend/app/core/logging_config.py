@@ -17,7 +17,6 @@ Validates Requirements: 7.1, 7.2, 7.6, 7.10, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
 """
 import logging
 import sys
-import json
 import os
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional

@@ -7,8 +7,7 @@ of the library management system using hypothesis for property-based testing.
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
-from hypothesis import given, strategies as st, assume, settings, HealthCheck
+from hypothesis import given, strategies as st, settings, HealthCheck
 from hypothesis.strategies import composite
 
 from app.services.library_management.library_manager import LibraryManager

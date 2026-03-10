@@ -5,7 +5,6 @@ Unit tests for Search Service
 import pytest
 import asyncio
 from unittest.mock import Mock, AsyncMock, patch
-from typing import List, Dict, Any
 
 import httpx
 
@@ -14,7 +13,6 @@ from app.services.library_management.search_service import (
     NPMSearchClient,
     PyPISearchClient,
     AsyncCircuitBreaker,
-    SearchError,
     NetworkSearchError,
     InvalidSearchQueryError
 )

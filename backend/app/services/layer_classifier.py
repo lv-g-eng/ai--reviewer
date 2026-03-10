@@ -1,8 +1,7 @@
 """
 Utility for classifying architectural layers based on naming conventions and project structure.
 """
-import re
-from typing import Dict, Optional, Tuple
+from typing import Tuple
 
 class LayerClassifier:
     """

@@ -8,7 +8,7 @@ Run with: pytest backend/tests/test_cloudwatch_alarms.py -v
 """
 
 import json
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 import pytest
 import sys
 import os

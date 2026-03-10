@@ -6,7 +6,7 @@ Validates Requirements: 1.4
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 

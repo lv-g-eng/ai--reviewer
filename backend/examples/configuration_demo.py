@@ -9,7 +9,6 @@ and hot reloading capabilities.
 Run this demo to see the configuration system in action.
 """
 
-import asyncio
 import logging
 import sys
 import time
@@ -20,8 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.core.configuration_manager import (
     ConfigurationManager,
-    ConfigurationChangeEvent,
-    initialize_configuration
+    ConfigurationChangeEvent
 )
 from app.core.service_config_generator import (
     ServiceConfigGenerator,
@@ -210,14 +208,16 @@ def demo_configuration_export(service_generator: ServiceConfigGenerator):
     logger.info("Exporting frontend configuration as .env format:")
     env_content = service_generator.export_service_config("frontend", format="env", mask_secrets=True)
     logger.info("```")
-    logger.info(str(env_content[:300] + "..." if len(env_content)) > 300 else env_content)
+    display_content = env_content[:300] + "..." if len(env_content) > 300 else env_content
+    logger.info(display_content)
     logger.info("```")
     
     # Export backend config as JSON format
     logger.info("\nExporting backend configuration as JSON format:")
     json_content = service_generator.export_service_config("backend", format="json", mask_secrets=True)
     logger.info("```json")
-    logger.info(str(json_content[:300] + "..." if len(json_content)) > 300 else json_content)
+    display_json = json_content[:300] + "..." if len(json_content) > 300 else json_content
+    logger.info(display_json)
     logger.info("```")
 
 

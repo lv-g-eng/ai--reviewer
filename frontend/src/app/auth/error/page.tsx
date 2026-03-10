@@ -39,7 +39,7 @@ function AuthErrorContent() {
           </div>
           <div className="flex flex-col gap-2">
             <Button asChild>
-              <Link href="/auth/signin">
+              <Link href="/login">
                 Try Again
               </Link>
             </Button>

@@ -7,19 +7,16 @@ current code structure against expected architectural patterns and constraints.
 
 import logging
 import re
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-from enum import Enum
+# Import consolidated enums from common library  
+from common.shared.enums import Severity as DriftSeverity
 from app.services.neo4j_ast_service import Neo4jASTService
 from app.services.architecture_golden_standard import GoldenStandardManager
 
 logger = logging.getLogger(__name__)
 
-class DriftSeverity(Enum):
-    LOW = "LOW"
-    MEDIUM = "MEDIUM" 
-    HIGH = "HIGH"
-    CRITICAL = "CRITICAL"
+
 
 @dataclass
 class DriftViolation:
@@ -56,7 +53,7 @@ class ArchitecturalDriftDetector:
 
     async def detect_drift(self, project_id: str) -> DriftSummary:
         """Main method to detect architectural drift for a project."""
-        from app.services.cache_manager import analysis_cache
+        from app.shared.cache_manager import analysis_cache
         from dataclasses import asdict
         
         # Check cache

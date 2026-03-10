@@ -5,13 +5,11 @@ Enhanced configuration with graceful degradation, automatic fallbacks,
 and intelligent service discovery for improved reliability.
 """
 
-import os
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 from dataclasses import dataclass
 from pydantic import BaseSettings, Field
 import asyncio
-import socket
 
 logger = logging.getLogger(__name__)
 

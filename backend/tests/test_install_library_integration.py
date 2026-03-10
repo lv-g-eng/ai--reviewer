@@ -4,9 +4,8 @@ Integration tests for the Install Library endpoint
 Tests the complete install library workflow including LibraryManager integration.
 """
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 
 from app.main import app
@@ -15,8 +14,6 @@ from app.api.dependencies import get_current_user
 from app.schemas.library import (
     InstallationResult, 
     InstalledLibrary, 
-    ValidationResult, 
-    LibraryMetadata,
     ProjectContext
 )
 from app.models.library import RegistryType
@@ -33,7 +30,7 @@ def setup_test_dependencies():
     mock_user = User(
         id="test-user-id",
         email="test@example.com",
-        role=UserRole.developer,
+        role=UserRole.user,
         is_active=True
     )
     

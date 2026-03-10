@@ -5,10 +5,9 @@ Requirements:
 - 8.3: Implement rate limiting on all API endpoints: 100 requests per minute, 5000 requests per hour
 """
 import pytest
-import asyncio
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import Mock
 import time
 
 from app.middleware.rate_limiting import (

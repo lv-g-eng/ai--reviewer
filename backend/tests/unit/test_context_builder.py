@@ -2,7 +2,6 @@
 Unit tests for context_builder service
 """
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from app.services.context_builder import ContextBuilder
 
 

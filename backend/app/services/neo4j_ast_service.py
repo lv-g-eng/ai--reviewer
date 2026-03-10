@@ -6,10 +6,9 @@ logger = logging.getLogger(__name__)
 
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-import json
 
 from app.services.neo4j_service import Neo4jService as BaseNeo4jService
-from app.schemas.ast_models import ParsedFile, ClassNode, FunctionNode, DependencyGraph
+from app.schemas.ast_models import ParsedFile, ClassNode, FunctionNode
 from app.core.config import settings
 
 
@@ -400,7 +399,7 @@ class Neo4jASTService(BaseNeo4jService):
         """
         Detect cyclic dependencies in the project
         """
-        from app.services.cache_manager import analysis_cache
+        from app.shared.cache_manager import analysis_cache
         
         # Check cache
         cached = await analysis_cache.get_cached_result(project_id, "cyclic_dependencies")
@@ -439,7 +438,7 @@ class Neo4jASTService(BaseNeo4jService):
         """
         Detect layer violations (e.g., Controller directly to Repository)
         """
-        from app.services.cache_manager import analysis_cache
+        from app.shared.cache_manager import analysis_cache
         
         # Check cache
         cached = await analysis_cache.get_cached_result(project_id, "layer_violations", layer_definitions)
@@ -526,7 +525,7 @@ class Neo4jASTService(BaseNeo4jService):
         """
         Calculate coupling metrics for all modules
         """
-        from app.services.cache_manager import analysis_cache
+        from app.shared.cache_manager import analysis_cache
         
         cached = await analysis_cache.get_cached_result(project_id, "coupling_metrics")
         if cached:
@@ -570,7 +569,7 @@ class Neo4jASTService(BaseNeo4jService):
         """
         Find longest dependency paths (refactoring candidates)
         """
-        from app.services.cache_manager import analysis_cache
+        from app.shared.cache_manager import analysis_cache
         
         params = {"limit": limit}
         cached = await analysis_cache.get_cached_result(project_id, "longest_paths", params)

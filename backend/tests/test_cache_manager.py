@@ -7,12 +7,10 @@ and integration with Redis.
 Validates Requirements: 10.4, 13.5
 """
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-from app.services.cache_manager import (
+from unittest.mock import patch
+from app.shared.cache_manager import (
     CacheManager,
     cached,
-    get_cache_manager,
     reset_cache_manager
 )
 

@@ -5,19 +5,13 @@ This module contains comprehensive test cases for the AI PR reviewer functionali
 """
 
 import pytest
-import asyncio
 import json
 from unittest.mock import Mock, patch, AsyncMock
-from typing import Dict, List
-from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.ai_pr_reviewer import AIPRReviewer, ReviewResult, ComplianceStatus
-from app.services.ai_pr_reviewer_service import AIReviewService, ReviewRequest, ReviewResponse
-from app.services.llm_client import LLMClient, LLMProvider
+from app.services.ai_pr_reviewer_service import AIReviewService, ReviewResponse
 from app.services.agentic_ai_service import AgenticAIService, ReasoningResult
-from app.services.architectural_drift_detector import ArchitecturalDriftDetector
-from app.services.security_compliance_service import SecurityComplianceService
 
 
 class TestAIPRReviewer:
@@ -234,7 +228,7 @@ class TestAIReviewService:
     @pytest.fixture
     def sample_review_request(self):
         """Sample review request for testing."""
-        from app.services.ai_pr_reviewer_service import ReviewRequest, ReviewResponse
+        from app.services.ai_pr_reviewer_service import ReviewRequest
         
         return ReviewRequest(
             diff_content="sample diff content",

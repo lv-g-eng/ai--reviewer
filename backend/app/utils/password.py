@@ -4,7 +4,7 @@ Uses bcrypt for secure password hashing with configurable salt rounds
 """
 from passlib.context import CryptContext
 from app.core.config import settings
-from app.utils.error_sanitizer import sanitize_password_error, get_generic_password_error
+from app.utils.error_sanitizer import get_generic_password_error
 import logging
 
 logger = logging.getLogger(__name__)

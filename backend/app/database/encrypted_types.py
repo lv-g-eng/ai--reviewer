@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from typing import Optional
-from sqlalchemy import TypeDecorator, String, Text
+from sqlalchemy import TypeDecorator, Text
 from sqlalchemy.engine import Dialect
 
 

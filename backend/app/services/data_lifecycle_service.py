@@ -9,12 +9,12 @@ Validates Requirements: 11.1, 11.8
 """
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import select, delete, and_, func, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 import uuid
 
-from app.services.audit_logging_service import AuditLoggingService, AuditEventType
+from app.services.audit_logging_service import AuditLoggingService
 
 logger = logging.getLogger(__name__)
 

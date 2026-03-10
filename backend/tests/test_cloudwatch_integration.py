@@ -4,9 +4,7 @@ Tests for CloudWatch Logs integration
 Validates Requirements: 7.2, 7.10
 """
 import logging
-import os
-from unittest.mock import Mock, patch, MagicMock
-import pytest
+from unittest.mock import Mock, patch
 from botocore.exceptions import ClientError, NoCredentialsError
 
 from app.core.cloudwatch_handler import (

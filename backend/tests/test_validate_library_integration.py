@@ -6,15 +6,12 @@ Tests the endpoint with real LibraryManager instances to ensure proper integrati
 import pytest
 from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.main import app
 from app.database.postgresql import get_db
 from app.api.dependencies import get_current_user
-from app.schemas.library import ValidationResult, LibraryMetadata, ProjectContext
+from app.schemas.library import LibraryMetadata, ProjectContext
 from app.models.library import RegistryType
-from app.services.library_management.library_manager import LibraryManager
-from app.services.library_management.library_repository import LibraryRepository
 
 
 def setup_test_dependencies():
@@ -27,7 +24,7 @@ def setup_test_dependencies():
     mock_user = User(
         id="test-user-id",
         email="test@example.com",
-        role=UserRole.developer,
+        role=UserRole.user,
         is_active=True
     )
     

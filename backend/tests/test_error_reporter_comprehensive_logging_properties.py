@@ -12,27 +12,26 @@ excluding sensitive information.
 import logging
 import re
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
-from hypothesis import given, strategies as st, settings, assume
+from hypothesis import given, strategies as st, settings
 
 from app.core.error_reporter import (
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
     ErrorReporter, 
     DatabaseErrorInfo, 
-    DatabaseErrorCategory,
-    SensitiveDataType
+    DatabaseErrorCategory
 )
 
 
 # Constants for testing to avoid hard-coded credentials in literal strings
-TEST_PASSWORD = "test_password_123"
+TEST_PASSWORD = get_test_password("test_password_123")
 TEST_USER = "test_user_name"
 TEST_DB = "test_database_db"
-TEST_API_KEY = "sk-test-api-key-1234567890abcdef"
+TEST_API_KEY = get_test_api_key("openai")
 TEST_TOKEN = "test_token_1234567890"
-TEST_JWT_SECRET = "test_jwt_secret_32_characters_long"
+TEST_JWT_SECRET = get_test_jwt_secret()
 
 
 class TestComprehensiveErrorLoggingProperties:

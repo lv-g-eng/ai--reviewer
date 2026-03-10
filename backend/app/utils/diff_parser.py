@@ -3,7 +3,7 @@ Git diff parser utilities
 Parse git diff format and extract changes
 """
 import re
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 
 
 class DiffParser:

@@ -4,7 +4,7 @@ Connection Pool Types and Data Classes
 Defines data structures for connection pool management.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, Optional, Any
 

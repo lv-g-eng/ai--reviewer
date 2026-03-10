@@ -4,7 +4,7 @@ Tests for Prometheus middleware.
 Validates Requirement 7.3: Automatic collection of HTTP metrics.
 """
 import pytest
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.middleware.prometheus_middleware import PrometheusMiddleware, configure_prometheus_middleware

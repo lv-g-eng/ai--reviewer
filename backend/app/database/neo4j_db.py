@@ -7,8 +7,8 @@ logger = logging.getLogger(__name__)
 import asyncio
 import os
 from neo4j import AsyncGraphDatabase, AsyncDriver
-from neo4j.exceptions import ServiceUnavailable, AuthError, ClientError
-from typing import Optional, Dict, Any
+from neo4j.exceptions import ServiceUnavailable, AuthError
+from typing import Optional
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from app.core.config import settings
@@ -82,24 +82,33 @@ async def init_neo4j():
     try:
         logger.info("🔌 Connecting to Neo4j at {settings.NEO4J_URI}")
 
-        # Create driver with optimized settings for CI/CD
+        # Create driver with optimized settings for stability
         neo4j_driver = AsyncGraphDatabase.driver(
             settings.NEO4J_URI,
             auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD),
-            max_connection_pool_size=10,  # Reduced for CI environments
-            connection_timeout=15,  # Reduced timeout for faster failures
-            connection_acquisition_timeout=10,
-            max_connection_lifetime=300,  # 5 minutes
-            max_transaction_retry_time=15,
+            max_connection_pool_size=10,  # 增加连接池大小
+            connection_timeout=30,  # 增加连接超时时间
+            connection_acquisition_timeout=15,  # 增加获取连接超时时间
+            max_connection_lifetime=300,  # 增加连接生命周期到5分钟
+            max_transaction_retry_time=30,  # 增加事务重试时间
+            encrypted=False,  # Disable encryption for local development
         )
 
-        # Verify connectivity with timeout
-        await asyncio.wait_for(
-            neo4j_driver.verify_connectivity(),
-            timeout=10
-        )
-
-        logger.info("✅ Neo4j initialized successfully")
+        # Verify connectivity with timeout and retry
+        for attempt in range(3):
+            try:
+                await asyncio.wait_for(
+                    neo4j_driver.verify_connectivity(),
+                    timeout=15
+                )
+                logger.info("✅ Neo4j initialized successfully")
+                break
+            except Exception as e:
+                if attempt < 2:
+                    logger.warning(f"Neo4j connectivity check failed (attempt {attempt + 1}/3), retrying...")
+                    await asyncio.sleep(5)
+                else:
+                    raise e
 
         # Create indexes in background (don't block startup)
         asyncio.create_task(create_indexes())

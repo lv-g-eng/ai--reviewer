@@ -10,15 +10,13 @@ error statistics to identify recurring connectivity patterns over time.
 
 import json
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List
 from unittest.mock import patch
 
 import pytest
-from hypothesis import given, strategies as st, settings, assume
+from hypothesis import given, strategies as st, settings
 
 from app.core.error_reporter import (
     ErrorReporter, 
-    DatabaseErrorInfo, 
     DatabaseErrorCategory,
     ErrorStatistics
 )

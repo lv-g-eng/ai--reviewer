@@ -2,7 +2,6 @@
 JavaScript/TypeScript AST Parser
 Uses tree-sitter for parsing
 """
-import json
 from typing import List, Optional, Any
 from pathlib import Path
 

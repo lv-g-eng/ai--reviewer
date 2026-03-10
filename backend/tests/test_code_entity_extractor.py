@@ -4,7 +4,6 @@ Unit tests for Code Entity Extractor Service
 Tests entity extraction, complexity calculation, and dependency identification.
 """
 import pytest
-from pathlib import Path
 import tempfile
 import os
 

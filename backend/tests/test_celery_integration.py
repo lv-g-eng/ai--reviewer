@@ -13,16 +13,12 @@ For full integration testing with real workers, see CELERY_INTEGRATION_TESTS_REA
 Validates Requirements: 13.5 (Redis caching and queuing integration tests)
 """
 import pytest
-import time
-from unittest.mock import Mock, patch
 from datetime import datetime, timezone
 from celery import chain, group
-from celery.exceptions import Retry
 
 from app.celery_config import celery_app
 from app.tasks.task_monitoring import (
     MonitoredTask,
-    TaskStatus,
     TaskProgressStage
 )
 

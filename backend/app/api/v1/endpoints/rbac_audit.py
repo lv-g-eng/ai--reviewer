@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.postgresql import get_db
 from app.auth import (
-    AuditLog,
     Permission,
     AuditService,
     AuditFilter,

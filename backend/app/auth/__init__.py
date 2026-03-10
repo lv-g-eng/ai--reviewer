@@ -22,7 +22,6 @@ from .models import (
 )
 
 from .services import (
-    AuthService,
     AuthResult,
     TokenPayload,
     RBACService,
@@ -39,8 +38,6 @@ from .middleware import (
     require_project_access,
 )
 
-from .config import auth_settings
-
 __all__ = [
     # Models
     "User",
@@ -52,7 +49,6 @@ __all__ = [
     "Permission",
     "ROLE_PERMISSIONS",
     # Services
-    "AuthService",
     "AuthResult",
     "TokenPayload",
     "RBACService",
@@ -65,6 +61,4 @@ __all__ = [
     "require_role",
     "require_permission",
     "require_project_access",
-    # Config
-    "auth_settings",
 ]

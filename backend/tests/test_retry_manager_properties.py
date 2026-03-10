@@ -7,12 +7,10 @@ Validates Requirements: 2.1, 2.2, 2.3, 2.4, 2.5
 """
 
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock
 from hypothesis import given, strategies as st, settings, HealthCheck
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from app.database.retry_manager import RetryManager, OperationType, RetryState
+from app.database.retry_manager import RetryManager, OperationType
 from app.database.models import RetryConfig
 
 

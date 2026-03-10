@@ -1,7 +1,6 @@
 """
 RBAC service for role and permission management.
 """
-from typing import Optional
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy.ext.asyncio import AsyncSession
 

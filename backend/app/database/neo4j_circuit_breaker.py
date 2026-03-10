@@ -9,7 +9,6 @@ Validates Requirements: 2.6, 2.7, 12.5, 12.6
 import logging
 from typing import Optional, Any, Callable
 from neo4j import AsyncDriver
-from neo4j.exceptions import ServiceUnavailable, ClientError
 
 from app.services.llm.circuit_breaker import (
     CircuitBreaker,
@@ -17,7 +16,7 @@ from app.services.llm.circuit_breaker import (
     CircuitBreakerConfig
 )
 from app.database.neo4j_db import get_neo4j_driver
-from app.services.cache_manager import get_cache_manager
+from app.shared.cache_manager import get_cache_manager
 
 logger = logging.getLogger(__name__)
 

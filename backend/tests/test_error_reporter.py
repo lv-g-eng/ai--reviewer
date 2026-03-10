@@ -10,20 +10,19 @@ Validates Requirements: 5.1, 5.2, 5.3, 7.1, 7.2, 7.5
 import pytest
 from datetime import datetime, timezone
 from app.core.error_reporter import (
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
     ErrorReporter,
     SensitiveDataType,
-    MaskingRule,
     DatabaseErrorCategory,
     DatabaseErrorInfo,
-    ErrorStatistics,
 )
 
 
 # Constants for testing to avoid hard-coded credentials in literal strings
-TEST_PASSWORD = "test_password_123"
-TEST_API_KEY = "sk-test-api-key-1234567890abcdef"
+TEST_PASSWORD = get_test_password("test_password_123")
+TEST_API_KEY = get_test_api_key("openai")
 TEST_TOKEN = "test_token_1234567890"
-TEST_JWT_SECRET = "test_jwt_secret_32_characters_long"
+TEST_JWT_SECRET = get_test_jwt_secret()
 TEST_WEBHOOK_SECRET = "whsec_test_webhook_secret_12345"
 
 
@@ -849,7 +848,6 @@ class TestDatabaseErrorLogging:
 
     def test_log_database_error(self, caplog):
         """Test logging of database errors"""
-        import logging
         
         error = Exception("Connection timeout")
         error_info = ErrorReporter.create_database_error_info(error, "PostgreSQL")

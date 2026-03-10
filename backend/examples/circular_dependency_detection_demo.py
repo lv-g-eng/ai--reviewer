@@ -48,15 +48,17 @@ async def demo_basic_detection():
     if result.cycles:
         logger.info("\n🔄 Detected Cycles:")
         for i, cycle in enumerate(result.cycles[:5], 1):  # Show first 5
-            logger.info("\n   Cycle {i}: {cycle.cycle_id}")
-            logger.info("   ├─ Severity: {cycle.severity.value}")
-            logger.info("   ├─ Depth: {cycle.depth} nodes")
-            logger.info("   ├─ Complexity: {cycle.total_complexity} (avg: {cycle.avg_complexity})")
-            logger.info(str(f"   └─ Path: {' → '.join(cycle.nodes[:4]))}" + 
-                  (" → ..." if len(cycle.nodes) > 4 else ""))
+            logger.info(f"\n   Cycle {i}: {cycle.cycle_id}")
+            logger.info(f"   ├─ Severity: {cycle.severity.value}")
+            logger.info(f"   ├─ Depth: {cycle.depth} nodes")
+            logger.info(f"   ├─ Complexity: {cycle.total_complexity} (avg: {cycle.avg_complexity})")
+            path_display = f"   └─ Path: {' → '.join(cycle.nodes[:4])}"
+            if len(cycle.nodes) > 4:
+                path_display += " → ..."
+            logger.info(path_display)
         
         if len(result.cycles) > 5:
-            logger.info("\n   ... and {len(result.cycles) - 5} more cycles")
+            logger.info(f"\n   ... and {len(result.cycles) - 5} more cycles")
     else:
         logger.info("\n✅ No circular dependencies found!")
 
@@ -73,14 +75,16 @@ async def demo_severity_filtering():
     result = await detector.detect_cycles(min_severity=CycleSeverity.HIGH)
     
     logger.info("\n🔍 High/Critical Severity Cycles:")
-    logger.info("   Found: {result.total_cycles} cycles")
+    logger.info(f"   Found: {result.total_cycles} cycles")
     
     for cycle in result.cycles:
         severity_emoji = "🔴" if cycle.severity == CycleSeverity.CRITICAL else "🟠"
-        logger.info("\n   {severity_emoji} {cycle.cycle_id}")
-        logger.info("      Severity: {cycle.severity.value}")
-        logger.info(str(f"      Nodes: {', '.join(cycle.nodes[:3]))}" + 
-              (f" + {len(cycle.nodes) - 3} more" if len(cycle.nodes) > 3 else ""))
+        logger.info(f"\n   {severity_emoji} {cycle.cycle_id}")
+        logger.info(f"      Severity: {cycle.severity.value}")
+        nodes_display = f"      Nodes: {', '.join(cycle.nodes[:3])}"
+        if len(cycle.nodes) > 3:
+            nodes_display += f" + {len(cycle.nodes) - 3} more"
+        logger.info(nodes_display)
 
 
 async def demo_entity_specific_detection():

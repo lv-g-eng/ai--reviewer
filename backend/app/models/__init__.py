@@ -30,7 +30,7 @@ from app.models.library import (
 
 
 class UserRole(str, enum.Enum):
-    """User role enum - simplified to single user role"""
+    """User role enum - simplified for invitation-based system"""
     user = "user"
 
 
@@ -59,7 +59,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
-    role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.user)
+    role = Column(SQLEnum(UserRole, name='user_role'), nullable=False, default=UserRole.user)
     full_name = Column(String(255))
     is_active = Column(Boolean, default=True)
     github_token = Column(String(500), nullable=True)
@@ -70,6 +70,11 @@ class User(Base):
     # Relationships
     projects = relationship("Project", back_populates="owner")
     pull_requests = relationship("PullRequest", back_populates="author")
+    
+    # Project invitation relationships
+    sent_invitations = relationship("ProjectInvitation", foreign_keys="ProjectInvitation.inviter_id", back_populates="inviter")
+    received_invitations = relationship("ProjectInvitation", foreign_keys="ProjectInvitation.invitee_id", back_populates="invitee")
+    project_memberships = relationship("ProjectMember", back_populates="user")
 
 
 class GitHubConnectionType(str, enum.Enum):
@@ -100,6 +105,10 @@ class Project(Base):
     # Relationships
     owner = relationship("User", back_populates="projects")
     pull_requests = relationship("PullRequest", back_populates="project")
+    
+    # Project invitation relationships
+    invitations = relationship("ProjectInvitation", back_populates="project")
+    members = relationship("ProjectMember", back_populates="project")
     ssh_key = relationship("SSHKey", back_populates="projects")
 
 
@@ -257,3 +266,6 @@ class SSHKey(Base):
 
 # Add SSH keys relationship to User model
 User.ssh_keys = relationship("SSHKey", back_populates="user", cascade="all, delete-orphan")
+
+# Import project invitation models
+from .project_invitation import ProjectInvitation, ProjectMember, InvitationStatus, ProjectRole

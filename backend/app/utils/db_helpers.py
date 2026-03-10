@@ -10,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
-from app.models import User, Project, PullRequest
 
 T = TypeVar('T')
 

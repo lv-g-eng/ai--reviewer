@@ -15,8 +15,8 @@ import bleach
 import html
 import json
 import re
-from typing import Optional, List, Dict, Any
-from urllib.parse import quote, urlparse
+from typing import Dict, Any
+from urllib.parse import urlparse
 import logging
 
 logger = logging.getLogger(__name__)

@@ -159,7 +159,7 @@ class TestEncryptionService:
     
     def test_derive_key_from_password(self):
         """Test key derivation from password."""
-        password = "my secure password"
+        password = get_test_password("secure_password")
         salt = os.urandom(16)
         
         key = EncryptionService.derive_key_from_password(password, salt)
@@ -265,8 +265,8 @@ class TestAWSKMSEncryptionService:
         monkeypatch.setenv("AWS_KMS_KEY_ID", "arn:aws:kms:us-east-1:123456789012:key/12345678")
         
         # Mock boto3 import failure
-        import sys
         import builtins
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
         original_import = builtins.__import__
         
         def mock_import(name, *args, **kwargs):

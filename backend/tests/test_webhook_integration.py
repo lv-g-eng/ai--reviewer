@@ -10,9 +10,8 @@ import pytest
 import hmac
 import hashlib
 import json
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import Mock, patch, AsyncMock
 from httpx import AsyncClient
-from datetime import datetime
 
 from app.main import app
 
@@ -76,7 +75,6 @@ class TestWebhookIntegration:
             yield mock_session
         
         # Override the dependency
-        from app.api.v1.endpoints.code_review_webhook import router
         from app.database.postgresql import get_db
         app.dependency_overrides[get_db] = mock_get_db
         

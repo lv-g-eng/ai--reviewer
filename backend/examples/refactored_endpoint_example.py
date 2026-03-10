@@ -20,14 +20,11 @@ from app.auth import (
     RBACService,
     AuditService,
     TokenPayload,
-    get_current_user,
-    require_role,
     require_permission,
 )
 
 # Import DRY utilities
 from app.utils.db_helpers import get_or_404_sync, check_unique_field_sync
-from app.utils.auth_helpers import require_admin, get_client_ip
 from app.utils.audit_helpers import log_action_sync
 from app.utils.response_converters import user_to_response, users_to_response_list
 

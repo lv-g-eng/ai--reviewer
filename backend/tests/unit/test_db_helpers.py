@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 from app.utils.db_helpers import (
     get_or_404_async,
     get_or_404_sync,
-    get_by_field_async,
     get_by_field_sync,
     check_unique_field_sync,
     check_unique_field_async

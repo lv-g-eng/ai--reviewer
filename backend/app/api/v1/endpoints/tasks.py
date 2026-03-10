@@ -20,8 +20,7 @@ from app.tasks.task_monitoring import (
     revoke_task,
     get_active_tasks,
     get_scheduled_tasks,
-    get_worker_stats,
-    TaskStatus
+    get_worker_stats
 )
 
 

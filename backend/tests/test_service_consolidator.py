@@ -2,16 +2,13 @@
 Unit tests for Service Consolidator component
 """
 
-import asyncio
 import json
 import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
 
 from app.services.service_consolidator import (
     ServiceConsolidator,
-    ServiceType,
     ConsolidationStrategy,
     ServiceDependency,
     ServiceFunction,

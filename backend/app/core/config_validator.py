@@ -9,10 +9,9 @@ Validates Requirement 14.3: Implement configuration validation on startup
 import logging
 import os
 import sys
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from pathlib import Path
 from dataclasses import dataclass
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -506,7 +505,6 @@ def startup_validation(settings: Any, check_connectivity: bool = True):
         SystemExit: If critical connectivity issues are found
     
     Example:
-        from app.core.config import settings
         from app.core.config_validator import startup_validation
         
         # In main.py or app startup

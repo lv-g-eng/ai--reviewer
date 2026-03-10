@@ -49,10 +49,7 @@ def verify_middleware():
     
     try:
         from app.middleware.rate_limiting import (
-            RateLimitMiddleware,
-            limiter,
-            configure_rate_limiting,
-            get_user_identifier
+            limiter
         )
         
         logger.info("\n✓ Middleware imports successful")

@@ -16,7 +16,7 @@ from app.services.llm.circuit_breaker import (
     CircuitBreakerConfig
 )
 from app.services.github_client import GitHubAPIClient
-from app.services.cache_manager import get_cache_manager
+from app.shared.cache_manager import get_cache_manager
 
 logger = logging.getLogger(__name__)
 

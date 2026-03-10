@@ -7,12 +7,12 @@ from typing import Annotated, Optional, Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select
 from datetime import datetime, timedelta
 import logging
 
 from app.database.postgresql import get_db
-from app.auth import TokenPayload, get_current_user, require_project_access, Permission
+from app.auth import TokenPayload, require_project_access, Permission
 from app.models.code_review import (
     PullRequest,
     CodeReview,
@@ -21,7 +21,7 @@ from app.models.code_review import (
     ArchitectureViolation,
     ReviewStatus
 )
-from app.services.llm_service import llm_service, ModelType
+from app.services.llm_service import llm_service
 from app.services.project_analysis_service import ProjectAnalysisService  # Added missing import
 
 logger = logging.getLogger(__name__)

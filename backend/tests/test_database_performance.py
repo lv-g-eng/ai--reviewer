@@ -19,7 +19,7 @@ from typing import List
 from uuid import uuid4
 
 from sqlalchemy import text, select
-from app.database.postgresql import AsyncSessionLocal, engine
+from app.database.postgresql import AsyncSessionLocal
 from app.models import User, Project, PullRequest, CodeReview, ReviewComment
 
 

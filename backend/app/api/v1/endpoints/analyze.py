@@ -5,17 +5,14 @@ This module provides the /analyze endpoint for analyzing GitHub repositories
 and extracting architectural information using AST parsing and AI analysis.
 """
 
-import os
 import tempfile
 import shutil
-import subprocess
 import asyncio
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 import git
 import ast
 import json
-import re
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse

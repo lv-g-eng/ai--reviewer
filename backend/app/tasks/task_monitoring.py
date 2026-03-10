@@ -10,7 +10,7 @@ This module provides monitoring capabilities for Celery tasks:
 Validates Requirements: 12.7 (Timeout handling for all external API calls)
 """
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from enum import Enum
 import traceback
 import logging

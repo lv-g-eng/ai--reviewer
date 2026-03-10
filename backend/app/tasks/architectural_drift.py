@@ -13,9 +13,6 @@ from app.celery_config import celery_app
 from app.database.neo4j_db import get_neo4j_driver
 from app.services.neo4j_ast_service import Neo4jASTService
 from app.services.architectural_drift_detector import ArchitecturalDriftDetector
-from app.database.postgresql import AsyncSessionLocal
-from app.models import Project
-from sqlalchemy import select
 
 
 @celery_app.task(

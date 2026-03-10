@@ -9,7 +9,6 @@ import pytest
 import time
 import tempfile
 import os
-from pathlib import Path
 
 from app.services.optimized_parser import OptimizedParser, FileCache, _parse_single_file
 from app.schemas.ast_models import ParsedFile

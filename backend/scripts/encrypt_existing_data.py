@@ -11,7 +11,6 @@ Usage:
     python backend/scripts/encrypt_existing_data.py [--dry-run] [--table TABLE] [--field FIELD]
 """
 import sys
-import os
 import asyncio
 from pathlib import Path
 
@@ -19,7 +18,7 @@ from pathlib import Path
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from sqlalchemy import select, update, text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.postgresql import get_async_session_maker
 from app.services.encryption_service import get_encryption_service

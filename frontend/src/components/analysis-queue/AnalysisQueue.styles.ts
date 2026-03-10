@@ -1,6 +1,6 @@
-import { React.CSSProperties } from 'react';
+import { CSSProperties } from 'react';
 
-export const styles: Record<string, React.CSSProperties> = {
+export const styles: Record<string, CSSProperties> = {
   container: {
     padding: '24px',
     maxWidth: '1400px',

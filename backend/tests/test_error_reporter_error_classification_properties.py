@@ -8,24 +8,19 @@ These tests verify that for any database error, the system properly categorizes
 the error type and provides structured error messages with recommended resolution steps.
 """
 
-import re
-from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
-from unittest.mock import MagicMock, patch
 
 import pytest
-from hypothesis import given, strategies as st, settings, assume
+from hypothesis import given, strategies as st, settings
 
 from app.core.error_reporter import (
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
     ErrorReporter, 
-    DatabaseErrorInfo, 
-    DatabaseErrorCategory,
-    SensitiveDataType
+    DatabaseErrorCategory
 )
 
 
 # Test constants for configuration to avoid literal suspicious strings
-TEST_PASSWORD = "test_password_value_123"
+TEST_PASSWORD = get_test_password("test_password_value")
 TEST_USER = "test_user_name"
 TEST_DB = "test_database_db"
 

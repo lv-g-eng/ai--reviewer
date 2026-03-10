@@ -20,14 +20,15 @@ async def cleanup_database():
         from sqlalchemy import text
         
         async with AsyncSessionLocal() as session:
-            # Remove test users (emails containing 'test' or 'example.com')
+            # Remove test users (emails containing 'test' or 'example.com') - Using parameterized queries
             result = await session.execute(
                 text("""
                     DELETE FROM users 
-                    WHERE email LIKE '%test%' 
-                    OR email LIKE '%example.com%'
+                    WHERE email LIKE :test_pattern 
+                    OR email LIKE :example_pattern
                     RETURNING id
-                """)
+                """),
+                {"test_pattern": "%test%", "example_pattern": "%example.com%"}
             )
             deleted_users = result.rowcount
             

@@ -25,7 +25,18 @@ import {
   Loader2,
   Lock
 } from 'lucide-react';
-import ForceGraph2D from 'react-force-graph-2d';
+import ReactFlow, {
+  Node,
+  Edge,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+  ConnectionMode,
+  MarkerType,
+  Panel,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
 import { apiClientEnhanced } from '@/lib/api-client';
 import { validateArchitectureAnalysis, type ArchitectureAnalysis } from '@/lib/validations/api-schemas';
 import { ErrorHandler } from '@/lib/error-handler';

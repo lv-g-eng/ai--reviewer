@@ -9,12 +9,10 @@ Requirements tested:
 - Requirement 5.10: Security tests for OWASP Top 10
 """
 
-import json
-import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 import pytest
 import yaml

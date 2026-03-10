@@ -10,7 +10,6 @@ for common query patterns to optimize database performance.
 Requirements: 10.5 - Database query optimization with proper indexes on all foreign keys
 """
 from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.

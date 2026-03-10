@@ -10,7 +10,6 @@ import logging
 import asyncio
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
-from datetime import datetime
 import time
 
 from github import GithubException

@@ -8,8 +8,7 @@ and compliance verification.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Dict, Any
+from unittest.mock import AsyncMock
 
 from app.services.architecture_analyzer.analyzer import ArchitectureAnalyzer
 from app.services.architecture_analyzer.drift_detector import (

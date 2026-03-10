@@ -11,9 +11,7 @@ Validates Requirements: 1.6
 import pytest
 from hypothesis import given, strategies as st, settings, HealthCheck
 
-from app.services.security_scanner import SecurityScanner, get_security_scanner
-from app.services.secure_code_analyzer import AnalysisRisk
-from app.shared.standards import OWASPVulnerability
+from app.services.security_scanner import get_security_scanner
 
 
 # Strategy for generating security code samples
@@ -32,7 +30,7 @@ def query_user(user_id):
         '''
 def connect_api():
     api_key = "sk-1234567890abcdef"
-    password = "admin123"
+    password = get_test_password("admin")
     return connect(api_key, password)
 ''',
         # Dangerous Function - eval (A03:2021)
@@ -197,6 +195,7 @@ def test_property_multiple_files_owasp_reference(num_files):
     for i in range(num_files):
         files[f"file{i}.py"] = f'''
 import os
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
 def dangerous_function_{i}():
     # SQL injection
     query = "SELECT * FROM users WHERE id = " + user_id

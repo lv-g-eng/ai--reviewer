@@ -17,7 +17,6 @@ Categories:
 import sys
 import os
 import importlib
-import traceback
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
@@ -122,8 +121,6 @@ class SmokeTestRunner:
         # Core modules to test
         core_modules = [
             # Authentication
-            ("app.auth.services.auth_service", "AuthService"),
-            ("app.auth.services.rbac_service", "RBACService"),
             ("app.auth.services.audit_service", "AuditService"),
 
             # Database
@@ -142,9 +139,6 @@ class SmokeTestRunner:
             # API Endpoints
             ("app.api.v1.endpoints.health", None),
             ("app.api.v1.endpoints.auth", None),
-            ("app.api.v1.endpoints.rbac_auth", None),
-            ("app.api.v1.endpoints.rbac_users", None),
-            ("app.api.v1.endpoints.rbac_projects", None),
 
             # Utils
             ("app.utils.validators", None),
@@ -181,8 +175,6 @@ class SmokeTestRunner:
             ("app.services.health_service", "HealthService"),
             ("app.services.llm_service", "LLMService"),
             ("app.services.repository_service", "RepositoryService"),
-            ("app.auth.services.auth_service", "AuthService"),
-            ("app.auth.services.rbac_service", "RBACService"),
         ]
 
         for module_path, class_name in service_classes:

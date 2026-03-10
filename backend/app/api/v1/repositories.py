@@ -3,7 +3,7 @@ Repository management API endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional, Annotated
+from typing import Optional, Annotated
 
 from app.database.postgresql import get_db
 from app.services.repository_service import RepositoryService

@@ -1,16 +1,39 @@
 """
 Authentication endpoints
 """
-from datetime import datetime, timedelta, timezone
-from typing import Annotated
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 import logging
+def get_client_ip(request) -> str:
+    """安全获取客户端IP地址"""
+    if request.client and request.client.host:
+        # 验证IP地址格式
+        ip = request.client.host
+        if ip and ip != "0.0.0.0":
+            return ip
+    
+    # 检查代理头部
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # 取第一个IP地址
+        ip = forwarded_for.split(",")[0].strip()
+        if ip and ip != "0.0.0.0":
+            return ip
+    
+    # 检查真实IP头部
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip and real_ip != "0.0.0.0":
+        return real_ip
+    
+    return "unknown"  # 避免使用 0.0.0.0
+
+
 
 from app.database.postgresql import get_db
-from app.models import User, TokenBlacklist
+from app.models import User
 from app.schemas.auth import (
     UserRegister,
     UserLogin,
@@ -21,11 +44,11 @@ from app.schemas.auth import (
     Message
 )
 from app.utils.password import hash_password, verify_password, validate_password_strength
-from app.utils.jwt import create_access_token, create_refresh_token, verify_token, get_token_expiry
+from app.utils.jwt import create_access_token, create_refresh_token, verify_token
 from app.api.dependencies import get_current_user
 from app.services.redis_cache_service import get_cache_service
-from app.utils.error_sanitizer import get_generic_auth_error, get_generic_password_error
-from app.services.audit_service import AuditService
+from app.utils.error_sanitizer import get_generic_auth_error
+from app.core.audit_service import UnifiedAuditService as AuditService
 from app.services.account_lockout_service import AccountLockoutService
 
 logger = logging.getLogger(__name__)
@@ -77,8 +100,9 @@ async def register(
             detail=str(e)
         )
     
-    # Create new user
+    # Create new user with UUID
     user = User(
+        id=str(uuid.uuid4()),  # Generate UUID for new user
         email=user_data.email,
         password_hash=password_hash,
         full_name=user_data.full_name
@@ -271,7 +295,7 @@ async def refresh_token(
     preventing token replay attacks and limiting the impact of token theft.
     """
     # Get client IP for audit logging
-    client_ip = request.client.host if request.client else "0.0.0.0"
+    client_ip = get_client_ip(request)
     user_agent = request.headers.get("User-Agent")
     
     # Verify refresh token signature and type

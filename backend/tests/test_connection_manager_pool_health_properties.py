@@ -8,18 +8,18 @@ These tests verify that for any connection pool experiencing failures, the conne
 manager monitors pool health and automatically recreates failed connections.
 """
 
-import asyncio
 import pytest
 from hypothesis import given, strategies as st, settings, assume
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 from datetime import datetime, timedelta
 
 from app.database.connection_manager import ConnectionManager, PoolStats
-from app.database.models import DatabaseConfig, RetryConfig, HealthState
+from app.database.models import DatabaseConfig, HealthState
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
 
 
 # constants for testing to avoid hard-coded credentials in literal strings
-TEST_PASSWORD = "test_password_123"
+TEST_PASSWORD = get_test_password("test_password_123")
 TEST_USER = "test_user_name"
 TEST_DB = "test_database_db"
 

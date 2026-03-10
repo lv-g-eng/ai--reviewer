@@ -13,11 +13,11 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional
 from weakref import WeakSet
 
 import neo4j
-from neo4j import AsyncDriver, AsyncSession, AsyncTransaction
+from neo4j import AsyncDriver, AsyncSession
 from neo4j.exceptions import AuthError, ClientError, ServiceUnavailable, TransientError
 
 from .models import DatabaseConfig, ErrorType, DatabaseError

@@ -2,9 +2,8 @@
 LLM client service for AI code review
 Supports OpenAI GPT-4 and Anthropic Claude
 """
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from enum import Enum
-import json
 import openai
 import anthropic
 from anthropic import AsyncAnthropic

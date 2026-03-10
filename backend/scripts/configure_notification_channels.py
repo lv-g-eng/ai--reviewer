@@ -38,7 +38,6 @@ Requirements:
 """
 
 import argparse
-import json
 import sys
 from datetime import datetime
 from typing import Dict, List, Optional

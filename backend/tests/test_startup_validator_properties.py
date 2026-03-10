@@ -15,7 +15,6 @@ from app.core.startup_validator import (
     ValidationErrorType,
     ConnectionStatus,
 )
-from app.core.config import settings as app_settings
 
 
 class TestStartupValidationProperties:

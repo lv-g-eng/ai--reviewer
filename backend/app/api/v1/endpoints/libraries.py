@@ -10,10 +10,10 @@ Provides endpoints for:
 Validates Requirements: All library management requirements (API layer)
 """
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, status, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, Annotated
+from typing import Optional
 
 from app.database.postgresql import get_db
 from app.api.dependencies import get_current_user

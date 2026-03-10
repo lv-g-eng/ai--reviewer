@@ -315,7 +315,8 @@ class EncodingValidator:
                     # Try to get a readable representation of the line
                     try:
                         line_content = line_bytes.decode('utf-8', errors='replace')
-                    except:
+                    except (UnicodeDecodeError, AttributeError) as e:
+                        # Fallback for encoding issues
                         line_content = str(line_bytes)
                     
                     error_desc = f"UTF-8 decode error at position {e.start}: {e.reason}"

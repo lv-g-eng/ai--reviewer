@@ -4,7 +4,7 @@ Unit tests for Standards Classifier Service
 Tests the classification logic for ISO/IEC 25010, ISO/IEC 23396, and OWASP Top 10.
 """
 import pytest
-from app.services.standards_classifier import StandardsClassifier, ClassifiedFinding, get_standards_classifier
+from app.services.standards_classifier import StandardsClassifier, get_standards_classifier
 
 
 class TestStandardsClassifier:

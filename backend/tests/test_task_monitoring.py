@@ -12,8 +12,7 @@ Validates Requirements: 12.7 (Timeout handling for all external API calls)
 """
 import pytest
 import asyncio
-from datetime import datetime, timezone
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from celery.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 
 from app.tasks.task_monitoring import (

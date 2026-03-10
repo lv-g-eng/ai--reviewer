@@ -9,7 +9,6 @@ Validates Requirement: 10.6
 import logging
 logger = logging.getLogger(__name__)
 
-import ast
 import sys
 
 

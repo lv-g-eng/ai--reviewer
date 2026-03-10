@@ -119,7 +119,6 @@ httptools==0.7.1
     # via uvicorn
 httpx==0.27.2
     # via
-    #   -r requirements.in
     #   anthropic
     #   openai
 humanize==4.15.0
@@ -161,7 +160,6 @@ opentelemetry-api==1.28.2
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
-    #   opentelemetry-instrumentation-httpx
     #   opentelemetry-instrumentation-redis
     #   opentelemetry-instrumentation-sqlalchemy
     #   opentelemetry-sdk
@@ -174,14 +172,11 @@ opentelemetry-instrumentation==0.49b2
     # via
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
-    #   opentelemetry-instrumentation-httpx
     #   opentelemetry-instrumentation-redis
     #   opentelemetry-instrumentation-sqlalchemy
 opentelemetry-instrumentation-asgi==0.49b2
     # via opentelemetry-instrumentation-fastapi
 opentelemetry-instrumentation-fastapi==0.49b2
-    # via -r requirements.in
-opentelemetry-instrumentation-httpx==0.49b2
     # via -r requirements.in
 opentelemetry-instrumentation-redis==0.49b2
     # via -r requirements.in
@@ -200,7 +195,6 @@ opentelemetry-semantic-conventions==0.49b2
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
-    #   opentelemetry-instrumentation-httpx
     #   opentelemetry-instrumentation-redis
     #   opentelemetry-instrumentation-sqlalchemy
     #   opentelemetry-sdk
@@ -208,7 +202,6 @@ opentelemetry-util-http==0.49b2
     # via
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
-    #   opentelemetry-instrumentation-httpx
 packaging==25.0
     # via
     #   kombu
@@ -360,7 +353,6 @@ wrapt==1.16.0
     # via
     #   deprecated
     #   opentelemetry-instrumentation
-    #   opentelemetry-instrumentation-httpx
     #   opentelemetry-instrumentation-redis
     #   opentelemetry-instrumentation-sqlalchemy
 zipp==3.23.0

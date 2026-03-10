@@ -16,23 +16,41 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import DependencyGraphVisualization from '../DependencyGraphVisualization';
 
-// Mock ForceGraph2D
-jest.mock('react-force-graph-2d', () => {
-  return function MockForceGraph2D({ graphData, onNodeClick, onZoom }: any) {
+// Mock ReactFlow
+jest.mock('reactflow', () => ({
+  __esModule: true,
+  default: function MockReactFlow({ nodes, edges, onNodeClick }: any) {
     return (
-      <div data-testid="force-graph">
+      <div data-testid="react-flow">
         <div data-testid="graph-nodes">
-          {graphData.nodes.map((node: any) => (
+          {nodes?.map((node: any) => (
             <div
               key={node.id}
               data-testid={`node-${node.id}`}
-              onClick={() => onNodeClick && onNodeClick(node)}
+              onClick={() => onNodeClick && onNodeClick(null, node)}
             >
-              {node.name}
+              {node.data?.label || node.id}
             </div>
           ))}
         </div>
-        <div data-testid="graph-links">
+        <div data-testid="graph-edges">
+          {edges?.map((edge: any) => (
+            <div key={edge.id} data-testid={`edge-${edge.id}`}>
+              {edge.source} → {edge.target}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  },
+  Controls: () => <div data-testid="flow-controls" />,
+  Background: () => <div data-testid="flow-background" />,
+  Panel: ({ children }: any) => <div data-testid="flow-panel">{children}</div>,
+  useNodesState: (initialNodes: any) => [initialNodes, jest.fn()],
+  useEdgesState: (initialEdges: any) => [initialEdges, jest.fn()],
+  ConnectionMode: { Loose: 'loose' },
+  MarkerType: { ArrowClosed: 'arrowclosed' },
+}));
           {graphData.links.map((link: any, index: number) => (
             <div key={index} data-testid={`link-${index}`}>
               {typeof link.source === 'string' ? link.source : link.source.id} →{' '}

@@ -13,7 +13,7 @@ Validates Requirements: 7.4, 7.10
 import logging
 import os
 import psutil
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from datetime import datetime
 
 try:

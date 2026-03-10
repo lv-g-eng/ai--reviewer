@@ -7,9 +7,8 @@ import logging
 from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
 
-from app.services.audit_service import AuditService
+from app.core.audit_service import UnifiedAuditService as AuditService
 from app.database.postgresql import get_db
 
 logger = logging.getLogger(__name__)

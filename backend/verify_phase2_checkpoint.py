@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 import sys
 import ast
 from pathlib import Path
-from typing import List, Tuple
 
 
 def print_header(title: str):

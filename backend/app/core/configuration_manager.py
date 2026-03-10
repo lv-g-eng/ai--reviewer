@@ -8,8 +8,6 @@ into a hierarchical configuration system with validation, type checking, and hot
 Validates Requirements: 1.1, 1.2, 1.3, 1.4, 1.5
 """
 
-import asyncio
-import json
 import logging
 import os
 import threading
@@ -17,13 +15,10 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union, Callable
+from typing import Any, Dict, List, Optional, Set, Callable
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import yaml
 
-from pydantic import BaseModel, Field, ValidationError, field_validator
-from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +121,6 @@ class ConfigurationValidator:
         
         # Basic validation for common database URL patterns
         valid_schemes = ['postgresql', 'postgresql+asyncpg', 'redis', 'bolt', 'neo4j']
-        from urllib.parse import urlparse
         
         try:
             parsed = urlparse(value)

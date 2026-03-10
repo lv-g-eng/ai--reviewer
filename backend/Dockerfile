@@ -65,9 +65,9 @@ RUN mkdir -p /tmp/app && chown appuser:appuser /tmp/app
 
 USER appuser
 
-# Health check using curl
-HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
-    CMD curl -f http://localhost:8000/health || exit 1
+# Health check using curl with better error handling
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+    CMD curl -f http://localhost:8000/health/live || exit 1
 
 # Expose port
 EXPOSE 8000

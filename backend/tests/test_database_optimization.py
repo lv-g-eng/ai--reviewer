@@ -3,8 +3,7 @@ Test database optimization functionality
 """
 
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from app.database.optimizations import DatabaseOptimizer, db_optimizer
 
 @pytest.fixture

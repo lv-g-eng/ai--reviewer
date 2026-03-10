@@ -10,16 +10,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 from typing import List, Dict, Optional, Any, Tuple
-import asyncio
 from datetime import datetime
 
 from app.database.neo4j_db import get_neo4j_driver
 from app.core.config import settings
 from app.services.code_entity_extractor import CodeEntity
-from app.schemas.ast_models import DependencyGraph, DependencyEdge
+from app.schemas.ast_models import DependencyGraph
 from .models import (
-    GraphNode, GraphRelationship, GraphUpdateResult,
-    NodeType, RelationshipType
+    GraphUpdateResult
 )
 
 

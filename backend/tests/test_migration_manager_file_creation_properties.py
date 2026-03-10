@@ -6,17 +6,16 @@ Property-based tests for migration manager file creation integrity
 """
 import pytest
 import tempfile
-import os
 from pathlib import Path
 from hypothesis import given, strategies as st, settings, assume, HealthCheck
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import patch
 
 from app.database.migration_manager import MigrationManager
-from app.utils.encoding_validator import EncodingValidator, EncodingValidationResult
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
 
 
 # constants for testing to avoid hard-coded credentials in literal strings
-TEST_PASSWORD = "test_password_123"
+TEST_PASSWORD = get_test_password("test_password_123")
 TEST_USER = "test_user_name"
 TEST_DB = "test_database_db"
 

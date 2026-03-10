@@ -5,7 +5,7 @@ Stub implementation for backward compatibility.
 This module will be fully implemented in future tasks.
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 
 
 class ArchitectureAnalyzer:

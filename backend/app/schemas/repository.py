@@ -4,25 +4,9 @@ Repository management schemas for GitHub dependency integration
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
-from enum import Enum
+# Import consolidated enums from common library
+from common.shared.enums import RepositoryStatus, RepositoryURLFormat
 import re
-
-
-class RepositoryURLFormat(str, Enum):
-    """Supported repository URL formats"""
-    HTTPS = "https"
-    SSH = "ssh"
-
-
-class RepositoryStatus(str, Enum):
-    """Repository processing status"""
-    PENDING = "pending"
-    VALIDATING = "validating"
-    CLONING = "cloning"
-    ANALYZING = "analyzing"
-    ACTIVE = "active"
-    FAILED = "failed"
-    ARCHIVED = "archived"
 
 
 class AddRepositoryRequest(BaseModel):

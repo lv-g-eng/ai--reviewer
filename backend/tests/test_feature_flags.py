@@ -4,7 +4,6 @@ Tests for feature flag system.
 Validates Requirement 14.7: Implement feature flags for gradual rollout
 """
 import pytest
-import os
 from app.core.feature_flags import (
     FeatureFlagManager,
     FeatureFlagStrategy,

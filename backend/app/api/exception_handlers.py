@@ -16,7 +16,6 @@ from typing import Any, Dict, Optional
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from pydantic import ValidationError
 
 from app.shared.exceptions import (
     ServiceException,

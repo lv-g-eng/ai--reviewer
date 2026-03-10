@@ -9,7 +9,7 @@ Validates Requirements: 1.10, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7
 """
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import Column, String, DateTime, JSON, Text, Index, Integer, Boolean, select, and_, func, desc
+from sqlalchemy import Column, String, DateTime, Text, Index, Boolean, select, and_, func, desc
 from sqlalchemy.dialects.postgresql import UUID, INET, JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid

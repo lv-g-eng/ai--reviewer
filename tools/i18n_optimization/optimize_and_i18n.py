@@ -148,7 +148,9 @@ class CodeOptimizer:
                     if matches:
                         for m in matches:
                             findings.append((i, m, line.strip()[:100]))
-        except: pass
+        except Exception as e:
+            # Log error but continue processing
+            pass
         return findings
     
     def translate_chinese(self, text: str) -> str:
@@ -218,10 +220,14 @@ class CodeOptimizer:
                                         if not any(n in used_names for n in names):
                                             result['changes'].append(f"Removed unused import: {stripped}")
                                             continue
-                            except: pass
+                            except Exception as e:
+                                # Skip problematic imports
+                                pass
                         new_lines.append(line)
                     content = '\n'.join(new_lines)
-                except: pass
+                except Exception as e:
+                    # Skip file if processing fails
+                    pass
             
             if content != original and not dry_run:
                 with open(filepath, 'w', encoding='utf-8') as f:

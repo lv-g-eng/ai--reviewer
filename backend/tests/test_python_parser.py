@@ -4,8 +4,6 @@ Sample test file for Python AST parser
 import logging
 logger = logging.getLogger(__name__)
 
-import pytest
-from pathlib import Path
 from app.services.parsers.python_parser import PythonASTParser
 
 

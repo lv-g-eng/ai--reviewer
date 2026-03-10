@@ -11,7 +11,7 @@ Validates Requirements: 11.1, 11.8
 """
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 from app.tasks.data_cleanup import (
     cleanup_old_analysis_results,

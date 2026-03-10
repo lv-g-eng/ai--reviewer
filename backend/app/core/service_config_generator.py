@@ -7,15 +7,13 @@ and hot reloading capabilities for the unified configuration management system.
 Validates Requirements: 1.4, 1.5
 """
 
-import asyncio
 import json
 import logging
-import os
 import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Callable, Union
+from typing import Any, Dict, List, Optional, Set, Callable
 from enum import Enum
 
 from app.core.configuration_manager import (

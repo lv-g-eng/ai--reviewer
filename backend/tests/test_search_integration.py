@@ -4,7 +4,7 @@ Integration tests for the search libraries endpoint
 Tests the complete flow from API endpoint to SearchService
 """
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
 
 from app.main import app
@@ -25,7 +25,7 @@ def setup_test_dependencies(mock_user=None):
         mock_user = User(
             id="test-user-id",
             email="test@example.com",
-            role=UserRole.developer,
+            role=UserRole.user,
             is_active=True
         )
     

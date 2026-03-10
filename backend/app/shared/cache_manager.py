@@ -10,10 +10,10 @@ Validates Requirements: 7.3, 10.4, 10.5
 import json
 import logging
 import hashlib
-from typing import Optional, Any, Dict, List
-from datetime import timedelta
+from typing import Optional, Any, Dict, List, Callable
 from enum import Enum
 import redis.asyncio as redis
+from functools import wraps
 
 from .exceptions import CacheException
 
@@ -29,6 +29,60 @@ class CacheKeyPrefix(str, Enum):
     PROJECT_PATTERNS = "patterns"
     USER_DATA = "user"
     RATE_LIMIT = "ratelimit"
+
+
+# Global cache manager instance
+_cache_manager: Optional['CacheManager'] = None
+
+
+def get_cache_manager() -> 'CacheManager':
+    """Get global cache manager instance"""
+    global _cache_manager
+    if _cache_manager is None:
+        _cache_manager = CacheManager()
+    return _cache_manager
+
+
+def reset_cache_manager():
+    """Reset global cache manager instance"""
+    global _cache_manager
+    _cache_manager = None
+
+
+# Analysis cache instance for backward compatibility
+analysis_cache = get_cache_manager()
+
+
+def get_cache_stats() -> Dict[str, Any]:
+    """Get cache statistics"""
+    return get_cache_manager().get_stats()
+
+
+def cached(ttl: int = 3600, key_prefix: str = ""):
+    """Cache decorator for functions"""
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Generate cache key
+            key_parts = [key_prefix, func.__name__]
+            key_parts.extend(str(arg) for arg in args)
+            key_parts.extend(f"{k}:{v}" for k, v in sorted(kwargs.items()))
+            cache_key = ":".join(filter(None, key_parts))
+            
+            # Try to get from cache
+            cache_manager = get_cache_manager()
+            cached_result = await cache_manager.get(cache_key)
+            
+            if cached_result is not None:
+                return cached_result
+            
+            # Execute function and cache result
+            result = await func(*args, **kwargs)
+            await cache_manager.set(cache_key, result, ttl)
+            return result
+        
+        return wrapper
+    return decorator
     TEMP = "temp"
 
 
@@ -85,6 +139,7 @@ class CacheManager:
         socket_timeout: int = 5,
         socket_connect_timeout: int = 5,
         decode_responses: bool = True,
+        use_redis: bool = True,
     ):
         """
         Initialize cache manager.
@@ -98,18 +153,27 @@ class CacheManager:
             socket_timeout: Socket timeout in seconds
             socket_connect_timeout: Socket connect timeout in seconds
             decode_responses: Whether to decode responses to strings
+            use_redis: Whether to use Redis or in-memory cache
         """
-        self.pool = redis.ConnectionPool(
-            host=host,
-            port=port,
-            password=password,
-            db=db,
-            max_connections=max_connections,
-            socket_timeout=socket_timeout,
-            socket_connect_timeout=socket_connect_timeout,
-            decode_responses=decode_responses,
-        )
-        self.client: Optional[redis.Redis] = None
+        self.use_redis = use_redis
+        self._stats = {"hits": 0, "misses": 0, "sets": 0}
+        self._memory_cache = {}  # In-memory fallback
+        
+        if use_redis:
+            self.pool = redis.ConnectionPool(
+                host=host,
+                port=port,
+                password=password,
+                db=db,
+                max_connections=max_connections,
+                socket_timeout=socket_timeout,
+                socket_connect_timeout=socket_connect_timeout,
+                decode_responses=decode_responses,
+            )
+            self.client: Optional[redis.Redis] = None
+        else:
+            self.pool = None
+            self.client = None
         
         logger.info(
             "Cache manager initialized",
@@ -118,6 +182,7 @@ class CacheManager:
                 'port': port,
                 'db': db,
                 'max_connections': max_connections,
+                'use_redis': use_redis,
             }
         )
     
@@ -148,7 +213,8 @@ class CacheManager:
         key: str,
         value: Any,
         expiration: Optional[int] = 3600,
-        serialize: bool = True
+        serialize: bool = True,
+        ttl: Optional[int] = None  # Backward compatibility
     ) -> bool:
         """
         Set cache value.
@@ -158,6 +224,7 @@ class CacheManager:
             value: Value to cache
             expiration: Expiration time in seconds (None for no expiration)
             serialize: Whether to JSON serialize the value
+            ttl: Alias for expiration (backward compatibility)
             
         Returns:
             True if successful
@@ -165,6 +232,20 @@ class CacheManager:
         Raises:
             CacheException: If operation fails
         """
+        # Use ttl if provided (backward compatibility)
+        if ttl is not None:
+            expiration = ttl
+        
+        self._stats["sets"] += 1
+        
+        # In-memory fallback
+        if not self.use_redis:
+            if serialize:
+                value = json.dumps(value)
+            self._memory_cache[key] = value
+            logger.debug(f"Cache set (memory): {key}")
+            return True
+        
         if not self.client:
             raise CacheException(
                 "Cache client not initialized",
@@ -212,6 +293,24 @@ class CacheManager:
         Raises:
             CacheException: If operation fails
         """
+        # In-memory fallback
+        if not self.use_redis:
+            value = self._memory_cache.get(key)
+            if value is None:
+                self._stats["misses"] += 1
+                logger.debug(f"Cache miss (memory): {key}")
+                return None
+            
+            self._stats["hits"] += 1
+            logger.debug(f"Cache hit (memory): {key}")
+            
+            if deserialize:
+                try:
+                    return json.loads(value)
+                except json.JSONDecodeError:
+                    return value
+            return value
+        
         if not self.client:
             raise CacheException(
                 "Cache client not initialized",
@@ -224,19 +323,20 @@ class CacheManager:
             value = await self.client.get(key)
             
             if value is None:
+                self._stats["misses"] += 1
                 logger.debug(f"Cache miss: {key}", extra={'key': key})
                 return None
             
+            self._stats["hits"] += 1
             logger.debug(f"Cache hit: {key}", extra={'key': key})
             
             if deserialize:
-                return json.loads(value)
+                try:
+                    return json.loads(value)
+                except json.JSONDecodeError:
+                    return value
             return value
             
-        except json.JSONDecodeError as e:
-            logger.error(f"Cache deserialization failed for key {key}: {e}")
-            # Return raw value if deserialization fails
-            return value
         except Exception as e:
             logger.error(f"Cache get failed for key {key}: {e}")
             raise CacheException(
@@ -259,6 +359,14 @@ class CacheManager:
         Raises:
             CacheException: If operation fails
         """
+        # In-memory fallback
+        if not self.use_redis:
+            deleted = key in self._memory_cache
+            if deleted:
+                del self._memory_cache[key]
+            logger.debug(f"Cache delete (memory): {key}", extra={'key': key, 'deleted': deleted})
+            return deleted
+        
         if not self.client:
             raise CacheException(
                 "Cache client not initialized",
@@ -294,6 +402,10 @@ class CacheManager:
         Raises:
             CacheException: If operation fails
         """
+        # In-memory fallback
+        if not self.use_redis:
+            return key in self._memory_cache
+        
         if not self.client:
             raise CacheException(
                 "Cache client not initialized",
@@ -475,11 +587,77 @@ class CacheManager:
     
     async def get_pool_stats(self) -> Dict[str, Any]:
         """Get connection pool statistics"""
-        return {
-            'max_connections': self.pool.max_connections,
-            'connection_kwargs': {
-                'host': self.pool.connection_kwargs.get('host'),
-                'port': self.pool.connection_kwargs.get('port'),
-                'db': self.pool.connection_kwargs.get('db'),
+        if self.use_redis and self.pool:
+            return {
+                'max_connections': self.pool.max_connections,
+                'connection_kwargs': {
+                    'host': self.pool.connection_kwargs.get('host'),
+                    'port': self.pool.connection_kwargs.get('port'),
+                    'db': self.pool.connection_kwargs.get('db'),
+                }
             }
-        }
+        return {'use_redis': False, 'memory_cache_size': len(self._memory_cache)}
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get cache statistics"""
+        return self._stats.copy()
+    
+    def reset_stats(self):
+        """Reset cache statistics"""
+        self._stats = {"hits": 0, "misses": 0, "sets": 0}
+    
+    async def clear(self):
+        """Clear all cache entries"""
+        if self.use_redis and self.client:
+            await self.client.flushdb()
+        else:
+            self._memory_cache.clear()
+        logger.info("Cache cleared")
+    
+    async def invalidate_pattern(self, pattern: str) -> int:
+        """Invalidate cache keys matching pattern (alias for delete_pattern)"""
+        return await self.delete_pattern(pattern)
+    
+    async def invalidate_on_update(self, entity_type: str, entity_id: str) -> int:
+        """Invalidate cache entries related to an entity update"""
+        patterns = [
+            f"{entity_type}:{entity_id}:*",
+            f"*:{entity_type}:{entity_id}:*",
+        ]
+        
+        total_deleted = 0
+        for pattern in patterns:
+            deleted = await self.delete_pattern(pattern)
+            total_deleted += deleted
+        
+        logger.info(f"Invalidated {total_deleted} cache entries for {entity_type}:{entity_id}")
+        return total_deleted
+    
+    async def warm_cache(self, loader_func: Callable, keys: List[tuple], ttl: int = 3600):
+        """Warm cache with data from loader function"""
+        for key_data in keys:
+            cache_key = key_data[0]
+            loader_args = key_data[1:] if len(key_data) > 1 else ()
+            
+            # Skip if already cached
+            if await self.exists(cache_key):
+                continue
+            
+            # Load and cache data
+            try:
+                data = await loader_func(*loader_args)
+                await self.set(cache_key, data, ttl)
+            except Exception as e:
+                logger.error(f"Failed to warm cache for key {cache_key}: {e}")
+        
+        logger.info(f"Cache warming completed for {len(keys)} keys")
+    
+    async def get_cached_result(self, project_id: str, analysis_type: str) -> Optional[Any]:
+        """Get cached analysis result (backward compatibility)"""
+        cache_key = f"analysis:{project_id}:{analysis_type}"
+        return await self.get(cache_key)
+    
+    async def set_cached_result(self, project_id: str, analysis_type: str, result: Any, ttl: int = 3600):
+        """Set cached analysis result (backward compatibility)"""
+        cache_key = f"analysis:{project_id}:{analysis_type}"
+        await self.set(cache_key, result, ttl)

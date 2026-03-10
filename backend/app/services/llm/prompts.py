@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Optional, List
 from enum import Enum
 from dataclasses import dataclass
 

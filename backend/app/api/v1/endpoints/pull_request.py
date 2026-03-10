@@ -5,11 +5,9 @@ Handles PR creation, analysis status, and results
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, Annotated
 
 from app.database.postgresql import get_db
-from app.models import PullRequest, Project, User
-from app.schemas.auth import Message
+from app.models import PullRequest, User
 from app.api.dependencies import get_current_user, check_project_access
 from app.tasks.pull_request_analysis import analyze_pull_request_sync
 from app.services.circular_dependency_detector import detect_circular_dependencies_background

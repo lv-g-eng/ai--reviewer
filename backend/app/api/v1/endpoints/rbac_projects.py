@@ -113,10 +113,11 @@ async def _validate_github_connection(project_data: CreateProjectRequest, user_i
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="github_cli_token is required for CLI connections"
-          )
-     
-     # Async wrappers for RBACService methods
-     async def _grant_project_access(db: AsyncSession, project_id: str, user_id: str, granted_by: str) -> bool:
+            )
+
+
+# Async wrappers for RBACService methods
+async def _grant_project_access(db: AsyncSession, project_id: str, user_id: str, granted_by: str) -> bool:
     """Async wrapper for RBACService.grant_project_access"""
     try:
         # Use run_in_executor to call sync RBAC method
@@ -635,7 +636,6 @@ async def create_ssh_key(
     """
     try:
         from cryptography.fernet import Fernet
-        import base64
         import hashlib
 
         # Generate key fingerprint from public key

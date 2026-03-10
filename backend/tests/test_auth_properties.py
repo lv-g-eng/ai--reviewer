@@ -14,16 +14,12 @@ that authentication properties hold across a wide range of inputs.
 import pytest
 from hypothesis import given, strategies as st, settings, assume
 from datetime import datetime, timedelta, timezone
-import bcrypt
-from jose import jwt as jose_jwt
 
-from app.auth.services.auth_service import AuthService
-from app.auth.config import auth_settings
+from app.core.security import hash_password, verify_password
 from app.utils.jwt import (
     create_access_token,
     create_refresh_token,
     decode_token,
-    verify_token,
     revoke_token,
     is_token_revoked,
     verify_token_with_revocation
@@ -56,7 +52,7 @@ class TestPasswordHashingProperties:
     """
     Property-based tests for password hashing.
     
-    **Validates: Requirement 8.3** - THE RBAC_System SHALL hash all passwords 
+    **Validates: Requirement 8.3** - The authentication system SHALL hash all passwords 
     using bcrypt with cost factor 12
     """
     
@@ -71,16 +67,16 @@ class TestPasswordHashingProperties:
         deterministic verification.
         """
         # Hash the same password twice
-        hash1 = AuthService.hash_password(password)
-        hash2 = AuthService.hash_password(password)
+        hash1 = hash_password(password)
+        hash2 = hash_password(password)
         
         # Hashes should be different (due to random salt)
         assert hash1 != hash2, "Bcrypt should use random salt for each hash"
         
         # But both should verify against the original password
-        assert AuthService.verify_password(password, hash1), \
+        assert verify_password(password, hash1), \
             "First hash should verify against original password"
-        assert AuthService.verify_password(password, hash2), \
+        assert verify_password(password, hash2), \
             "Second hash should verify against original password"
     
     @given(password=passwords_strategy)
@@ -93,7 +89,7 @@ class TestPasswordHashingProperties:
         This tests that password hashing is a one-way function by verifying
         that the hash doesn't contain the original password.
         """
-        password_hash = AuthService.hash_password(password)
+        password_hash = hash_password(password)
         
         # Hash should not contain the original password
         assert password not in password_hash, \
@@ -111,7 +107,7 @@ class TestPasswordHashingProperties:
         
         **Validates: Requirement 8.3** - Bcrypt cost factor must be 12
         """
-        password_hash = AuthService.hash_password(password)
+        password_hash = hash_password(password)
         
         # Extract cost factor from bcrypt hash
         # Bcrypt hash format: $2b$12$...
@@ -135,10 +131,10 @@ class TestPasswordHashingProperties:
         # Skip if passwords are the same
         assume(password != wrong_password)
         
-        password_hash = AuthService.hash_password(password)
+        password_hash = hash_password(password)
         
         # Wrong password should not verify
-        assert not AuthService.verify_password(wrong_password, password_hash), \
+        assert not verify_password(wrong_password, password_hash), \
             "Wrong password should not verify against hash"
     
     @given(password=passwords_strategy)
@@ -148,7 +144,7 @@ class TestPasswordHashingProperties:
         Property: Bcrypt hashes should have consistent length regardless
         of input password length.
         """
-        password_hash = AuthService.hash_password(password)
+        password_hash = hash_password(password)
         
         # Bcrypt hashes are always 60 characters
         assert len(password_hash) == 60, \
@@ -163,10 +159,10 @@ class TestPasswordHashingProperties:
         # Skip if password is empty
         assume(len(password) > 0)
         
-        password_hash = AuthService.hash_password(password)
+        password_hash = hash_password(password)
         
         # Empty string should not verify
-        assert not AuthService.verify_password('', password_hash), \
+        assert not verify_password('', password_hash), \
             "Empty string should not verify against any hash"
 
 
@@ -174,7 +170,7 @@ class TestJWTTokenExpirationProperties:
     """
     Property-based tests for JWT token expiration.
     
-    **Validates: Requirement 8.2** - THE RBAC_System SHALL implement JWT token 
+    **Validates: Requirement 8.2** - The authentication system SHALL implement JWT token 
     expiration of 24 hours with refresh token support
     """
     

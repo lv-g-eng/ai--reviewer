@@ -5,11 +5,10 @@ Handles database error detection, classification, reporting, and tracking.
 """
 
 import logging
-import traceback
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
-from .types import DatabaseErrorCategory, DatabaseErrorInfo, SensitiveDataType
+from .types import DatabaseErrorCategory, DatabaseErrorInfo
 from .masking import MASKING_RULES
 from .statistics_manager import error_stats
 

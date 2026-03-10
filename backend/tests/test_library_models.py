@@ -1,8 +1,6 @@
 """
 Unit tests for library management SQLAlchemy models
 """
-import pytest
-from datetime import datetime
 
 from app.models.library import Library, LibraryDependency, RegistryType, ProjectContext
 

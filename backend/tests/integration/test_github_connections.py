@@ -4,9 +4,7 @@ Test script for GitHub connection functionality
 """
 
 import asyncio
-import json
 import aiohttp
-from typing import Dict, Any
 
 BASE_URL = "http://localhost:8080/api/v1"
 

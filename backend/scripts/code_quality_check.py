@@ -1,9 +1,7 @@
 import logging
 logger = logging.getLogger(__name__)
 
-import os
 import subprocess
-import sys
 import json
 from datetime import datetime
 from pathlib import Path

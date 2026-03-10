@@ -11,7 +11,6 @@ All cleanup operations are logged to the audit log.
 Validates Requirements: 11.1, 11.8
 """
 from celery import shared_task
-from datetime import datetime, timezone
 import logging
 
 from app.database.postgresql import get_db

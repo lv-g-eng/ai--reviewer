@@ -6,10 +6,7 @@ Tests baseline creation, drift detection, metrics calculation, and severity assi
 
 import pytest
 import json
-from datetime import datetime
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import List, Dict, Any
+from unittest.mock import AsyncMock, patch
 
 from app.services.architecture_analyzer.baseline import (
     BaselineManager,
@@ -18,9 +15,7 @@ from app.services.architecture_analyzer.baseline import (
 from app.services.architecture_analyzer.drift_detector import (
     DriftDetector,
     DriftSeverity,
-    DriftMetrics,
-    DriftResult,
-    DriftDetail
+    DriftMetrics
 )
 
 

@@ -6,7 +6,7 @@ This test suite validates the audit log query and export API endpoints.
 Validates Requirements: 15.6, 15.7
 """
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from datetime import datetime, timezone
 import uuid

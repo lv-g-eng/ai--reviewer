@@ -8,8 +8,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-import os
-import re
 
 
 def verify_config_file():

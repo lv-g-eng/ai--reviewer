@@ -2,10 +2,9 @@
 Base AST parser interface
 """
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from app.schemas.ast_models import (
     ParsedFile,
-    ModuleNode,
     ClassNode,
     FunctionNode,
     ImportNode,

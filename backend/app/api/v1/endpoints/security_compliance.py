@@ -4,14 +4,13 @@ Security Compliance API Endpoints
 Provides REST API endpoints for the Security and Audit Compliance module.
 """
 
-from typing import List, Optional, Dict, Any, Annotated
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import logging
 
-from app.core.dependencies import get_neo4j_db, get_security_compliance_service
-from app.schemas.security_models import ComplianceReport, SecurityScanResult
+from app.core.dependencies import get_security_compliance_service
+from app.schemas.security_models import ComplianceReport
 from app.services.security_compliance_service import SecurityComplianceService
 
 logger = logging.getLogger(__name__)

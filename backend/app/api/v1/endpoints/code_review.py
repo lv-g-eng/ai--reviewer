@@ -3,7 +3,7 @@ Code Review API Endpoint
 
 Provides code review feature using user-configured API key.
 """
-from typing import Annotated, Optional, List, Dict, Any
+from typing import Optional, List, Dict
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Path
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +11,7 @@ from uuid import UUID
 import re
 
 from app.database.postgresql import get_db
-from app.auth import TokenPayload, get_current_user, require_project_access, Permission
+from app.auth import TokenPayload, get_current_user
 from app.services.ai_pr_reviewer_service import AIReviewService, ReviewRequest
 from app.models.code_review import PullRequest
 

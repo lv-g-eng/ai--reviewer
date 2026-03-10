@@ -8,8 +8,6 @@ Run tests:
     pytest backend/tests/test_notification_channels.py -v
 """
 
-import json
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest

@@ -5,19 +5,14 @@ Parses npm audit JSON reports and maps vulnerabilities to compliance scores.
 Implements the Security and Audit Compliance module (Chapter 8.2.1).
 """
 
-import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
 from app.database.neo4j_db import Neo4jDB
 from app.schemas.security_models import (
-    SecurityScanResult, 
-    NpmAuditVulnerability, 
-    Severity,
-    ProjectQualityMetrics,
     ComplianceReport
 )
 

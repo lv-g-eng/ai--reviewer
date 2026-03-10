@@ -2,8 +2,6 @@
 Monitoring endpoints for slow queries and performance metrics
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict, Any
 import logging
 
 from app.database.postgresql import get_db

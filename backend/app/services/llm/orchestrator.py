@@ -8,7 +8,7 @@ Validates Requirements: 2.2, 2.3, 2.6, 2.8
 """
 
 import logging
-from typing import Optional, List
+from typing import Optional
 from dataclasses import dataclass
 
 from .base import BaseLLMProvider, LLMProviderType, LLMRequest, LLMResponse

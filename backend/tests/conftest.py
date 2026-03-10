@@ -15,12 +15,10 @@ import sys
 # Windows socket issues with ProactorEventLoop in tests
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-from typing import AsyncGenerator, Dict, Any, Optional
+from typing import AsyncGenerator, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
-import sqlalchemy
 from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 # Set TESTING environment variable and override DB name before importing app
@@ -32,23 +30,10 @@ os.environ["POSTGRES_USER"] = "postgres"
 os.environ["POSTGRES_PASSWORD"] = "" # Use empty password for trust auth on port 5433
 
 from app.main import app
-from app.database.postgresql import Base, get_db
+from app.database.postgresql import get_db
 from app.core.config import settings
 
 # Import common fixtures to make them available to all tests
-from tests.fixtures.common_fixtures import (
-    mock_http_client,
-    mock_circuit_breaker,
-    mock_redis_client as common_mock_redis_client,
-    mock_logger,
-    sample_user_data,
-    sample_project_data,
-    sample_pull_request_data,
-    mock_db_session as common_mock_db_session,
-    mock_request,
-    mock_response,
-    mock_audit_service
-)
 
 
 def is_docker_available() -> bool:

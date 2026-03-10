@@ -15,7 +15,6 @@ from app.utils.validators import (
     validate_url,
     validate_github_url,
     validate_file_path,
-    sanitize_sql_identifier,
 )
 from app.utils.xss_prevention import XSSProtection, sanitize_user_input
 from app.database.sql_injection_prevention import (

@@ -10,11 +10,11 @@ Provides comprehensive AI-powered project analysis including:
 """
 
 import logging
-from typing import Dict, Any, List, Optional, Sequence
+from typing import Dict, Any, List, Sequence
 from datetime import datetime, timedelta
-from statistics import mean, median
+from statistics import mean
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select
 
 from app.models.code_review import (
     PullRequest,

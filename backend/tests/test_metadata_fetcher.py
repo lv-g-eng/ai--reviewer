@@ -2,7 +2,7 @@
 Unit tests for metadata fetcher service
 """
 import pytest
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 import httpx
 
 from app.services.library_management.metadata_fetcher import (
@@ -15,7 +15,7 @@ from app.services.library_management.metadata_fetcher import (
     InvalidResponseError,
     MetadataFetchError
 )
-from app.schemas.library import LibraryMetadata, Dependency
+from app.schemas.library import LibraryMetadata
 from app.models.library import RegistryType
 
 

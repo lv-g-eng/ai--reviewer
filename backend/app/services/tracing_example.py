@@ -7,7 +7,6 @@ and add contextual attributes for better observability.
 Validates Requirement 18.1: Custom spans for business logic
 """
 from typing import Dict, Any
-from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 
 from app.core.tracing import get_tracer

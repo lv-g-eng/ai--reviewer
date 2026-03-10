@@ -7,7 +7,7 @@ Tests compliance verification against ISO/IEC 25010 quality standards.
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, patch
 from datetime import datetime
 
 from app.services.architecture_analyzer.compliance import (

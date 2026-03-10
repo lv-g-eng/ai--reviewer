@@ -10,7 +10,6 @@ from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 import uuid
 
-from app.core.config import settings
 from app.database.redis_db import get_redis
 
 
@@ -57,6 +56,8 @@ def create_access_token(
         "jti": jti
     })
     
+    # Use main app settings for consistency
+    from app.core.config import settings
     encoded_jwt = jwt.encode(
         to_encode,
         settings.JWT_SECRET,
@@ -110,6 +111,8 @@ def create_refresh_token(
         "jti": jti
     })
     
+    # Use main app settings for consistency
+    from app.core.config import settings
     encoded_jwt = jwt.encode(
         to_encode,
         settings.JWT_SECRET,
@@ -123,19 +126,28 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
     Decode and validate JWT token
     
     Args:
-        token: JWT token string
+        token: JWT token string to decode
         
     Returns:
-        Decoded token payload or None if invalid
+        Decoded token payload if valid, None if invalid/expired
+        
+    Security Features:
+        - Validates signature using secret key
+        - Checks expiration time
+        - Returns None for any validation failure
     """
     try:
+        # Use main app settings for consistency
+        from app.core.config import settings
         payload = jwt.decode(
             token,
             settings.JWT_SECRET,
             algorithms=[settings.JWT_ALGORITHM]
         )
         return payload
-    except JWTError:
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
         return None
 
 

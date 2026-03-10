@@ -8,9 +8,8 @@ Validates Requirements: 1.3, 1.4, 1.6, 8.1, 8.2, 8.3
 """
 
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from dataclasses import dataclass, field
-from pydantic import BaseModel, Field
 
 
 class ISO25010CharacteristicType(str, Enum):

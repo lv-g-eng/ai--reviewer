@@ -14,7 +14,6 @@ This migration adds tables for the Enterprise RBAC Authentication System:
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '003_rbac_auth'

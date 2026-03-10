@@ -16,7 +16,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 
 from celery import chain
 
@@ -213,7 +213,8 @@ async def _parse_pr_files(pr_id: str, project_id: str, task) -> Dict[str, Any]:
             try:
                 pr.status = PRStatus.pending
                 await db.commit()
-            except:
+            except Exception as commit_error:
+                logger.warning(f"Failed to update PR status: {commit_error}")
                 pass
             
             # Retry with exponential backoff
@@ -628,7 +629,8 @@ async def _post_comments(analysis_result: Dict[str, Any], task) -> Dict[str, Any
             try:
                 pr.status = PRStatus.pending
                 await db.commit()
-            except:
+            except Exception as commit_error:
+                logger.warning(f"Failed to update PR status: {commit_error}")
                 pass
             
             raise task.retry(exc=e, countdown=60 * task.request.retries)
@@ -853,7 +855,8 @@ async def _analyze_pr(pr_id: str, project_id: str, task) -> Dict[str, Any]:
             try:
                 pr.status = PRStatus.pending
                 await db.commit()
-            except:
+            except Exception as commit_error:
+                logger.warning(f"Failed to update PR status: {commit_error}")
                 pass
             
             # Retry with exponential backoff

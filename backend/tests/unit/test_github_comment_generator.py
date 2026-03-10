@@ -2,7 +2,7 @@
 Unit tests for github_comment_generator service
 """
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, patch
 from app.services.github_comment_generator import GitHubCommentGenerator
 
 

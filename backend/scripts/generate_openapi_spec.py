@@ -26,7 +26,6 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.main import app
-from app.core.config import settings
 
 
 def generate_openapi_spec() -> Dict[str, Any]:

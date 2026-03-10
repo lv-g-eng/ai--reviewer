@@ -7,7 +7,6 @@ Validates Requirements: 8.1, 8.2, 8.3, 8.4, 8.5
 """
 
 import logging
-import asyncio
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -211,7 +210,6 @@ class CeleryValidator:
     async def _verify_redis_backend(self) -> bool:
         """Verify Redis result backend connectivity"""
         try:
-            import redis
             
             # Parse Redis URL
             url = settings.CELERY_RESULT_BACKEND

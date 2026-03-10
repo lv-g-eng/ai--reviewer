@@ -32,7 +32,6 @@ celery
 flower
 
 # HTTP Clients
-httpx
 requests==2.32.4  # Security: CVE-2024-47081
 
 # External APIs & AI
@@ -60,7 +59,6 @@ opentelemetry-api
 opentelemetry-sdk
 opentelemetry-instrumentation-fastapi
 opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-instrumentation-httpx
 opentelemetry-instrumentation-redis
 opentelemetry-instrumentation-sqlalchemy
 

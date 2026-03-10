@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-from typing import Dict, List, Any, Optional, Set
+from typing import Dict, List, Any
 from dataclasses import dataclass, asdict
 from enum import Enum
 from datetime import datetime

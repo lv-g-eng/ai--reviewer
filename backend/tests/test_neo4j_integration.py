@@ -27,7 +27,6 @@ pytest backend/tests/test_neo4j_integration.py -v -s
 """
 import pytest
 import asyncio
-from typing import AsyncGenerator
 from testcontainers.neo4j import Neo4jContainer
 
 # Mark all tests in this module as requiring Docker
@@ -42,6 +41,7 @@ from app.services.code_entity_extractor import CodeEntity
 from app.schemas.ast_models import DependencyGraph, DependencyEdge
 from app.database.neo4j_db import init_neo4j, close_neo4j, get_neo4j_driver
 from app.core.config import settings
+from backend.tests.utils.secure_test_data import get_test_password
 
 
 @pytest.fixture(scope="module")
@@ -68,7 +68,7 @@ async def neo4j_test_config(neo4j_container):
     
     settings.NEO4J_URI = neo4j_container.get_connection_url()
     settings.NEO4J_USER = "neo4j"
-    settings.NEO4J_PASSWORD = "testpassword"
+    settings.NEO4J_PASSWORD = get_test_password("neo4j_test")
     settings.NEO4J_DATABASE = "neo4j"
     
     # Initialize connection
@@ -864,8 +864,9 @@ class TestGraphUpdateOperations:
         driver = await get_neo4j_driver()
         async with driver.session(database=settings.NEO4J_DATABASE) as session:
             for rel_type in relationship_types:
-                query = f"MATCH ()-[r:{rel_type}]->() RETURN count(r) as count"
-                query_result = await session.run(query)
+                # Use parameterized query for security best practices
+                query = "MATCH ()-[r]->() WHERE type(r) = $rel_type RETURN count(r) as count"
+                query_result = await session.run(query, rel_type=rel_type)
                 record = await query_result.single()
                 assert record["count"] >= 1
 

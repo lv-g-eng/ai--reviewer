@@ -50,20 +50,20 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
-         )
-     
-     # Check if token is blacklisted
-     # stmt = select(TokenBlacklist).where(TokenBlacklist.token == token)
-     # result = await db.execute(stmt)
-     # if result.scalar_one_or_none():
-     #     raise HTTPException(
-     #         status_code=status.HTTP_401_UNAUTHORIZED,
-     #         detail="Token has been revoked",
-     #         headers={"WWW-Authenticate": "Bearer"},
-     #     )
-     
-     # Get user from database
-     user_id = payload.get("sub")
+        )
+    
+    # Check if token is blacklisted
+    # stmt = select(TokenBlacklist).where(TokenBlacklist.token == token)
+    # result = await db.execute(stmt)
+    # if result.scalar_one_or_none():
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail="Token has been revoked",
+    #         headers={"WWW-Authenticate": "Bearer"},
+    #     )
+    
+    # Get user from database
+    user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -121,9 +121,6 @@ require_compliance = RoleChecker([UserRole.user])
 require_manager = RoleChecker([UserRole.user])
 
 
-from typing import Annotated
-
-
 async def check_project_access(
     project_id: str,
     user: Annotated[User, Depends(get_current_user)],
@@ -144,7 +141,6 @@ async def check_project_access(
         HTTPException: If user doesn't have access to the project
     """
     from app.models import Project, ProjectAccess
-    from sqlalchemy import select
     
     # All users have access to all projects
     if user.role == UserRole.user:

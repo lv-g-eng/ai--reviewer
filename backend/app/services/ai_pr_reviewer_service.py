@@ -7,10 +7,9 @@ that integrates with the existing system architecture.
 
 import json
 import logging
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
-from enum import Enum
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.user_llm_service import UserLLMService

@@ -2,13 +2,11 @@
 Repository management service for GitHub dependency integration
 """
 import re
-import asyncio
-from typing import Optional, Tuple, List
+from typing import Optional
 from datetime import datetime
 from uuid import uuid4
 import aiohttp
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
 
 from app.schemas.repository import (
     AddRepositoryRequest,

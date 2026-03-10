@@ -7,7 +7,6 @@ from typing import Optional, Any
 from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User
 from app.services.audit_logging_service import AuditService

@@ -12,7 +12,6 @@ Validates Requirements: 12.10
 import asyncio
 import logging
 import signal
-import sys
 from typing import Optional, Callable, List
 from datetime import datetime
 

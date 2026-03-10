@@ -8,7 +8,6 @@ Validates Requirement 1.3: Update Graph_Database with new dependencies
 """
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
 
 from app.services.graph_builder.service import GraphBuilderService
 from app.services.code_entity_extractor import CodeEntity

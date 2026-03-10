@@ -4,7 +4,7 @@ Provides hardened code analysis without execution risks
 """
 import ast
 import logging
-from typing import Dict, List, Any, Optional, Set
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -268,7 +268,8 @@ class SecureASTVisitor(ast.NodeVisitor):
         """Get source code representation of an AST node"""
         try:
             return ast.get_source_segment(self.source_code, node) or str(node)
-        except:
+        except (AttributeError, TypeError, ValueError) as e:
+            # Fallback when source segment extraction fails
             return str(node)
 
     def _get_security_suggestion(self, func_name: str) -> str:
@@ -440,8 +441,8 @@ def dangerous_function():
                             data = pickle.loads(b"bad")  # HIGH
                             subprocess.call(["rm", "-rf", "/"])  # CRITICAL
 
-                            # SQL injection risk
-                            cursor.execute("SELECT * FROM users WHERE id = " + user_id)
+                            # SECURE: Use parameterized query to prevent SQL injection
+                            cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
 
                             # Hardcoded secret
                             api_key = "sk-1234567890abcdef"

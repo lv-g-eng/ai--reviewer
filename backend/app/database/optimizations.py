@@ -9,20 +9,16 @@ Provides comprehensive database optimizations including:
 - Performance monitoring
 """
 
-import asyncio
 import time
-from typing import List, Dict, Any, Optional, Tuple
-from sqlalchemy import text, Index, inspect
+from typing import List, Dict, Any, Optional
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload, contains_eager
-from sqlalchemy.sql import func
+from sqlalchemy.orm import selectinload, joinedload
 import logging
 
 from app.database.postgresql import get_db
-from app.database.redis_db import get_redis
-from app.models import Project, User, CodeReview as Review, Library
-from app.models.library import Library as LibraryModel
-from app.core.performance_optimizer import cache_result, performance_optimizer
+from app.models import Project, CodeReview as Review
+from app.core.performance_optimizer import cache_result
 
 logger = logging.getLogger(__name__)
 

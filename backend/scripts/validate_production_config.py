@@ -19,7 +19,7 @@ Usage:
 
 import os
 import sys
-from typing import List, Tuple
+from typing import List
 
 class ProductionConfigValidator:
     def __init__(self):

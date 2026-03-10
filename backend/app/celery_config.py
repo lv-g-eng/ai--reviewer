@@ -55,10 +55,10 @@ celery_app.conf.update(
             3: 5,  # TCP_KEEPCNT
         },
     },
-    result_expires=3600,  # Results expire after 1 hour
+    result_expires=1800,  # 减少到30分钟过期时间
     result_persistent=True,  # Persist results to disk
     result_compression='gzip',  # Compress results to save memory
-    result_extended=True,  # Store additional task metadata
+    result_extended=False,  # 禁用扩展元数据以节省内存
     
     # ========================================
     # SERIALIZATION
@@ -74,15 +74,16 @@ celery_app.conf.update(
     enable_utc=True,
     
     # ========================================
-    # TASK EXECUTION SETTINGS
+    # TASK EXECUTION SETTINGS - 内存优化
     # ========================================
     task_acks_late=True,  # Acknowledge tasks after execution (not before)
     task_reject_on_worker_lost=True,  # Requeue tasks if worker crashes
     task_track_started=True,  # Track when tasks start execution
-    task_time_limit=3600,  # Hard time limit: 1 hour
-    task_soft_time_limit=3300,  # Soft time limit: 55 minutes (raises exception)
+    task_time_limit=1800,  # 减少到30分钟硬限制
+    task_soft_time_limit=1500,  # 减少到25分钟软限制
     task_ignore_result=False,  # Store task results
     task_store_errors_even_if_ignored=True,  # Store errors even if result is ignored
+    task_compression='gzip',  # 启用任务压缩节省内存
     
     # ========================================
     # TASK ROUTING AND PRIORITY QUEUES
@@ -182,12 +183,14 @@ celery_app.conf.update(
     },
     
     # ========================================
-    # WORKER CONFIGURATION
+    # WORKER CONFIGURATION - 内存优化
     # ========================================
     worker_prefetch_multiplier=1,  # Fetch one task at a time for fair distribution
-    worker_max_tasks_per_child=1000,  # Restart worker after 1000 tasks (prevent memory leaks)
+    worker_max_tasks_per_child=500,  # 减少到500个任务后重启worker (防止内存泄漏)
+    worker_max_memory_per_child=200000,  # 限制每个worker最大内存200MB
+    worker_concurrency=2,  # 限制并发worker数量
     worker_disable_rate_limits=False,  # Enable rate limiting
-    worker_send_task_events=True,  # Send task events for monitoring
+    worker_send_task_events=False,  # 禁用事件发送以节省内存
     
     # ========================================
     # RETRY CONFIGURATION

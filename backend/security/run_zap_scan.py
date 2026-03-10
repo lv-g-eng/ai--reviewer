@@ -23,10 +23,9 @@ import json
 import os
 import subprocess
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import yaml
 
@@ -113,7 +112,8 @@ class ZAPScanner:
             try:
                 urllib.request.urlopen(target, timeout=5)
                 return True
-            except:
+            except (urllib.error.URLError, OSError, TimeoutError) as e:
+                # Service not available
                 return False
     
     def run_baseline_scan(self, target: str, output_dir: str) -> int:

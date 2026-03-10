@@ -6,9 +6,7 @@ for the search functionality.
 """
 
 import pytest
-import asyncio
 from unittest.mock import Mock, AsyncMock, patch
-from typing import List
 
 from hypothesis import given, strategies as st, assume, settings
 from hypothesis import HealthCheck
@@ -17,8 +15,7 @@ from app.services.library_management.search_service import (
     SearchService,
     NPMSearchClient,
     PyPISearchClient,
-    InvalidSearchQueryError,
-    NetworkSearchError
+    InvalidSearchQueryError
 )
 from app.schemas.library import LibrarySearchResult
 from app.models.library import RegistryType

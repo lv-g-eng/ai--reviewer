@@ -23,15 +23,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 import pytest
-import asyncio
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, patch, Mock
+from unittest.mock import patch
 from httpx import AsyncClient
 
 from app.main import app
 from app.models import (
-    Project, PullRequest, PRStatus, CodeEntity, 
-    User, UserRole, ProjectAccess
+    Project, CodeEntity, 
+    User, UserRole
 )
 from app.database.postgresql import AsyncSessionLocal
 from app.services.graph_builder.service import GraphBuilderService
@@ -77,7 +76,7 @@ class TestCompleteAnalysisWorkflow:
                     email="e2e-test@example.com",
                     username="e2e_tester",
                     password_hash="$2b$12$test_hash",  # Dummy hash
-                    role=UserRole.developer,
+                    role=UserRole.user,
                     is_active=True
                 )
                 db.add(test_user)
@@ -111,7 +110,7 @@ class TestCompleteAnalysisWorkflow:
             project_response = create_response.json()
             project_id = project_response['id']
         
-        logger.info("âœ“ Step 1: Project created (ID: {project_id})")
+        logger.info("âœ?Step 1: Project created (ID: {project_id})")
         
         # Step 3: Configure GitHub webhook
         webhook_config = {
@@ -130,7 +129,7 @@ class TestCompleteAnalysisWorkflow:
             
             assert config_response.status_code == 200
         
-        logger.info("âœ“ Step 2: GitHub webhook configured")
+        logger.info("âœ?Step 2: GitHub webhook configured")
         
         # Step 4: Simulate code analysis with realistic data
         # Create sample code entities
@@ -217,7 +216,7 @@ class TestCompleteAnalysisWorkflow:
             
             await db.commit()
         
-        logger.info("âœ“ Step 3: Created {len(sample_entities)} code entities")
+        logger.info("âœ?Step 3: Created {len(sample_entities)} code entities")
         
         # Step 6: Build dependency graph in Neo4j
         graph_service = GraphBuilderService()
@@ -228,7 +227,7 @@ class TestCompleteAnalysisWorkflow:
         )
         assert nodes_result.nodes_created > 0
         
-        logger.info("âœ“ Step 4: Created {nodes_result.nodes_created} graph nodes")
+        logger.info("âœ?Step 4: Created {nodes_result.nodes_created} graph nodes")
         
         # Create relationships
         relationships = []
@@ -244,7 +243,7 @@ class TestCompleteAnalysisWorkflow:
             rels_result = await graph_service.create_dependency_relationships_batch(
                 project_id, relationships
             )
-            logger.info("âœ“ Step 5: Created {rels_result.relationships_created} dependency relationships")
+            logger.info("âœ?Step 5: Created {rels_result.relationships_created} dependency relationships")
         
         # Step 7: Detect circular dependencies
         from app.services.graph_builder.circular_dependency_detector import CircularDependencyDetector
@@ -253,7 +252,7 @@ class TestCompleteAnalysisWorkflow:
         cycles = await detector.detect_cycles(project_id)
         
         assert len(cycles) > 0, "Expected to find circular dependencies"
-        logger.info("âœ“ Step 6: Detected {len(cycles)} circular dependencies")
+        logger.info("âœ?Step 6: Detected {len(cycles)} circular dependencies")
         
         # Verify the circular dependency we created
         cycle_found = False
@@ -271,11 +270,11 @@ class TestCompleteAnalysisWorkflow:
         # Create baseline snapshot
         baseline = await analyzer.create_baseline_snapshot(project_id)
         assert baseline is not None
-        logger.info("âœ“ Step 7: Created architectural baseline")
+        logger.info("âœ?Step 7: Created architectural baseline")
         
         # Detect drift (should be none for first analysis)
         drift = await analyzer.detect_drift(project_id, baseline)
-        logger.info("âœ“ Step 8: Drift analysis completed (drift score: {drift.get('drift_score', 0)})")
+        logger.info("âœ?Step 8: Drift analysis completed (drift score: {drift.get('drift_score', 0)})")
         
         # Step 9: Perform LLM analysis (mocked)
         mock_llm_analysis = {
@@ -308,7 +307,7 @@ class TestCompleteAnalysisWorkflow:
             'low_issues': 1
         }
         
-        logger.info("âœ“ Step 9: LLM analysis completed ({mock_llm_analysis['total_issues']} issues found)")
+        logger.info("âœ?Step 9: LLM analysis completed ({mock_llm_analysis['total_issues']} issues found)")
         
         # Step 10: Generate compliance report
         from app.services.architecture_analyzer.compliance import ComplianceChecker
@@ -318,7 +317,7 @@ class TestCompleteAnalysisWorkflow:
         
         assert compliance_report is not None
         assert 'iso_25010_score' in compliance_report
-        logger.info("âœ“ Step 10: Compliance report generated (ISO 25010 score: {compliance_report['iso_25010_score']})")
+        logger.info("âœ?Step 10: Compliance report generated (ISO 25010 score: {compliance_report['iso_25010_score']})")
         
         # Step 11: Retrieve analysis results via API
         with patch('app.api.v1.endpoints.projects.get_current_user') as mock_auth:
@@ -341,7 +340,7 @@ class TestCompleteAnalysisWorkflow:
                 entities_data = entities_response.json()
                 assert len(entities_data) == len(sample_entities)
         
-        logger.info("âœ“ Step 11: Retrieved analysis results via API")
+        logger.info("âœ?Step 11: Retrieved analysis results via API")
         
         # Step 12: Verify end-to-end timing
         end_time = datetime.now(timezone.utc)
@@ -354,7 +353,7 @@ class TestCompleteAnalysisWorkflow:
         
         # Print summary
         logger.info("\n{'='*60}")
-        logger.info("âœ“ COMPLETE ANALYSIS WORKFLOW TEST PASSED")
+        logger.info("âœ?COMPLETE ANALYSIS WORKFLOW TEST PASSED")
         logger.info("{'='*60}")
         logger.info("Total execution time: {total_time:.2f}s")
         logger.info("Project ID: {project_id}")
@@ -462,7 +461,7 @@ class TestCompleteAnalysisWorkflow:
         
         await graph_service.close()
         
-        logger.info("\nâœ“ Multi-language analysis test passed!")
+        logger.info("\nâœ?Multi-language analysis test passed!")
         logger.info("  Analyzed {len(multi_lang_entities)} entities across 4 languages")
     
     @pytest.mark.asyncio
@@ -550,7 +549,7 @@ class TestCompleteAnalysisWorkflow:
         assert total_time < 30, f"Large codebase analysis took {total_time}s, expected < 30s"
         assert nodes_result.nodes_created == 100
         
-        logger.info("\nâœ“ Large codebase analysis test passed!")
+        logger.info("\nâœ?Large codebase analysis test passed!")
         logger.info("  Processed 100 entities in {total_time:.2f}s")
         logger.info("  Average time per entity: {total_time/100:.3f}s")
 

@@ -9,19 +9,13 @@ Validates Requirements: 2.6, 12.5
 
 import logging
 import time
-from enum import Enum
+# Import consolidated enums from common library
+from common.shared.enums import CircuitBreakerState
 from typing import Callable, Any, Optional
 from dataclasses import dataclass
 from threading import Lock
 
 logger = logging.getLogger(__name__)
-
-
-class CircuitState(str, Enum):
-    """Circuit breaker states"""
-    CLOSED = "closed"  # Normal operation
-    OPEN = "open"  # Failing, reject requests
-    HALF_OPEN = "half_open"  # Testing if service recovered
 
 
 @dataclass

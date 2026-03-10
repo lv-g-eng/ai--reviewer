@@ -8,20 +8,17 @@ Validates Requirements: 1.2, 1.4, 2.1, 2.4, 2.5
 """
 
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 from datetime import datetime, timezone
 
 from app.services.health_service import (
     HealthService,
-    HealthStatus,
     HealthCheckResponse,
     ReadinessCheckResponse,
     LivenessCheckResponse,
     DatabaseHealth,
     ServiceHealth,
 )
-from app.core.config import settings
 
 
 @pytest.fixture

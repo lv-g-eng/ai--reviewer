@@ -10,16 +10,13 @@ Validates Requirements: 1.1, 1.2, 1.3, 1.4, 4.4
 
 import asyncio
 import logging
-import time
-from typing import Any, Optional, Dict, List, Union
+from typing import Any, Optional, Dict, List
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 import asyncpg
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.postgresql import (
-    engine, 
     AsyncSessionLocal, 
     init_postgres, 
     close_postgres, 
@@ -30,10 +27,9 @@ from app.database.models import (
     CompatibilityResult, 
     DatabaseError, 
     ErrorType,
-    ConnectionStatus,
-    DatabaseConfig
+    ConnectionStatus
 )
-from app.database.retry_manager import RetryManager, OperationType
+from app.database.retry_manager import RetryManager
 from app.core.error_reporter import ErrorReporter
 from datetime import datetime
 

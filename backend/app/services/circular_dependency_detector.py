@@ -10,10 +10,9 @@ logger = logging.getLogger(__name__)
 
 import ast
 import os
-from typing import Dict, List, Set, Tuple, Optional, Any
-from pathlib import Path
+from typing import Dict, List, Set, Optional, Any
 from dataclasses import dataclass
-from collections import defaultdict, deque
+from collections import defaultdict
 import networkx as nx
 
 
@@ -380,7 +379,6 @@ class CircularDependencyDetector:
 # Import these only when running in FastAPI context to avoid circular imports
 try:
     from fastapi import BackgroundTasks, HTTPException
-    from app.database.postgresql import get_db
     from sqlalchemy.ext.asyncio import AsyncSession
     from app.models import Project
     from sqlalchemy import select

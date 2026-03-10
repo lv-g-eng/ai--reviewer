@@ -14,16 +14,17 @@ terminated with proper cleanup and detailed logging.
 
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from hypothesis import given, strategies as st, settings, HealthCheck
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from app.database.postgresql_client import PostgreSQLClient, PostgreSQLCompatibilityError
-from app.database.models import CompatibilityResult, ConnectionStatus, ErrorType, DatabaseConfig, RetryConfig
+from app.database.postgresql_client import PostgreSQLClient
+from app.database.models import CompatibilityResult
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
 
 
 # constants for testing to avoid hard-coded credentials in literal strings
-TEST_PASSWORD = "test_password_123"
+TEST_PASSWORD = get_test_password("test_password_123")
 TEST_USER = "test_user_name"
 TEST_DB = "test_database_db"
 

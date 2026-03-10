@@ -6,14 +6,12 @@ import json
 import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from app.services.library_management.dependency_resolver import (
     DependencyResolver,
     DependencyResolverError,
-    FileParsingError,
-    VersionConflictError,
-    CircularDependencyError
+    FileParsingError
 )
 from app.schemas.library import LibraryMetadata, Dependency, ConflictAnalysis, ConflictInfo
 from app.models.library import RegistryType, ProjectContext

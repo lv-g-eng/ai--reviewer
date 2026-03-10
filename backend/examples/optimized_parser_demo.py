@@ -11,7 +11,6 @@ Task 7.3: Optimize parser performance
 import time
 import tempfile
 import os
-from pathlib import Path
 
 from app.services.optimized_parser import OptimizedParser
 from app.services.code_entity_extractor import CodeEntityExtractor

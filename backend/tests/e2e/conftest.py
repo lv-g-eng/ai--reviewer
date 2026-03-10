@@ -10,7 +10,6 @@ from unittest.mock import AsyncMock, Mock
 
 from app.database.postgresql import AsyncSessionLocal, engine
 from app.models import Base, User, UserRole, Project
-from sqlalchemy import select
 
 
 @pytest.fixture(scope="session")
@@ -54,7 +53,7 @@ async def test_user(test_db) -> User:
         email="test@example.com",
         username="testuser",
         password_hash="$2b$12$test_hash",
-        role=UserRole.developer,
+        role=UserRole.user,
         is_active=True
     )
     test_db.add(user)

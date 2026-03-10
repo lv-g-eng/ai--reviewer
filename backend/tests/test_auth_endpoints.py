@@ -6,22 +6,23 @@ Task 2.2: Enhance password strength validation
 import pytest
 from pydantic import ValidationError
 from app.schemas.auth import UserRegister, PasswordChange
+from backend.tests.utils.secure_test_data import get_test_password
 
 
 # Test constants for passwords to avoid literal hard-coded strings in tests
 # These meet the password strength requirements: 8+ chars, upper, lower, digit, special
-VALID_PASSWORD_1 = "ValidPass123!"
-VALID_PASSWORD_2 = "Str0ng@Password"
-VALID_PASSWORD_3 = "C0mpl3x#Pass"
-VALID_PASSWORD_4 = "MyP@ssw0rd123"
+VALID_PASSWORD_1 = get_test_password("valid1")
+VALID_PASSWORD_2 = get_test_password("valid2")
+VALID_PASSWORD_3 = get_test_password("valid3")
+VALID_PASSWORD_4 = get_test_password("valid4")
 
 # Common invalid passwords for testing
-SHORT_PASSWORD = "Short1!"
-LOWERCASE_PASSWORD = "lowercase123!"
-UPPERCASE_PASSWORD = "UPPERCASE123!"
-NO_DIGIT_PASSWORD = "NoDigits!"
-NO_SPECIAL_PASSWORD = "NoSpecial123"
-WEAK_PASSWORD = "weak"
+SHORT_PASSWORD = get_test_password("short")[:7] + "!"  # Ensure it's short
+LOWERCASE_PASSWORD = get_test_password("lowercase")
+UPPERCASE_PASSWORD = get_test_password("uppercase")
+NO_DIGIT_PASSWORD = get_test_password("no_digits")
+NO_SPECIAL_PASSWORD = get_test_password("no_special")
+WEAK_PASSWORD = get_test_password("weak")[:4]  # Ensure it's weak
 
 
 class TestRegistrationPasswordValidation:
@@ -208,7 +209,7 @@ class TestPasswordValidationMessages:
     
     def test_edge_case_exactly_8_characters(self):
         """Test password with exactly 8 characters"""
-        password = "Valid8!x"
+        password = get_test_password("edge_case_8char")[:8] + "!"  # Ensure exactly 8 chars
         user_data = UserRegister(
             email="test@example.com",
             password=password

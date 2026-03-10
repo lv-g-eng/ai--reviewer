@@ -2,7 +2,6 @@
 Tests for error sanitization utilities
 Validates that error messages don't expose implementation details (Requirement 2.5)
 """
-import pytest
 from app.utils.error_sanitizer import (
     sanitize_password_error,
     get_generic_auth_error,

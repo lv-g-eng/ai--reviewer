@@ -47,6 +47,27 @@ CREATE INDEX idx_users_created_at ON users(created_at DESC);
 CREATE INDEX idx_users_github_username ON users(github_username);
 
 -- ================================================
+-- TABLE: ssh_keys
+-- ================================================
+
+CREATE TABLE IF NOT EXISTS ssh_keys (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    public_key TEXT NOT NULL,
+    private_key TEXT NOT NULL,
+    key_fingerprint VARCHAR(255) UNIQUE NOT NULL,
+    github_username VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_ssh_keys_user ON ssh_keys(user_id);
+CREATE INDEX idx_ssh_keys_fingerprint ON ssh_keys(key_fingerprint);
+
+-- ================================================
 -- TABLE: projects
 -- ================================================
 
@@ -71,27 +92,6 @@ CREATE INDEX idx_projects_github_url ON projects(github_repo_url);
 CREATE INDEX idx_projects_is_active ON projects(is_active);
 CREATE INDEX idx_projects_name ON projects(name);
 CREATE INDEX idx_projects_created_at ON projects(created_at DESC);
-
--- ================================================
--- TABLE: ssh_keys
--- ================================================
-
-CREATE TABLE IF NOT EXISTS ssh_keys (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    public_key TEXT NOT NULL,
-    private_key TEXT NOT NULL,
-    key_fingerprint VARCHAR(255) UNIQUE NOT NULL,
-    github_username VARCHAR(255),
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_used_at TIMESTAMP WITH TIME ZONE
-);
-
-CREATE INDEX idx_ssh_keys_user ON ssh_keys(user_id);
-CREATE INDEX idx_ssh_keys_fingerprint ON ssh_keys(key_fingerprint);
 
 -- ================================================
 -- TABLE: pull_requests

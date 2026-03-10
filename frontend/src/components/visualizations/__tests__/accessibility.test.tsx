@@ -13,12 +13,16 @@ import DependencyGraphVisualization from '../DependencyGraphVisualization';
 // Extend Jest matchers
 expect.extend(toHaveNoViolations);
 
-// Mock react-force-graph-2d
-jest.mock('react-force-graph-2d', () => {
-  return function MockForceGraph2D() {
-    return <div data-testid="force-graph">Mock Force Graph</div>;
-  };
-});
+// Mock ReactFlow
+jest.mock('reactflow', () => ({
+  __esModule: true,
+  default: function MockReactFlow() {
+    return <div data-testid="react-flow">Mock React Flow</div>;
+  },
+  Controls: () => <div data-testid="flow-controls" />,
+  Background: () => <div data-testid="flow-background" />,
+  Panel: ({ children }: any) => <div data-testid="flow-panel">{children}</div>,
+}));
 
 describe('Dependency Graph Visualization Accessibility', () => {
   it('should not have any automatically detectable accessibility violations', async () => {

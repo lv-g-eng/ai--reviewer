@@ -6,18 +6,18 @@ Tests core properties of database configuration validation using hypothesis.
 Validates Requirements: 7.1, 7.2, 7.4
 """
 
-import pytest
 import os
 from hypothesis import given, strategies as st, settings, HealthCheck
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from app.database.config_validator import ConfigurationValidator
-from app.database.models import DatabaseConfig, RetryConfig, get_python_version
+from app.database.models import DatabaseConfig, RetryConfig
 from app.core.config import Settings
 from pydantic import ValidationError
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
 
 
 # Constant for testing to avoid hard-coded passwords in literal strings
-TEST_PASSWORD = "test_password_value"
+TEST_PASSWORD = get_test_password("test_password_value")
 TEST_USER = "test_user_name"
 TEST_DB = "test_database_db"
 

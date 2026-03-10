@@ -10,13 +10,12 @@ Validates Requirements: 2.1, 2.2, 2.3, 2.4, 2.5
 
 import asyncio
 import logging
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, TypeVar, Union
-from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, Optional, TypeVar
+from dataclasses import dataclass
 
-from .models import RetryConfig, ErrorType
+from .models import RetryConfig
 
 logger = logging.getLogger(__name__)
 

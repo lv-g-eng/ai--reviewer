@@ -3,7 +3,6 @@ Database configuration validation with environment variable support.
 """
 
 import os
-import sys
 from typing import List
 from app.database.models import DatabaseConfig, CompatibilityResult, get_python_version
 

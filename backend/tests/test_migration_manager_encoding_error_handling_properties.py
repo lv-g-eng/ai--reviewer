@@ -6,13 +6,12 @@ Property-based tests for migration manager encoding error handling
 """
 import pytest
 import tempfile
-import os
 from pathlib import Path
 from hypothesis import given, strategies as st, settings, assume, HealthCheck
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import patch
 
 from app.database.migration_manager import MigrationManager
-from app.utils.encoding_validator import EncodingValidator, EncodingValidationResult, EncodingFixResult
+from app.utils.encoding_validator import EncodingValidationResult, EncodingFixResult
 
 
 class TestMigrationManagerEncodingErrorHandlingProperties:

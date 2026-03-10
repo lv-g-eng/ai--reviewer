@@ -5,11 +5,7 @@ This script tests the new ProjectAnalysisService integration
 with sample data to verify all four modules display real data.
 """
 
-import asyncio
-import sys
 from datetime import datetime, timedelta
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
 
 # Test data structure
 SAMPLE_ANALYTICS = {

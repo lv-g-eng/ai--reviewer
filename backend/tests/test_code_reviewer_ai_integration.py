@@ -8,7 +8,6 @@ Validates Requirements: 1.2
 """
 import pytest
 from unittest.mock import Mock, AsyncMock, patch
-from typing import List
 
 from app.services.code_reviewer import CodeReviewer
 from app.services.agentic_ai_service import (
@@ -202,7 +201,15 @@ class TestAgenticAIIntegration:
             developer_explanation="Your code is vulnerable to SQL injection attacks, which could allow attackers to access or modify your database.",
             why_it_matters="This is a critical security issue that could lead to data breaches and compromise user data.",
             how_to_fix="Use parameterized queries or an ORM to safely handle user input.",
-            code_example="# Bad\nquery = f'SELECT * FROM users WHERE id = {user_id}'\n\n# Good\nquery = 'SELECT * FROM users WHERE id = ?'\ncursor.execute(query, (user_id,))"
+            code_example="""
+# Example of SQL injection vulnerability (for educational purposes):
+# BAD: query = f'SELECT * FROM users WHERE id = {user_id}'
+# cursor.execute(query)
+
+# SECURE: Use parameterized queries
+query = 'SELECT * FROM users WHERE id = ?'
+cursor.execute(query, (user_id,))
+"""
         )
         mock_agentic_ai_service.generate_natural_language_explanation.return_value = mock_explanation
         

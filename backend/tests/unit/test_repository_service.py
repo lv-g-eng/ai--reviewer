@@ -2,7 +2,7 @@
 Unit tests for repository_service
 """
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import Mock, AsyncMock, patch
 from app.services.repository_service import RepositoryService
 
 

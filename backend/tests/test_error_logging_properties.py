@@ -11,9 +11,7 @@ Validates Requirements: 1.8, 7.6
 
 import pytest
 from hypothesis import given, strategies as st, settings, HealthCheck
-from datetime import datetime
 import logging
-from io import StringIO
 
 from app.core.error_reporter import ErrorReporter, DatabaseErrorCategory
 from app.shared.exceptions import (

@@ -11,8 +11,8 @@ import time
 import logging
 from enum import Enum
 from typing import Callable, Any, Optional, Dict
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from threading import Lock
 
 from .exceptions import CircuitBreakerException

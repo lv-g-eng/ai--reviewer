@@ -6,20 +6,17 @@ Tests circuit breaker behavior for GitHub API, Neo4j, and LLM services.
 Validates Requirements: 13.9
 """
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 from fastapi import HTTPException
 
 from app.services.github_circuit_breaker import (
-    GitHubClientWithCircuitBreaker,
-    get_github_client_with_circuit_breaker
+    GitHubClientWithCircuitBreaker
 )
 from app.database.neo4j_circuit_breaker import (
     Neo4jWithCircuitBreaker,
-    Neo4jCircuitBreakerError,
-    get_neo4j_with_circuit_breaker
+    Neo4jCircuitBreakerError
 )
 from app.services.llm.circuit_breaker import CircuitState
-from app.services.cache_manager import get_cache_manager
 
 
 class TestGitHubCircuitBreaker:

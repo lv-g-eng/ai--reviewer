@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 import asyncio
 import sys
-from datetime import datetime, timezone
 
 
 async def verify_endpoint():
@@ -69,7 +68,6 @@ async def verify_endpoint():
     # Check 5: Verify router registration
     logger.info("\n✓ Check 5: Verifying router registration...")
     try:
-        from app.api.v1 import router as api_router
         # Check if audit_logs router is included
         logger.info("  ✅ API router imported successfully")
         logger.info("  ℹ️  Endpoint should be available at: POST /api/v1/audit-logs/feature-flags")

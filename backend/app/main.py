@@ -3,6 +3,7 @@ Main FastAPI application entry point
 """
 import os
 import logging
+import asyncio
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,43 +49,89 @@ async def lifespan(app: FastAPI):
     # Skip database initialization during testing as it's handled by fixtures
     testing = os.environ.get("TESTING") == "true"
     
-    # Run comprehensive startup validation (Requirement 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7)
-    from app.core.startup_validator import run_startup_validation
+    # Run security validation first (Critical)
     if not testing:
-        logger.info("Skipping startup validation for debugging...")
-        # validation_result = await run_startup_validation()
-        # Temporarily skip validation
-        validation_result = None
+        logger.info("Running security validation...")
+        try:
+            from app.core.security_validator import SecurityValidator
+            SecurityValidator.validate_startup()
+            logger.info("✅ Security validation passed")
+        except Exception as e:
+            logger.error("❌ Security validation failed: %s", str(e))
+            if settings.ENVIRONMENT == "production":
+                logger.critical("Blocking application startup due to security issues")
+                raise e
+            else:
+                logger.warning("Continuing in development mode despite security issues")
+    
+    # Run comprehensive startup validation (Requirement 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7)
+    if not testing:
+        logger.info("Running startup validation...")
+        try:
+            from app.services.startup_validation import run_startup_validation
+            validation_result = await run_startup_validation()
+            if validation_result and not validation_result.is_valid:
+                logger.warning("Startup validation failed but continuing: %s", validation_result.errors)
+        except Exception as e:
+            logger.warning("Startup validation error (continuing): %s", str(e))
+            validation_result = None
     else:
         logger.info("Testing mode: Skipping startup validation")
         validation_result = None
     
-    # Initialize databases (optional - will continue if they fail)
+    # Initialize databases with timeout and graceful degradation
     db_status = {}
     postgres_available = False
     
     if not testing:
-        try:
-            await init_postgres()
-            db_status["PostgreSQL"] = {"is_connected": True, "response_time_ms": 0}
-            postgres_available = True
-        except Exception as e:
-            db_status["PostgreSQL"] = {"is_connected": False, "error": str(e)[:50]}
-            logger.warning("PostgreSQL not available: %s", str(e)[:100])
+        # PostgreSQL - Critical for application (增加重试机制)
+        postgres_retries = 3
+        for attempt in range(postgres_retries):
+            try:
+                timeout = 30 + (attempt * 15)  # 递增超时时间
+                await asyncio.wait_for(init_postgres(), timeout=timeout)
+                db_status["PostgreSQL"] = {"is_connected": True, "response_time_ms": 0}
+                postgres_available = True
+                logger.info("✅ PostgreSQL connected successfully")
+                break
+            except asyncio.TimeoutError:
+                if attempt < postgres_retries - 1:
+                    logger.warning(f"⚠️ PostgreSQL connection timeout (attempt {attempt + 1}/{postgres_retries}), retrying...")
+                    await asyncio.sleep(5)  # 等待5秒后重试
+                else:
+                    db_status["PostgreSQL"] = {"is_connected": False, "error": "Connection timeout after retries"}
+                    logger.error("❌ PostgreSQL connection timeout after all retries - backend will be degraded")
+            except Exception as e:
+                if attempt < postgres_retries - 1:
+                    logger.warning(f"⚠️ PostgreSQL connection failed (attempt {attempt + 1}/{postgres_retries}): {str(e)[:100]}, retrying...")
+                    await asyncio.sleep(5)
+                else:
+                    db_status["PostgreSQL"] = {"is_connected": False, "error": str(e)[:50]}
+                    logger.error("❌ PostgreSQL connection failed after all retries: %s", str(e)[:100])
         
+        # Redis - Optional for caching (移到Neo4j之前，因为更重要)
         try:
-            await init_neo4j()
-            db_status["Neo4j"] = {"is_connected": True, "response_time_ms": 0}
-        except Exception as e:
-            db_status["Neo4j"] = {"is_connected": False, "error": str(e)[:50]}
-            logger.warning("Neo4j not available: %s", str(e)[:100])
-        
-        try:
-            await init_redis()
+            await asyncio.wait_for(init_redis(), timeout=15)
             db_status["Redis"] = {"is_connected": True, "response_time_ms": 0}
+            logger.info("✅ Redis connected successfully")
+        except asyncio.TimeoutError:
+            db_status["Redis"] = {"is_connected": False, "error": "Connection timeout"}
+            logger.warning("⚠️ Redis connection timeout - caching disabled")
         except Exception as e:
             db_status["Redis"] = {"is_connected": False, "error": str(e)[:50]}
-            logger.warning("Redis not available: %s", str(e)[:100])
+            logger.warning("⚠️ Redis not available: %s", str(e)[:100])
+        
+        # Neo4j - Optional for graph features
+        try:
+            await asyncio.wait_for(init_neo4j(), timeout=30)
+            db_status["Neo4j"] = {"is_connected": True, "response_time_ms": 0}
+            logger.info("✅ Neo4j connected successfully")
+        except asyncio.TimeoutError:
+            db_status["Neo4j"] = {"is_connected": False, "error": "Connection timeout"}
+            logger.warning("⚠️ Neo4j connection timeout - graph features disabled")
+        except Exception as e:
+            db_status["Neo4j"] = {"is_connected": False, "error": str(e)[:50]}
+            logger.warning("⚠️ Neo4j not available: %s", str(e)[:100])
     else:
         logger.info("Testing mode: Skipping database initialization in lifespan")
         postgres_available = True # Assume available as it's handled by fixtures
@@ -113,12 +160,6 @@ async def lifespan(app: FastAPI):
                 logger.info("Database is up to date")
         except Exception as e:
             logger.warning("Error during migration: %s", str(e), exc_info=True)
-    
-    # Initialize LLM service if enabled
-    if settings.LLM_ENABLED:
-        from app.services.llm_service import llm_service
-        await llm_service.initialize()
-        logger.info("LLM service initialized")
     
     # Create default test user if not exists
     if postgres_available and not testing:
@@ -151,12 +192,12 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning("Could not create default user: %s", str(e))
     
-    # Initialize RBAC authentication system
+    # Initialize authentication system
     try:
-        from app.auth import auth_settings
-        logger.info("RBAC Authentication initialized (JWT expiry: %d min)", auth_settings.jwt_access_token_expire_minutes)
+        from app.core.config import settings
+        logger.info("Authentication initialized (JWT expiry: %d hours)", settings.JWT_EXPIRATION_HOURS)
     except Exception as e:
-        logger.warning("RBAC Authentication initialization warning: %s", str(e))
+        logger.warning("Authentication initialization warning: %s", str(e))
     
     # Log startup summary (Requirement 11.1, 11.2, 11.3, 11.4, 11.5, 11.6)
     from app.core.logging_config import log_startup_summary, log_database_status
@@ -522,7 +563,6 @@ async def readiness_check():
     
     Validates Requirements: 1.1, 1.2, 2.1, 2.4, 2.5
     """
-    from app.services.health_service import get_health_service
     
     health_service = get_health_service()
     readiness_status = await health_service.get_readiness_status()
@@ -545,7 +585,6 @@ async def liveness_check():
     
     Validates Requirements: 1.1, 1.2, 2.5
     """
-    from app.services.health_service import get_health_service
     
     health_service = get_health_service()
     liveness_status = await health_service.get_liveness_status()

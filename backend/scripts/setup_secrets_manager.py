@@ -17,7 +17,6 @@ Usage:
 import argparse
 import json
 import sys
-import os
 from typing import Dict, Any
 import boto3
 from botocore.exceptions import ClientError
@@ -50,9 +49,10 @@ def create_or_update_secret(
         secret_string = secret_value
     
     if dry_run:
-        logger.info("[DRY RUN] Would create/update secret: {secret_name}")
-        logger.info("  Description: {description}")
-        logger.info(str(f"  Value: {secret_string[:50]}..." if len(secret_string)) > 50 else f"  Value: {secret_string}")
+        logger.info(f"[DRY RUN] Would create/update secret: {secret_name}")
+        logger.info(f"  Description: {description}")
+        display_value = f"  Value: {secret_string[:50]}..." if len(secret_string) > 50 else f"  Value: {secret_string}"
+        logger.info(display_value)
         return True
     
     try:

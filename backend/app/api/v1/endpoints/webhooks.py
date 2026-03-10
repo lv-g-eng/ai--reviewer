@@ -14,7 +14,7 @@ Requirements:
 import hmac
 import hashlib
 import logging
-from typing import Optional, Dict, Any, Annotated
+from typing import Optional, Dict, Any
 from fastapi import APIRouter, Request, Header, HTTPException, status, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

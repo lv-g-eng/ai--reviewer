@@ -2,7 +2,7 @@
 Utility functions for better exception handling
 """
 import logging
-from typing import Callable, TypeVar, Any, Optional
+from typing import TypeVar, Any, Optional
 from functools import wraps
 from contextlib import contextmanager
 

@@ -3,9 +3,9 @@ Database connection management with retry logic and health checks.
 """
 import asyncio
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from functools import wraps
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from fastapi import Depends, HTTPException, status
 
@@ -28,7 +28,6 @@ from .redis_db import (
     test_redis_connection,
     get_redis as get_redis_client,
 )
-from app.core.config import settings
 
 # Configure logging
 logger = logging.getLogger(__name__)

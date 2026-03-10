@@ -5,9 +5,9 @@ This module provides REST API endpoints for querying and exporting audit logs.
 
 Validates Requirements: 15.6, 15.7
 """
-from typing import Optional, List, Annotated
+from typing import Optional, List
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field

@@ -10,13 +10,10 @@ Validates Requirements: 1.5
 
 import pytest
 from hypothesis import given, strategies as st, settings, HealthCheck
-from unittest.mock import AsyncMock, MagicMock, patch
-import asyncio
+from unittest.mock import AsyncMock, MagicMock
 
 from app.services.github_comment_generator import (
     GitHubCommentGenerator,
-    CommentResult,
-    CommentBatchResult,
 )
 from app.services.security_scanner import SecurityFinding
 from app.services.standards_classifier import ClassifiedFinding

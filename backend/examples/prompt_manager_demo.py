@@ -56,8 +56,9 @@ class UserService:
 SAMPLE_CODE_SECURITY = """
 @app.route('/api/user/<user_id>')
 def get_user(user_id):
-    query = f"SELECT * FROM users WHERE id={user_id}"
-    result = db.execute(query)
+    # SECURE: Use parameterized query to prevent SQL injection
+    query = "SELECT * FROM users WHERE id = ?"
+    result = db.execute(query, (user_id,))
     return jsonify(result)
 """
 

@@ -9,13 +9,11 @@ Validates Requirements 5.4, 5.7, 13.7
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from unittest.mock import AsyncMock, patch, MagicMock
-from datetime import datetime, timezone
-import json
+from unittest.mock import AsyncMock, patch
 
-from app.main import app
-from app.models import User, Project, PullRequest, PRStatus
+from app.models import User
 from app.utils.password import hash_password
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
 
 
 class TestAuthenticationEndpoints:
@@ -75,7 +73,7 @@ class TestAuthenticationEndpoints:
         **Validates: Requirements 5.4, 13.7**
         """
         # Create and login user
-        password = "SecurePass123!"
+        password = get_test_password("secure_pass")
         user = User(
             email="refresh@test.com",
             password_hash=hash_password(password),

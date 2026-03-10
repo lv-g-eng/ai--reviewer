@@ -13,20 +13,8 @@
 
 import { AxiosError } from 'axios';
 import { ApiError } from './api-client';
-
-/**
- * Error types for classification
- */
-export enum ErrorType {
-  NETWORK_ERROR = 'NETWORK_ERROR',
-  TIMEOUT_ERROR = 'TIMEOUT_ERROR',
-  AUTH_ERROR = 'AUTH_ERROR',
-  PERMISSION_ERROR = 'PERMISSION_ERROR',
-  VALIDATION_ERROR = 'VALIDATION_ERROR',
-  SERVER_ERROR = 'SERVER_ERROR',
-  RATE_LIMIT_ERROR = 'RATE_LIMIT_ERROR',
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
-}
+// Import consolidated enums from common library
+import { ErrorType } from '../../common/shared/enums';
 
 /**
  * Error information structure

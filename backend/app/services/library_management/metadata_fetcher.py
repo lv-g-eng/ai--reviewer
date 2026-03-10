@@ -6,10 +6,9 @@ npm, PyPI, and Maven Central. It provides a unified interface for retrieving
 library information such as name, version, description, license, and dependencies.
 """
 
-import asyncio
 import logging
 import time
-from typing import Dict, List, Optional, Any, Callable, Awaitable
+from typing import Optional, Callable, Awaitable
 from urllib.parse import quote
 
 import httpx

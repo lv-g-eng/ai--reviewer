@@ -754,7 +754,7 @@ class CodeAnalyzer:
                 elif isinstance(node, ast.Call):
                     tokens.append('CALL')
         
-        except:
+        except (SyntaxError, ValueError, TypeError) as e:
             # Fallback to simple tokenization if AST parsing fails
             tokens = self._simple_tokenize(source)
         

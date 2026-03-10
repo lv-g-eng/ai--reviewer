@@ -9,7 +9,7 @@ import json
 import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from hypothesis import given, strategies as st, assume, settings
 from hypothesis.strategies import composite
 

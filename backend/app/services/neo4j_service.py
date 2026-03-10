@@ -2,8 +2,8 @@
 Neo4j graph database service
 Handles code architecture graph operations
 """
-from typing import List, Dict, Any, Optional
-from neo4j import AsyncGraphDatabase, AsyncDriver, AsyncSession
+from typing import List, Dict, Any
+from neo4j import AsyncDriver
 
 from app.core.config import settings
 

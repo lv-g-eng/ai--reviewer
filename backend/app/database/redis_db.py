@@ -2,6 +2,7 @@
 Redis cache and session management
 """
 import logging
+import asyncio
 logger = logging.getLogger(__name__)
 
 import redis.asyncio as redis
@@ -28,18 +29,29 @@ async def init_redis():
         redis_client = redis.Redis(
             host=settings.REDIS_HOST,
             port=settings.REDIS_PORT,
-            password=settings.REDIS_PASSWORD,
+            password=settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None,
             db=settings.REDIS_DB,
             decode_responses=True,
-            max_connections=50,
-            socket_timeout=5,
-            socket_connect_timeout=5,
+            max_connections=10,  # 减少最大连接数
+            socket_timeout=10,  # 增加socket超时时间
+            socket_connect_timeout=10,  # 增加连接超时时间
+            retry_on_timeout=True,
+            health_check_interval=60,  # 增加健康检查间隔
         )
-        # Test connection
-        await redis_client.ping()
-        logger.info("✅ Redis initialized")
+        # Test connection with retry
+        for attempt in range(3):
+            try:
+                await redis_client.ping()
+                logger.info("✅ Redis initialized")
+                return
+            except Exception as e:
+                if attempt < 2:
+                    logger.warning(f"Redis ping failed (attempt {attempt + 1}/3), retrying...")
+                    await asyncio.sleep(2)
+                else:
+                    raise e
     except Exception as e:
-        logger.info("❌ Failed to initialize Redis: {e}")
+        logger.error("❌ Failed to initialize Redis: %s", str(e))
         raise
 
 

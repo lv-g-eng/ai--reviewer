@@ -3,12 +3,8 @@
  * Communicates with the local LLM service for code analysis
  */
 import axios, { AxiosInstance } from 'axios';
-
-export enum ModelType {
-  CODE_REVIEW = 'code_review',
-  GENERAL = 'general',
-  VISION = 'vision',
-}
+// Import consolidated enums from common library
+import { ModelType } from '../common/shared/enums';
 
 export interface CodeAnalysisRequest {
   code: string;

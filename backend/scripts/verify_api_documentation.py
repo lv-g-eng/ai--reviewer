@@ -21,7 +21,7 @@ Requirements:
 import argparse
 import sys
 import requests
-from typing import Dict, Any, List
+from typing import List
 
 
 def check_endpoint(url: str, endpoint: str, expected_content: List[str]) -> bool:

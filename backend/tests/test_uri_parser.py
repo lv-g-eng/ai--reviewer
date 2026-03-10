@@ -7,7 +7,6 @@ Tests specific URI format examples, edge cases, and error conditions.
 import pytest
 from app.services.library_management.uri_parser import URIParser
 from app.models.library import RegistryType
-from app.schemas.library import ParsedURI
 
 
 class TestNPMURIParsing:

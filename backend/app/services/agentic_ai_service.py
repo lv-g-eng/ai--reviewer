@@ -11,14 +11,12 @@ This service provides:
 Validates Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.9, 3.10, 3.11
 """
 
-import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 
 from app.shared.llm_provider import LLMOrchestrator, LLMProviderConfig, LLMProviderType
-from app.shared.exceptions import LLMProviderException
-from app.services.context_builder import ContextBuilder, create_context_builder
+from app.services.context_builder import create_context_builder
 
 class CleanCodePrinciple(str, Enum):
     """Clean Code principles for violation detection"""
@@ -168,9 +166,9 @@ Provide detailed analysis of any Clean Code principle violations."""
         try:
             response = await self.llm.generate(prompt, system_prompt=system_prompt)
             
-             # Parse response and create violations
-             # For now, return a simple structure
-             violations = []
+            # Parse response and create violations
+            # For now, return a simple structure
+            violations = []
             
             logger.info(
                 f"Found {len(violations)} Clean Code violations in {file_path}",
@@ -231,14 +229,14 @@ Provide a clear, actionable explanation."""
         try:
             response = await self.llm.generate(prompt, system_prompt=system_prompt)
             
-             # Parse response
-             explanation = NaturalLanguageExplanation(
-                 technical_finding=technical_finding,
-                 developer_explanation=response,
-                 why_it_matters="This affects code quality and maintainability.",
-                 how_to_fix="Follow suggested improvements.",
-                 code_example=None,
-             )
+            # Parse response
+            explanation = NaturalLanguageExplanation(
+                technical_finding=technical_finding,
+                developer_explanation=response,
+                why_it_matters="This affects code quality and maintainability.",
+                how_to_fix="Follow suggested improvements.",
+                code_example=None,
+            )
             
             logger.info("Generated natural language explanation")
             

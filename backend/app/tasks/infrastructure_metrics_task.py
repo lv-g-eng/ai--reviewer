@@ -115,7 +115,7 @@ def collect_cache_metrics_task():
     Validates Requirement: 7.4
     """
     try:
-        from app.services.cache_manager import get_cache_stats
+        from app.shared.cache_manager import get_cache_stats
         
         collector = get_metrics_collector()
         

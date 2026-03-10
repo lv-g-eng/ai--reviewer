@@ -9,14 +9,12 @@ import subprocess
 import sys
 from datetime import datetime
 import json
-import shutil
 import os
 
 from alembic.config import Config
 from alembic.script import ScriptDirectory
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import text, inspect
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.utils.encoding_validator import EncodingValidator, EncodingValidationResult, EncodingFixResult
@@ -178,7 +176,7 @@ class MigrationManager:
                     return status
             
             # Check if alembic_version table exists
-            from sqlalchemy import create_engine, MetaData
+            from sqlalchemy import create_engine
             engine = create_engine(settings.sync_postgres_url)
             
             with engine.connect() as connection:

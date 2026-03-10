@@ -13,8 +13,7 @@ Validates Requirements: 12.10
 import pytest
 import asyncio
 import signal
-from unittest.mock import AsyncMock, MagicMock, patch, call
-from datetime import datetime
+from unittest.mock import AsyncMock, patch
 
 from app.services.graceful_shutdown import (
     GracefulShutdownHandler,

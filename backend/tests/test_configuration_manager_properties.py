@@ -8,10 +8,9 @@ and scenarios, ensuring robustness and correctness.
 Validates Requirements: 1.1, 1.2, 1.3, 1.4, 1.5
 """
 
-import os
 import tempfile
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict
 from unittest.mock import patch
 
 import pytest
@@ -22,8 +21,6 @@ from app.core.configuration_manager import (
     ConfigurationManager,
     ConfigurationSource,
     ConfigurationValidator,
-    ConfigurationEntry,
-    get_configuration_manager,
     initialize_configuration
 )
 

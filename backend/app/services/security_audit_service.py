@@ -2,8 +2,6 @@
 Security Audit Service
 Handles storage and retrieval of security scan results and audit logs in Neo4j
 """
-import asyncio
-import json
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 from uuid import uuid4
@@ -11,7 +9,6 @@ from uuid import uuid4
 from app.database.neo4j_db import get_neo4j_driver
 from app.schemas.security_models import (
     SecurityScanResult,
-    AuditLogEntry,
     ProjectQualityMetrics,
     QualityGrade,
     ScanTool

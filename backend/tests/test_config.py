@@ -16,10 +16,11 @@ import pytest
 from pydantic import ValidationError
 from unittest.mock import patch
 from app.core.config import Settings
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
 
 
 # Constant for testing to avoid hard-coded passwords in literal strings
-TEST_PASSWORD = "test_password_value_123"
+TEST_PASSWORD = get_test_password("test_password_value")
 TEST_USER = "test_user_name"
 TEST_DB = "test_database_db"
 TEST_WEBHOOK_SECRET = "whsec_test_secret_12345"

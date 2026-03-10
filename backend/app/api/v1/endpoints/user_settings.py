@@ -3,7 +3,7 @@ userset API endpoint
 
 管理user的item人set，包括 API keyconfig
 """
-from typing import Annotated, Optional
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession

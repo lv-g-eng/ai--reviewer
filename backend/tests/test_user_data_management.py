@@ -6,12 +6,8 @@ Validates Requirements: 11.5, 11.6, 11.7, 15.10
 """
 import pytest
 from datetime import datetime, timezone, timedelta
-from unittest.mock import Mock, patch, AsyncMock
-from fastapi import status
-from sqlalchemy import text
 import uuid
 
-from app.models import User, Project, PullRequest, AuditLog, UserRole
 
 
 @pytest.mark.unit

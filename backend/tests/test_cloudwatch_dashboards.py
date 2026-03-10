@@ -5,7 +5,7 @@ Validates Requirements: 18.2
 """
 import json
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import sys
 import os
 

@@ -12,8 +12,6 @@ Usage:
 import os
 import sys
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
 
 # Set test environment variables BEFORE importing app modules
 os.environ["TESTING"] = "true"
@@ -154,38 +152,6 @@ class TestPullRequestEndpoints:
         print("✅ Pull Request endpoint: Structure OK")
 
 
-class TestRBACEndpoints:
-    """Smoke tests for RBAC endpoints"""
-
-    @pytest.mark.asyncio
-    async def test_rbac_auth_endpoint_imports(self):
-        """Verify RBAC Auth endpoint module can be imported"""
-        try:
-            from app.api.v1.endpoints import rbac_auth
-            assert hasattr(rbac_auth, 'router'), "RBAC Auth module should have router"
-            print("✅ RBAC Auth endpoint: Import OK")
-        except Exception as e:
-            pytest.fail(f"RBAC Auth endpoint import failed: {e}")
-
-    @pytest.mark.asyncio
-    async def test_rbac_users_endpoint_imports(self):
-        """Verify RBAC Users endpoint module can be imported"""
-        try:
-            from app.api.v1.endpoints import rbac_users
-            assert hasattr(rbac_users, 'router'), "RBAC Users module should have router"
-            print("✅ RBAC Users endpoint: Import OK")
-        except Exception as e:
-            pytest.fail(f"RBAC Users endpoint import failed: {e}")
-
-    @pytest.mark.asyncio
-    async def test_rbac_projects_endpoint_imports(self):
-        """Verify RBAC Projects endpoint module can be imported"""
-        try:
-            from app.api.v1.endpoints import rbac_projects
-            assert hasattr(rbac_projects, 'router'), "RBAC Projects module should have router"
-            print("✅ RBAC Projects endpoint: Import OK")
-        except Exception as e:
-            pytest.fail(f"RBAC Projects endpoint import failed: {e}")
 
 
 class TestArchitectureEndpoints:

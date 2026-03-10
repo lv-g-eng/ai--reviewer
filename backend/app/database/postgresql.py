@@ -14,14 +14,20 @@ from app.core.config import settings
 # Requirements: 10.6 - Connection pooling for PostgreSQL with pool size of 20 connections
 engine = create_async_engine(
     settings.postgres_url,
-    echo=True,
+    echo=False,  # Disable SQL logging for performance
     future=True,
     pool_pre_ping=True,  # Verify connections before using them
-    pool_size=20,  # Core pool size (requirement 10.6)
-    max_overflow=10,  # Additional connections beyond pool_size
-    pool_timeout=30,  # Timeout for getting connection from pool (seconds)
-    pool_recycle=3600,  # Recycle connections after 1 hour to prevent stale connections
+    pool_size=5,  # 减少核心连接池大小以提高稳定性
+    max_overflow=10,  # 增加溢出连接数
+    pool_timeout=30,  # 增加超时时间
+    pool_recycle=3600,  # 增加连接回收时间到1小时
     pool_use_lifo=True,  # Use LIFO to reduce connection churn
+    connect_args={
+        "command_timeout": 60,  # 增加命令超时时间
+        "server_settings": {
+            "application_name": "ai_code_review_backend",
+        },
+    },
 )
 
 # Create async session maker

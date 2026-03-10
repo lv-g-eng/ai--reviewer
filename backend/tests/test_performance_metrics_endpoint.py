@@ -9,7 +9,6 @@ Validates Requirements 2.4, 3.7
 import pytest
 from httpx import AsyncClient
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
 
 from app.main import app
 from app.models import User, Project, PullRequest, ReviewStatus

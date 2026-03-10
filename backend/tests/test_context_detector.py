@@ -2,16 +2,13 @@
 Unit tests for Context Detector Service
 """
 
-import os
 import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from app.services.library_management.context_detector import (
-    ContextDetector,
-    ContextDetectionError,
-    ConfigurationFileNotFoundError
+    ContextDetector
 )
 from app.models.library import RegistryType, ProjectContext
 

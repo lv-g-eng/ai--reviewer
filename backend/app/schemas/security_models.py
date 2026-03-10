@@ -6,7 +6,6 @@ from typing import List, Dict, Any, Optional, Union
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field, validator
-from uuid import UUID
 
 
 class Severity(str, Enum):

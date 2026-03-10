@@ -3,7 +3,6 @@ Error sanitization utilities for secure error handling
 Prevents exposure of implementation details in error messages
 """
 import re
-from typing import Optional
 
 
 # Patterns that should never appear in error messages

@@ -4,9 +4,8 @@ Tests for Library Management API Router
 Tests the validate library endpoint implementation and other router functionality.
 """
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.main import app
 from app.database.postgresql import get_db
@@ -29,7 +28,7 @@ def setup_test_dependencies(mock_user=None):
         mock_user = User(
             id="test-user-id",
             email="test@example.com",
-            role=UserRole.developer,
+            role=UserRole.user,
             is_active=True
         )
     

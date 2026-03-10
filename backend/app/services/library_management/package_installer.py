@@ -10,10 +10,8 @@ import json
 import logging
 import os
 import shutil
-import subprocess
-import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import List, Optional, Tuple
 from datetime import datetime
 
 from app.schemas.library import LibraryMetadata, InstallationResult, InstalledLibrary

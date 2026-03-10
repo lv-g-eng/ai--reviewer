@@ -11,10 +11,7 @@ from typing import Dict, Optional, List, Any
 from dataclasses import dataclass
 
 from app.shared.standards import (
-    StandardsMapper,
-    ISO25010Characteristic,
-    ISO23396Practice,
-    OWASPVulnerability
+    StandardsMapper
 )
 
 logger = logging.getLogger(__name__)

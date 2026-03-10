@@ -9,18 +9,11 @@ across PostgreSQL, Neo4j, and Redis with common patterns for:
 - Error handling
 - Retry logic
 """
-from typing import Protocol, Optional, Dict, Any, TypeVar, Generic
+from typing import Optional, Dict, Any, TypeVar, Generic
 from abc import ABC, abstractmethod
 from enum import Enum
 import asyncio
 import logging
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log
-)
 
 logger = logging.getLogger(__name__)
 

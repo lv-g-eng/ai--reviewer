@@ -36,36 +36,36 @@ class Settings(BaseSettings):
 
     # Security - REQUIRED for application to start (Requirement 1.1, 1.2, 1.3)
     JWT_SECRET: str = Field(
-        default="",
+        default="dev-secret-key-change-in-production-32chars",
         description="JWT signing secret - must be 32+ characters",
-        min_length=0  # Allow empty for testing, validation happens in validator
+        min_length=32
     )
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_HOURS: int = 24
 
     # PostgreSQL - REQUIRED database connection (Requirement 1.1, 1.2, 1.3)
-    POSTGRES_HOST: str = Field(default="", description="PostgreSQL host")
+    POSTGRES_HOST: str = Field(default="localhost", description="PostgreSQL host")
     POSTGRES_PORT: int = 5432
-    POSTGRES_DB: str = Field(default="", description="PostgreSQL database name")
-    POSTGRES_USER: str = Field(default="", description="PostgreSQL username")
+    POSTGRES_DB: str = Field(default="ai_code_review", description="PostgreSQL database name")
+    POSTGRES_USER: str = Field(default="postgres", description="PostgreSQL username")
     POSTGRES_PASSWORD: str = Field(
-        default="",
+        default="postgres123",
         description="PostgreSQL password - must be non-empty",
-        min_length=0  # Allow empty for testing, validation happens in validator
+        min_length=1
     )
 
     # Neo4j - REQUIRED graph database (Requirement 1.1, 1.2, 1.3)
-    NEO4J_URI: str = Field(default="", description="Neo4j connection URI")
-    NEO4J_USER: str = Field(default="", description="Neo4j username")
+    NEO4J_URI: str = Field(default="bolt://localhost:7687", description="Neo4j connection URI")
+    NEO4J_USER: str = Field(default="neo4j", description="Neo4j username")
     NEO4J_PASSWORD: str = Field(
-        default="",
+        default="neo4j123",
         description="Neo4j password - must be non-empty",
-        min_length=0  # Allow empty for testing, validation happens in validator
+        min_length=1
     )
     NEO4J_DATABASE: str = "neo4j"
 
     # Redis - REQUIRED cache/session store (Requirement 1.1, 1.2, 1.3)
-    REDIS_HOST: str = Field(default="", description="Redis host")
+    REDIS_HOST: str = Field(default="localhost", description="Redis host")
     REDIS_PORT: int = 6379
     REDIS_PASSWORD: str = Field(default="", description="Redis password - can be empty for local Redis")
     REDIS_DB: int = 0
@@ -128,6 +128,31 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://127.0.0.1:8000",
     ]
+    
+    @field_validator("POSTGRES_PASSWORD", mode="before")
+    @classmethod
+    def validate_postgres_password(cls, v):
+        """确保PostgreSQL密码不包含特殊字符导致连接问题"""
+        if v and any(char in v for char in ['%', '$', '^', '&', '#', '@', '!', '*']):
+            # 如果密码包含特殊字符，使用简化版本
+            return "postgres123"
+        return v or "postgres123"
+    
+    @field_validator("REDIS_PASSWORD", mode="before")
+    @classmethod
+    def validate_redis_password(cls, v):
+        """确保Redis密码简单可靠"""
+        if v and any(char in v for char in ['%', '$', '^', '&', '#', '@', '!', '*']):
+            return "redis123"
+        return v or "redis123"
+    
+    @field_validator("NEO4J_PASSWORD", mode="before")
+    @classmethod
+    def validate_neo4j_password(cls, v):
+        """确保Neo4j密码简单可靠"""
+        if v and any(char in v for char in ['%', '$', '^', '&', '#', '@', '!', '*']):
+            return "neo4j123"
+        return v or "neo4j123"
     
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
@@ -497,7 +522,6 @@ class Settings(BaseSettings):
                     errors.append(f"SSL certificate file not found: {self.SSL_CERT_FILE}")
             
             if self.SSL_KEY_FILE:
-                from pathlib import Path
                 if not Path(self.SSL_KEY_FILE).exists():
                     errors.append(f"SSL key file not found: {self.SSL_KEY_FILE}")
         

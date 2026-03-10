@@ -13,14 +13,13 @@ Validates Requirements: 1.1, 1.2, 1.3, 1.4, 1.5
 
 import os
 import tempfile
-import threading
-import time
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from app.core.configuration_manager import (
+from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
     ConfigurationManager,
     ConfigurationSource,
     ConfigurationEntry,
@@ -34,9 +33,9 @@ from app.core.configuration_manager import (
 
 
 # Constants for testing to avoid hard-coded credentials in literal strings
-TEST_PASSWORD = "test_password_value_12345678"
+TEST_PASSWORD = get_test_password("test_password_long")
 TEST_SECRET = "test_secret_value_32_chars_long_12345"
-TEST_JWT_SECRET = "test_jwt_secret_value_32_characters"
+TEST_JWT_SECRET = get_test_jwt_secret()
 
 
 class TestConfigurationValidator:

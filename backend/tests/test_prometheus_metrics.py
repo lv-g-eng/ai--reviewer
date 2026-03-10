@@ -3,32 +3,13 @@ Tests for Prometheus metrics collection.
 
 Validates Requirement 7.3: Collect metrics for API response times, error rates, and throughput.
 """
-import pytest
 import time
 from prometheus_client import REGISTRY as DEFAULT_REGISTRY
-from fastapi.testclient import TestClient
 
 from app.main import app
 from app.core.prometheus_metrics import (
     REGISTRY,
     http_request_duration_seconds,
-    http_requests_total,
-    http_requests_in_progress,
-    http_errors_total,
-    exception_count,
-    database_query_duration_seconds,
-    database_operations_total,
-    code_analysis_duration_seconds,
-    code_analysis_total,
-    llm_requests_total,
-    llm_request_duration_seconds,
-    llm_tokens_used,
-    cache_operations_total,
-    celery_tasks_total,
-    celery_task_duration_seconds,
-    auth_attempts_total,
-    github_webhook_events_total,
-    github_api_requests_total,
     MetricsTimer,
     record_http_request,
     record_exception,

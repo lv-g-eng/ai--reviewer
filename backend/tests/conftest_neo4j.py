@@ -6,9 +6,7 @@ It handles both testcontainer-based tests (when Docker is available) and
 mock-based tests (when Docker is not available).
 """
 import pytest
-import os
 import subprocess
-from typing import Optional
 
 
 def is_docker_available() -> bool:

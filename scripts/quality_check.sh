@@ -76,13 +76,17 @@ fi
 
 # 生成质量报告
 echo -e "\n📊 生成质量报告..."
+
+# Calculate success rate using Python instead of bc
+SUCCESS_RATE=$(python.exe -c "print(f'{$PASSED_CHECKS * 100 / $TOTAL_CHECKS:.1f}' if $TOTAL_CHECKS > 0 else '0.0')")
+
 cat > quality_report.json << EOF
 {
     "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
     "total_checks": $TOTAL_CHECKS,
     "passed_checks": $PASSED_CHECKS,
     "failed_checks": $FAILED_CHECKS,
-    "success_rate": $(echo "scale=2; $PASSED_CHECKS * 100 / $TOTAL_CHECKS" | bc -l),
+    "success_rate": $SUCCESS_RATE,
     "quality_gate_status": "$([ $FAILED_CHECKS -eq 0 ] && echo 'PASSED' || echo 'FAILED')"
 }
 EOF
@@ -92,8 +96,6 @@ echo -e "\n📈 质量检查摘要:"
 echo -e "总检查项: $TOTAL_CHECKS"
 echo -e "${GREEN}通过: $PASSED_CHECKS${NC}"
 echo -e "${RED}失败: $FAILED_CHECKS${NC}"
-
-SUCCESS_RATE=$(echo "scale=1; $PASSED_CHECKS * 100 / $TOTAL_CHECKS" | bc -l)
 echo -e "成功率: $SUCCESS_RATE%"
 
 if [ $FAILED_CHECKS -eq 0 ]; then

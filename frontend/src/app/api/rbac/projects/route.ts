@@ -42,15 +42,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('[POST /api/rbac/projects] Creating new project');
-    
     const cookieStore = await cookies();
     const accessToken = cookieStore.get('access_token')?.value;
 
-    console.log('[POST] Access token exists:', !!accessToken);
-
     if (!accessToken) {
-      console.error('[POST] No access token found');
       return NextResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -58,10 +53,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('[POST] Request body:', body);
 
     const backendUrl = `${BACKEND_URL}/api/v1/rbac/projects`;
-    console.log('[POST] Calling backend:', backendUrl);
 
     const response = await fetch(backendUrl, {
       method: 'POST',
@@ -72,11 +65,8 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    console.log('[POST] Backend response status:', response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[POST] Backend error response:', errorText);
       
       let error;
       try {
@@ -89,11 +79,9 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('[POST] Project created successfully:', data.id);
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('[POST] Error creating project:', error);
-    console.error('[POST] Error stack:', error.stack);
+    console.error('Error creating project:', error);
     return NextResponse.json(
       { detail: `Internal server error: ${error.message}` },
       { status: 500 }

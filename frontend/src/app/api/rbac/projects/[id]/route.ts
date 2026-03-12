@@ -93,16 +93,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    console.log('[DELETE] Project ID:', id);
     
     const cookieStore = await cookies();
     const accessToken = cookieStore.get('access_token')?.value;
-    
-    console.log('[DELETE] Access token exists:', !!accessToken);
-    console.log('[DELETE] Backend URL:', BACKEND_URL);
 
     if (!accessToken) {
-      console.error('[DELETE] No access token found in cookies');
       return NextResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -110,7 +105,6 @@ export async function DELETE(
     }
 
     const backendUrl = `${BACKEND_URL}/api/v1/rbac/projects/${id}`;
-    console.log('[DELETE] Calling backend:', backendUrl);
 
     const response = await fetch(backendUrl, {
       method: 'DELETE',
@@ -120,11 +114,8 @@ export async function DELETE(
       },
     });
 
-    console.log('[DELETE] Backend response status:', response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[DELETE] Backend error response:', errorText);
       
       let error;
       try {
@@ -137,7 +128,6 @@ export async function DELETE(
     }
 
     const responseText = await response.text();
-    console.log('[DELETE] Backend success response:', responseText);
     
     let data;
     try {
@@ -148,8 +138,7 @@ export async function DELETE(
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('[DELETE] Error deleting project:', error);
-    console.error('[DELETE] Error stack:', error.stack);
+    console.error('Error deleting project:', error);
     return NextResponse.json(
       { detail: `Internal server error: ${error.message}` },
       { status: 500 }

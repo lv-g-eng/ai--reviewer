@@ -31,13 +31,11 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('Backend response:', data);
     
     const token = data.access_token;
     const refreshToken = data.refresh_token;
     
     if (!token) {
-      console.error('No token in response:', data);
       return NextResponse.json(
         { detail: 'No token received from server', response: data },
         { status: 500 }

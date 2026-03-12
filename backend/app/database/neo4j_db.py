@@ -81,7 +81,7 @@ async def init_neo4j():
             neo4j_driver = None
 
     try:
-        logger.info("🔌 Connecting to Neo4j at {settings.NEO4J_URI}")
+        logger.info(f"🔌 Connecting to Neo4j at {settings.NEO4J_URI}")
 
         # Create driver with optimized settings for stability
         neo4j_driver = AsyncGraphDatabase.driver(
@@ -116,7 +116,7 @@ async def init_neo4j():
 
     except ServiceUnavailable as e:
         error_msg = f"Neo4j service unavailable: {e}"
-        logger.info("❌ {error_msg}")
+        logger.error(f"❌ {error_msg}")
         if is_ci_environment():
             logger.info("💡 CI Environment: Ensure Neo4j container is running and healthy")
             logger.info("   Check: docker ps | grep neo4j")
@@ -124,14 +124,14 @@ async def init_neo4j():
 
     except AuthError as e:
         error_msg = f"Neo4j authentication failed: {e}"
-        logger.info("❌ {error_msg}")
+        logger.error(f"❌ {error_msg}")
         if is_ci_environment():
             logger.info("💡 CI Environment: Check NEO4J_USER and NEO4J_PASSWORD secrets")
         raise RuntimeError(error_msg) from e
 
     except Exception as e:
         error_msg = f"Failed to initialize Neo4j: {e}"
-        logger.info("❌ {error_msg}")
+        logger.error(f"❌ {error_msg}")
 
         # Provide helpful context for common issues
         if "Connection refused" in str(e):
@@ -164,7 +164,7 @@ async def test_neo4j_connection():
         logger.info("✅ Neo4j connection successful")
         return True
     except Exception as e:
-        logger.info("❌ Neo4j connection failed: {e}")
+        logger.error(f"❌ Neo4j connection failed: {e}")
         return False
 
 

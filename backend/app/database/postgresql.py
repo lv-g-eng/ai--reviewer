@@ -91,5 +91,5 @@ async def test_postgres_connection():
         logger.info("✅ PostgreSQL connection successful")
         return True
     except Exception as e:
-        logger.info("❌ PostgreSQL connection failed: {e}")
+        logger.error(f"❌ PostgreSQL connection failed: {e}")
         return False

@@ -6,6 +6,9 @@ const nextConfig = {
     compress: true,
     generateEtags: true,
 
+    // Development server configuration for remote preview
+    allowedHosts: ['.monkeycode-ai.online'],
+
     // Exclude test files from pages
     pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
 

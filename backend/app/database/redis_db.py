@@ -77,7 +77,7 @@ async def test_redis_connection():
         logger.info("✅ Redis connection successful")
         return True
     except Exception as e:
-        logger.info("❌ Redis connection failed: {e}")
+        logger.error(f"Redis connection failed: {e}")
         return False
 
 

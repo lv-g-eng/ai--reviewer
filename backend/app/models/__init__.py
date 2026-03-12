@@ -28,10 +28,9 @@ from app.models.library import (
     ProjectContext
 )
 
-
-class UserRole(str, enum.Enum):
-    """User role enum - simplified for invitation-based system"""
-    user = "user"
+# Import Role from common library to ensure consistency with frontend
+# Note: This is the same Role enum used by auth/models/enums.py
+from common.shared.enums import Role as UserRole
 
 
 class PRStatus(str, enum.Enum):

@@ -1,38 +1,41 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
-export async function GET() {
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
+export async function GET(request: NextRequest) {
   try {
-    // Mock data - replace with actual backend API call
-    const reviews = [
-      {
-        id: '1',
-        title: 'Add user authentication feature',
-        repository: 'frontend-app',
-        author: 'john.doe',
-        status: 'approved',
-        qualityScore: 92,
-        securityScore: 95,
-        createdAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-01-15T14:20:00Z',
-      },
-      {
-        id: '2',
-        title: 'Fix database connection pooling',
-        repository: 'backend-api',
-        author: 'jane.smith',
-        status: 'in_progress',
-        qualityScore: 85,
-        securityScore: 88,
-        createdAt: '2024-01-16T09:15:00Z',
-        updatedAt: '2024-01-16T11:45:00Z',
-      },
-    ];
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access_token')?.value;
 
-    return NextResponse.json(reviews);
+    if (!accessToken) {
+      return NextResponse.json(
+        { detail: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
+
+    // Fetch user's reviews from backend
+    // Using the projects endpoint to get all accessible projects with their reviews
+    const response = await fetch(`${BACKEND_URL}/api/v1/projects?include_reviews=true`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return NextResponse.json(error, { status: response.status });
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching reviews:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch reviews' },
+      { detail: 'Internal server error' },
       { status: 500 }
     );
   }

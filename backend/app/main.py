@@ -179,7 +179,7 @@ async def lifespan(app: FastAPI):
                         id=uuid.uuid4(),
                         email="admin@example.com",
                         password_hash=hash_password("Admin123!"),
-                        role=UserRole.user,
+                        role=UserRole.ADMIN,
                         full_name="Admin User",
                         is_active=True
                     )

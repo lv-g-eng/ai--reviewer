@@ -139,6 +139,16 @@ test_out*.txt
 service_consolidation_report.json
 test-results.json
 mock-data-audit-report.txt
+code_quality_report.json
+coverage.json
+e2e_out.txt
+errors.json
+failures*.txt
+import_debug_results.txt
+collection_errors_summary.txt
+test-results.json
+report.json
+*.log
 
 # Coverage reports
 .coverage

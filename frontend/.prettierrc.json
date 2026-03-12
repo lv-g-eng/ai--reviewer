@@ -5,8 +5,12 @@
     "printWidth": 100,
     "tabWidth": 2,
     "useTabs": false,
-    "arrowParens": "always",
+    "bracketSpacing": true,
+    "arrowParens": "avoid",
     "endOfLine": "lf",
+    "quoteProps": "as-needed",
+    "bracketSameLine": false,
+    "proseWrap": "preserve",
     "plugins": [
         "prettier-plugin-tailwindcss"
     ]

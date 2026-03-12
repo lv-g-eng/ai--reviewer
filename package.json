@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "description": "AI-powered code review and architecture analysis platform",
   "private": true,
-  "workspaces": [],
+  "workspaces": [
+    "frontend",
+    "common",
+    "shared"
+  ],
   "scripts": {
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",

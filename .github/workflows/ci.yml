@@ -90,7 +90,7 @@ jobs:
         working-directory: ./backend
         run: |
           pip install ruff
-          ruff check app/ --ignore E501 --ignore F401 || true
+          ruff check app/ --ignore E501 --ignore F401
 
       - name: Run Tech Debt Monitor
         run: |
@@ -102,8 +102,7 @@ jobs:
           TESTING: true
         run: |
           pip install pytest pytest-asyncio pytest-cov
-          pytest tests/ -v --tb=short --cov=app --cov-report=xml || true
-        continue-on-error: true
+          pytest tests/ -v --tb=short --cov=app --cov-report=xml
 
   # ========================================
   # Frontend Build & Test
@@ -129,13 +128,11 @@ jobs:
 
       - name: Run linting
         working-directory: ./frontend
-        run: npm run lint || true
-        continue-on-error: true
+        run: npm run lint
 
       - name: Type check
         working-directory: ./frontend
-        run: npm run type-check || true
-        continue-on-error: true
+        run: npm run type-check
 
       - name: Build
         working-directory: ./frontend
@@ -145,8 +142,7 @@ jobs:
 
       - name: Run tests
         working-directory: ./frontend
-        run: npm run test || true
-        continue-on-error: true
+        run: npm run test
 
   # ========================================
   # Security Scan

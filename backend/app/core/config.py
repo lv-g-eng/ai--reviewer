@@ -89,9 +89,14 @@ class Settings(BaseSettings):
     DEFAULT_LLM_PROVIDER: str = Field(default="openai", description="Default LLM provider (openai, anthropic, openrouter, lmstudio)")
     DEFAULT_LLM_MODEL: str = Field(default="gpt-4-turbo-preview", description="Default LLM model")
 
+    # DeepSeek Configuration
+    DEEPSEEK_API_KEY: Optional[str] = Field(default=None, description="DeepSeek API key for AI code review")
+    DEEPSEEK_BASE_URL: str = Field(default="https://api.deepseek.com", description="DeepSeek API base URL")
+    DEEPSEEK_MODEL: str = Field(default="deepseek-chat", description="DeepSeek model name")
+
     # LM Studio Configuration (local inference server)
     LMSTUDIO_BASE_URL: str = Field(
-        default="http://10.122.128.180:1234/v1",
+        default="http://localhost:1234/v1",
         description="LM Studio server base URL (OpenAI-compatible endpoint)"
     )
     LMSTUDIO_MODEL: str = Field(
@@ -103,7 +108,7 @@ class Settings(BaseSettings):
         description="LM Studio request timeout in seconds"
     )
     LMSTUDIO_ENABLED: bool = Field(
-        default=True,
+        default=False,
         description="Enable LM Studio as an LLM provider for project reviews"
     )
     
@@ -141,10 +146,12 @@ class Settings(BaseSettings):
     @field_validator("REDIS_PASSWORD", mode="before")
     @classmethod
     def validate_redis_password(cls, v):
-        """确保Redis密码简单可靠"""
-        if v and any(char in v for char in ['%', '$', '^', '&', '#', '@', '!', '*']):
+        """确保Redis密码简单可靠，空密码保持为空"""
+        if not v:
+            return ""  # Redis 默认无密码，保持为空
+        if any(char in v for char in ['%', '$', '^', '&', '#', '@', '!', '*']):
             return "redis123"
-        return v or "redis123"
+        return v
     
     @field_validator("NEO4J_PASSWORD", mode="before")
     @classmethod
@@ -496,6 +503,10 @@ class Settings(BaseSettings):
     def is_lmstudio_enabled(self) -> bool:
         """Check if LM Studio local inference is enabled"""
         return self.LMSTUDIO_ENABLED and bool(self.LMSTUDIO_BASE_URL)
+
+    def is_deepseek_enabled(self) -> bool:
+        """Check if DeepSeek AI integration is enabled"""
+        return bool(self.DEEPSEEK_API_KEY)
 
     def is_ssl_enabled(self) -> bool:
         """Check if SSL/TLS is enabled (Requirement 8.5)"""

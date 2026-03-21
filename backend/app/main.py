@@ -27,8 +27,11 @@ async def lifespan(app: FastAPI):
     # Startup
     setup_logging(level=settings.LOG_LEVEL, enable_json=True)
     
-    # Initialize OpenTelemetry tracing if enabled (Requirement 18.1)
-    if settings.is_tracing_enabled():
+    # Skip database initialization during testing as it's handled by fixtures
+    testing = os.environ.get("TESTING") == "true"
+    
+    # Initialize OpenTelemetry tracing if enabled (Requirement 18.1) - skip in testing
+    if not testing and settings.is_tracing_enabled():
         from app.core.tracing import setup_tracing
         tracing_config = setup_tracing(
             service_name=settings.PROJECT_NAME,
@@ -46,8 +49,7 @@ async def lifespan(app: FastAPI):
     from app.services.graceful_shutdown import setup_graceful_shutdown
     shutdown_handler = setup_graceful_shutdown(shutdown_timeout=30)
     
-    # Skip database initialization during testing as it's handled by fixtures
-    testing = os.environ.get("TESTING") == "true"
+    # testing flag already set above
     
     # Run security validation first (Critical)
     if not testing:
@@ -136,8 +138,8 @@ async def lifespan(app: FastAPI):
         logger.info("Testing mode: Skipping database initialization in lifespan")
         postgres_available = True # Assume available as it's handled by fixtures
     
-    # Apply database migrations if PostgreSQL is available
-    if postgres_available:
+    # Apply database migrations if PostgreSQL is available (skip in testing)
+    if postgres_available and not testing:
         try:
             from app.database.migration_manager import get_migration_manager
             migration_manager = get_migration_manager()
@@ -192,9 +194,8 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning("Could not create default user: %s", str(e))
     
-    # Initialize authentication system
+    # Authentication system uses module-level settings import
     try:
-        from app.core.config import settings
         logger.info("Authentication initialized (JWT expiry: %d hours)", settings.JWT_EXPIRATION_HOURS)
     except Exception as e:
         logger.warning("Authentication initialization warning: %s", str(e))
@@ -207,6 +208,7 @@ async def lifespan(app: FastAPI):
     
     features_enabled = {
         "GitHub Integration": settings.is_github_integration_enabled(),
+        "DeepSeek AI": settings.is_deepseek_enabled(),
         "OpenAI": settings.is_openai_enabled(),
         "Anthropic": settings.is_anthropic_enabled(),
         "Ollama Local LLM": settings.is_ollama_enabled(),
@@ -500,8 +502,6 @@ configure_prometheus_middleware(app)
 from app.core.prometheus_metrics import set_app_info
 set_app_info(version=settings.VERSION, environment=settings.ENVIRONMENT)
 
-# Compression middleware
-app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Request Logging Middleware
 app.middleware("http")(log_request)
@@ -564,6 +564,7 @@ async def readiness_check():
     Validates Requirements: 1.1, 1.2, 2.1, 2.4, 2.5
     """
     
+    from app.services.health_service import get_health_service
     health_service = get_health_service()
     readiness_status = await health_service.get_readiness_status()
     
@@ -586,6 +587,7 @@ async def liveness_check():
     Validates Requirements: 1.1, 1.2, 2.5
     """
     
+    from app.services.health_service import get_health_service
     health_service = get_health_service()
     liveness_status = await health_service.get_liveness_status()
     

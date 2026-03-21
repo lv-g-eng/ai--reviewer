@@ -33,31 +33,39 @@ class ReviewResult:
 
 
 class AIPRReviewer:
-    """AI-powered Pull Request Reviewer."""
+    """AI-powered Pull Request Reviewer with DeepSeek integration."""
     
-    def __init__(self, agentic_ai_service: Optional[Any] = None):
+    def __init__(self, agentic_ai_service: Optional[Any] = None, deepseek_service: Optional[Any] = None):
         """
         Initialize the AI PR Reviewer.
         
         Args:
             agentic_ai_service: Service for complex reasoning and decision support
+            deepseek_service: DeepSeek AI service for code review (preferred)
         """
         self.agentic_service = agentic_ai_service
+        self.deepseek_service = deepseek_service
         self.logger = logger
     
     async def analyze_pr(
         self, 
         git_diff: str, 
         design_standard: str,
-        architectural_patterns: Optional[Dict] = None
+        architectural_patterns: Optional[Dict] = None,
+        pr_title: str = "",
+        pr_description: str = "",
     ) -> ReviewResult:
         """
         Perform comprehensive PR analysis.
+        
+        Priority: DeepSeek AI -> Agentic AI -> Rule-based fallback
         
         Args:
             git_diff: Git diff string to analyze
             design_standard: Text describing design standards
             architectural_patterns: Optional architectural patterns to check against
+            pr_title: PR title for AI context
+            pr_description: PR description for AI context
             
         Returns:
             ReviewResult containing analysis results
@@ -69,25 +77,41 @@ class AIPRReviewer:
             
             analysis_data = {}
             
+            # Priority 1: Try DeepSeek AI
+            if self.deepseek_service and self.deepseek_service.is_available:
+                try:
+                    self.logger.info("Using DeepSeek AI for PR analysis")
+                    ds_result = await self.deepseek_service.review_code_diff(
+                        diff_content=git_diff,
+                        pr_title=pr_title,
+                        pr_description=pr_description,
+                    )
+                    return ReviewResult(
+                        safety_score=ds_result.safety_score,
+                        compliance_status=self._determine_compliance_status(ds_result.safety_score),
+                        refactoring_suggestions=ds_result.refactoring_suggestions,
+                        architectural_issues=ds_result.architectural_issues,
+                        security_issues=ds_result.security_issues,
+                        code_quality_issues=ds_result.code_quality_issues,
+                    )
+                except Exception as e:
+                    self.logger.warning(f"DeepSeek AI failed, trying fallback: {e}")
+            
+            # Priority 2: Try Agentic AI
             if self.agentic_service:
-                # Use Agentic AI for complex reasoning
                 context = {
                     "git_diff": git_diff,
                     "design_standard": design_standard,
                     "architectural_patterns": architectural_patterns
                 }
-                
-                # Perform reasoning task
                 result = await self.agentic_service.perform_complex_reasoning(
                     task_type="pr_review",
                     context=context
                 )
-                
-                # Parse reasoning result (assuming it returns JSON-like structure in reasoning_chain)
                 if result.reasoning_chain:
                     analysis_data = self._parse_analysis_result(result.reasoning_chain[0])
             else:
-                self.logger.warning("Agentic AI Service not available, returning empty analysis")
+                self.logger.warning("No AI service available, using rule-based analysis")
             
             # Calculate safety score
             safety_score = self._calculate_safety_score(analysis_data, git_diff)

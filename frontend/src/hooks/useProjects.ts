@@ -172,6 +172,7 @@ export function useSyncProject() {
 
 /**
  * Create new project with GitHub connection options
+ * Uses the /api/projects/create route to ensure github_repo_url is properly forwarded
  */
 export function useCreateProject() {
   const queryClient = useQueryClient();
@@ -186,7 +187,22 @@ export function useCreateProject() {
       github_cli_token?: string;
       language?: string;
     }) => {
-      return apiClient.post<Project>('/rbac/projects', data);
+      // Use our Next.js API route which properly forwards all data to backend
+      const response = await fetch('/api/projects/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Includes cookies for auth
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Failed to create project' }));
+        throw new Error(error.detail || 'Failed to create project');
+      }
+
+      return response.json() as Promise<Project>;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });

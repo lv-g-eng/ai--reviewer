@@ -10,7 +10,7 @@ Validates Requirements: 2.6, 12.5
 import logging
 import time
 # Import consolidated enums from common library
-from common.shared.enums import CircuitBreakerState
+from common.shared.enums import CircuitBreakerState as CircuitState
 from typing import Callable, Any, Optional
 from dataclasses import dataclass
 from threading import Lock

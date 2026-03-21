@@ -49,8 +49,6 @@ def reset_cache_manager():
     _cache_manager = None
 
 
-# Analysis cache instance for backward compatibility
-analysis_cache = get_cache_manager()
 
 
 def get_cache_stats() -> Dict[str, Any]:

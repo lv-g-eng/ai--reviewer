@@ -798,3 +798,72 @@ async def get_architecture_analysis(
     )
 
     return response
+
+
+class DiagramGenerateRequest(BaseModel):
+    """Request model for architecture diagram generation."""
+    files: List[Dict[str, Any]] = Field(
+        ..., description="List of file dicts with 'filename' and optional 'patch'"
+    )
+    review_summary: Optional[str] = Field(
+        None, description="Optional code review summary for context"
+    )
+
+
+class DiagramGenerateResponse(BaseModel):
+    """Response model for architecture diagram generation."""
+    diagram: str = Field(..., description="Mermaid diagram definition")
+    diagram_type: str = Field(default="flowchart", description="Type of diagram generated")
+    file_count: int = Field(ge=0)
+    api_version: str = Field(default=API_VERSION)
+
+
+@router.post("/diagram/generate", response_model=DiagramGenerateResponse)
+async def generate_architecture_diagram(
+    request: DiagramGenerateRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+):
+    """
+    Generate a Mermaid architecture diagram from code files using DeepSeek AI.
+
+    Accepts a list of code files (with filenames and optional patches/content)
+    and generates a visual architecture diagram in Mermaid format.
+
+    Falls back to rule-based diagram generation if DeepSeek API is unavailable.
+
+    Args:
+        request: DiagramGenerateRequest with files and optional review summary
+
+    Returns:
+        DiagramGenerateResponse with Mermaid diagram definition
+    """
+    from app.services.deepseek_service import get_deepseek_service
+
+    deepseek = get_deepseek_service()
+
+    try:
+        diagram = await deepseek.generate_architecture_diagram(
+            code_files=request.files,
+            review_summary=request.review_summary,
+        )
+
+        # Detect diagram type
+        diagram_type = "flowchart"
+        if diagram.strip().startswith("classDiagram"):
+            diagram_type = "classDiagram"
+        elif diagram.strip().startswith("sequenceDiagram"):
+            diagram_type = "sequenceDiagram"
+        elif diagram.strip().startswith("graph"):
+            diagram_type = "graph"
+
+        return DiagramGenerateResponse(
+            diagram=diagram,
+            diagram_type=diagram_type,
+            file_count=len(request.files),
+            api_version=API_VERSION,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate architecture diagram: {str(e)[:100]}"
+        )

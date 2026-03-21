@@ -217,22 +217,25 @@ async def create_project(
         )
 
         db.add(new_project)
-        await db.commit()
+        await db.flush()  # flush instead of commit — let get_db handle the commit
         await db.refresh(new_project)
 
-        # Log audit event
-        ip_address = request.client.host if request.client else "0.0.0.0"
-        await _log_audit_action(
-            db=db,
-            user_id=current_user.user_id,
-            username=current_user.username,
-            action="CREATE_PROJECT",
-            ip_address=ip_address,
-            success=True,
-            resource_type="Project",
-            resource_id=str(new_project.id),
-            user_agent=request.headers.get("user-agent")
-        )
+        # Log audit event (non-critical, don't crash if it fails)
+        try:
+            ip_address = request.client.host if request.client else "0.0.0.0"
+            await _log_audit_action(
+                db=db,
+                user_id=current_user.user_id,
+                username=current_user.username,
+                action="CREATE_PROJECT",
+                ip_address=ip_address,
+                success=True,
+                resource_type="Project",
+                resource_id=str(new_project.id),
+                user_agent=request.headers.get("user-agent")
+            )
+        except Exception as audit_err:
+            logger.warning(f"Audit log failed (non-critical): {audit_err}")
 
         return ProjectResponse(
             id=str(getattr(new_project, 'id')),
@@ -251,10 +254,10 @@ async def create_project(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating project: {str(e)}")
+        logger.error(f"Error creating project: {type(e).__name__}: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create project"
+            detail=f"Failed to create project: {str(e)}"
         )
 
 

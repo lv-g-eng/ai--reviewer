@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/main-layout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -66,11 +66,6 @@ export default function ProfilePage() {
   const [defaultProvider, setDefaultProvider] = useState('openrouter');
   const [defaultModel, setDefaultModel] = useState('anthropic/claude-3.5-sonnet');
 
-  // Load API settings on mount
-  useState(() => {
-    loadAPISettings();
-  });
-
   const loadAPISettings = async () => {
     try {
       const settings = await apiClient.get<APISettings>('/user/settings/api-settings');
@@ -82,9 +77,14 @@ export default function ProfilePage() {
         setDefaultModel(settings.default_llm_model);
       }
     } catch (error) {
-      console.error('Failed to load API settings:', error);
+      // API settings endpoint may not exist, ignore gracefully
     }
   };
+
+  // Load API settings on mount
+  useEffect(() => {
+    loadAPISettings();
+  }, []);
 
   const handleSaveAPISettings = async () => {
     setIsLoading(true);
@@ -106,7 +106,7 @@ export default function ProfilePage() {
       }
 
       await apiClient.put('/user/settings/api-settings', updateData);
-      
+
       toast({
         title: 'Success',
         description: 'API settings saved successfully',
@@ -134,7 +134,7 @@ export default function ProfilePage() {
     setIsLoading(true);
     try {
       await apiClient.delete(`/user/settings/api-settings/${provider}`);
-      
+
       toast({
         title: 'Success',
         description: `${provider} API key deleted successfully`,
@@ -302,8 +302,8 @@ export default function ProfilePage() {
                           activity.status === 'approved'
                             ? 'bg-green-500'
                             : activity.status === 'critical'
-                            ? 'bg-red-500'
-                            : 'bg-yellow-500'
+                              ? 'bg-red-500'
+                              : 'bg-yellow-500'
                         }
                       >
                         {activity.status.replace('_', ' ')}
@@ -321,7 +321,7 @@ export default function ProfilePage() {
                 <Key className="h-5 w-5" />
                 <h3 className="text-lg font-semibold">API Configuration</h3>
               </div>
-              
+
               <p className="text-sm text-muted-foreground mb-6">
                 Configure your personal API keys for AI code review services. Your keys are encrypted and stored securely.
               </p>
@@ -360,7 +360,7 @@ export default function ProfilePage() {
 
                 <div className="border-t pt-6">
                   <h4 className="font-semibold mb-4">API Keys</h4>
-                  
+
                   {/* OpenRouter API Key */}
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center justify-between">

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Depends, Query
 
-from app.core.dependencies import get_current_user
+from app.auth import get_current_user
 from app.schemas.security_models import (
     SecurityScanResult,
     ProjectQualityMetrics

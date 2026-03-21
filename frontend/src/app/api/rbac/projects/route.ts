@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-// Use BACKEND_URL for server-side (Docker network), fallback to NEXT_PUBLIC_BACKEND_URL for local dev
-const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+// Use BACKEND_URL for server-side (Docker network), fallback to NEXT_PUBLIC_BACKEND_URL
+// In Docker: NEXT_PUBLIC_BACKEND_URL=http://backend:8000
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://backend:8000';
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,14 +68,14 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      
+
       let error;
       try {
         error = JSON.parse(errorText);
       } catch {
         error = { detail: errorText || 'Unknown error' };
       }
-      
+
       return NextResponse.json(error, { status: response.status });
     }
 

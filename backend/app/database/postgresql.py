@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
+from sqlalchemy import text
 from typing import AsyncGenerator
 
 from app.core.config import settings
@@ -61,6 +62,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def init_postgres():
     """Initialize PostgreSQL database"""
     async with engine.begin() as conn:
+        # Enable uuid-ossp extension for uuid_generate_v4()
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""))
         # Create all tables
         await conn.run_sync(Base.metadata.create_all)
     

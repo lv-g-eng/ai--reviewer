@@ -9,9 +9,19 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from pydantic import BaseModel
 import logging
 
-from app.core.dependencies import get_security_compliance_service
+try:
+    from app.services.security_compliance_service import SecurityComplianceService
+except ImportError:
+    SecurityComplianceService = None
+
 from app.schemas.security_models import ComplianceReport
-from app.services.security_compliance_service import SecurityComplianceService
+
+
+def get_security_compliance_service():
+    """Factory for SecurityComplianceService."""
+    if SecurityComplianceService is None:
+        raise HTTPException(status_code=503, detail="Security compliance service not available")
+    return SecurityComplianceService()
 
 logger = logging.getLogger(__name__)
 

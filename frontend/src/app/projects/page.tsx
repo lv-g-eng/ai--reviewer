@@ -242,8 +242,8 @@ function ProjectsPageContent() {
       })
       setShowCreateModal(true)
     } else if (error) {
-      console.error('[Projects Page] GitHub connection error:', error)
-      console.error('[Projects Page] Error detail:', errorDetail || errorDescription)
+      console.warn('[Projects Page] GitHub connection error:', error)
+      console.warn('[Projects Page] Error detail:', errorDetail || errorDescription)
 
       const errorMsg = errorDetail || errorDescription || 'Failed to connect GitHub account'
 
@@ -271,11 +271,11 @@ function ProjectsPageContent() {
     return projects
       .filter(project => {
         const matchesSearch = project.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-                              (project.description?.toLowerCase() || '').includes(debouncedSearchTerm.toLowerCase())
+          (project.description?.toLowerCase() || '').includes(debouncedSearchTerm.toLowerCase())
 
         const matchesStatus = selectedStatus === 'all' ||
-                             (selectedStatus === 'active' && project.is_active) ||
-                             (selectedStatus === 'inactive' && !project.is_active)
+          (selectedStatus === 'active' && project.is_active) ||
+          (selectedStatus === 'inactive' && !project.is_active)
 
         const matchesLanguage = selectedLanguage === 'all' || project.language === selectedLanguage
 

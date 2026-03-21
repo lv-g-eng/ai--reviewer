@@ -41,15 +41,25 @@ from .circuit_breaker import (
     get_all_circuit_breaker_states,
 )
 
-from .llm_provider import (
-    LLMProvider,
-    LLMProviderType,
-    LLMProviderConfig,
-    LLMOrchestrator,
-    OpenAIProvider,
-    AnthropicProvider,
-    OllamaProvider,
-)
+try:
+    from .llm_provider import (
+        LLMProvider,
+        LLMProviderType,
+        LLMProviderConfig,
+        LLMOrchestrator,
+        OpenAIProvider,
+        AnthropicProvider,
+        OllamaProvider,
+    )
+except ImportError:
+    # llm_provider module may not be present
+    LLMProvider = None
+    LLMProviderType = None
+    LLMProviderConfig = None
+    LLMOrchestrator = None
+    OpenAIProvider = None
+    AnthropicProvider = None
+    OllamaProvider = None
 
 from .cache_manager import (
     CacheManager,

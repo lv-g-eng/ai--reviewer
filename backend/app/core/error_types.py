@@ -6,12 +6,11 @@ from enum import Enum
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, Any
-from backend.tests.utils.secure_test_data import get_test_password, get_test_jwt_secret, get_test_api_key
 
 
 class SensitiveDataType(Enum):
     """需要掩码的敏感数据类型"""
-    PASSWORD = get_test_password("password")
+    PASSWORD = "password"
     API_KEY = "api_key"
     TOKEN = "token"
     CONNECTION_STRING = "connection_string"

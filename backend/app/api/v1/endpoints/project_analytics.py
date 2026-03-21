@@ -21,7 +21,14 @@ from app.models.code_review import (
     ArchitectureViolation,
     ReviewStatus
 )
-from app.services.llm_service import llm_service
+try:
+    from app.services.llm_service import llm_service
+except ImportError:
+    # Stub llm_service when module is not available
+    class _StubLLMService:
+        def is_initialized(self): return False
+        async def generate_architecture_insights(self, data): return {}
+    llm_service = _StubLLMService()
 from app.services.project_analysis_service import ProjectAnalysisService  # Added missing import
 
 logger = logging.getLogger(__name__)

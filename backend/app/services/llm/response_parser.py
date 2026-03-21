@@ -13,29 +13,20 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, asdict
 # Import consolidated enums from common library
 from common.shared.enums import Severity
-    INFO = "info"  # For informational comments
-    
-    @classmethod
-    def from_string(cls, value: str) -> "Severity":
-        """
-        Parse severity from string, case-insensitive.
-        
-        Args:
-            value: Severity string
-            
-        Returns:
-            Severity enum value, defaults to MEDIUM if unknown
-        """
-        value_lower = value.lower().strip()
-        
-        for severity in cls:
-            if severity.value == value_lower:
-                return severity
-        
-        # Default to MEDIUM for unknown severities
-        logger.warning(f"Unknown severity '{value}', defaulting to MEDIUM")
-        return cls.MEDIUM
 
+logger = logging.getLogger(__name__)
+
+
+def _severity_from_string(value: str) -> Severity:
+    """Parse severity from string, case-insensitive. Defaults to MEDIUM."""
+    value_lower = value.lower().strip()
+    for severity in Severity:
+        if severity.value == value_lower:
+            return severity
+    return Severity.MEDIUM
+
+# Monkey-patch from_string for backward compatibility
+Severity.from_string = classmethod(lambda cls, v: _severity_from_string(v))
 
 @dataclass
 class ReviewComment:

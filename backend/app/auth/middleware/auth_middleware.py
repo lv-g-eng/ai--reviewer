@@ -5,7 +5,7 @@ from fastapi import Request, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.services.auth_service import TokenPayload
+from app.auth.services import TokenPayload
 from app.auth.services.rbac_service import RBACService
 from app.auth.models import Role, Permission
 from app.database.postgresql import get_db

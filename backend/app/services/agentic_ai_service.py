@@ -15,7 +15,16 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 
-from app.shared.llm_provider import LLMOrchestrator, LLMProviderConfig, LLMProviderType
+try:
+    from app.shared.llm_provider import LLMOrchestrator, LLMProviderConfig, LLMProviderType
+except ImportError:
+    # Stub types when llm_provider module is missing
+    LLMOrchestrator = None
+    LLMProviderConfig = None
+    LLMProviderType = None
+
+import logging
+logger = logging.getLogger(__name__)
 from app.services.context_builder import create_context_builder
 
 class CleanCodePrinciple(str, Enum):

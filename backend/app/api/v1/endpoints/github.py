@@ -534,7 +534,9 @@ async def sync_project(
     _: bool = Depends(check_project_access)
 ):
     """
-    Manually trigger project synchronization with GitHub
+    Manually trigger project synchronization with GitHub.
+    
+    Fetches repo info and open PRs from GitHub API, stores them in DB.
     """
     stmt = select(Project).where(Project.id == project_id)
     result = await db.execute(stmt)
@@ -546,15 +548,94 @@ async def sync_project(
             detail="Project not found"
         )
     
-        # Get repository info from GitHub
-        github_client = get_github_client()
-        repo_info = await github_client.get_repository(project.github_repo_url)
+    if not project.github_repo_url:
+        return Message(message="No GitHub repository URL configured for this project")
     
-    # Update project info
-    project.language = repo_info.get('language')
-    await db.commit()
-    
-    return Message(message="Project synchronized successfully")
+    try:
+        # Use the user's GitHub OAuth token from the database
+        user_github_token = getattr(current_user, 'github_token', None)
+        if not user_github_token:
+            return Message(message="GitHub account not connected. Please connect your GitHub account first.")
+        
+        from app.services.github_client import GitHubAPIClient
+        github_client = GitHubAPIClient(access_token=user_github_token)
+        
+        # Extract owner/repo from the URL for list_repository_prs
+        repo_url = project.github_repo_url
+        parts = repo_url.rstrip('/').rstrip('.git').split('/')
+        if len(parts) >= 2:
+            owner = parts[-2]
+            repo_name = parts[-1]
+            repo_full_name = f"{owner}/{repo_name}"
+        else:
+            return Message(message=f"Invalid GitHub repository URL: {repo_url}")
+        
+        # 1. Fetch repo info to update language (get_repository takes full URL)
+        try:
+            repo_info = await github_client.get_repository(repo_url)
+            if repo_info:
+                project.language = repo_info.get('language', project.language)
+                if repo_info.get('description') and not project.description:
+                    project.description = repo_info.get('description')
+        except Exception as repo_err:
+            logger.warning(f"Failed to fetch repo info for {repo_full_name}: {repo_err}")
+        
+        # 2. Fetch PRs from GitHub (list_repository_prs takes owner/repo)
+        try:
+            prs_data = await github_client.list_repository_prs(repo_full_name, state='all', limit=50)
+            
+            if prs_data:
+                # Get existing PR numbers to avoid duplicates
+                existing_prs_result = await db.execute(
+                    select(PullRequest.github_pr_number).where(PullRequest.project_id == project_id)
+                )
+                existing_pr_numbers = set(row[0] for row in existing_prs_result.fetchall())
+                
+                new_prs_count = 0
+                for pr_data in prs_data:
+                    pr_number = pr_data.get('number')
+                    if pr_number and pr_number not in existing_pr_numbers:
+                        # Map GitHub PR state to our PRStatus
+                        gh_state = pr_data.get('state', 'open')
+                        if gh_state == 'open':
+                            pr_status = PRStatus.pending
+                        elif gh_state == 'closed':
+                            pr_status = PRStatus.rejected
+                        else:
+                            pr_status = PRStatus.approved
+                        
+                        new_pr = PullRequest(
+                            project_id=project_id,
+                            github_pr_number=pr_number,
+                            title=pr_data.get('title', f'PR #{pr_number}'),
+                            description='',
+                            author=pr_data.get('user', 'unknown'),
+                            source_branch='',
+                            target_branch='main',
+                            status=pr_status,
+                            files_changed=0,
+                            lines_added=0,
+                            lines_deleted=0,
+                            risk_score=None,
+                            created_at=datetime.fromisoformat(
+                                pr_data.get('created_at', datetime.now(timezone.utc).isoformat()).replace('Z', '+00:00')
+                            ),
+                        )
+                        db.add(new_pr)
+                        new_prs_count += 1
+                
+                logger.info(f"Synced {new_prs_count} new PRs for project {project_id}")
+        except Exception as pr_err:
+            logger.warning(f"Failed to fetch PRs for {repo_full_name}: {pr_err}")
+        
+        project.updated_at = datetime.now(timezone.utc)
+        await db.commit()
+        
+        return Message(message=f"Project synchronized successfully with GitHub")
+        
+    except Exception as e:
+        logger.error(f"Error syncing project {project_id}: {str(e)}", exc_info=True)
+        return Message(message=f"Sync partially completed: {str(e)}")
 
 
 @router.get("/projects/{project_id}/pulls")

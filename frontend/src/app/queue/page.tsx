@@ -74,11 +74,19 @@ function ProjectQueueSection({ project }: { project: Project }) {
 
   if (isLoading) {
     return (
-      <TableRow>
-        <TableCell colSpan={7}>
-          <div className="h-8 w-full animate-pulse rounded-md bg-muted" />
-        </TableCell>
-      </TableRow>
+      <>
+        {[1, 2].map((i) => (
+          <TableRow key={`skeleton-${project.id}-${i}`}>
+            <TableCell><div className="h-4 w-24 animate-pulse rounded bg-muted" /></TableCell>
+            <TableCell><div className="h-4 w-16 animate-pulse rounded bg-muted" /></TableCell>
+            <TableCell><div className="h-4 w-32 animate-pulse rounded bg-muted" /></TableCell>
+            <TableCell><div className="h-4 w-16 animate-pulse rounded bg-muted" /></TableCell>
+            <TableCell><div className="h-4 w-20 animate-pulse rounded bg-muted" /></TableCell>
+            <TableCell><div className="h-4 w-28 animate-pulse rounded bg-muted" /></TableCell>
+            <TableCell><div className="h-4 w-8 animate-pulse rounded bg-muted" /></TableCell>
+          </TableRow>
+        ))}
+      </>
     );
   }
 

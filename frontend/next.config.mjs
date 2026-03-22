@@ -6,8 +6,7 @@ const nextConfig = {
     compress: true,
     generateEtags: true,
 
-    // Development server configuration for remote preview
-    allowedHosts: ['.monkeycode-ai.online'],
+
 
     // Exclude test files from pages
     pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
@@ -46,12 +45,8 @@ const nextConfig = {
     },
 
     serverExternalPackages: ['sharp'],
-    
-    // Turbopack configuration for Next.js 16+
-    turbopack: {
-        // Exclude test files from being treated as pages
-        exclude: ['**/*.test.tsx', '**/*.test.ts', '**/*.spec.tsx', '**/*.spec.ts'],
-    },
+
+
 
     // Headers for static asset caching (需求 11.2)
     async headers() {
@@ -145,7 +140,7 @@ const nextConfig = {
             // 2. CSS minification (handled by Next.js)
             // 3. Gzip compression (enabled via compress: true above)
             config.optimization.minimize = true;
-            
+
             // Configure source maps for production (需求 11.2)
             config.devtool = isServer ? false : 'source-map';
         }

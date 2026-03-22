@@ -146,10 +146,13 @@ class TracingConfig:
     def instrument_httpx(self) -> None:
         """Instrument HTTPX client for automatic tracing of HTTP requests"""
         try:
+            if HTTPXClientInstrumentor is None:
+                logger.info("HTTPX instrumentor not available, skipping")
+                return
             HTTPXClientInstrumentor().instrument()
             logger.info("✅ HTTPX instrumented for tracing")
         except Exception as e:
-            logger.error(f"Failed to instrument HTTPX: {e}")
+            logger.warning(f"HTTPX instrumentation skipped: {e}")
     
     def instrument_redis(self) -> None:
         """Instrument Redis client for automatic tracing"""
@@ -167,10 +170,13 @@ class TracingConfig:
             engine: SQLAlchemy engine instance
         """
         try:
+            if SQLAlchemyInstrumentor is None:
+                logger.info("SQLAlchemy instrumentor not available, skipping")
+                return
             SQLAlchemyInstrumentor().instrument(engine=engine)
             logger.info("✅ SQLAlchemy instrumented for tracing")
         except Exception as e:
-            logger.error(f"Failed to instrument SQLAlchemy: {e}")
+            logger.warning(f"SQLAlchemy instrumentation skipped: {e}")
     
     def get_tracer(self, name: str) -> trace.Tracer:
         """

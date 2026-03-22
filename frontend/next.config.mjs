@@ -46,7 +46,8 @@ const nextConfig = {
 
     serverExternalPackages: ['sharp'],
 
-
+    // Required for Next.js 16: acknowledge Turbopack is default bundler
+    turbopack: {},
 
     // Headers for static asset caching (需求 11.2)
     async headers() {

@@ -51,7 +51,8 @@ class GitHubAPIClient:
             access_token: GitHub personal access token or App token
         """
         self.token = access_token or settings.GITHUB_TOKEN
-        self.client = Github(self.token) if self.token else None
+        # Always create client — PyGithub supports unauthenticated access for public repos
+        self.client = Github(self.token) if self.token else Github()
         self.http_client = httpx.AsyncClient()
         
         # Initialize circuit breaker for GitHub API

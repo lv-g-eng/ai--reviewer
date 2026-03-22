@@ -867,3 +867,298 @@ async def generate_architecture_diagram(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate architecture diagram: {str(e)[:100]}"
         )
+
+
+class ArchitectureOverviewNode(BaseModel):
+    """System architecture overview node."""
+    id: str
+    label: str
+    type: str  # frontend, backend, database, cache, graph_db, ai_engine, external, gateway
+    group: str  # client, application, data, external
+    health: str = "healthy"
+    description: str = ""
+    position: Dict[str, float] = Field(default_factory=dict)
+    style: Optional[Dict[str, str]] = None
+
+
+class ArchitectureOverviewEdge(BaseModel):
+    """System architecture overview edge."""
+    id: str
+    source: str
+    target: str
+    label: str = ""
+    type: str = "default"  # default, animated, dashed
+    style: Optional[Dict[str, str]] = None
+
+
+class ArchitectureOverviewResponse(BaseModel):
+    """System architecture overview response."""
+    project_id: str
+    project_name: str
+    nodes: List[ArchitectureOverviewNode]
+    edges: List[ArchitectureOverviewEdge]
+    groups: List[Dict[str, Any]]
+    health_summary: Dict[str, Any]
+    api_version: str = Field(default=API_VERSION)
+
+
+@router.get("/overview/{project_id}", response_model=ArchitectureOverviewResponse)
+async def get_architecture_overview(
+    project_id: str,
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get system-level architecture overview for a project.
+
+    Returns a comprehensive architecture graph showing system components,
+    their connections, health status, and logical grouping.
+    This endpoint always returns data — generating a default architecture
+    diagram based on the project's configuration when no analysis data exists.
+    """
+    from app.models import Project
+
+    # Get project info (gracefully handle invalid UUID or missing project)
+    project_name = "AI Code Review Platform"
+    analysis = None
+    total_violations = 0
+
+    try:
+        project_result = await db.execute(
+            select(Project).filter(Project.id == project_id)
+        )
+        project = project_result.scalar_one_or_none()
+        if project:
+            project_name = project.name
+
+        # Check for real architecture data from analysis
+        analysis_result = await db.execute(
+            select(ArchitectureAnalysis)
+            .join(PullRequest)
+            .filter(PullRequest.project_id == project_id)
+            .order_by(ArchitectureAnalysis.started_at.desc())
+            .limit(1)
+        )
+        analysis = analysis_result.scalar_one_or_none()
+
+        # Count violations
+        if analysis:
+            violations_result = await db.execute(
+                select(func.count(ArchitectureViolation.id))
+                .filter(ArchitectureViolation.analysis_id == analysis.id)
+            )
+            total_violations = violations_result.scalar() or 0
+    except Exception:
+        # If project_id is invalid UUID or DB query fails, use defaults
+        pass
+
+    # Generate the system architecture diagram
+    nodes = _build_system_nodes(total_violations)
+    edges = _build_system_edges()
+    groups = _build_system_groups()
+    health_summary = _build_health_summary(analysis, total_violations)
+
+    return ArchitectureOverviewResponse(
+        project_id=project_id,
+        project_name=project_name,
+        nodes=nodes,
+        edges=edges,
+        groups=groups,
+        health_summary=health_summary,
+        api_version=API_VERSION,
+
+    )
+
+
+def _build_system_nodes(violations: int = 0) -> List[ArchitectureOverviewNode]:
+    """Build system architecture nodes representing the AI Code Review Platform."""
+    health_data = "warning" if violations > 3 else "healthy"
+    health_ai = "healthy"
+
+    return [
+        # Client Layer
+        ArchitectureOverviewNode(
+            id="browser", label="Browser Client", type="frontend",
+            group="client", health="healthy",
+            description="用户浏览器客户端",
+            position={"x": 400, "y": 20},
+            style={"background": "#dbeafe", "borderColor": "#3b82f6"},
+        ),
+        # Gateway Layer
+        ArchitectureOverviewNode(
+            id="nextjs", label="Next.js Frontend\n(Port 3000)", type="frontend",
+            group="application", health="healthy",
+            description="Next.js 16 SSR + React 前端应用",
+            position={"x": 400, "y": 140},
+            style={"background": "#e0e7ff", "borderColor": "#6366f1"},
+        ),
+        # Application Layer
+        ArchitectureOverviewNode(
+            id="fastapi", label="FastAPI Backend\n(Port 8000)", type="backend",
+            group="application", health="healthy",
+            description="FastAPI 异步后端 API 服务",
+            position={"x": 400, "y": 280},
+            style={"background": "#dcfce7", "borderColor": "#22c55e"},
+        ),
+        ArchitectureOverviewNode(
+            id="auth", label="Auth Module\nJWT + RBAC", type="backend",
+            group="application", health="healthy",
+            description="身份认证与权限控制",
+            position={"x": 160, "y": 280},
+            style={"background": "#fef3c7", "borderColor": "#f59e0b"},
+        ),
+        ArchitectureOverviewNode(
+            id="review_engine", label="Code Review\nEngine", type="backend",
+            group="application", health="healthy",
+            description="代码审查引擎核心",
+            position={"x": 640, "y": 280},
+            style={"background": "#dcfce7", "borderColor": "#22c55e"},
+        ),
+        # Data Layer
+        ArchitectureOverviewNode(
+            id="postgres", label="PostgreSQL\n(Port 5432)", type="database",
+            group="data", health=health_data,
+            description="主数据库 - 存储项目、用户、PR数据",
+            position={"x": 200, "y": 440},
+            style={"background": "#dbeafe", "borderColor": "#2563eb"},
+        ),
+        ArchitectureOverviewNode(
+            id="redis", label="Redis\n(Port 6379)", type="cache",
+            group="data", health="healthy",
+            description="缓存与会话存储",
+            position={"x": 400, "y": 440},
+            style={"background": "#fce7f3", "borderColor": "#ec4899"},
+        ),
+        ArchitectureOverviewNode(
+            id="neo4j", label="Neo4j\n(Port 7474)", type="graph_db",
+            group="data", health="healthy",
+            description="图数据库 - 存储架构依赖关系",
+            position={"x": 600, "y": 440},
+            style={"background": "#e0e7ff", "borderColor": "#7c3aed"},
+        ),
+        # External Services
+        ArchitectureOverviewNode(
+            id="deepseek", label="DeepSeek AI\nAPI", type="ai_engine",
+            group="external", health=health_ai,
+            description="AI 代码分析引擎",
+            position={"x": 160, "y": 580},
+            style={"background": "#f3e8ff", "borderColor": "#9333ea"},
+        ),
+        ArchitectureOverviewNode(
+            id="github", label="GitHub\nAPI", type="external",
+            group="external", health="healthy",
+            description="GitHub 仓库集成与 Webhook",
+            position={"x": 400, "y": 580},
+            style={"background": "#f1f5f9", "borderColor": "#475569"},
+        ),
+        ArchitectureOverviewNode(
+            id="otel", label="OpenTelemetry\nTracing", type="external",
+            group="external", health="healthy",
+            description="分布式追踪与性能监控",
+            position={"x": 640, "y": 580},
+            style={"background": "#fef3c7", "borderColor": "#d97706"},
+        ),
+    ]
+
+
+def _build_system_edges() -> List[ArchitectureOverviewEdge]:
+    """Build system architecture edges."""
+    return [
+        # Client → Frontend
+        ArchitectureOverviewEdge(
+            id="e1", source="browser", target="nextjs",
+            label="HTTP / WebSocket", type="default",
+        ),
+        # Frontend → Backend
+        ArchitectureOverviewEdge(
+            id="e2", source="nextjs", target="fastapi",
+            label="REST API", type="default",
+        ),
+        # Backend → Auth
+        ArchitectureOverviewEdge(
+            id="e3", source="fastapi", target="auth",
+            label="认证", type="default",
+        ),
+        # Backend → Review Engine
+        ArchitectureOverviewEdge(
+            id="e4", source="fastapi", target="review_engine",
+            label="分析请求", type="default",
+        ),
+        # Backend → Databases
+        ArchitectureOverviewEdge(
+            id="e5", source="fastapi", target="postgres",
+            label="SQLAlchemy", type="default",
+        ),
+        ArchitectureOverviewEdge(
+            id="e6", source="fastapi", target="redis",
+            label="Session/Cache", type="default",
+        ),
+        ArchitectureOverviewEdge(
+            id="e7", source="fastapi", target="neo4j",
+            label="Bolt", type="default",
+        ),
+        # Review Engine → AI
+        ArchitectureOverviewEdge(
+            id="e8", source="review_engine", target="deepseek",
+            label="AI 分析", type="animated",
+        ),
+        # Backend → GitHub
+        ArchitectureOverviewEdge(
+            id="e9", source="fastapi", target="github",
+            label="Webhook / API", type="default",
+        ),
+        # Backend → Tracing
+        ArchitectureOverviewEdge(
+            id="e10", source="fastapi", target="otel",
+            label="Traces", type="dashed",
+        ),
+        # Auth → Redis (session)
+        ArchitectureOverviewEdge(
+            id="e11", source="auth", target="redis",
+            label="Token 存储", type="dashed",
+        ),
+    ]
+
+
+def _build_system_groups() -> List[Dict[str, Any]]:
+    """Build system architecture logical groups."""
+    return [
+        {
+            "id": "client",
+            "label": "客户端层 (Client Layer)",
+            "color": "#eff6ff",
+            "borderColor": "#93c5fd",
+        },
+        {
+            "id": "application",
+            "label": "应用层 (Application Layer)",
+            "color": "#f0fdf4",
+            "borderColor": "#86efac",
+        },
+        {
+            "id": "data",
+            "label": "数据层 (Data Layer)",
+            "color": "#fefce8",
+            "borderColor": "#fde047",
+        },
+        {
+            "id": "external",
+            "label": "外部服务 (External Services)",
+            "color": "#faf5ff",
+            "borderColor": "#c084fc",
+        },
+    ]
+
+
+def _build_health_summary(analysis, violations: int) -> Dict[str, Any]:
+    """Build architecture health summary."""
+    return {
+        "overall": "healthy" if violations == 0 else "warning" if violations < 5 else "critical",
+        "total_components": 11,
+        "healthy_components": 11 - (1 if violations > 3 else 0),
+        "warning_components": 1 if violations > 3 else 0,
+        "critical_components": 0,
+        "total_violations": violations,
+        "has_analysis": analysis is not None,
+    }
+

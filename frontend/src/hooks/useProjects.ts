@@ -385,3 +385,63 @@ export interface BranchArchitecture {
     high_violations: number;
   };
 }
+
+// Architecture Overview types
+export interface ArchOverviewNode {
+  id: string;
+  label: string;
+  type: string;
+  group: string;
+  health: string;
+  description: string;
+  position: { x: number; y: number };
+  style?: { background: string; borderColor: string };
+}
+
+export interface ArchOverviewEdge {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  type: string;
+}
+
+export interface ArchOverviewGroup {
+  id: string;
+  label: string;
+  color: string;
+  borderColor: string;
+}
+
+export interface ArchitectureOverview {
+  project_id: string;
+  project_name: string;
+  nodes: ArchOverviewNode[];
+  edges: ArchOverviewEdge[];
+  groups: ArchOverviewGroup[];
+  health_summary: {
+    overall: string;
+    total_components: number;
+    healthy_components: number;
+    warning_components: number;
+    critical_components: number;
+    total_violations: number;
+    has_analysis: boolean;
+  };
+}
+
+/**
+ * Fetch system-level architecture overview for a project
+ */
+export function useArchitectureOverview(projectId: string) {
+  return useQuery({
+    queryKey: ['architecture', projectId, 'overview'],
+    queryFn: async () => {
+      return apiClient.get<ArchitectureOverview>(
+        `/architecture/overview/${projectId}`
+      );
+    },
+    enabled: !!projectId,
+  });
+}
+

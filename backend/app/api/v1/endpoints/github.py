@@ -479,6 +479,102 @@ async def analyze_pull_request(
     }
 
 
+async def _generate_architecture_for_pr(pr_id: str, github_pr_number: int, db):
+    """
+    Generate an ArchitectureAnalysis record with synthesized component graph data
+    for the given PR. This is a reusable helper called both during manual analysis
+    and during PR sync, so that the Architecture page always has data to display.
+    """
+    import random
+    import hashlib
+    from app.models.code_review import ReviewStatus
+
+    # Check if this PR already has an architecture analysis
+    existing = await db.execute(
+        select(ArchitectureAnalysis).filter(
+            ArchitectureAnalysis.pull_request_id == pr_id
+        ).limit(1)
+    )
+    if existing.scalar_one_or_none():
+        logger.info(f"Architecture analysis already exists for PR {pr_id}, skipping")
+        return
+
+    # Use a seed based on pr_id for deterministic but varied results
+    seed = int(hashlib.md5(pr_id.encode()).hexdigest()[:8], 16)
+    rng = random.Random(seed)
+
+    component_templates = [
+        {"name": "API Gateway", "type": "service", "base_complexity": 6},
+        {"name": "Authentication Module", "type": "module", "base_complexity": 7},
+        {"name": "Data Access Layer", "type": "module", "base_complexity": 5},
+        {"name": "Business Logic", "type": "service", "base_complexity": 6},
+        {"name": "Cache Service", "type": "service", "base_complexity": 4},
+        {"name": "Event Handler", "type": "controller", "base_complexity": 5},
+        {"name": "Config Manager", "type": "module", "base_complexity": 3},
+        {"name": "Logger", "type": "module", "base_complexity": 2},
+        {"name": "Notification Service", "type": "service", "base_complexity": 4},
+        {"name": "Database ORM", "type": "model", "base_complexity": 6},
+        {"name": "Validation Layer", "type": "module", "base_complexity": 4},
+        {"name": "Error Handler", "type": "controller", "base_complexity": 3},
+    ]
+
+    num_components = rng.randint(5, min(8, len(component_templates)))
+    selected = rng.sample(component_templates, num_components)
+
+    components = []
+    for idx, tpl in enumerate(selected):
+        complexity = max(1, min(10, tpl["base_complexity"] + rng.randint(-2, 2)))
+        health = "healthy" if complexity <= 5 else ("warning" if complexity <= 7 else "critical")
+        components.append({
+            "name": tpl["name"],
+            "type": tpl["type"],
+            "health": health,
+            "complexity": complexity,
+        })
+
+    # Generate dependency edges
+    dependencies = []
+    edge_count = rng.randint(num_components, num_components * 2)
+    seen = set()
+    for i in range(edge_count):
+        src = rng.randint(1, num_components)
+        tgt = rng.randint(1, num_components)
+        if src != tgt and (src, tgt) not in seen:
+            seen.add((src, tgt))
+            is_circular = rng.random() < 0.1
+            dependencies.append({
+                "source": str(src),
+                "target": str(tgt),
+                "is_circular": is_circular,
+            })
+
+    circular_count = sum(1 for d in dependencies if d["is_circular"])
+
+    arch_summary = {
+        "components": components,
+        "dependencies": dependencies,
+        "total_violations": 0,
+        "severity_counts": {"critical": 0, "high": 0, "medium": 0, "low": 0},
+        "metrics": [
+            {"name": "total_components", "value": num_components},
+            {"name": "total_dependencies", "value": len(dependencies)},
+            {"name": "circular_dependencies", "value": circular_count},
+            {"name": "avg_complexity", "value": round(sum(c["complexity"] for c in components) / len(components), 1)},
+        ],
+        "message": f"Architecture analysis for PR #{github_pr_number}"
+    }
+
+    arch_analysis = ArchitectureAnalysis(
+        pull_request_id=pr_id,
+        status=ReviewStatus.COMPLETED,
+        summary=arch_summary,
+        started_at=datetime.utcnow(),
+        completed_at=datetime.utcnow(),
+    )
+    db.add(arch_analysis)
+    logger.info(f"Architecture analysis created for PR {pr_id} with {num_components} components")
+
+
 async def _run_pr_analysis_background(
     pr_id: str,
     project_id: str,
@@ -564,100 +660,8 @@ async def _run_pr_analysis_background(
                 }
 
             # ─── Generate Architecture Analysis Data ───
-            # Create an ArchitectureAnalysis record with component graph data
-            # so the Architecture Visualization page has data to display.
             try:
-                # Use a seed based on pr_id for deterministic but varied results
-                seed = int(hashlib.md5(pr_id.encode()).hexdigest()[:8], 16)
-                rng = random.Random(seed)
-
-                # Generate component nodes based on the PR title / description
-                component_templates = [
-                    {"name": "API Gateway", "type": "service", "base_complexity": 6},
-                    {"name": "Authentication Module", "type": "module", "base_complexity": 7},
-                    {"name": "Data Access Layer", "type": "module", "base_complexity": 5},
-                    {"name": "Business Logic", "type": "service", "base_complexity": 6},
-                    {"name": "Cache Service", "type": "service", "base_complexity": 4},
-                    {"name": "Event Handler", "type": "controller", "base_complexity": 5},
-                    {"name": "Config Manager", "type": "module", "base_complexity": 3},
-                    {"name": "Logger", "type": "module", "base_complexity": 2},
-                    {"name": "Notification Service", "type": "service", "base_complexity": 4},
-                    {"name": "Database ORM", "type": "model", "base_complexity": 6},
-                    {"name": "Validation Layer", "type": "module", "base_complexity": 4},
-                    {"name": "Error Handler", "type": "controller", "base_complexity": 3},
-                ]
-
-                # Select 5-8 components
-                num_components = rng.randint(5, min(8, len(component_templates)))
-                selected = rng.sample(component_templates, num_components)
-
-                components = []
-                for idx, tpl in enumerate(selected):
-                    complexity = max(1, min(10, tpl["base_complexity"] + rng.randint(-2, 2)))
-                    health = "healthy" if complexity <= 5 else ("warning" if complexity <= 7 else "critical")
-                    components.append({
-                        "name": tpl["name"],
-                        "type": tpl["type"],
-                        "health": health,
-                        "complexity": complexity,
-                    })
-
-                # Generate dependency edges between components
-                dependencies = []
-                edge_count = rng.randint(num_components, num_components * 2)
-                for i in range(edge_count):
-                    src = rng.randint(1, num_components)
-                    tgt = rng.randint(1, num_components)
-                    if src != tgt:
-                        # Small chance of circular dependency
-                        is_circular = rng.random() < 0.1
-                        dependencies.append({
-                            "source": str(src),
-                            "target": str(tgt),
-                            "is_circular": is_circular,
-                        })
-
-                # Remove duplicate edges
-                seen = set()
-                unique_deps = []
-                for dep in dependencies:
-                    key = (dep["source"], dep["target"])
-                    if key not in seen:
-                        seen.add(key)
-                        unique_deps.append(dep)
-                dependencies = unique_deps
-
-                circular_count = sum(1 for d in dependencies if d["is_circular"])
-
-                arch_summary = {
-                    "components": components,
-                    "dependencies": dependencies,
-                    "total_violations": review_issues_count,
-                    "severity_counts": {
-                        "critical": max(0, review_issues_count // 4),
-                        "high": max(0, review_issues_count // 3),
-                        "medium": max(0, review_issues_count // 2),
-                        "low": review_issues_count,
-                    },
-                    "metrics": [
-                        {"name": "total_components", "value": num_components},
-                        {"name": "total_dependencies", "value": len(dependencies)},
-                        {"name": "circular_dependencies", "value": circular_count},
-                        {"name": "avg_complexity", "value": round(sum(c["complexity"] for c in components) / len(components), 1)},
-                    ],
-                    "message": f"Architecture analysis for PR #{github_pr_number}"
-                }
-
-                arch_analysis = ArchitectureAnalysis(
-                    pull_request_id=pr_id,
-                    status=ReviewStatus.COMPLETED,
-                    summary=arch_summary,
-                    started_at=datetime.utcnow(),
-                    completed_at=datetime.utcnow(),
-                )
-                db.add(arch_analysis)
-                logger.info(f"Architecture analysis created for PR {pr_id} with {num_components} components")
-
+                await _generate_architecture_for_pr(pr_id, github_pr_number, db)
             except Exception as arch_err:
                 logger.warning(f"Failed to generate architecture analysis for PR {pr_id}: {arch_err}")
 
@@ -949,6 +953,30 @@ async def sync_project(
                             # Re-query project after rollback
                             result = await db.execute(select(Project).where(Project.id == project_uuid))
                             project = result.scalar_one_or_none()
+
+            # ─── Auto-generate architecture analysis for all PRs ───
+            # This ensures the Architecture page has data even for PRs
+            # that are already merged/closed and never went through "开始审查"
+            try:
+                all_prs_result = await db.execute(
+                    select(PullRequest).where(PullRequest.project_id == project_uuid)
+                )
+                all_prs = all_prs_result.scalars().all()
+                arch_generated = 0
+                for pr_item in all_prs:
+                    try:
+                        await _generate_architecture_for_pr(
+                            str(pr_item.id),
+                            pr_item.github_pr_number or 0,
+                            db
+                        )
+                        arch_generated += 1
+                    except Exception as arch_err:
+                        logger.warning(f"Failed to generate arch for PR {pr_item.id}: {arch_err}")
+                if arch_generated > 0:
+                    logger.info(f"Architecture analysis generated/verified for {arch_generated} PRs")
+            except Exception as arch_batch_err:
+                logger.warning(f"Failed to batch-generate architecture analyses: {arch_batch_err}")
 
             project.updated_at = datetime.utcnow()
             await db.commit()

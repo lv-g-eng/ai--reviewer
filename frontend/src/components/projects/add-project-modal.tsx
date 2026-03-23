@@ -175,8 +175,14 @@ export function AddProjectModal({ open, onClose }: AddProjectModalProps) {
       setSelectedRepo(null)
       onClose()
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || error.message || 'An error occurred'
-      toast({ variant: 'destructive', title: '创建失败', description: errorMessage })
+      const errorMessage = error.message || 'An error occurred'
+      toast({
+        variant: 'destructive',
+        title: '创建失败',
+        description: errorMessage.includes('已被关联')
+          ? '该仓库已关联到现有项目，请选择其他仓库或检查已有项目'
+          : errorMessage,
+      })
     }
   }
 

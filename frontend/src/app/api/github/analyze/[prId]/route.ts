@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://backend:8000';
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 export async function POST(
     request: NextRequest,
@@ -16,8 +16,9 @@ export async function POST(
             return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
         }
 
+        // Backend route is POST /github/pr/{pr_id}/analyze
         const response = await fetch(
-            `${BACKEND_URL}/api/v1/github/analyze/${prId}`,
+            `${BACKEND_URL}/api/v1/github/pr/${prId}/analyze`,
             {
                 method: 'POST',
                 headers: {

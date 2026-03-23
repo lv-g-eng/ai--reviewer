@@ -133,8 +133,11 @@ export function useProjectPullRequests(projectId: string, state: string = 'all')
   return useQuery({
     queryKey: ['projects', projectId, 'pulls', state],
     queryFn: async () => {
+      // Always skip the API client cache for PR lists so we can see
+      // real-time status changes (pending → analyzing → reviewed)
       return apiClient.get(`/github/projects/${projectId}/pulls`, {
         params: { state },
+        skipCache: true,
       });
     },
     enabled: !!projectId,

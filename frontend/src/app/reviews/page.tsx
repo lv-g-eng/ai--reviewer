@@ -32,7 +32,7 @@ import { useProjects, useProjectPullRequests } from '@/hooks/useProjects';
 import type { Project, PullRequest } from '@/hooks/useProjects';
 
 // Component to render Pull Request list for a project
-function ProjectPRList({ project, onSync }: { project: Project; onSync: () => void }) {
+function ProjectPRList({ project, onSync }: { project: Project; onSync: (msg: string) => void }) {
   const router = useRouter();
   const { data: pullRequestsData, isLoading, refetch } = useProjectPullRequests(project.id, 'all');
   const [analyzingPRId, setAnalyzingPRId] = useState<string | null>(null);
@@ -54,9 +54,10 @@ function ProjectPRList({ project, onSync }: { project: Project; onSync: () => vo
       const resp = await fetch(`/api/github/projects/${project.id}/sync`, { method: 'POST' });
       const data = await resp.json();
       if (resp.ok) {
+        // Show backend's sync result message (includes PR counts)
+        onSync(data.message || `${project.name} 同步完成`);
         // Refetch PRs after sync
         setTimeout(() => refetch(), 500);
-        onSync();
       } else {
         alert(data.message || data.detail || 'Sync failed');
       }
@@ -73,12 +74,24 @@ function ProjectPRList({ project, onSync }: { project: Project; onSync: () => vo
       const resp = await fetch(`/api/github/analyze/${prId}`, { method: 'POST' });
       const data = await resp.json();
       if (resp.ok) {
-        setTimeout(() => refetch(), 1000);
+        // Force invalidate the cache and refetch immediately
+        // The apiClient has a 5-min cache, so we clear the query cache via React Query
+        refetch();
+        // Poll for status change (analyzing → reviewed) every 2 seconds
+        let pollCount = 0;
+        const pollInterval = setInterval(() => {
+          pollCount++;
+          refetch();
+          // Stop polling after 30 attempts (60 seconds)
+          if (pollCount >= 30) clearInterval(pollInterval);
+        }, 2000);
+        // Also stop polling after 60 seconds as safety measure
+        setTimeout(() => clearInterval(pollInterval), 62000);
       } else {
-        alert(data.message || data.detail || 'Analysis failed');
+        alert(data.message || data.detail || '分析启动失败');
       }
     } catch (err) {
-      alert('Analysis failed: network error');
+      alert('分析启动失败：网络错误');
     } finally {
       setAnalyzingPRId(null);
     }
@@ -201,19 +214,19 @@ function ProjectPRList({ project, onSync }: { project: Project; onSync: () => vo
                     风险: {pr.risk_score}
                   </Badge>
                 )}
-                {pr.status === 'pending' && (
+                {(pr.status === 'pending' || pr.status === 'analyzing') && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={(e) => { e.stopPropagation(); handleAnalyze(pr.id); }}
-                    disabled={analyzingPRId === pr.id}
+                    disabled={analyzingPRId === pr.id || pr.status === 'analyzing'}
                   >
-                    {analyzingPRId === pr.id ? (
+                    {(analyzingPRId === pr.id || pr.status === 'analyzing') ? (
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                     ) : (
                       <Play className="h-3 w-3 mr-1" />
                     )}
-                    {analyzingPRId === pr.id ? '分析中' : '开始审查'}
+                    {(analyzingPRId === pr.id || pr.status === 'analyzing') ? '分析中' : '开始审查'}
                   </Button>
                 )}
               </div>
@@ -346,7 +359,7 @@ export default function ReviewsPage() {
                 <CardContent>
                   <ProjectPRList
                     project={project}
-                    onSync={() => setSyncMessage(`${project.name} 同步完成`)}
+                    onSync={(msg) => setSyncMessage(msg)}
                   />
                 </CardContent>
               </Card>

@@ -189,6 +189,19 @@ async def create_project(
     The creating user becomes the project owner.
     """
     try:
+        # Check if github_repo_url is already used by another project
+        if project_data.github_repo_url:
+            existing_result = await db.execute(
+                select(Project).filter(
+                    Project.github_repo_url == project_data.github_repo_url
+                )
+            )
+            if existing_result.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="该 GitHub 仓库 URL 已被关联到另一个项目，请勿重复添加"
+                )
+
         # Validate GitHub connection configuration
         await _validate_github_connection(project_data, current_user.user_id, db)
 
@@ -254,6 +267,14 @@ async def create_project(
     except HTTPException:
         raise
     except Exception as e:
+        # Catch IntegrityError from concurrent duplicate inserts
+        error_str = str(e)
+        if "UniqueViolation" in type(e).__name__ or "unique" in error_str.lower() or "duplicate" in error_str.lower():
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="该 GitHub 仓库 URL 已被关联到另一个项目，请勿重复添加"
+            )
         logger.error(f"Error creating project: {type(e).__name__}: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -435,37 +456,100 @@ async def delete_project(
 ):
     """
     Delete project (Owner or Admin only).
-    
+
     Requires DELETE_PROJECT permission and project ownership or admin role.
+    Cascade-deletes all related records: PRs, reviews, comments, analyses, violations.
     """
-    import logging
-    logger = logging.getLogger(__name__)
-    
+    from app.models.code_review import (
+        PullRequest, CodeReview, ReviewComment,
+        ArchitectureAnalysis, ArchitectureViolation
+    )
+    from app.models import ReviewResult
+
     try:
         logger.info(f"Delete project request for project_id={project_id}, user_id={current_user.user_id}")
-        
+
         result = await db.execute(select(Project).filter(Project.id == project_id))
         project = result.scalar_one_or_none()
-        
+
         if not project:
             logger.warning(f"Project {project_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Project not found"
             )
-        
+
         project_name = project.name
-        logger.info(f"Deleting project {project_name} (id={project_id})")
-        
-        # Delete all access grants first
+        logger.info(f"Deleting project {project_name} (id={project_id}) and all related records")
+
+        # 1. Get all PR IDs for this project
+        pr_result = await db.execute(
+            select(PullRequest.id).where(PullRequest.project_id == project_id)
+        )
+        pr_ids = [row[0] for row in pr_result.fetchall()]
+        logger.info(f"Found {len(pr_ids)} PRs to delete for project {project_id}")
+
+        if pr_ids:
+            # 2. Get all review IDs for these PRs
+            review_result = await db.execute(
+                select(CodeReview.id).where(CodeReview.pull_request_id.in_(pr_ids))
+            )
+            review_ids = [row[0] for row in review_result.fetchall()]
+
+            # 3. Get all analysis IDs for these PRs
+            analysis_result = await db.execute(
+                select(ArchitectureAnalysis.id).where(ArchitectureAnalysis.pull_request_id.in_(pr_ids))
+            )
+            analysis_ids = [row[0] for row in analysis_result.fetchall()]
+
+            # 4. Delete review comments (children of reviews)
+            if review_ids:
+                await db.execute(
+                    delete(ReviewComment).where(ReviewComment.review_id.in_(review_ids))
+                )
+                logger.info(f"Deleted review comments for {len(review_ids)} reviews")
+
+            # 5. Delete architecture violations (children of analyses)
+            if analysis_ids:
+                await db.execute(
+                    delete(ArchitectureViolation).where(ArchitectureViolation.analysis_id.in_(analysis_ids))
+                )
+                logger.info(f"Deleted architecture violations for {len(analysis_ids)} analyses")
+
+            # 6. Delete code reviews
+            if review_ids:
+                await db.execute(
+                    delete(CodeReview).where(CodeReview.id.in_(review_ids))
+                )
+                logger.info(f"Deleted {len(review_ids)} code reviews")
+
+            # 7. Delete architecture analyses
+            if analysis_ids:
+                await db.execute(
+                    delete(ArchitectureAnalysis).where(ArchitectureAnalysis.id.in_(analysis_ids))
+                )
+                logger.info(f"Deleted {len(analysis_ids)} architecture analyses")
+
+            # 8. Delete review results
+            await db.execute(
+                delete(ReviewResult).where(ReviewResult.pull_request_id.in_(pr_ids))
+            )
+
+            # 9. Delete pull requests
+            await db.execute(
+                delete(PullRequest).where(PullRequest.project_id == project_id)
+            )
+            logger.info(f"Deleted {len(pr_ids)} pull requests")
+
+        # 10. Delete project access grants
         await db.execute(delete(ProjectAccess).filter(ProjectAccess.project_id == project_id))
         logger.info(f"Deleted access grants for project {project_id}")
-        
-        # Delete project
+
+        # 11. Delete the project itself
         await db.delete(project)
         await db.commit()
         logger.info(f"Project {project_name} deleted successfully")
-        
+
         # Log action
         try:
             ip_address = request.client.host if request.client else "0.0.0.0"
@@ -482,9 +566,9 @@ async def delete_project(
             )
         except Exception as audit_error:
             logger.warning(f"Failed to log audit action: {audit_error}")
-        
+
         return MessageResponse(message=f"Project {project_name} deleted successfully")
-    
+
     except HTTPException:
         raise
     except Exception as e:

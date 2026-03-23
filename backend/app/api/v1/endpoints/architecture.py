@@ -11,6 +11,7 @@ from sqlalchemy import select, func
 from datetime import datetime
 from uuid import UUID
 import re
+import base64
 
 from app.database.postgresql import get_db
 from app.auth import TokenPayload, get_current_user, require_project_access, Permission
@@ -172,13 +173,32 @@ async def get_project_branches(
         else:
             health_status = 'critical'
 
+        # Get actual component count from architecture analysis summary
+        arch_components_count = 0
+        for pr_item in prs_list:
+            arch_result = await db.execute(
+                select(ArchitectureAnalysis)
+                .filter(ArchitectureAnalysis.pull_request_id == pr_item.id)
+                .order_by(ArchitectureAnalysis.started_at.desc())
+                .limit(1)
+            )
+            arch = arch_result.scalar_one_or_none()
+            if arch and arch.summary and isinstance(arch.summary, dict):
+                components = arch.summary.get('components', [])
+                if components:
+                    arch_components_count = len(components)
+                    break
+
+        # Use base64url encoding for branch ID to avoid corrupting branch names with dashes
+        branch_id_encoded = base64.urlsafe_b64encode(branch_name.encode('utf-8')).decode('ascii').rstrip('=')
+
         branches.append(BranchInfo(
-            id=branch_name.replace('/', '-'),
+            id=branch_id_encoded,
             name=branch_name,
             last_commit=latest_pr.title or 'No commit message',
             last_commit_date=latest_pr.created_at.isoformat(),
             author=str(latest_pr.author_id) if latest_pr.author_id else 'unknown',
-            components_count=latest_pr.files_changed or 0,
+            components_count=arch_components_count if arch_components_count else (latest_pr.files_changed or 0),
             complexity=complexity,
             health_status=health_status,
             circular_dependencies=circular_deps
@@ -199,8 +219,14 @@ async def get_branch_architecture(
 
     Includes nodes, edges, statistics, etc.
     """
-    # Convert branch_id back to branch name
-    branch_name = branch_id.replace('-', '/')
+    # Decode base64url branch_id back to branch name
+    try:
+        # Add back padding that was stripped during encoding
+        padded = branch_id + '=' * (4 - len(branch_id) % 4) if len(branch_id) % 4 else branch_id
+        branch_name = base64.urlsafe_b64decode(padded.encode('ascii')).decode('utf-8')
+    except Exception:
+        # Fallback: try old dash-replacement format for backward compatibility
+        branch_name = branch_id.replace('-', '/')
 
     # Get the latest PR for this branch
     pr_result = await db.execute(

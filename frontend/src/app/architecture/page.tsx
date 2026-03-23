@@ -387,13 +387,23 @@ export default function ArchitecturePage() {
     setSelectedNode(null);
 
     fetch(`/api/architecture/${selectedProjectId}/branches/${selectedBranchId}/architecture`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) {
+          console.error(`Architecture fetch failed: ${r.status} ${r.statusText}`);
+          return r.json().then(err => {
+            console.error('Architecture API error:', err);
+            return null;
+          });
+        }
+        return r.json();
+      })
       .then((data) => {
-        if (data && data.nodes) setArchData(data);
+        console.log('Architecture data received:', data);
+        if (data && data.nodes && data.nodes.length > 0) setArchData(data);
         else setArchData(null);
         setLoadingArch(false);
       })
-      .catch(() => { setArchData(null); setLoadingArch(false); });
+      .catch((err) => { console.error('Architecture fetch error:', err); setArchData(null); setLoadingArch(false); });
   }, [selectedProjectId, selectedBranchId]);
 
   // SSR guard — render identical loading state on server + first client render
